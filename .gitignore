@@ -1,0 +1,7 @@
+# Ignorar dist y secretos
+/backend/dist/
+/dist/
+.env
+*.env
+node_modules/
+extras

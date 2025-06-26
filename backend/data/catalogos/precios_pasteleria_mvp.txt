@@ -1,0 +1,67 @@
+Lista de productos y precios para pastelerías:
+
+Lemon pie: $16,000
+Banana Split: $16,000
+Tarta Cabsha: $18,000
+D D L y Coco: $17,000
+Pasta Frola (G): $8,500
+Pasta Frola (M): $4,500
+Frutal: $19,000
+Ricota: $16,000
+4 Sabores: $16,000
+Frutos rojos: $19,000
+Pastafrola ddl: $13,000
+Profiteroles x12: $5,000
+Crumble: $16,000
+Chaja: $35,000
+Brownie : $28,000
+Frutos rojos : $38,000
+Pavlova: $28,000
+Bruce: $35,000
+Cheesecake : $38,000
+Chocotorta: $33,000
+Torta 1kg: $21,000
+Tiramisú : $33,000
+Manzana invertida: $10,000
+Mascarpone : $38,000
+Red velvet : $42,000
+T H DDL: $25,000
+T H FR ROJOS: $28,000
+T H OREO: $25,000
+galles c/ diseño : $25,000
+cupcake batter: $13,000
+cupcake ballina: $25,000
+popcakes: $10,000
+popcakes c/diseño : $26,000
+caja matera 3x6: $13,000
+caja matera 4x6: $17,000
+cuadrad limon x6: $6,000
+pepas x6: $8,000
+alfajor maicena: $8,000
+alfajor choco: $8,000
+cupcakes vainilla: $9,500
+brownie X6: $8,000
+Pasteles x12: $15,000
+carasucias X12: $5,000
+budín vainilla : $5,000
+budín amapola: $7,500
+budín Banana: $6,000
+budín Banana chocolate : $7,500
+budín Naranja: $6,000
+budín chips choco : $8,500
+budín frutos secos : $6,000
+budín ingles : $8,000
+budín 🫐 : $9,500
+budín 🍒: $7,000
+Pan dulce fr secos: $17,000
+pan dulce chip ch: $14,000
+pan dulce c/frutas: $10,000
+stollen 1kg: $14,000
+Stollen 450gr: $7,500
+Galesa 1kg: $18,000
+garrapinadas: $2,500
+panettone 1kg: $32,000
+mantecol: $3,200
+Rosca ddl: $5,500
+rosca 100% choco: $7,500
+rosca reyes: $5,500
