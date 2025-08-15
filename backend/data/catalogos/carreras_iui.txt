@@ -1,0 +1,64 @@
+=============================
+CATÁLOGO DE CARRERAS - IUI
+Instituto Universitario del Iberá
+Etapa MVP - Catálogo Simulado
+=============================
+
+------------------------------------------------------------
+🎓 Tecnicatura en Desarrollo Web
+Duración: 2 años
+Modalidad: Presencial / Virtual
+Plan de estudios simplificado:
+- HTML, CSS y diseño responsive
+- JavaScript moderno
+- Backend con Node.js y MongoDB
+- Proyecto Final Integrador
+Perfil de egreso: desarrollador web junior listo para insertarse laboralmente.
+
+------------------------------------------------------------
+🎓 Licenciatura en Psicología
+Duración: 5 años
+Modalidad: Presencial
+Plan de estudios simplificado:
+- Introducción a la Psicología
+- Teorías de la personalidad
+- Psicología Social
+- Clínica y Psicodiagnóstico
+- Prácticas Profesionales Supervisadas
+Perfil de egreso: profesional capacitado en salud mental con orientación clínica.
+
+------------------------------------------------------------
+🎓 Tecnicatura en Marketing Digital
+Duración: 2 años y medio
+Modalidad: Virtual
+Plan de estudios simplificado:
+- Fundamentos del Marketing
+- Estrategias en redes sociales
+- SEO / SEM / Email Marketing
+- Analítica digital y automatización
+Perfil de egreso: técnico capacitado para gestionar campañas digitales y redes.
+
+------------------------------------------------------------
+🎓 Profesorado en Educación Física
+Duración: 4 años
+Modalidad: Presencial
+Plan de estudios simplificado:
+- Anatomía y fisiología
+- Prácticas deportivas
+- Pedagogía y didáctica
+- Educación y salud
+Perfil de egreso: docente preparado para trabajar en escuelas y espacios deportivos.
+
+------------------------------------------------------------
+
+💳 MEDIOS DE PAGO DISPONIBLES
+- Transferencia bancaria (CBU/alias)
+- Tarjeta de crédito (hasta 3 cuotas sin interés)
+- Débito automático
+- Pago en efectivo en sede (lunes a viernes de 8 a 18hs)
+- Promoción activa: 15% de descuento por pago semestral anticipado
+
+📎 Para más información ingresá en: https://iui.edu.ar/catalogo
+📆 Agendá una reunión con un director: https://calendly.com/iui-directores
+
+Gracias por interesarte en el IUI 😊

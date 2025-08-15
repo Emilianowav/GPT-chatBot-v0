@@ -8,7 +8,9 @@
     "test": "echo \"Error: no test specified\" && exit 1",
     "build": "tsc",
     "start": "node dist/app.js",
-    "dev": "concurrently \"node --loader ts-node/esm src/app.ts\" \"ngrok http 3000\""
+    "dev": "node --loader ts-node/esm src/app.ts",
+    "tunnel": "ngrok http 3000"
+
   },
   "keywords": [],
   "author": "",

@@ -4,7 +4,8 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 
 const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+// 👉 Usamos solo la carpeta 'data', no el archivo, para armar rutas dinámicas después
+const __dirname = path.resolve('./data');
 
 const MAX_INTERACCIONES = 5;
 
@@ -33,6 +34,8 @@ export async function actualizarContexto(
 ): Promise<ChatCompletionMessageParam[]> {
   let conv = conversaciones.get(clienteId);
 
+  const primerMensaje = !conv;
+
   if (!conv) {
     conv = {
       mensajes: [],
@@ -42,6 +45,10 @@ export async function actualizarContexto(
 
   conv.mensajes.push({ role: 'user', content: mensajeUsuario });
   conversaciones.set(clienteId, conv);
+
+  // 🚨 Si es la primera vez que aparece este cliente, guardamos ya
+  if (primerMensaje) guardarConversacion(clienteId, conv);
+
   return conv.mensajes;
 }
 
@@ -93,7 +100,7 @@ async function generarResumen(mensajes: ChatCompletionMessageParam[]): Promise<C
 }
 
 function guardarConversacion(clienteId: string, conv: Conversacion) {
-  const dir = path.resolve(__dirname, '../data/conversaciones/');
+  const dir = path.resolve(__dirname);
   if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
 
   const ruta = path.join(dir, `${clienteId}_${Date.now()}.json`);

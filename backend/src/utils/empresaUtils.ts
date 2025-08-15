@@ -1,12 +1,9 @@
-import { fileURLToPath } from 'url';
 import path from 'path';
 import fs from 'fs';
 import { EmpresaConfig } from "../types/Types.js";
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
 
-const empresasPath = path.resolve(__dirname, '../data/empresas.json');
+const empresasPath = path.resolve('./data/empresas.json');
 
 function normalizarTelefono(tel: string): string {
   return tel.replace(/\D/g, ''); // Elimina todo excepto dígitos

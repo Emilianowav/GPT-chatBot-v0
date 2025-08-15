@@ -51,37 +51,56 @@ export const recibirMensaje = async (req: Request, res: Response, next: NextFunc
     if (!usuario.nombre && profileName) usuario.nombre = profileName;
     if (!usuario.empresaTelefono) usuario.empresaTelefono = telefonoEmpresa;
 
-    const mensajeMinuscula = mensaje.toLowerCase();
-    const esMensajeDeCierre = /gracias|perfecto|ok|entendido/i.test(mensajeMinuscula);
-
-    if (usuario.despedido && !esMensajeDeCierre) {
+    // 🧹 Borrado del historial al recibir "limpiar"
+    if (/^limpiar$/i.test(mensaje.trim())) {
+      usuario.historial = [];
+      usuario.saludado = false;
       usuario.despedido = false;
-      usuario.saludado = true;
+      usuario.num_mensajes_recibidos = 0;
+      usuario.num_mensajes_enviados = 0;
+      usuario.interacciones = 0;
+      usuario.tokens_consumidos = 0;
+      usuario.ultimo_status = 'reset';
+      await actualizarUsuario(usuario);
+      await enviarMensajeWhatsAppTexto(telefonoCliente, '✅ Historial de conversación limpiado. Podés empezar de nuevo cuando quieras.', empresa.phoneNumberId);
+      res.sendStatus(200);
+      return;
     }
 
-    const ultimaInteraccionMs = new Date(usuario.ultimaInteraccion).getTime();
+    const mensajeMinuscula = mensaje.toLowerCase();
+    const esMensajeDeCierre = /gracias|perfecto|ok|entendido/i.test(mensajeMinuscula);
+    const esSaludoCliente = /^(hola|buenas|buen día|buenas tardes|buenas noches|saludos|hey)[!. ]*$/i.test(mensajeMinuscula);
+
     const ahoraMs = Date.now();
+    const ultimaInteraccionMs = new Date(usuario.ultimaInteraccion).getTime();
     const tiempoDesdeUltima = ahoraMs - ultimaInteraccionMs;
     const puedeSaludar = !usuario.saludado || tiempoDesdeUltima > SALUDO_REPETIR_CADA_MS;
 
+    let saludoRespondido = false;
     if (puedeSaludar) {
       const saludos = empresa.saludos?.length
         ? empresa.saludos
         : ["¡Hola! Bienvenido a la concesionaria de motos ASZI. ¿En qué puedo ayudarte hoy?"];
       const saludoElegido = saludos[Math.floor(Math.random() * saludos.length)];
-
       await enviarMensajeWhatsAppTexto(telefonoCliente, saludoElegido, empresa.phoneNumberId);
+      usuario.historial.push(`Cliente: ${mensaje}`);
       usuario.historial.push(`Asistente: ${saludoElegido}`);
       usuario.saludado = true;
       usuario.ultimaInteraccion = new Date().toISOString();
+      usuario.num_mensajes_recibidos += 1;
+      usuario.num_mensajes_enviados += 1;
+      usuario.interacciones += 1;
+      usuario.tokens_consumidos = (usuario.tokens_consumidos ?? 0) + encode(mensaje).length + encode(saludoElegido).length;
+      usuario.ultimo_status = 'responded';
       await actualizarUsuario(usuario);
-
-      res.sendStatus(200);
-      return;
+      if (esSaludoCliente) {
+        res.sendStatus(200);
+        return;
+      }
+      saludoRespondido = true;
     }
 
     const promptSistema = `${empresa.prompt ?? 'Sos un asistente simpático y eficiente.'}${textoCatalogo ? '\n\nCatálogo disponible:\n' + textoCatalogo : ''}`;
-
     const historial: ChatCompletionMessageParam[] = [
       { role: 'system', content: promptSistema },
       ...usuario.historial.flatMap((entrada) => {
@@ -93,6 +112,7 @@ export const recibirMensaje = async (req: Request, res: Response, next: NextFunc
       { role: 'user', content: mensaje }
     ];
 
+    const quiereHablarConAlguien = /(hablar con alguien|quiero hablar|asesor|ayuda humana|atención humana)/i.test(mensajeMinuscula);
     let numeroDerivacion: string | undefined = undefined;
 
     if (Array.isArray(empresa.ubicaciones)) {
@@ -100,17 +120,11 @@ export const recibirMensaje = async (req: Request, res: Response, next: NextFunc
         mensajeMinuscula.includes((suc.ciudad ?? '').toLowerCase()) ||
         mensajeMinuscula.includes((suc.nombre ?? '').toLowerCase())
       );
-
-      if (sucursalDetectada?.derivarA?.[0]) {
-        numeroDerivacion = sucursalDetectada.derivarA[0];
-      }
+      if (sucursalDetectada?.derivarA?.[0]) numeroDerivacion = sucursalDetectada.derivarA[0];
     }
-
     if (!numeroDerivacion && Array.isArray(empresa.derivarA)) {
       numeroDerivacion = empresa.derivarA[0];
     }
-
-    const quiereHablarConAlguien = /(hablar con alguien|quiero hablar|asesor|ayuda humana|atención humana)/i.test(mensajeMinuscula);
 
     if (quiereHablarConAlguien && numeroDerivacion) {
       const msgDerivacion = `Para avanzar con la compra o recibir asesoramiento personalizado, podés contactar a nuestro equipo al siguiente número: ${numeroDerivacion}. Que tengas un excelente día.`;
@@ -121,19 +135,18 @@ export const recibirMensaje = async (req: Request, res: Response, next: NextFunc
       return;
     }
 
-    // 🧠 Llamada a OpenAI
     const { texto: respuestaOriginal } = await obtenerRespuestaChat({
       historial,
       modelo: empresa.modelo ?? 'gpt-3.5-turbo'
     });
 
     let respuesta = respuestaOriginal;
-    const ofrecimientoInfo = /te gustaría más información|querés saber más|querés conocer más/i.test(respuestaOriginal);
-    if (ofrecimientoInfo && numeroDerivacion) {
+    if (/te gustaría más información|querés saber más|querés conocer más/i.test(respuestaOriginal) && numeroDerivacion) {
       respuesta += `\n\n👉🏼 Si querés hablar con un asesor para recibir ayuda personalizada, podés contactarlo al número: ${numeroDerivacion}.`;
     }
 
-    usuario.historial.push(`Cliente: ${mensaje}`, `Asistente: ${respuesta}`);
+    if (!saludoRespondido) usuario.historial.push(`Cliente: ${mensaje}`);
+    usuario.historial.push(`Asistente: ${respuesta}`);
     usuario.historial = usuario.historial.slice(-40);
     usuario.num_mensajes_recibidos += 1;
     usuario.num_mensajes_enviados += 1;
@@ -152,7 +165,6 @@ export const recibirMensaje = async (req: Request, res: Response, next: NextFunc
     }
 
     await enviarMensajeWhatsAppTexto(telefonoCliente, respuesta, empresa.phoneNumberId);
-
     await verificarYEnviarResumen(telefonoEmpresa, empresa);
 
     if (empresa.email) {

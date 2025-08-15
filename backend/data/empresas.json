@@ -1,0 +1,158 @@
+[
+  {
+    "id": "2",
+    "nombre": "ASZI motos",
+    "categoria": "motos",
+    "telefono": "15556488371",
+    "email": "emidbiasi@gmail.com",
+    "derivarA": [
+      "+5493794701533"
+    ],
+    "prompt": "Sos un asistente virtual profesional de la concesionaria de motos ASZI. Tu única misión es ayudar al cliente a encontrar su moto ideal según categoría (cilindrada), modelo o rango de precio.\n\nReglas estrictas:\n\n1. Respondé solo con información precisa y oficial proporcionada por el sistema. No inventes, supongas ni estimes nada.\n2. Sé formal, claro y directo. Sin emojis, modismos ni opiniones.\n3. Mostrá motos solo si el cliente lo pide o demuestra interés explícito.\n4. Incluí siempre: modelo, marca, precio, condiciones de pago (si las hay) y link (si está disponible).\n5. Si el cliente no sabe qué busca, ofrecé mostrar motos por cilindrada.\n6. Al cerrar, si el cliente está satisfecho, decí EXACTAMENTE:\n\"Gracias por tu consulta. Para avanzar con la compra o recibir asesoramiento personalizado, podés contactar a nuestro equipo al siguiente número: [NÚMERO DEL VENDEDOR]. Que tengas un excelente día.\"\n7. Informá que el cliente puede contactar al personal en cualquier momento, pero decí esto solo una vez durante la conversación.\n8. No continúes la conversación tras el cierre.\n9. Comenzá con una bienvenida breve y ofrecé ayuda clara para encontrar motos.\n\nInsistí en entender claramente qué busca el cliente y ajustá todas las respuestas a eso, sin desviarte ni agregar información irrelevante.",
+    "saludos": [
+      "¡Hola! Bienvenido a la concesionaria de motos ASZI. ¿En qué puedo ayudarte hoy?",
+      "¡Hola! Estás hablando con ASZI Motos. ¿Qué estás buscando hoy?",
+      "¡Bienvenido a ASZI! ¿En qué modelo de moto estás interesado?",
+      "Hola 👋 Estás en la concesionaria de ASZI Motos. ¿En qué puedo asistirte?",
+      "¡Gracias por contactarte con ASZI Motos! ¿Qué estás buscando?"
+    ],
+    "catalogoPath": "data/catalogos/precios_motos.txt",
+    "linkCatalogo": "https://miweb.com/pasteleria_luciana/catalogo.pdf",
+    "modelo": "gpt-3.5-turbo",
+    "ubicaciones": [
+      {
+        "nombre": "ASZI Motos Central",
+        "direccion": "Av. Corrientes 1234",
+        "ciudad": "Buenos Aires",
+        "provincia": "Buenos Aires",
+        "coordenadas": {
+          "lat": -34.6037,
+          "lng": -58.3816
+        },
+        "telefono": "011-4567-8900",
+        "horarios": "Lunes a viernes de 9 a 18 hs"
+      },
+      {
+        "nombre": "ASZI Motos Resistencia",
+        "direccion": "Av. 25 de Mayo 2345",
+        "ciudad": "Resistencia",
+        "provincia": "Chaco",
+        "telefono": "0362-444-5566",
+        "horarios": "Lunes a sábados de 8 a 13 y 17 a 20"
+      }
+    ],
+    "cliente": "ASZI motos",
+    "waba_id": "333333333333333",
+    "business_id": "638598412538242",
+    "phoneNumberId": "701199076403746"
+  },
+  {
+  "id": "3",
+  "nombre": "Clínica Salud Integral",
+  "categoria": "consultorio médico",
+  "telefono": "15556503339",
+  "email": "contacto@clinicasalud.com",
+  "derivarA": [
+    "+5491144556677"
+  ],
+  "prompt": "Sos un asistente virtual profesional de la Clínica Salud Integral. Tu misión es ayudar a los pacientes a consultar información sobre especialidades, horarios, ubicaciones y protocolos.\n\nReglas estrictas:\n\n1. Respondé solo con información precisa y oficial proporcionada por el sistema. No inventes ni supongas.\n2. Sé formal, claro y directo. Sin emojis ni modismos.\n3. Mostrá especialidades solo si el cliente pregunta o demuestra interés.\n4. Incluí siempre: nombre de la especialidad, precio (si aplica), horarios y ubicación cuando corresponda.\n5. Si el cliente no sabe qué necesita, ofrecé mostrar especialidades o horarios.\n6. Al cerrar, decí EXACTAMENTE:\n\"Gracias por tu consulta. Para atención personalizada podés comunicarte con nuestro equipo al siguiente número: 0800-DEMO-555. Que tengas un excelente día.\"\n7. Informá que el cliente puede contactar al personal en cualquier momento, pero decí esto solo una vez.\n8. No continúes la conversación tras el cierre.\n9. Comenzá con una bienvenida breve y ofrecé ayuda clara para consultas médicas.\n",
+  "saludos": [
+    "¡Hola! Bienvenido a Clínica Salud Integral. ¿En qué puedo ayudarte hoy?",
+    "¡Hola! Estás hablando con Clínica Salud Integral. ¿Qué consulta médica tenés?",
+    "¡Bienvenido a Clínica Salud Integral! ¿Querés saber sobre especialidades o horarios?",
+    "Hola 👋 Estás en Clínica Salud Integral. ¿En qué puedo asistirte?",
+    "¡Gracias por contactarte con Clínica Salud Integral! ¿Qué información necesitás?"
+  ],
+  "catalogoPath": "data/catalogos/servicios_clinica.json",
+  "linkCatalogo": "https://clinicasalud.com/catalogo.pdf",
+  "modelo": "gpt-3.5-turbo",
+  "ubicaciones": [
+    {
+      "nombre": "Clínica Central",
+      "direccion": "Av. Salud 1234",
+      "ciudad": "Ciudad Autónoma de Buenos Aires",
+      "provincia": "Buenos Aires",
+      "coordenadas": {
+        "lat": -34.6037,
+        "lng": -58.3816
+      },
+      "telefono": "011-1234-5678",
+      "horarios": "Lunes a viernes de 8 a 18 hs"
+    },
+    {
+      "nombre": "Clínica Norte",
+      "direccion": "Calle San Martín 4567",
+      "ciudad": "Vicente López",
+      "provincia": "Buenos Aires",
+      "telefono": "011-8765-4321",
+      "horarios": "Lunes a viernes de 9 a 17 hs"
+    }
+  ],
+  "cliente": "Clínica Salud Integral",
+  "waba_id": "444444444444444",
+  "business_id": "738598412538243",
+  "phoneNumberId": "690112274182992" 
+},
+{
+  "id": "4",
+  "nombre": "Instituto Universitario del Iberá",
+  "categoria": "educación superior",
+  "telefono": "+15556503339",
+  "email": "info@iui.edu.ar",
+  "derivarA": [
+    "+5493794123456",
+    "+5493794234567"
+  ],
+  "prompt": "Sos un asistente virtual del Instituto Universitario del Iberá. Tu rol es acompañar a futuros estudiantes a descubrir su carrera ideal, resolver dudas sobre precios, promociones, turnos con directores y pasos de inscripción. Siempre respondé con calidez, precisión y claridad. Respondé solo con datos oficiales. Si la persona no sabe qué carrera quiere, ofrecé orientarla. Nunca inventes información.",
+  "saludos": [
+    "¡Hola! Bienvenido al Instituto Universitario del Iberá 👋 ¿Querés info sobre alguna carrera o necesitás ayuda para empezar?",
+    "¡Gracias por escribir al Instituto Universitario del Iberá! ¿Qué te gustaría estudiar?",
+    "¡Hola! ¿En qué carrera estás interesado? Estoy acá para ayudarte con todo lo que necesites.",
+    "Hola 👋 ¿Querés conocer las carreras, precios o agendar un turno con un director? Estoy para ayudarte.",
+    "¡Bienvenido al IUI! ¿Te gustaría saber sobre nuestras carreras, inscripciones o promociones?"
+  ],
+  "modelo": "gpt-4o",
+  "cliente": "IUI",
+  "waba_id": "1031704819166592",
+  "business_id": "1352981479127514",
+  "phoneNumberId": "690112274182992",
+  "catalogoPath": "data/catalogos/carreras_iui.txt",
+  "catalogoPreciosPath": "data/catalogos/precios_iui.json",
+  "linkCatalogo": "https://iui.edu.ar/catalogo",
+  "calendarioTurnos": "https://calendly.com/iui-directores",
+  "camposPerfilamiento": [
+    "nombre",
+    "apellido",
+    "edad",
+    "ciudad",
+    "nivel de estudios alcanzado",
+    "área de interés"
+  ],
+  "estadosConversacion": [
+    "lead_inicial",
+    "lead_perfilado",
+    "lead_interesado_carrera",
+    "lead_precio_consultado",
+    "lead_datos_cargados",
+    "turno_agendado",
+    "inscripcion_enviada",
+    "pago_confirmado"
+  ],
+  "seguimientoAutomatizado": {
+    "post_turno": 2,
+    "post_interes": 4,
+    "lead_frio": 7
+  },
+  "ubicaciones": [
+    {
+      "nombre": "Sede Central",
+      "direccion": "Av. Iberá 456",
+      "ciudad": "Corrientes",
+      "provincia": "Corrientes",
+      "telefono": "+543794001234",
+      "horarios": "Lunes a viernes de 8 a 20 hs"
+    }
+  ]
+}
+
+]
