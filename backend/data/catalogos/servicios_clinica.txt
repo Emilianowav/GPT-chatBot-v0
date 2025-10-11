@@ -1,0 +1,51 @@
+Especialidades, médicos y precios:
+
+- Consulta General 
+  Costo: $5,000
+  Atención primaria para diagnóstico y tratamiento básico.
+  Médicos: Dra. María López, Dr. Juan Pérez
+
+- Pediatría 
+  Costo: $6,000
+  Consultas para niños desde recién nacidos hasta adolescentes.
+  Médicos: Dra. Laura Martínez, Dr. Andrés Gómez
+
+- Ginecología 
+  Costo: $7,000
+  Atención y control para salud femenina y embarazos.
+  Médicos: Dra. Claudia Fernández, Dra. Romina Silva
+
+- Cardiología 
+  Costo: $8,000
+  Diagnóstico y tratamiento de enfermedades del corazón.
+  Médicos: Dr. Ricardo Méndez, Dra. Sandra Torres
+
+- Traumatología 
+  Costo: $7,500
+  Atención especializada en lesiones y enfermedades del sistema músculo-esquelético.
+  Médicos: Dr. Pablo Ramírez, Dr. Esteban Ortiz
+
+- Dermatología 
+  Costo: $6,500
+  Diagnóstico y tratamiento de enfermedades de la piel.
+  Médicos: Dra. Gabriela Suárez, Dr. Martín Díaz
+
+Horarios de atención:
+
+- Lunes a viernes: 08:00 - 18:00
+- Sábado: 08:00 - 13:00
+- Domingo: Cerrado
+
+Preguntas frecuentes:
+
+- ¿Cómo pido un turno?
+  Por ahora no ofrecemos turnos online. Por favor, comunicarse al teléfono +54 11 4455-6677.
+
+- ¿Qué seguros médicos aceptan?
+  Aceptamos OSDE, Swiss Medical, Galeno y otras obras sociales.
+
+- ¿Cuáles son los precios de las consultas?
+  Los precios varían según la especialidad, por ejemplo, Consulta General cuesta $5,000 y Cardiología $8,000.
+
+- ¿Qué debo llevar a mi consulta?
+  DNI, credencial del seguro (si aplica), y estudios previos si los tiene.
