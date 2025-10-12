@@ -41,6 +41,9 @@ export const enviarMensajeWhatsAppTexto = async (
 
   const numeroFormateado = formatPhoneNumberForWhatsapp(numero);
   const token = getMetaToken(); // Asegura que esté actualizado
+  
+  console.log('🔑 Token (primeros 20 chars):', token?.substring(0, 20) + '...');
+  console.log('📱 Phone Number ID:', phoneNumberId);
 
   const API_URL = `https://graph.facebook.com/v18.0/${phoneNumberId}/messages`;
 

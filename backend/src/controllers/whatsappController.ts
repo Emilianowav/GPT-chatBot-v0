@@ -34,6 +34,14 @@ export const recibirMensaje = async (req: Request, res: Response, next: NextFunc
     }
 
     const { telefonoCliente, telefonoEmpresa, mensaje, profileName, phoneNumberId, error } = extraerDatosDePayloadWhatsApp(entrada);
+    
+    console.log('📋 Datos extraídos del webhook:', {
+      telefonoCliente,
+      telefonoEmpresa,
+      phoneNumberId,
+      mensaje: mensaje?.substring(0, 50)
+    });
+    
     if (error || !mensaje || !telefonoCliente || !telefonoEmpresa || !phoneNumberId) {
       res.status(400).json({ error: error ?? "Datos insuficientes" });
       return;
