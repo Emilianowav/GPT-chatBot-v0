@@ -14,7 +14,10 @@ interface Payload {
           profile?: { name?: string };
           wa_id?: string;
         }>;
-        metadata?: { display_phone_number?: string };
+        metadata?: { 
+          display_phone_number?: string;
+          phone_number_id?: string;
+        };
       };
     }>;
   }>;
@@ -25,6 +28,7 @@ interface WhatsAppDatos {
   telefonoEmpresa: string | null;
   mensaje: string | null;
   profileName: string | null;
+  phoneNumberId: string | null;
   error?: string;
 }
 
@@ -40,6 +44,7 @@ export function extraerDatosDePayloadWhatsApp(payload: Payload): WhatsAppDatos {
       telefonoEmpresa: null,
       mensaje: null,
       profileName: null,
+      phoneNumberId: null,
       error: "Payload inválido o incompleto"
     };
   }
@@ -48,6 +53,7 @@ export function extraerDatosDePayloadWhatsApp(payload: Payload): WhatsAppDatos {
   const telefonoEmpresa = metadata.display_phone_number?.replace(/\D/g, '') ?? null;
   const mensaje = mensajeObj.text?.body ?? null;
   const profileName = contacto?.profile?.name ?? null;
+  const phoneNumberId = metadata.phone_number_id ?? null;
 
-  return { telefonoCliente, telefonoEmpresa, mensaje, profileName };
+  return { telefonoCliente, telefonoEmpresa, mensaje, profileName, phoneNumberId };
 }

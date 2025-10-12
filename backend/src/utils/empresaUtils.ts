@@ -27,7 +27,7 @@ export const cargarEmpresas = (): EmpresaConfig[] => {
 
   // Validación básica
   for (const empresa of data) {
-    if (!empresa.telefono || !empresa.nombre || !empresa.phoneNumberId) {
+    if (!empresa.telefono || !empresa.nombre) {
       throw new Error(`Empresa mal configurada: ${JSON.stringify(empresa)}`);
     }
   }

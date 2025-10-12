@@ -33,8 +33,8 @@ export const recibirMensaje = async (req: Request, res: Response, next: NextFunc
       return;
     }
 
-    const { telefonoCliente, telefonoEmpresa, mensaje, profileName, error } = extraerDatosDePayloadWhatsApp(entrada);
-    if (error || !mensaje || !telefonoCliente || !telefonoEmpresa) {
+    const { telefonoCliente, telefonoEmpresa, mensaje, profileName, phoneNumberId, error } = extraerDatosDePayloadWhatsApp(entrada);
+    if (error || !mensaje || !telefonoCliente || !telefonoEmpresa || !phoneNumberId) {
       res.status(400).json({ error: error ?? "Datos insuficientes" });
       return;
     }
@@ -62,7 +62,7 @@ export const recibirMensaje = async (req: Request, res: Response, next: NextFunc
       usuario.tokens_consumidos = 0;
       usuario.ultimo_status = 'reset';
       await actualizarUsuario(usuario);
-      await enviarMensajeWhatsAppTexto(telefonoCliente, '✅ Historial de conversación limpiado. Podés empezar de nuevo cuando quieras.', empresa.phoneNumberId);
+      await enviarMensajeWhatsAppTexto(telefonoCliente, '✅ Historial de conversación limpiado. Podés empezar de nuevo cuando quieras.', phoneNumberId);
       res.sendStatus(200);
       return;
     }
@@ -82,7 +82,7 @@ export const recibirMensaje = async (req: Request, res: Response, next: NextFunc
         ? empresa.saludos
         : ["¡Hola! Bienvenido a la concesionaria de motos ASZI. ¿En qué puedo ayudarte hoy?"];
       const saludoElegido = saludos[Math.floor(Math.random() * saludos.length)];
-      await enviarMensajeWhatsAppTexto(telefonoCliente, saludoElegido, empresa.phoneNumberId);
+      await enviarMensajeWhatsAppTexto(telefonoCliente, saludoElegido, phoneNumberId);
       usuario.historial.push(`Cliente: ${mensaje}`);
       usuario.historial.push(`Asistente: ${saludoElegido}`);
       usuario.saludado = true;
@@ -128,7 +128,7 @@ export const recibirMensaje = async (req: Request, res: Response, next: NextFunc
 
     if (quiereHablarConAlguien && numeroDerivacion) {
       const msgDerivacion = `Para avanzar con la compra o recibir asesoramiento personalizado, podés contactar a nuestro equipo al siguiente número: ${numeroDerivacion}. Que tengas un excelente día.`;
-      await enviarMensajeWhatsAppTexto(telefonoCliente, msgDerivacion, empresa.phoneNumberId);
+      await enviarMensajeWhatsAppTexto(telefonoCliente, msgDerivacion, phoneNumberId);
       usuario.despedido = true;
       await actualizarUsuario(usuario);
       res.sendStatus(200);
@@ -157,14 +157,14 @@ export const recibirMensaje = async (req: Request, res: Response, next: NextFunc
 
     if (esMensajeDeCierre && numeroDerivacion) {
       const msgCierre = `Gracias por tu consulta. Para avanzar con la compra o recibir asesoramiento personalizado, podés contactar a nuestro equipo al siguiente número: ${numeroDerivacion}. Que tengas un excelente día.`;
-      await enviarMensajeWhatsAppTexto(telefonoCliente, msgCierre, empresa.phoneNumberId);
+      await enviarMensajeWhatsAppTexto(telefonoCliente, msgCierre, phoneNumberId);
       usuario.despedido = true;
       await actualizarUsuario(usuario);
       res.sendStatus(200);
       return;
     }
 
-    await enviarMensajeWhatsAppTexto(telefonoCliente, respuesta, empresa.phoneNumberId);
+    await enviarMensajeWhatsAppTexto(telefonoCliente, respuesta, phoneNumberId);
     await verificarYEnviarResumen(telefonoEmpresa, empresa);
 
     if (empresa.email) {

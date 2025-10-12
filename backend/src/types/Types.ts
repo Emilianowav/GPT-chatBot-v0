@@ -54,7 +54,7 @@ export type EmpresaConfig = {
   linkCatalogo?: string;
   saludos?: string[];
   email?: string;
-  phoneNumberId: string; // <-- agregado
+  phoneNumberId?: string; // Opcional: ahora se obtiene del webhook
 };
 
 
