@@ -1,97 +1,70 @@
 [
   {
     "id": "2",
-    "nombre": "ASZI motos",
-    "categoria": "motos",
-    "telefono": "+5493794044145",
+    "nombre": "Parana Lodge",
+    "categoria": "hotelería",
+    "telefono": "5493794044145",
     "email": "emidbiasi@gmail.com",
     "derivarA": [
       "+5493794701533"
     ],
-    "prompt": "Sos un asistente virtual profesional de la concesionaria de motos ASZI. Tu única misión es ayudar al cliente a encontrar su moto ideal según categoría (cilindrada), modelo o rango de precio.\n\nReglas estrictas:\n\n1. Respondé solo con información precisa y oficial proporcionada por el sistema. No inventes, supongas ni estimes nada.\n2. Sé formal, claro y directo. Sin emojis, modismos ni opiniones.\n3. Mostrá motos solo si el cliente lo pide o demuestra interés explícito.\n4. Incluí siempre: modelo, marca, precio, condiciones de pago (si las hay) y link (si está disponible).\n5. Si el cliente no sabe qué busca, ofrecé mostrar motos por cilindrada.\n6. Al cerrar, si el cliente está satisfecho, decí EXACTAMENTE:\n\"Gracias por tu consulta. Para avanzar con la compra o recibir asesoramiento personalizado, podés contactar a nuestro equipo al siguiente número: [NÚMERO DEL VENDEDOR]. Que tengas un excelente día.\"\n7. Informá que el cliente puede contactar al personal en cualquier momento, pero decí esto solo una vez durante la conversación.\n8. No continúes la conversación tras el cierre.\n9. Comenzá con una bienvenida breve y ofrecé ayuda clara para encontrar motos.\n\nInsistí en entender claramente qué busca el cliente y ajustá todas las respuestas a eso, sin desviarte ni agregar información irrelevante.",
+    "prompt": "Sos un asistente virtual de Parana Lodge. Ayudá a los huéspedes con información sobre reservas, servicios y actividades del lodge.",
     "saludos": [
-      "¡Hola! Bienvenido a la concesionaria de motos ASZI. ¿En qué puedo ayudarte hoy?",
-      "¡Hola! Estás hablando con ASZI Motos. ¿Qué estás buscando hoy?",
-      "¡Bienvenido a ASZI! ¿En qué modelo de moto estás interesado?",
-      "Hola 👋 Estás en la concesionaria de ASZI Motos. ¿En qué puedo asistirte?",
-      "¡Gracias por contactarte con ASZI Motos! ¿Qué estás buscando?"
+      "¡Hola! Bienvenido a Parana Lodge. ¿En qué puedo ayudarte?",
+      "¡Hola! Estás hablando con Parana Lodge. ¿Qué información necesitás?",
+      "¡Bienvenido a Parana Lodge! ¿Querés saber sobre reservas o servicios?"
     ],
-    "catalogoPath": "data/catalogos/precios_motos.txt",
-    "linkCatalogo": "https://miweb.com/pasteleria_luciana/catalogo.pdf",
+    "catalogoPath": "data/catalogos/parana_lodge.txt",
+    "linkCatalogo": "https://paranalodge.com/catalogo.pdf",
     "modelo": "gpt-3.5-turbo",
     "ubicaciones": [
       {
-        "nombre": "ASZI Motos Central",
-        "direccion": "Av. Corrientes 1234",
-        "ciudad": "Buenos Aires",
-        "provincia": "Buenos Aires",
-        "coordenadas": {
-          "lat": -34.6037,
-          "lng": -58.3816
-        },
-        "telefono": "011-4567-8900",
-        "horarios": "Lunes a viernes de 9 a 18 hs"
-      },
-      {
-        "nombre": "ASZI Motos Resistencia",
-        "direccion": "Av. 25 de Mayo 2345",
-        "ciudad": "Resistencia",
-        "provincia": "Chaco",
-        "telefono": "0362-444-5566",
-        "horarios": "Lunes a sábados de 8 a 13 y 17 a 20"
+        "nombre": "Parana Lodge",
+        "direccion": "Ruta Provincial 118",
+        "ciudad": "Corrientes",
+        "provincia": "Corrientes",
+        "telefono": "+54 9 379 404-4145",
+        "horarios": "Atención 24/7"
       }
     ],
-    "cliente": "ASZI motos",
-    "waba_id": "333333333333333",
+    "cliente": "Parana Lodge",
+    "waba_id": "772636765924023",
     "business_id": "638598412538242",
-    "phoneNumberId": "701199076403746"
+    "phoneNumberId": "825197550677870"
   },
   {
   "id": "3",
-  "nombre": "Clínica Salud Integral",
-  "categoria": "consultorio médico",
+  "nombre": "iCenter",
+  "categoria": "tecnología",
   "telefono": "5493794269419",
-  "email": "contacto@clinicasalud.com",
+  "email": "contacto@icenter.ar",
   "derivarA": [
     "+5491144556677"
   ], 
-  "prompt":"Sos un asistente virtual profesional de la Clínica Salud Integral. Tu misión es ayudar a los pacientes a consultar información sobre especialidades, horarios, ubicaciones y protocolos.\n\nReglas estrictas:\n\n1. Respondé solo con información precisa y oficial proporcionada por el sistema. No inventes ni supongas.\n2. Sé formal, claro y directo. Sin emojis ni modismos.\n3. Mostrá especialidades solo si el cliente pregunta o demuestra interés.\n4. Incluí siempre: nombre de la especialidad, precio (si aplica), horarios y ubicación cuando corresponda.\n5. Si el cliente no sabe qué necesita, ofrecé mostrar especialidades o horarios.\n6. Al cerrar, decí EXACTAMENTE:\n\"Gracias por tu consulta. Para atención personalizada podés comunicarte con nuestro equipo al siguiente número: 0800-DEMO-555. Que tengas un excelente día.\"\n7. Informá que el cliente puede contactar al personal en cualquier momento, pero decí esto solo una vez.\n8. No continúes la conversación tras el cierre.\n9. Comenzá con una bienvenida breve y ofrecé ayuda clara para consultas médicas.\n",
+  "prompt":"Sos un asistente virtual de iCenter. Ayudá a los clientes con información sobre productos tecnológicos, servicios y soporte técnico. Respondé de forma clara y profesional.\n",
   "saludos": [
-    "¡Hola! Bienvenido a Clínica Salud Integral. ¿En qué puedo ayudarte hoy?",
-    "¡Hola! Estás hablando con Clínica Salud Integral. ¿Qué consulta médica tenés?",
-    "¡Bienvenido a Clínica Salud Integral! ¿Querés saber sobre especialidades o horarios?",
-    "Hola 👋 Estás en Clínica Salud Integral. ¿En qué puedo asistirte?",
-    "¡Gracias por contactarte con Clínica Salud Integral! ¿Qué información necesitás?"
+    "¡Hola! Bienvenido a iCenter. ¿En qué puedo ayudarte?",
+    "¡Hola! Estás hablando con iCenter. ¿Qué información necesitás?",
+    "¡Bienvenido a iCenter! ¿Querés saber sobre productos o servicios?",
+    "Hola 👋 Estás en iCenter. ¿En qué puedo asistirte?"
   ],
-  "catalogoPath": "data/catalogos/servicios_clinica.json",
-  "linkCatalogo": "https://clinicasalud.com/catalogo.pdf",
+  "catalogoPath": "data/catalogos/icenter_productos.json",
+  "linkCatalogo": "https://icenter.ar/catalogo.pdf",
   "modelo": "gpt-3.5-turbo",
   "ubicaciones": [
     {
-      "nombre": "Clínica Central",
-      "direccion": "Av. Salud 1234",
-      "ciudad": "Ciudad Autónoma de Buenos Aires",
-      "provincia": "Buenos Aires",
-      "coordenadas": {
-        "lat": -34.6037,
-        "lng": -58.3816
-      },
-      "telefono": "011-1234-5678",
-      "horarios": "Lunes a viernes de 8 a 18 hs"
-    },
-    {
-      "nombre": "Clínica Norte",
-      "direccion": "Calle San Martín 4567",
-      "ciudad": "Vicente López",
-      "provincia": "Buenos Aires",
-      "telefono": "011-8765-4321",
-      "horarios": "Lunes a viernes de 9 a 17 hs"
+      "nombre": "iCenter Corrientes",
+      "direccion": "Av. Principal 123",
+      "ciudad": "Corrientes",
+      "provincia": "Corrientes",
+      "telefono": "+54 9 3794 26-9419",
+      "horarios": "Lunes a viernes de 9 a 18 hs"
     }
   ],
-  "cliente": "Clínica Salud Integral",
-  "waba_id": "444444444444444",
+  "cliente": "iCenter",
+  "waba_id": "772636765924023",
   "business_id": "738598412538243",
-  "phoneNumberId": "768730689655171" 
+  "phoneNumberId": "846615935196755" 
 },
 {
   "id": "4",
