@@ -1,5 +1,5 @@
 // chatProcessorService.ts
-import { obtenerUsuario, agregarAlHistorial, registrarInteraccionUsuario } from '../utils/usuarioStore.js';
+import { obtenerUsuario, agregarAlHistorial, registrarInteraccionUsuario } from '../utils/usuarioStoreMongo.js';
 import { procesarMensajeIA } from './mensajeService.js';
 import { EmpresaConfig, MensajeProcesado } from '../types/Types.js';
 
