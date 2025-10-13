@@ -32,38 +32,39 @@
     "phoneNumberId": "765114850025938"
   },
   {
-    "id": "2",
-    "nombre": "Parana Lodge",
-    "categoria": "hotelería",
-    "telefono": "5493794044145",
-    "email": "emidbiasi@gmail.com",
-    "derivarA": [
-      "+5493794701533"
-    ],
-    "prompt": "Sos un asistente virtual de Parana Lodge. Ayudá a los huéspedes con información sobre reservas, servicios y actividades del lodge.",
-    "saludos": [
-      "¡Hola! Bienvenido a Parana Lodge. ¿En qué puedo ayudarte?",
-      "¡Hola! Estás hablando con Parana Lodge. ¿Qué información necesitás?",
-      "¡Bienvenido a Parana Lodge! ¿Querés saber sobre reservas o servicios?"
-    ],
-    "catalogoPath": "data/catalogos/parana_lodge.txt",
-    "linkCatalogo": "https://paranalodge.com/catalogo.pdf",
-    "modelo": "gpt-3.5-turbo",
-    "ubicaciones": [
-      {
-        "nombre": "Parana Lodge",
-        "direccion": "Ruta Provincial 118",
-        "ciudad": "Corrientes",
-        "provincia": "Corrientes",
-        "telefono": "+54 9 379 404-4145",
-        "horarios": "Atención 24/7"
-      }
-    ],
-    "cliente": "Parana Lodge",
-    "waba_id": "772636765924023",
-    "business_id": "638598412538242",
-    "phoneNumberId": "825197550677870"
-  },
+  "id": "2",
+  "nombre": "Paraná Lodge",
+  "categoria": "inversión inmobiliaria turística",
+  "telefono": "5493794934481",
+  "email": "sin informacion",
+  "derivarA": [
+    "+5493794701533"
+  ],
+  "prompt": "Sos un asistente virtual de Paraná Lodge. Informá a los interesados sobre el proyecto de inversión turística premium, sus beneficios, rentabilidad, fideicomiso, y cómo participar. Respondé de manera clara, profesional y motivadora.",
+  "saludos": [
+    "¡Hola! Bienvenido a Paraná Lodge, una oportunidad de inversión única en turismo premium. ¿Querés conocer cómo participar?",
+    "¡Hola! Soy el asistente virtual de Paraná Lodge. ¿Querés que te cuente cómo invertir en nuestro lodge boutique del río Paraná?",
+    "¡Bienvenido a Paraná Lodge! Te cuento sobre nuestro proyecto de inversión turística con respaldo inmobiliario. ¿Querés saber más?"
+  ],
+  "catalogoPath": "data/catalogos/parana_lodge.txt",
+  "linkCatalogo": "https://paranalodge.com/catalogo.pdf",
+  "modelo": "gpt-4o-mini",
+  "ubicaciones": [
+    {
+      "nombre": "Paraná Lodge",
+      "direccion": "Ruta Provincial 118, a 25 km de Corrientes Capital",
+      "ciudad": "Corrientes",
+      "provincia": "Corrientes",
+      "telefono": "+54 9 379 493-4481",
+      "horarios": "Atención a inversores: Lunes a Viernes de 9 a 18hs"
+    }
+  ],
+  "cliente": "Paraná Lodge",
+  "waba_id": "772636765924023",
+  "business_id": "638598412538242",
+  "phoneNumberId": "825197550677870"
+}
+,
   {
   "id": "3",
   "nombre": "iCenter",
