@@ -1,0 +1,14 @@
+services:
+  - type: web
+    name: gpt-chatbot-v0
+    env: node
+    buildCommand: npm install && npm run build
+    startCommand: npm start
+    envVars:
+      - key: NODE_ENV
+        value: production
+    # 💾 Configuración de disco persistente
+    disk:
+      name: chatbot-data
+      mountPath: /opt/render/project/src/data
+      sizeGB: 1

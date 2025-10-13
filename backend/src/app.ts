@@ -5,6 +5,7 @@ dotenv.config();
 import express from "express";
 import openaiRoutes from "./routes/openaiRoutes.js";
 import whatsappRoutes from "./routes/whatsappRoutes.js";
+import statusRoutes from "./routes/statusRoutes.js";
 import { errorHandler } from "./middlewares/errorHandler.js";
 
 import {
@@ -27,6 +28,7 @@ app.use((req, res, next) => {
 // Rutas
 app.use("/api/openai", openaiRoutes);
 app.use("/api/whatsapp", whatsappRoutes);
+app.use("/api", statusRoutes);
 app.use(errorHandler);
 
 // Token refresh al iniciar
