@@ -1,29 +1,17 @@
 // 📊 Controlador para verificar el estado del sistema
 import type { Request, Response } from 'express';
-import fs from 'fs/promises';
-import path from 'path';
-
-const RUTA_USUARIOS = path.resolve("data/usuarios.json");
+import mongoose from 'mongoose';
+import { obtenerTodosLosUsuarios } from '../utils/usuarioStoreMongo.js';
+import { cargarEmpresas } from '../utils/empresaUtilsMongo.js';
 
 export const verificarEstado = async (req: Request, res: Response): Promise<void> => {
   try {
-    // Verificar si el archivo existe
-    let existeArchivo = false;
-    let cantidadUsuarios = 0;
-    let usuarios: any[] = [];
-    let ultimaModificacion = null;
-
-    try {
-      const stats = await fs.stat(RUTA_USUARIOS);
-      existeArchivo = true;
-      ultimaModificacion = stats.mtime;
-
-      const contenido = await fs.readFile(RUTA_USUARIOS, 'utf-8');
-      usuarios = JSON.parse(contenido);
-      cantidadUsuarios = usuarios.length;
-    } catch (error) {
-      existeArchivo = false;
-    }
+    // Obtener información de MongoDB
+    const usuarios = await obtenerTodosLosUsuarios();
+    const empresas = await cargarEmpresas();
+    
+    const mongoStatus = mongoose.connection.readyState;
+    const mongoStatusText = ['desconectado', 'conectado', 'conectando', 'desconectando'][mongoStatus] || 'desconocido';
 
     // Información del sistema
     const info = {
@@ -37,12 +25,15 @@ export const verificarEstado = async (req: Request, res: Response): Promise<void
           total: Math.round(process.memoryUsage().heapTotal / 1024 / 1024) + ' MB'
         }
       },
-      archivos: {
+      baseDatos: {
+        tipo: 'MongoDB',
+        estado: mongoStatusText,
+        nombre: mongoose.connection.db?.databaseName || 'N/A',
+        host: mongoose.connection.host || 'N/A'
+      },
+      datos: {
         usuarios: {
-          existe: existeArchivo,
-          ruta: RUTA_USUARIOS,
-          cantidad: cantidadUsuarios,
-          ultimaModificacion: ultimaModificacion,
+          total: usuarios.length,
           ultimos5: usuarios.slice(-5).map(u => ({
             id: u.id,
             nombre: u.nombre,
@@ -50,11 +41,13 @@ export const verificarEstado = async (req: Request, res: Response): Promise<void
             interacciones: u.interacciones,
             ultimaInteraccion: u.ultimaInteraccion
           }))
+        },
+        empresas: {
+          total: empresas.length,
+          nombres: empresas.map(e => e.nombre)
         }
       },
-      advertencia: process.env.RENDER 
-        ? '⚠️ RENDER: Sistema de archivos efímero. Los datos se pierden al reiniciar. Considera usar Render Disk o una base de datos.'
-        : null
+      mensaje: '✅ Sistema usando MongoDB - Persistencia garantizada'
     };
 
     res.json(info);
@@ -69,12 +62,11 @@ export const verificarEstado = async (req: Request, res: Response): Promise<void
 
 export const listarUsuarios = async (req: Request, res: Response): Promise<void> => {
   try {
-    const contenido = await fs.readFile(RUTA_USUARIOS, 'utf-8');
-    const usuarios = JSON.parse(contenido);
+    const usuarios = await obtenerTodosLosUsuarios();
     
     res.json({
       total: usuarios.length,
-      usuarios: usuarios.map((u: any) => ({
+      usuarios: usuarios.map((u) => ({
         id: u.id,
         nombre: u.nombre,
         empresaId: u.empresaId,
@@ -86,7 +78,7 @@ export const listarUsuarios = async (req: Request, res: Response): Promise<void>
     });
   } catch (error) {
     res.status(500).json({ 
-      error: 'No se pudo leer el archivo de usuarios',
+      error: 'No se pudo obtener los usuarios de MongoDB',
       detalles: error instanceof Error ? error.message : 'Error desconocido'
     });
   }

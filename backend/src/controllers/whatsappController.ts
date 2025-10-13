@@ -3,8 +3,8 @@ import fs from 'fs';
 import path from 'path';
 
 import { extraerDatosDePayloadWhatsApp } from '../utils/whatsappUtils.js';
-import { buscarEmpresaPorTelefono } from '../utils/empresaUtils.js';
-import { obtenerUsuario, actualizarUsuario } from '../utils/usuarioStore.js';
+import { buscarEmpresaPorTelefono } from '../utils/empresaUtilsMongo.js';
+import { obtenerUsuario, actualizarUsuario } from '../utils/usuarioStoreMongo.js';
 import { obtenerRespuestaChat, type ChatCompletionMessageParam } from '../services/openaiService.js';
 import { verificarYEnviarResumen } from '../services/metricService.js';
 import { enviarMensajeWhatsAppTexto } from '../services/metaService.js';
@@ -47,7 +47,7 @@ export const recibirMensaje = async (req: Request, res: Response, next: NextFunc
       return;
     }
 
-    const empresa: EmpresaConfig | undefined = buscarEmpresaPorTelefono(telefonoEmpresa);
+    const empresa: EmpresaConfig | undefined = await buscarEmpresaPorTelefono(telefonoEmpresa);
     if (!empresa) {
       console.error(`❌ Empresa no encontrada para teléfono: ${telefonoEmpresa}`);
       res.status(404).json({ error: `Empresa no encontrada: ${telefonoEmpresa}` });

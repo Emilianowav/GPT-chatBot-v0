@@ -9,23 +9,27 @@
     "build": "tsc",
     "start": "npm run build && node dist/app.js",
     "dev": "node --loader ts-node/esm src/app.ts",
-    "tunnel": "ngrok http 3000"
-
+    "tunnel": "ngrok http 3000",
+    "migrar": "node --loader ts-node/esm src/scripts/migrarAMongoDB.ts"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "bson": "^6.10.4",
     "dotenv": "^16.5.0",
     "express": "^5.1.0",
     "gpt-3-encoder": "^1.1.4",
     "gpt-tokenizer": "^2.9.0",
+    "mongodb": "^6.20.0",
+    "mongoose": "^8.19.1",
     "nodemailer": "^7.0.3",
     "openai": "^4.103.0",
     "twilio": "^5.6.1"
   },
   "devDependencies": {
     "@types/express": "^5.0.2",
+    "@types/mongoose": "^5.11.97",
     "@types/node": "^22.15.21",
     "@types/nodemailer": "^6.4.17",
     "concurrently": "^9.1.2",

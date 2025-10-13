@@ -7,6 +7,7 @@ import openaiRoutes from "./routes/openaiRoutes.js";
 import whatsappRoutes from "./routes/whatsappRoutes.js";
 import statusRoutes from "./routes/statusRoutes.js";
 import { errorHandler } from "./middlewares/errorHandler.js";
+import { connectDB } from "./config/database.js";
 
 import {
   refreshMetaToken,
@@ -31,27 +32,42 @@ app.use("/api/whatsapp", whatsappRoutes);
 app.use("/api", statusRoutes);
 app.use(errorHandler);
 
-// Token refresh al iniciar
+// Inicialización de la aplicación
 (async () => {
-  if (shouldRefreshMetaToken()) {
-    console.log("🔄 Refrescando token Meta al iniciar la app...");
-    await refreshMetaToken();
-  } else {
-    console.log("🟢 Token Meta aún válido al iniciar.");
-  }
-
-  // Refresco cada 24 horas (en lugar de 59 días)
-  setInterval(async () => {
+  try {
+    // 1. Conectar a MongoDB
+    console.log('🔌 Conectando a MongoDB...');
+    await connectDB();
+    
+    // 2. Token refresh al iniciar
     if (shouldRefreshMetaToken()) {
-      console.log("⏳ Token cercano a vencerse. Renovando...");
+      console.log("🔄 Refrescando token Meta al iniciar la app...");
       await refreshMetaToken();
     } else {
-      console.log("🕒 Token aún vigente. No se renueva.");
+      console.log("🟢 Token Meta aún válido al iniciar.");
     }
-  }, 1000 * 60 * 60 * 24); // Cada 24h
 
-  // Servidor
-  app.listen(PORT, () => {
-    console.log(`🚀 Servidor corriendo en puerto ${PORT}`);
-  });
+    // 3. Refresco cada 24 horas (en lugar de 59 días)
+    setInterval(async () => {
+      if (shouldRefreshMetaToken()) {
+        console.log("⏳ Token cercano a vencerse. Renovando...");
+        await refreshMetaToken();
+      } else {
+        console.log("🕒 Token aún vigente. No se renueva.");
+      }
+    }, 1000 * 60 * 60 * 24); // Cada 24h
+
+    // 4. Iniciar servidor
+    app.listen(PORT, () => {
+      console.log(`🚀 Servidor corriendo en puerto ${PORT}`);
+      console.log(`📊 MongoDB: Conectado`);
+      console.log(`🌐 Endpoints disponibles:`);
+      console.log(`   - POST /api/whatsapp/webhook`);
+      console.log(`   - GET  /api/status`);
+      console.log(`   - GET  /api/usuarios`);
+    });
+  } catch (error) {
+    console.error('❌ Error al iniciar la aplicación:', error);
+    process.exit(1);
+  }
 })();
