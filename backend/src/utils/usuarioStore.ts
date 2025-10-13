@@ -28,8 +28,14 @@ async function leerUsuarios(): Promise<Usuario[]> {
 }
 
 async function guardarUsuarios(usuarios: Usuario[]): Promise<void> {
-  await fs.mkdir(path.dirname(RUTA), { recursive: true });
-  await fs.writeFile(RUTA, JSON.stringify(usuarios, null, 2), "utf-8");
+  try {
+    await fs.mkdir(path.dirname(RUTA), { recursive: true });
+    await fs.writeFile(RUTA, JSON.stringify(usuarios, null, 2), "utf-8");
+    console.log(`💾 Usuarios guardados correctamente en ${RUTA}. Total: ${usuarios.length}`);
+  } catch (error) {
+    console.error('❌ Error al guardar usuarios:', error);
+    throw error;
+  }
 }
 
 /**
@@ -78,19 +84,24 @@ export async function obtenerUsuario(
 }
 
 export async function actualizarUsuario(user: Usuario): Promise<void> {
+  console.log('🔄 Actualizando usuario:', { id: user.id, empresaId: user.empresaId, interacciones: user.interacciones });
+  
   const usuarios = await leerUsuarios();
   const idx = usuarios.findIndex((u) => u.id === user.id && u.empresaId === user.empresaId);
 
   user.ultima_actualizacion = new Date().toISOString();
 
   if (idx >= 0) {
+    console.log(`📝 Usuario encontrado en índice ${idx}, actualizando...`);
     usuarios[idx] = user;
   } else {
+    console.log('➕ Usuario no encontrado, agregando como nuevo...');
     usuarios.push(user);
   }
 
   await guardarUsuarios(usuarios);
   await actualizarUsuarioCSV(user);
+  console.log('✅ Usuario actualizado exitosamente');
 }
 
 export async function actualizarEstadoUsuario(

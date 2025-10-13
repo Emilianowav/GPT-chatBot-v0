@@ -49,12 +49,22 @@ export const recibirMensaje = async (req: Request, res: Response, next: NextFunc
 
     const empresa: EmpresaConfig | undefined = buscarEmpresaPorTelefono(telefonoEmpresa);
     if (!empresa) {
+      console.error(`❌ Empresa no encontrada para teléfono: ${telefonoEmpresa}`);
       res.status(404).json({ error: `Empresa no encontrada: ${telefonoEmpresa}` });
       return;
     }
 
+    console.log('🏢 Empresa encontrada:', { nombre: empresa.nombre, telefono: empresa.telefono });
+
     const textoCatalogo = empresa.catalogoPath ? leerCatalogoComoTexto(empresa.catalogoPath) : '';
     const usuario = await obtenerUsuario(telefonoCliente, empresa.nombre, profileName ?? undefined, telefonoEmpresa);
+    
+    console.log('👤 Usuario obtenido/creado:', { 
+      id: usuario.id, 
+      nombre: usuario.nombre, 
+      empresaId: usuario.empresaId,
+      interacciones: usuario.interacciones 
+    });
 
     if (!usuario.nombre && profileName) usuario.nombre = profileName;
     if (!usuario.empresaTelefono) usuario.empresaTelefono = telefonoEmpresa;
@@ -100,7 +110,11 @@ export const recibirMensaje = async (req: Request, res: Response, next: NextFunc
       usuario.interacciones += 1;
       usuario.tokens_consumidos = (usuario.tokens_consumidos ?? 0) + encode(mensaje).length + encode(saludoElegido).length;
       usuario.ultimo_status = 'responded';
+      
+      // 🔧 CORRECCIÓN: Siempre guardar el usuario después de actualizar sus datos
       await actualizarUsuario(usuario);
+      console.log('✅ Usuario guardado después del saludo:', { id: usuario.id, empresaId: usuario.empresaId });
+      
       if (esSaludoCliente) {
         res.sendStatus(200);
         return;
@@ -138,7 +152,9 @@ export const recibirMensaje = async (req: Request, res: Response, next: NextFunc
       const msgDerivacion = `Para avanzar con la compra o recibir asesoramiento personalizado, podés contactar a nuestro equipo al siguiente número: ${numeroDerivacion}. Que tengas un excelente día.`;
       await enviarMensajeWhatsAppTexto(telefonoCliente, msgDerivacion, phoneNumberId);
       usuario.despedido = true;
+      usuario.ultimaInteraccion = new Date().toISOString();
       await actualizarUsuario(usuario);
+      console.log('✅ Usuario guardado después de derivación:', { id: usuario.id, empresaId: usuario.empresaId });
       res.sendStatus(200);
       return;
     }
@@ -167,7 +183,9 @@ export const recibirMensaje = async (req: Request, res: Response, next: NextFunc
       const msgCierre = `Gracias por tu consulta. Para avanzar con la compra o recibir asesoramiento personalizado, podés contactar a nuestro equipo al siguiente número: ${numeroDerivacion}. Que tengas un excelente día.`;
       await enviarMensajeWhatsAppTexto(telefonoCliente, msgCierre, phoneNumberId);
       usuario.despedido = true;
+      usuario.ultimaInteraccion = new Date().toISOString();
       await actualizarUsuario(usuario);
+      console.log('✅ Usuario guardado después de mensaje de cierre:', { id: usuario.id, empresaId: usuario.empresaId });
       res.sendStatus(200);
       return;
     }
@@ -189,6 +207,7 @@ export const recibirMensaje = async (req: Request, res: Response, next: NextFunc
     }
 
     await actualizarUsuario(usuario);
+    console.log('✅ Usuario guardado al final del flujo:', { id: usuario.id, empresaId: usuario.empresaId, interacciones: usuario.interacciones });
     res.sendStatus(200);
 
   } catch (error) {
