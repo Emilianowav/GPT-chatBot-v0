@@ -3,9 +3,13 @@ import dotenv from "dotenv";
 dotenv.config();
 
 import express from "express";
+import cors from "cors";
 import openaiRoutes from "./routes/openaiRoutes.js";
 import whatsappRoutes from "./routes/whatsappRoutes.js";
 import statusRoutes from "./routes/statusRoutes.js";
+import authRoutes from "./routes/authRoutes.js";
+import empresaRoutes from "./routes/empresaRoutes.js";
+import conversacionesRoutes from "./routes/conversacionesRoutes.js";
 import { errorHandler } from "./middlewares/errorHandler.js";
 import { connectDB } from "./config/database.js";
 
@@ -17,16 +21,31 @@ import {
 const app = express();
 const PORT = process.env.PORT || 3000;
 
+// CORS configuration - Permisivo para desarrollo
+app.use(cors({
+  origin: true, // Acepta cualquier origen en desarrollo
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept'],
+  exposedHeaders: ['Content-Length', 'X-Request-Id'],
+  maxAge: 86400,
+  preflightContinue: false,
+  optionsSuccessStatus: 204
+}));
+
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 // Middleware de logging simple (sin bucles infinitos)
 app.use((req, res, next) => {
-  console.log(`[${new Date().toISOString()}] ${req.method} ${req.originalUrl}`);
+  console.log(`[${new Date().toISOString()}] ${req.method} ${req.originalUrl} - Origin: ${req.headers.origin || 'none'}`);
   next();
 });
 
 // Rutas
+app.use("/api/auth", authRoutes);
+app.use("/api/empresas", empresaRoutes);
+app.use("/api/conversaciones", conversacionesRoutes);
 app.use("/api/openai", openaiRoutes);
 app.use("/api/whatsapp", whatsappRoutes);
 app.use("/api", statusRoutes);

@@ -10,17 +10,21 @@
     "start": "npm run build && node dist/app.js",
     "dev": "node --loader ts-node/esm src/app.ts",
     "tunnel": "ngrok http 3000",
-    "migrar": "node --loader ts-node/esm src/scripts/migrarAMongoDB.ts"
+    "migrar": "node --loader ts-node/esm src/scripts/migrarAMongoDB.ts",
+    "crear-admins": "node --loader ts-node/esm src/scripts/crearAdminInicial.ts"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "bcryptjs": "^3.0.2",
     "bson": "^6.10.4",
+    "cors": "^2.8.5",
     "dotenv": "^16.5.0",
     "express": "^5.1.0",
     "gpt-3-encoder": "^1.1.4",
     "gpt-tokenizer": "^2.9.0",
+    "jsonwebtoken": "^9.0.2",
     "mongodb": "^6.20.0",
     "mongoose": "^8.19.1",
     "nodemailer": "^7.0.3",
@@ -28,7 +32,10 @@
     "twilio": "^5.6.1"
   },
   "devDependencies": {
+    "@types/bcryptjs": "^3.0.0",
+    "@types/cors": "^2.8.19",
     "@types/express": "^5.0.2",
+    "@types/jsonwebtoken": "^9.0.10",
     "@types/mongoose": "^5.11.97",
     "@types/node": "^22.15.21",
     "@types/nodemailer": "^6.4.17",
