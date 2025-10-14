@@ -101,10 +101,22 @@ export const recibirMensaje = async (req: Request, res: Response, next: NextFunc
         : ["¡Hola! Bienvenido a la concesionaria de motos ASZI. ¿En qué puedo ayudarte hoy?"];
       const saludoElegido = saludos[Math.floor(Math.random() * saludos.length)];
       await enviarMensajeWhatsAppTexto(telefonoCliente, saludoElegido, phoneNumberId);
-      usuario.historial.push(`Cliente: ${mensaje}`);
-      usuario.historial.push(`Asistente: ${saludoElegido}`);
+      
+      // Guardar mensajes con timestamp individual
+      const ahora = new Date().toISOString();
+      usuario.historial.push(JSON.stringify({
+        role: 'user',
+        content: mensaje,
+        timestamp: ahora
+      }));
+      usuario.historial.push(JSON.stringify({
+        role: 'assistant',
+        content: saludoElegido,
+        timestamp: ahora
+      }));
+      
       usuario.saludado = true;
-      usuario.ultimaInteraccion = new Date().toISOString();
+      usuario.ultimaInteraccion = ahora;
       usuario.num_mensajes_recibidos += 1;
       usuario.num_mensajes_enviados += 1;
       usuario.interacciones += 1;
@@ -126,10 +138,21 @@ export const recibirMensaje = async (req: Request, res: Response, next: NextFunc
     const historial: ChatCompletionMessageParam[] = [
       { role: 'system', content: promptSistema },
       ...usuario.historial.flatMap((entrada) => {
-        const match = entrada.match(/^(Cliente|Asistente): (.*)$/);
-        if (!match) return [];
-        const role: 'user' | 'assistant' = match[1] === 'Cliente' ? 'user' : 'assistant';
-        return [{ role, content: match[2] }];
+        try {
+          // Intentar parsear como JSON (nuevo formato)
+          const parsed = JSON.parse(entrada);
+          if (parsed.role && parsed.content) {
+            return [{ role: parsed.role, content: parsed.content }];
+          }
+        } catch (e) {
+          // Si falla, intentar formato antiguo "Cliente: mensaje"
+          const match = entrada.match(/^(Cliente|Asistente): (.*)$/);
+          if (match) {
+            const role: 'user' | 'assistant' = match[1] === 'Cliente' ? 'user' : 'assistant';
+            return [{ role, content: match[2] }];
+          }
+        }
+        return [];
       }),
       { role: 'user', content: mensaje }
     ];
@@ -169,8 +192,21 @@ export const recibirMensaje = async (req: Request, res: Response, next: NextFunc
       respuesta += `\n\n👉🏼 Si querés hablar con un asesor para recibir ayuda personalizada, podés contactarlo al número: ${numeroDerivacion}.`;
     }
 
-    if (!saludoRespondido) usuario.historial.push(`Cliente: ${mensaje}`);
-    usuario.historial.push(`Asistente: ${respuesta}`);
+    // Guardar mensajes con timestamp individual
+    const ahoraRespuesta = new Date().toISOString();
+    if (!saludoRespondido) {
+      usuario.historial.push(JSON.stringify({
+        role: 'user',
+        content: mensaje,
+        timestamp: ahoraRespuesta
+      }));
+    }
+    usuario.historial.push(JSON.stringify({
+      role: 'assistant',
+      content: respuesta,
+      timestamp: ahoraRespuesta
+    }));
+    
     usuario.historial = usuario.historial.slice(-40);
     usuario.num_mensajes_recibidos += 1;
     usuario.num_mensajes_enviados += 1;
