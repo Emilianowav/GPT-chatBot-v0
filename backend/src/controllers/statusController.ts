@@ -62,9 +62,22 @@ export const verificarEstado = async (req: Request, res: Response): Promise<void
 
 export const listarUsuarios = async (req: Request, res: Response): Promise<void> => {
   try {
-    const usuarios = await obtenerTodosLosUsuarios();
+    // 🔒 SEGURIDAD: Verificar que el usuario esté autenticado
+    if (!req.user) {
+      res.status(401).json({
+        success: false,
+        error: 'No autenticado'
+      });
+      return;
+    }
+
+    // 🔒 SEGURIDAD: Solo obtener usuarios de la empresa del usuario autenticado
+    const empresaId = req.user.empresaId;
+    const todosLosUsuarios = await obtenerTodosLosUsuarios();
+    const usuarios = todosLosUsuarios.filter(u => u.empresaId === empresaId);
     
     res.json({
+      success: true,
       total: usuarios.length,
       usuarios: usuarios.map((u) => ({
         id: u.id,
@@ -78,6 +91,7 @@ export const listarUsuarios = async (req: Request, res: Response): Promise<void>
     });
   } catch (error) {
     res.status(500).json({ 
+      success: false,
       error: 'No se pudo obtener los usuarios de MongoDB',
       detalles: error instanceof Error ? error.message : 'Error desconocido'
     });
