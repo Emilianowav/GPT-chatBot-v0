@@ -116,10 +116,23 @@ export const getHistorialUsuario = async (req: Request, res: Response): Promise<
         }
       }
 
+      // Determinar el rol basado en el contenido si no está definido
+      let rol = mensajeParsed.role || 'user';
+      const contenido = mensajeParsed.content || msg;
+      
+      // Si el contenido empieza con "Asistente:", "Bot:", "AI:", es del asistente
+      if (typeof contenido === 'string') {
+        if (/^(Asistente|Bot|AI|Assistant):/i.test(contenido)) {
+          rol = 'assistant';
+        } else if (/^(Cliente|Usuario|User):/i.test(contenido)) {
+          rol = 'user';
+        }
+      }
+
       return {
         id: mensajeParsed._id || `${usuario._id}-msg-${index}`,
-        contenido: mensajeParsed.content || msg,
-        rol: mensajeParsed.role || 'user', // 'user' o 'assistant'
+        contenido: contenido,
+        rol: rol, // 'user' o 'assistant'
         fecha: mensajeParsed.timestamp || usuario.ultimaInteraccion,
         leido: true
       };
