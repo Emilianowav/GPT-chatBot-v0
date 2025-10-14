@@ -10,6 +10,7 @@ import { verificarYEnviarResumen } from '../services/metricService.js';
 import { enviarMensajeWhatsAppTexto } from '../services/metaService.js';
 import { enviarConversacionPorEmail } from '../utils/conversacionReporter.js';
 import { encode } from 'gpt-tokenizer';
+import { wss } from '../app.js';
 
 import type { EmpresaConfig } from '../types/Types.js';
 
@@ -244,6 +245,26 @@ export const recibirMensaje = async (req: Request, res: Response, next: NextFunc
 
     await actualizarUsuario(usuario);
     console.log('✅ Usuario guardado al final del flujo:', { id: usuario.id, empresaId: usuario.empresaId, interacciones: usuario.interacciones });
+    
+    // Notificar a clientes WebSocket conectados
+    wss.clients.forEach((client) => {
+      if (client.readyState === 1 && (client as any).empresaId === empresa.nombre) {
+        client.send(JSON.stringify({
+          type: 'nuevo_mensaje',
+          empresaId: empresa.nombre,
+          usuarioId: usuario.id,
+          data: {
+            usuario: {
+              id: usuario.id,
+              nombre: usuario.nombre,
+              numero: usuario.numero,
+              ultimaInteraccion: usuario.ultimaInteraccion
+            }
+          }
+        }));
+      }
+    });
+    
     res.sendStatus(200);
 
   } catch (error) {

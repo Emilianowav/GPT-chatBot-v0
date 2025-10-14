@@ -4,6 +4,8 @@ dotenv.config();
 
 import express from "express";
 import cors from "cors";
+import http from "http";
+import { WebSocketServer, WebSocket } from "ws";
 import openaiRoutes from "./routes/openaiRoutes.js";
 import whatsappRoutes from "./routes/whatsappRoutes.js";
 import statusRoutes from "./routes/statusRoutes.js";
@@ -20,6 +22,15 @@ import {
 
 const app = express();
 const PORT = process.env.PORT || 3000;
+
+// Crear servidor HTTP
+const server = http.createServer(app);
+
+// Crear servidor WebSocket
+export const wss = new WebSocketServer({ 
+  server,
+  path: '/ws'
+});
 
 // CORS configuration - Permisivo para desarrollo
 app.use(cors({
@@ -76,14 +87,44 @@ app.use(errorHandler);
       }
     }, 1000 * 60 * 60 * 24); // Cada 24h
 
-    // 4. Iniciar servidor
-    app.listen(PORT, () => {
+    // 4. Configurar WebSocket
+    wss.on('connection', (ws: WebSocket) => {
+      console.log('🔌 Cliente WebSocket conectado');
+      
+      ws.on('message', (message: Buffer) => {
+        try {
+          const data = JSON.parse(message.toString());
+          console.log('📨 Mensaje WebSocket recibido:', data);
+          
+          // Suscribir cliente a una empresa específica
+          if (data.type === 'subscribe' && data.empresaId) {
+            (ws as any).empresaId = data.empresaId;
+            console.log(`✅ Cliente suscrito a empresa: ${data.empresaId}`);
+          }
+        } catch (error) {
+          console.error('❌ Error procesando mensaje WebSocket:', error);
+        }
+      });
+      
+      ws.on('close', () => {
+        console.log('🔌 Cliente WebSocket desconectado');
+      });
+      
+      ws.on('error', (error: Error) => {
+        console.error('❌ Error WebSocket:', error);
+      });
+    });
+
+    // 5. Iniciar servidor
+    server.listen(PORT, () => {
       console.log(`🚀 Servidor corriendo en puerto ${PORT}`);
       console.log(`📊 MongoDB: Conectado`);
+      console.log(`🔌 WebSocket: Activo en /ws`);
       console.log(`🌐 Endpoints disponibles:`);
       console.log(`   - POST /api/whatsapp/webhook`);
       console.log(`   - GET  /api/status`);
       console.log(`   - GET  /api/usuarios`);
+      console.log(`   - WS   ws://localhost:${PORT}/ws`);
     });
   } catch (error) {
     console.error('❌ Error al iniciar la aplicación:', error);
