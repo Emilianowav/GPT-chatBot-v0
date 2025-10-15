@@ -1,7 +1,7 @@
 'use client';
 
 // 🔐 Página de Login
-import { useState, FormEvent } from 'react';
+import { useState, FormEvent, useRef, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import styles from './login.module.css';
@@ -13,6 +13,13 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
   const { login } = useAuth();
   const router = useRouter();
+  const videoRef = useRef<HTMLVideoElement>(null);
+
+  useEffect(() => {
+    if (videoRef.current) {
+      videoRef.current.playbackRate = 0.9;
+    }
+  }, []);
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
@@ -31,9 +38,20 @@ export default function LoginPage() {
 
   return (
     <div className={styles.container}>
+      <div className={styles.videoSection}>
+        <video
+          ref={videoRef}
+          className={styles.video}
+          autoPlay
+          loop
+          muted
+          playsInline
+          src="/videoLogin.mp4"
+        />
+      </div>
       <div className={styles.loginBox}>
         <div className={styles.header}>
-          <h1>🤖 Neural CRM</h1>
+          <h1>🤖 Momento CRM</h1>
           <p>Sistema de Gestión de Chatbots</p>
         </div>
 

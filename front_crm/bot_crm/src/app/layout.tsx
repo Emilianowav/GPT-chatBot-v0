@@ -15,7 +15,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Neural CRM - Sistema de Gestión",
+  title: "Momento CRM - Sistema de Gestión",
   description: "CRM para gestión de chatbots y clientes",
 };
 

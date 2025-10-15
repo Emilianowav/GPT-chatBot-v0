@@ -6,7 +6,7 @@
 
 .container {
   display: flex;
-  height: calc(100vh - 140px);
+  height: calc(115vh - 140px);
   background: var(--background);
   border-radius: 16px;
   overflow: hidden;

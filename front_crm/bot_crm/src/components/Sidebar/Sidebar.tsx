@@ -72,7 +72,7 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
                 <path d="M12 8h.01"/>
               </svg>
             </span>
-            <span className={styles.logoText}>Neural CRM</span>
+            <span className={styles.logoText}>Momento CRM</span>
           </div>
           <button className={styles.closeButton} onClick={onClose}>
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">

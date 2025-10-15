@@ -1,32 +1,50 @@
 /* 🔐 Estilos del Login */
 
 .container {
-  min-height: 100vh;
+  min-height: 111vh;
+  height: 111vh;
+  display: flex;
+  align-items: stretch;
+  justify-content: flex-start;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  overflow: hidden;
+}
+
+.videoSection {
+  flex-shrink: 0;
+  height: 111vh;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  padding: 20px;
+  background: #000;
+  overflow: hidden;
+}
+
+.video {
+  height: 100%;
+  width: auto;
+  object-fit: cover;
 }
 
 .loginBox {
   background: white;
-  border-radius: 16px;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-  max-width: 420px;
-  width: 100%;
-  padding: 40px;
-  animation: slideUp 0.5s ease-out;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 0 15%;
+  overflow-y: auto;
+  animation: slideIn 0.5s ease-out;
 }
 
-@keyframes slideUp {
+@keyframes slideIn {
   from {
     opacity: 0;
-    transform: translateY(30px);
+    transform: translateX(30px);
   }
   to {
     opacity: 1;
-    transform: translateY(0);
+    transform: translateX(0);
   }
 }
 
@@ -130,12 +148,129 @@
   color: #999;
 }
 
-@media (max-width: 480px) {
+/* Tablets grandes y pantallas medianas */
+@media (max-width: 1200px) {
   .loginBox {
-    padding: 30px 20px;
+    padding: 50px 60px;
+  }
+}
+
+/* Tablets */
+@media (max-width: 968px) {
+  .container {
+    flex-direction: column;
+  }
+
+  .videoSection {
+    height: 35vh;
+    min-height: 250px;
+    width: 100%;
+  }
+
+  .video {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .loginBox {
+    padding: 40px 30px;
+    min-height: 65vh;
+  }
+
+  .header h1 {
+    font-size: 30px;
+  }
+}
+
+/* Móviles grandes */
+@media (max-width: 640px) {
+  .videoSection {
+    height: 30vh;
+    min-height: 200px;
+  }
+
+  .loginBox {
+    padding: 35px 25px;
   }
 
   .header h1 {
     font-size: 28px;
+  }
+
+  .header p {
+    font-size: 13px;
+  }
+
+  .formGroup input {
+    padding: 11px 14px;
+    font-size: 14px;
+  }
+
+  .submitButton {
+    padding: 13px 20px;
+    font-size: 15px;
+  }
+}
+
+/* Móviles pequeños */
+@media (max-width: 480px) {
+  .videoSection {
+    height: 25vh;
+    min-height: 180px;
+  }
+
+  .loginBox {
+    padding: 30px 20px;
+  }
+
+  .header {
+    margin-bottom: 24px;
+  }
+
+  .header h1 {
+    font-size: 26px;
+  }
+
+  .header p {
+    font-size: 12px;
+  }
+
+  .form {
+    gap: 16px;
+  }
+
+  .formGroup label {
+    font-size: 13px;
+  }
+
+  .formGroup input {
+    padding: 10px 12px;
+    font-size: 14px;
+  }
+
+  .submitButton {
+    padding: 12px 18px;
+    font-size: 14px;
+  }
+
+  .footer p {
+    font-size: 12px;
+  }
+}
+
+/* Móviles muy pequeños */
+@media (max-width: 360px) {
+  .videoSection {
+    height: 20vh;
+    min-height: 150px;
+  }
+
+  .loginBox {
+    padding: 25px 16px;
+  }
+
+  .header h1 {
+    font-size: 24px;
   }
 }

@@ -361,7 +361,7 @@ export default function ConversacionesPage() {
                   <line x1="9" y1="10" x2="15" y2="10"/>
                   <line x1="9" y1="14" x2="13" y2="14"/>
                 </svg>
-                <h2>Neural CRM</h2>
+                <h2>Momento CRM</h2>
                 <p>Selecciona una conversación para ver el historial completo de mensajes</p>
               </div>
             </div>
