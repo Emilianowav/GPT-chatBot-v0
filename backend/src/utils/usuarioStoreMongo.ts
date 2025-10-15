@@ -71,8 +71,22 @@ export async function actualizarUsuario(user: Usuario): Promise<void> {
     console.log('🔄 Actualizando usuario en MongoDB:', { 
       id: user.id, 
       empresaId: user.empresaId, 
-      interacciones: user.interacciones 
+      interacciones: user.interacciones,
+      totalMensajesEnHistorial: user.historial.length
     });
+    
+    // Log de los últimos 3 mensajes para debug
+    if (user.historial.length > 0) {
+      const ultimos3 = user.historial.slice(-3);
+      console.log('📝 Últimos 3 mensajes a guardar:', ultimos3.map(m => {
+        try {
+          const parsed = JSON.parse(m);
+          return { role: parsed.role, content: parsed.content?.substring(0, 30) };
+        } catch {
+          return { raw: m.substring(0, 30) };
+        }
+      }));
+    }
 
     user.ultima_actualizacion = new Date().toISOString();
 

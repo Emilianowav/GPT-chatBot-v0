@@ -195,18 +195,24 @@ export const recibirMensaje = async (req: Request, res: Response, next: NextFunc
 
     // Guardar mensajes con timestamp individual
     const ahoraRespuesta = new Date().toISOString();
+    
+    // SIEMPRE guardar el mensaje del usuario (excepto si ya se guardó en el saludo)
     if (!saludoRespondido) {
       usuario.historial.push(JSON.stringify({
         role: 'user',
         content: mensaje,
         timestamp: ahoraRespuesta
       }));
+      console.log('💾 Mensaje del usuario guardado:', { mensaje: mensaje.substring(0, 50), timestamp: ahoraRespuesta });
     }
+    
+    // SIEMPRE guardar la respuesta del asistente
     usuario.historial.push(JSON.stringify({
       role: 'assistant',
       content: respuesta,
       timestamp: ahoraRespuesta
     }));
+    console.log('💾 Respuesta del asistente guardada:', { respuesta: respuesta.substring(0, 50), timestamp: ahoraRespuesta });
     
     usuario.historial = usuario.historial.slice(-40);
     usuario.num_mensajes_recibidos += 1;
@@ -244,7 +250,12 @@ export const recibirMensaje = async (req: Request, res: Response, next: NextFunc
     }
 
     await actualizarUsuario(usuario);
-    console.log('✅ Usuario guardado al final del flujo:', { id: usuario.id, empresaId: usuario.empresaId, interacciones: usuario.interacciones });
+    console.log('✅ Usuario guardado al final del flujo:', { 
+      id: usuario.id, 
+      empresaId: usuario.empresaId, 
+      interacciones: usuario.interacciones,
+      totalMensajesEnHistorial: usuario.historial.length 
+    });
     
     // Notificar a clientes WebSocket conectados
     wss.clients.forEach((client) => {
