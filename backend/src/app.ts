@@ -36,9 +36,25 @@ export const wss = new WebSocketServer({
 
 console.log('🔧 WebSocket Server creado');
 
-// CORS configuration - Permisivo para desarrollo
+// CORS configuration - Orígenes permitidos
+const allowedOrigins = [
+  'http://localhost:3000',
+  'http://localhost:3001',
+  'https://momento-ebon.vercel.app'
+];
+
 app.use(cors({
-  origin: true, // Acepta cualquier origen en desarrollo
+  origin: (origin, callback) => {
+    // Permitir requests sin origin (como mobile apps o curl)
+    if (!origin) return callback(null, true);
+    
+    if (allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      console.log('❌ Origen bloqueado por CORS:', origin);
+      callback(new Error('No permitido por CORS'));
+    }
+  },
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
   allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept'],
@@ -141,6 +157,8 @@ app.use(errorHandler);
       console.log(`🚀 Servidor corriendo en puerto ${PORT}`);
       console.log(`📊 MongoDB: Conectado`);
       console.log(`🔌 WebSocket: Activo en /ws`);
+      console.log(`🌐 CORS: Orígenes permitidos:`);
+      allowedOrigins.forEach(origin => console.log(`   - ${origin}`));
       console.log(`🌐 Endpoints disponibles:`);
       console.log(`   - POST /api/whatsapp/webhook`);
       console.log(`   - GET  /api/status`);
