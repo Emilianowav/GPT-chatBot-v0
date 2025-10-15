@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import DashboardLayout from '@/components/DashboardLayout/DashboardLayout';
 import { apiClient } from '@/lib/api';
+import { config } from '@/lib/config';
 import { useWebSocket } from '@/hooks/useWebSocket';
 import styles from './conversaciones.module.css';
 
@@ -59,10 +60,8 @@ export default function ConversacionesPage() {
   const [showMobileList, setShowMobileList] = useState(true);
 
   // WebSocket para actualizaciones en tiempo real
-  const wsUrl = process.env.NEXT_PUBLIC_WS_URL || 'ws://localhost:3000/ws';
-  
   useWebSocket({
-    url: wsUrl,
+    url: config.wsUrl,
     empresaId: empresa?.empresaId || '',
     onMessage: (data) => {
       if (data.type === 'nuevo_mensaje') {

@@ -1,15 +1,15 @@
 // 🌐 Cliente API para comunicarse con el backend
-
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';
+import { config } from './config';
 
 export class ApiClient {
   private baseUrl: string;
   private token: string | null = null;
 
   constructor() {
-    this.baseUrl = API_URL;
+    this.baseUrl = config.apiUrl;
     if (typeof window !== 'undefined') {
       this.token = localStorage.getItem('auth_token');
+      config.logConfig(); // Log de configuración en desarrollo
     }
   }
 
