@@ -1,0 +1,287 @@
+/* 👨‍⚕️ Estilos de la lista de agentes */
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+  gap: 1.5rem;
+}
+
+.empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 3rem;
+  color: #95a5a6;
+  grid-column: 1 / -1;
+}
+
+.empty svg {
+  margin-bottom: 1rem;
+}
+
+.agenteCard {
+  background: white;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.agenteCard:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.12);
+}
+
+.agenteHeader {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1.5rem;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+}
+
+.agenteAvatar {
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.5rem;
+  font-weight: bold;
+  flex-shrink: 0;
+  border: 3px solid rgba(255, 255, 255, 0.3);
+}
+
+.agenteInfo {
+  flex: 1;
+}
+
+.agenteInfo h3 {
+  margin: 0 0 0.25rem 0;
+  font-size: 1.2rem;
+}
+
+.titulo {
+  display: inline-block;
+  padding: 0.2rem 0.6rem;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 12px;
+  font-size: 0.75rem;
+  margin-right: 0.5rem;
+}
+
+.especialidad {
+  display: inline-block;
+  padding: 0.2rem 0.6rem;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 12px;
+  font-size: 0.75rem;
+}
+
+.agenteEstado {
+  flex-shrink: 0;
+}
+
+.activo,
+.inactivo {
+  padding: 0.4rem 0.8rem;
+  border-radius: 20px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.activo {
+  background: rgba(46, 204, 113, 0.2);
+  color: #27ae60;
+}
+
+.inactivo {
+  background: rgba(231, 76, 60, 0.2);
+  color: #e74c3c;
+}
+
+.agenteBody {
+  padding: 1.5rem;
+}
+
+.contacto {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.contactoItem {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: #555;
+  font-size: 0.9rem;
+}
+
+.contactoItem svg {
+  color: #667eea;
+  flex-shrink: 0;
+}
+
+.descripcion {
+  padding: 1rem;
+  background: #f8f9fa;
+  border-radius: 8px;
+  color: #555;
+  line-height: 1.6;
+  margin-bottom: 1rem;
+  font-size: 0.9rem;
+}
+
+.detalles {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.detalle {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 0.75rem;
+  background: #f8f9fa;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  color: #555;
+  white-space: nowrap;
+}
+
+.detalle svg {
+  color: #667eea;
+  flex-shrink: 0;
+}
+
+.disponibilidad {
+  padding-top: 1rem;
+  border-top: 1px solid #e0e0e0;
+}
+
+.disponibilidad strong {
+  display: block;
+  margin-bottom: 0.75rem;
+  color: #2c3e50;
+  font-size: 0.9rem;
+}
+
+.diasGrid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 0.5rem;
+}
+
+.dia {
+  padding: 0.5rem;
+  text-align: center;
+  background: #f8f9fa;
+  border-radius: 6px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #95a5a6;
+  cursor: help;
+}
+
+.diaActivo {
+  background: #e8f5e9;
+  color: #27ae60;
+}
+
+.agenteAcciones {
+  display: flex;
+  gap: 0.5rem;
+  padding: 1rem 1.5rem;
+  background: #f8f9fa;
+  border-top: 1px solid #e0e0e0;
+}
+
+.agenteAcciones button {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.75rem;
+  border: none;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-size: 0.9rem;
+}
+
+.btnEditar {
+  background: #3498db;
+  color: white;
+}
+
+.btnEditar:hover {
+  background: #2980b9;
+  transform: translateY(-1px);
+}
+
+.btnDisponibilidad {
+  background: #9b59b6;
+  color: white;
+}
+
+.btnDisponibilidad:hover {
+  background: #8e44ad;
+  transform: translateY(-1px);
+}
+
+.btnDesactivarAgente {
+  background: #f39c12;
+  color: white;
+}
+
+.btnDesactivarAgente:hover {
+  background: #e67e22;
+  transform: translateY(-1px);
+}
+
+.btnActivar {
+  background: #27ae60;
+  color: white;
+}
+
+.btnActivar:hover {
+  background: #229954;
+  transform: translateY(-1px);
+}
+
+.btnEliminar {
+  background: #e74c3c;
+  color: white;
+}
+
+.btnEliminar:hover {
+  background: #c0392b;
+  transform: translateY(-1px);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .grid {
+    grid-template-columns: 1fr;
+  }
+
+  .agenteHeader {
+    flex-direction: column;
+    text-align: center;
+  }
+
+  .agenteAcciones {
+    flex-direction: column;
+  }
+}

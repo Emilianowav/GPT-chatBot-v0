@@ -1,0 +1,151 @@
+/* 👨‍⚕️ Estilos de la página de agentes */
+
+.container {
+  padding: 2rem;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 2rem;
+  flex-wrap: wrap;
+  gap: 1.5rem;
+}
+
+.header > div:first-child {
+  flex: 1;
+  min-width: 250px;
+}
+
+.header h1 {
+  font-size: 2rem;
+  margin-bottom: 0.5rem;
+  color: #2c3e50;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.header p {
+  color: #7f8c8d;
+  font-size: 1rem;
+}
+
+.btnNuevo {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.5rem;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-size: 0.95rem;
+  white-space: nowrap;
+}
+
+.btnNuevo:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 16px rgba(102, 126, 234, 0.3);
+}
+
+.btnNuevo:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.headerActions {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.toggleInactivos {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  background: white;
+  border: 2px solid #e0e0e0;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s;
+  user-select: none;
+}
+
+.toggleInactivos:hover {
+  border-color: #667eea;
+  background: #f8f9ff;
+}
+
+.toggleInactivos input[type="checkbox"] {
+  cursor: pointer;
+  width: 18px;
+  height: 18px;
+  accent-color: #667eea;
+}
+
+.toggleInactivos span {
+  font-size: 0.9rem;
+  color: #555;
+  font-weight: 500;
+}
+
+.loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 400px;
+  gap: 1rem;
+}
+
+.spinner {
+  width: 40px;
+  height: 40px;
+  border: 4px solid #f3f3f3;
+  border-top: 4px solid #667eea;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.error {
+  padding: 1rem;
+  background: #fee;
+  border: 1px solid #fcc;
+  border-radius: 8px;
+  color: #c33;
+  margin-bottom: 1.5rem;
+}
+
+.formularioContainer {
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+@media (max-width: 768px) {
+  .container {
+    padding: 1rem;
+  }
+
+  .header {
+    flex-direction: column;
+  }
+
+  .btnNuevo {
+    width: 100%;
+    justify-content: center;
+  }
+}

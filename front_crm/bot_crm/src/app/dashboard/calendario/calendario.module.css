@@ -1,0 +1,390 @@
+/* 📅 Estilos del módulo de Calendario */
+
+.container {
+  padding: 2rem;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+.loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 400px;
+  gap: 1rem;
+}
+
+.spinner {
+  width: 40px;
+  height: 40px;
+  border: 4px solid #f3f3f3;
+  border-top: 4px solid #3498db;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* Header */
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 2rem;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.headerLeft {
+  flex: 1;
+  min-width: 250px;
+}
+
+.headerLeft h1 {
+  font-size: 2rem;
+  margin-bottom: 0.5rem;
+  color: #2c3e50;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.headerLeft p {
+  color: #7f8c8d;
+  font-size: 1rem;
+}
+
+.headerRight {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+/* Buttons */
+.btnPrimary,
+.btnSecondary,
+.btnText {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.5rem;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  border: none;
+  font-size: 0.95rem;
+}
+
+.btnPrimary {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+}
+
+.btnPrimary:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 16px rgba(102, 126, 234, 0.3);
+}
+
+.btnPrimary:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.btnSecondary {
+  background: white;
+  color: #667eea;
+  border: 2px solid #667eea;
+}
+
+.btnSecondary:hover:not(:disabled) {
+  background: #f8f9ff;
+}
+
+.btnSecondary:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.btnText {
+  background: transparent;
+  color: #667eea;
+  padding: 0.5rem 1rem;
+}
+
+.btnText:hover:not(:disabled) {
+  background: #f8f9ff;
+}
+
+.btnText:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Stats Grid */
+.statsGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+.statCard {
+  background: white;
+  border-radius: 12px;
+  padding: 1.5rem;
+  display: flex;
+  gap: 1rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.statCard:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.12);
+}
+
+.statIcon {
+  width: 56px;
+  height: 56px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.statContent h3 {
+  font-size: 0.875rem;
+  color: #7f8c8d;
+  margin-bottom: 0.5rem;
+  font-weight: 500;
+}
+
+.statNumber {
+  font-size: 2rem;
+  font-weight: bold;
+  color: #2c3e50;
+  margin-bottom: 0.25rem;
+}
+
+.statChange {
+  font-size: 0.8rem;
+  color: #95a5a6;
+}
+
+/* Main Content */
+.mainContent {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 2rem;
+  margin-bottom: 2rem;
+}
+
+.calendarSection,
+.turnosSection {
+  background: white;
+  border-radius: 12px;
+  padding: 1.5rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.sectionHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+}
+
+.sectionHeader h2 {
+  font-size: 1.25rem;
+  color: #2c3e50;
+}
+
+/* View Toggle */
+.viewToggle {
+  display: flex;
+  background: #f8f9fa;
+  border-radius: 8px;
+  padding: 0.25rem;
+}
+
+.viewBtn {
+  padding: 0.5rem 1rem;
+  border: none;
+  background: transparent;
+  color: #7f8c8d;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-weight: 500;
+}
+
+.viewBtn.active {
+  background: white;
+  color: #667eea;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.viewBtn:hover:not(.active) {
+  color: #2c3e50;
+}
+
+/* Calendar Placeholder */
+.calendarPlaceholder {
+  min-height: 500px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.emptyState {
+  text-align: center;
+  max-width: 400px;
+}
+
+.emptyState svg {
+  color: #bdc3c7;
+  margin-bottom: 1.5rem;
+}
+
+.emptyState h3 {
+  font-size: 1.5rem;
+  color: #2c3e50;
+  margin-bottom: 0.75rem;
+}
+
+.emptyState p {
+  color: #7f8c8d;
+  line-height: 1.6;
+  margin-bottom: 2rem;
+}
+
+.quickActions {
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+}
+
+/* Turnos List */
+.turnosList {
+  min-height: 300px;
+}
+
+.emptyTurnos {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 300px;
+  color: #bdc3c7;
+}
+
+.emptyTurnos svg {
+  margin-bottom: 1rem;
+}
+
+.emptyTurnos p {
+  color: #95a5a6;
+  font-size: 0.95rem;
+}
+
+/* Info Banner */
+.infoBanner {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-radius: 12px;
+  padding: 2rem;
+  display: flex;
+  align-items: center;
+  gap: 2rem;
+  color: white;
+}
+
+.bannerIcon {
+  font-size: 3rem;
+  flex-shrink: 0;
+}
+
+.bannerContent {
+  flex: 1;
+}
+
+.bannerContent h3 {
+  font-size: 1.25rem;
+  margin-bottom: 0.75rem;
+}
+
+.bannerContent p {
+  line-height: 1.8;
+  opacity: 0.95;
+  font-size: 0.95rem;
+}
+
+.bannerBtn {
+  padding: 0.75rem 1.5rem;
+  background: white;
+  color: #667eea;
+  border: none;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  flex-shrink: 0;
+}
+
+.bannerBtn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+}
+
+/* Formulario Container */
+.formularioContainer {
+  max-width: 800px;
+  margin: 2rem auto;
+}
+
+/* Responsive */
+@media (max-width: 1024px) {
+  .mainContent {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 768px) {
+  .container {
+    padding: 1rem;
+  }
+
+  .header {
+    flex-direction: column;
+  }
+
+  .headerRight {
+    width: 100%;
+  }
+
+  .headerRight button {
+    flex: 1;
+  }
+
+  .statsGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .infoBanner {
+    flex-direction: column;
+    text-align: center;
+  }
+
+  .quickActions {
+    flex-direction: column;
+  }
+
+  .quickActions button {
+    width: 100%;
+  }
+}

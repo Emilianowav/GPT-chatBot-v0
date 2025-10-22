@@ -1,0 +1,205 @@
+/* 👤 Estilos del Formulario de Cliente */
+
+.container {
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+  max-width: 900px;
+  margin: 0 auto;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1.5rem 2rem;
+  border-bottom: 2px solid #f0f0f0;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border-radius: 12px 12px 0 0;
+}
+
+.header h2 {
+  margin: 0;
+  font-size: 1.5rem;
+}
+
+.btnClose {
+  background: rgba(255, 255, 255, 0.2);
+  border: none;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s;
+  color: white;
+}
+
+.btnClose:hover {
+  background: rgba(255, 255, 255, 0.3);
+  transform: rotate(90deg);
+}
+
+.form {
+  padding: 2rem;
+}
+
+.error {
+  padding: 1rem;
+  background: #fee;
+  border: 1px solid #fcc;
+  border-radius: 8px;
+  color: #c33;
+  margin-bottom: 1.5rem;
+  font-size: 0.9rem;
+}
+
+/* Secciones */
+.section {
+  margin-bottom: 2rem;
+}
+
+.sectionTitle {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 1.1rem;
+  color: #667eea;
+  margin-bottom: 1rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 2px solid #f0f0f0;
+}
+
+.sectionTitle svg {
+  color: #667eea;
+}
+
+/* Campos */
+.row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.field label {
+  font-weight: 600;
+  color: #333;
+  font-size: 0.9rem;
+}
+
+.field input,
+.field textarea {
+  padding: 0.75rem;
+  border: 2px solid #e0e0e0;
+  border-radius: 8px;
+  font-size: 1rem;
+  transition: all 0.2s;
+  font-family: inherit;
+}
+
+.field input:focus,
+.field textarea:focus {
+  outline: none;
+  border-color: #667eea;
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+.field input::placeholder,
+.field textarea::placeholder {
+  color: #999;
+}
+
+.field textarea {
+  resize: vertical;
+  min-height: 100px;
+}
+
+/* Botones */
+.actions {
+  display: flex;
+  gap: 1rem;
+  justify-content: flex-end;
+  margin-top: 2rem;
+  padding-top: 1.5rem;
+  border-top: 2px solid #f0f0f0;
+}
+
+.btnCancel,
+.btnSubmit {
+  padding: 0.75rem 2rem;
+  border: none;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btnCancel {
+  background: #e0e0e0;
+  color: #666;
+}
+
+.btnCancel:hover:not(:disabled) {
+  background: #d0d0d0;
+}
+
+.btnSubmit {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+}
+
+.btnSubmit:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+}
+
+.btnCancel:disabled,
+.btnSubmit:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .container {
+    border-radius: 0;
+    box-shadow: none;
+  }
+
+  .header {
+    padding: 1rem 1.5rem;
+    border-radius: 0;
+  }
+
+  .header h2 {
+    font-size: 1.2rem;
+  }
+
+  .form {
+    padding: 1.5rem;
+  }
+
+  .row {
+    grid-template-columns: 1fr;
+  }
+
+  .actions {
+    flex-direction: column-reverse;
+  }
+
+  .btnCancel,
+  .btnSubmit {
+    width: 100%;
+  }
+}

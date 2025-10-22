@@ -1,0 +1,229 @@
+/* 👤 Estilos del Selector de Cliente */
+
+.container {
+  position: relative;
+  width: 100%;
+}
+
+.inputWrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.searchIcon {
+  position: absolute;
+  left: 1rem;
+  color: #999;
+  pointer-events: none;
+}
+
+.input {
+  width: 100%;
+  padding: 0.75rem 3rem 0.75rem 3rem;
+  border: 2px solid #e0e0e0;
+  border-radius: 8px;
+  font-size: 1rem;
+  transition: all 0.2s;
+}
+
+.input:focus {
+  outline: none;
+  border-color: #667eea;
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+.input::placeholder {
+  color: #999;
+}
+
+.clearButton {
+  position: absolute;
+  right: 1rem;
+  background: transparent;
+  border: none;
+  padding: 0.25rem;
+  cursor: pointer;
+  color: #999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  transition: all 0.2s;
+}
+
+.clearButton:hover {
+  background: #f0f0f0;
+  color: #666;
+}
+
+.loadingSpinner {
+  position: absolute;
+  right: 1rem;
+}
+
+.spinner {
+  width: 20px;
+  height: 20px;
+  border: 2px solid #f3f3f3;
+  border-top: 2px solid #667eea;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* Resultados */
+.resultados {
+  position: absolute;
+  top: calc(100% + 0.5rem);
+  left: 0;
+  right: 0;
+  background: white;
+  border: 2px solid #e0e0e0;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  max-height: 400px;
+  overflow-y: auto;
+  z-index: 1000;
+}
+
+.noResultados {
+  padding: 3rem 2rem;
+  text-align: center;
+  color: #999;
+}
+
+.noResultados svg {
+  margin-bottom: 1rem;
+  opacity: 0.5;
+}
+
+.noResultados p {
+  font-size: 1rem;
+  color: #666;
+  margin-bottom: 0.5rem;
+}
+
+.noResultados small {
+  font-size: 0.85rem;
+  color: #999;
+}
+
+.resultado {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem;
+  border: none;
+  background: white;
+  cursor: pointer;
+  transition: all 0.2s;
+  border-bottom: 1px solid #f0f0f0;
+  text-align: left;
+}
+
+.resultado:last-child {
+  border-bottom: none;
+}
+
+.resultado:hover {
+  background: #f8f9ff;
+}
+
+.resultadoAvatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 0.9rem;
+  flex-shrink: 0;
+}
+
+.resultadoInfo {
+  flex: 1;
+  min-width: 0;
+}
+
+.resultadoNombre {
+  font-weight: 600;
+  color: #333;
+  margin-bottom: 0.25rem;
+}
+
+.resultadoDetalles {
+  font-size: 0.85rem;
+  color: #666;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.separator {
+  color: #ccc;
+}
+
+.badgeChatbot {
+  font-size: 1.2rem;
+  flex-shrink: 0;
+}
+
+/* Cliente Seleccionado */
+.seleccionado {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+  padding: 0.75rem;
+  background: #e8f5e9;
+  border: 1px solid #c8e6c9;
+  border-radius: 6px;
+  color: #2e7d32;
+  font-size: 0.9rem;
+}
+
+.seleccionado svg {
+  flex-shrink: 0;
+  color: #2e7d32;
+}
+
+.seleccionado strong {
+  color: #1b5e20;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .resultados {
+    max-height: 300px;
+  }
+
+  .resultado {
+    padding: 0.75rem;
+  }
+
+  .resultadoAvatar {
+    width: 36px;
+    height: 36px;
+    font-size: 0.8rem;
+  }
+
+  .resultadoDetalles {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.25rem;
+  }
+
+  .separator {
+    display: none;
+  }
+}

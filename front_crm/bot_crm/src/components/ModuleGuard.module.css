@@ -1,0 +1,162 @@
+/* 🛡️ Estilos para ModuleGuard */
+
+.loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 400px;
+  gap: 1rem;
+}
+
+.spinner {
+  width: 40px;
+  height: 40px;
+  border: 4px solid #f3f3f3;
+  border-top: 4px solid #3498db;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.upgradePrompt {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 500px;
+  padding: 2rem;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+.upgradeContent {
+  background: white;
+  border-radius: 16px;
+  padding: 3rem;
+  max-width: 500px;
+  text-align: center;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+}
+
+.icon {
+  font-size: 4rem;
+  margin-bottom: 1rem;
+}
+
+.upgradeContent h2 {
+  font-size: 1.8rem;
+  margin-bottom: 0.5rem;
+  color: #2c3e50;
+}
+
+.upgradeContent > p {
+  color: #7f8c8d;
+  margin-bottom: 2rem;
+  line-height: 1.6;
+}
+
+.moduleInfo {
+  display: flex;
+  gap: 1.5rem;
+  padding: 1.5rem;
+  background: #f8f9fa;
+  border-radius: 12px;
+  margin-bottom: 2rem;
+  text-align: left;
+  align-items: flex-start;
+}
+
+.moduleIcon {
+  font-size: 3rem;
+  flex-shrink: 0;
+}
+
+.moduleInfo h3 {
+  font-size: 1.2rem;
+  margin-bottom: 0.5rem;
+  color: #2c3e50;
+}
+
+.moduleInfo p {
+  font-size: 0.9rem;
+  color: #7f8c8d;
+  margin-bottom: 1rem;
+  line-height: 1.5;
+}
+
+.price {
+  display: flex;
+  align-items: baseline;
+  gap: 0.25rem;
+}
+
+.priceAmount {
+  font-size: 1.5rem;
+  font-weight: bold;
+  color: #27ae60;
+}
+
+.pricePeriod {
+  font-size: 0.9rem;
+  color: #7f8c8d;
+}
+
+.upgradeButton {
+  width: 100%;
+  padding: 1rem 2rem;
+  font-size: 1rem;
+  font-weight: 600;
+  color: white;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: transform 0.2s, box-shadow 0.2s;
+  margin-bottom: 1rem;
+}
+
+.upgradeButton:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 20px rgba(102, 126, 234, 0.4);
+}
+
+.upgradeButton:active {
+  transform: translateY(0);
+}
+
+.backLink {
+  display: inline-block;
+  color: #7f8c8d;
+  text-decoration: none;
+  font-size: 0.9rem;
+  transition: color 0.2s;
+}
+
+.backLink:hover {
+  color: #2c3e50;
+  text-decoration: underline;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .upgradePrompt {
+    padding: 1rem;
+  }
+
+  .upgradeContent {
+    padding: 2rem 1.5rem;
+  }
+
+  .moduleInfo {
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+  }
+
+  .moduleIcon {
+    font-size: 2.5rem;
+  }
+}
