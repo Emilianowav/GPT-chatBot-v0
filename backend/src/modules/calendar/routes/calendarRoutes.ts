@@ -5,11 +5,19 @@ import { authenticate } from '../../../middlewares/authMiddleware.js';
 import * as turnoController from '../controllers/turnoController.js';
 import * as agenteController from '../controllers/agenteController.js';
 import * as disponibilidadController from '../controllers/disponibilidadController.js';
+import configuracionRoutes from './configuracionRoutes.js';
+import botRoutes from './botRoutes.js';
 
 const router = Router();
 
 // Aplicar autenticación a todas las rutas
 router.use(authenticate);
+
+// ========== RUTAS DE CONFIGURACIÓN ==========
+router.use('/configuracion', configuracionRoutes);
+
+// ========== RUTAS DEL BOT ==========
+router.use('/bot', botRoutes);
 
 // ========== RUTAS DE TURNOS ==========
 

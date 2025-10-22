@@ -11,6 +11,7 @@ import { enviarMensajeWhatsAppTexto } from '../services/metaService.js';
 import { enviarConversacionPorEmail } from '../utils/conversacionReporter.js';
 import { encode } from 'gpt-tokenizer';
 import { wss } from '../app.js';
+import * as botTurnosService from '../modules/calendar/services/botTurnosService.js';
 
 import type { EmpresaConfig } from '../types/Types.js';
 
@@ -84,6 +85,34 @@ export const recibirMensaje = async (req: Request, res: Response, next: NextFunc
       await enviarMensajeWhatsAppTexto(telefonoCliente, '✅ Historial de conversación limpiado. Podés empezar de nuevo cuando quieras.', phoneNumberId);
       res.sendStatus(200);
       return;
+    }
+
+    // 🤖 BOT DE TURNOS - Procesar ANTES de OpenAI
+    try {
+      const respuestaBot = await botTurnosService.procesarMensaje(
+        mensaje,
+        telefonoCliente,
+        (empresa as any)._id?.toString() || empresa.nombre || ''
+      );
+      
+      if (respuestaBot) {
+        // El bot manejó el mensaje
+        await enviarMensajeWhatsAppTexto(telefonoCliente, respuestaBot, phoneNumberId);
+        
+        // Actualizar usuario
+        usuario.num_mensajes_recibidos += 1;
+        usuario.num_mensajes_enviados += 1;
+        usuario.interacciones += 1;
+        usuario.ultimaInteraccion = new Date().toISOString();
+        usuario.ultimo_status = 'bot_turnos';
+        await actualizarUsuario(usuario);
+        
+        res.sendStatus(200);
+        return;
+      }
+    } catch (errorBot) {
+      console.error('⚠️ Error en bot de turnos, continuando con flujo normal:', errorBot);
+      // Si el bot falla, continuar con el flujo normal de OpenAI
     }
 
     const mensajeMinuscula = mensaje.toLowerCase();

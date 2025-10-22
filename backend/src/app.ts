@@ -21,6 +21,7 @@ import {
   refreshMetaToken,
   shouldRefreshMetaToken
 } from "./services/metaTokenService.js";
+import { iniciarServicioNotificaciones } from "./services/notificacionesService.js";
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -156,7 +157,11 @@ app.use(errorHandler);
       console.log('👂 WebSocket Server escuchando...');
     });
 
-    // 5. Iniciar servidor
+    // 5. Iniciar servicio de notificaciones automáticas
+    console.log('🔔 Iniciando servicio de notificaciones...');
+    iniciarServicioNotificaciones();
+
+    // 6. Iniciar servidor
     server.listen(PORT, () => {
       console.log(`🚀 Servidor corriendo en puerto ${PORT}`);
       console.log(`📊 MongoDB: Conectado`);

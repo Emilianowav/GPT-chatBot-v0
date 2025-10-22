@@ -2,6 +2,7 @@
 import { Request, Response } from 'express';
 import * as turnoService from '../services/turnoService.js';
 import { EstadoTurno } from '../models/Turno.js';
+import { programarNotificacionesTurno } from '../../../services/notificacionesService.js';
 
 /**
  * POST /api/modules/calendar/turnos
@@ -17,9 +18,9 @@ export async function crearTurno(req: Request, res: Response) {
       });
     }
 
-    const { agenteId, clienteId, fechaInicio, duracion, servicio, notas } = req.body;
+    const { agenteId, clienteId, fechaInicio, duracion, datos, notas } = req.body;
 
-    if (!agenteId || !clienteId || !fechaInicio || !duracion) {
+    if (!clienteId || !fechaInicio || !duracion) {
       return res.status(400).json({
         success: false,
         message: 'Faltan campos requeridos'
@@ -32,10 +33,18 @@ export async function crearTurno(req: Request, res: Response) {
       clienteId,
       fechaInicio: new Date(fechaInicio),
       duracion,
-      servicio,
+      datos: datos || {}, // Campos dinámicos
       notas,
       creadoPor: 'admin'
     });
+
+    // Programar notificaciones automáticas
+    try {
+      await programarNotificacionesTurno(turno._id.toString(), empresaId);
+    } catch (error) {
+      console.error('Error programando notificaciones:', error);
+      // No fallar la creación del turno si falla la programación de notificaciones
+    }
 
     res.status(201).json({
       success: true,

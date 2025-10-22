@@ -10,9 +10,23 @@ export enum EstadoTurno {
   NO_ASISTIO = 'no_asistio'
 }
 
+export interface NotificacionTurno {
+  tipo: 'recordatorio' | 'confirmacion';
+  programadaPara: Date;
+  enviada: boolean;
+  enviadaEn?: Date;
+  plantilla: string;
+  respuesta?: string;
+  respondidoEn?: Date;
+}
+
 export interface ITurno extends Document {
   empresaId: string;
-  agenteId: mongoose.Types.ObjectId;
+  
+  // Agente/Recurso (ahora opcionales)
+  agenteId?: mongoose.Types.ObjectId;
+  recursoId?: mongoose.Types.ObjectId;
+  
   clienteId: string;
   
   fechaInicio: Date;
@@ -21,15 +35,36 @@ export interface ITurno extends Document {
   
   estado: EstadoTurno;
   
-  servicio?: string;
+  // Tipo de turno/reserva
+  tipoReserva?: string; // 'viaje', 'consulta', 'evento', etc.
+  categoria?: string;
+  
+  // CAMPOS DINÁMICOS - Datos específicos del negocio
+  datos: {
+    // Viajes
+    origen?: string;
+    destino?: string;
+    pasajeros?: number;
+    vehiculo?: string;
+    
+    // Consultas
+    servicio?: string;
+    especialidad?: string;
+    
+    // Restaurante
+    mesa?: string;
+    comensales?: number;
+    
+    // Cualquier campo personalizado
+    [key: string]: any;
+  };
+  
   notas?: string;
   notasInternas?: string;
   precio?: number;
   
-  recordatorio24h: boolean;
-  recordatorio1h: boolean;
-  recordatorio24hEnviado?: Date;
-  recordatorio1hEnviado?: Date;
+  // Sistema de notificaciones flexible
+  notificaciones: NotificacionTurno[];
   
   creadoPor: 'bot' | 'admin' | 'agente' | 'cliente';
   creadoEn: Date;
@@ -52,7 +87,13 @@ const TurnoSchema = new Schema<ITurno>(
     agenteId: {
       type: Schema.Types.ObjectId,
       ref: 'Agente',
-      required: true,
+      required: false,
+      index: true
+    },
+    recursoId: {
+      type: Schema.Types.ObjectId,
+      ref: 'Recurso',
+      required: false,
       index: true
     },
     clienteId: {
@@ -82,21 +123,39 @@ const TurnoSchema = new Schema<ITurno>(
       index: true
     },
     
-    servicio: String,
+    tipoReserva: String,
+    categoria: String,
+    
+    // Datos dinámicos del turno
+    datos: {
+      type: Schema.Types.Mixed,
+      default: {}
+    },
+    
     notas: String,
     notasInternas: String,
     precio: Number,
     
-    recordatorio24h: {
-      type: Boolean,
-      default: false
-    },
-    recordatorio1h: {
-      type: Boolean,
-      default: false
-    },
-    recordatorio24hEnviado: Date,
-    recordatorio1hEnviado: Date,
+    // Sistema de notificaciones flexible
+    notificaciones: [{
+      tipo: {
+        type: String,
+        enum: ['recordatorio', 'confirmacion'],
+        required: true
+      },
+      programadaPara: {
+        type: Date,
+        required: true
+      },
+      enviada: {
+        type: Boolean,
+        default: false
+      },
+      enviadaEn: Date,
+      plantilla: String,
+      respuesta: String,
+      respondidoEn: Date
+    }],
     
     creadoPor: {
       type: String,
