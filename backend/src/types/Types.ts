@@ -42,6 +42,50 @@ export type EmpresaUbicacion = {
   derivarA?: string[]; // números de WhatsApp de asesores asociados a esa sucursal
 };
 
+export type Modulo = {
+  id: string;
+  nombre: string;
+  descripcion: string;
+  version: string;
+  categoria: string;
+  icono: string;
+  activo: boolean;
+  fechaActivacion?: Date;
+  fechaExpiracion?: Date;
+  precio: number;
+  planMinimo: string;
+  dependencias: string[];
+  permisos: string[];
+  configuracion: any;
+  autor: string;
+  documentacion: string;
+  soporte: string;
+};
+
+export type Limites = {
+  mensajesMensuales: number;
+  usuariosActivos: number;
+  almacenamiento: number;
+  integraciones: number;
+  exportacionesMensuales: number;
+  agentesSimultaneos: number;
+};
+
+export type Uso = {
+  mensajesEsteMes: number;
+  usuariosActivos: number;
+  almacenamientoUsado: number;
+  exportacionesEsteMes: number;
+  ultimaActualizacion: Date;
+};
+
+export type Facturacion = {
+  metodoPago?: string;
+  ultimoPago?: Date;
+  proximoPago?: Date;
+  estado: 'activo' | 'suspendido' | 'prueba';
+};
+
 export type EmpresaConfig = {
   nombre: string;
   categoria: string;
@@ -55,6 +99,13 @@ export type EmpresaConfig = {
   saludos?: string[];
   email?: string;
   phoneNumberId?: string; // Opcional: ahora se obtiene del webhook
+  
+  // Sistema de módulos
+  plan?: string;
+  modulos?: Modulo[];
+  limites?: Limites;
+  uso?: Uso;
+  facturacion?: Facturacion;
 };
 
 

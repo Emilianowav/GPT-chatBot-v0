@@ -11,7 +11,8 @@
     "dev": "node --loader ts-node/esm src/app.ts",
     "tunnel": "ngrok http 3000",
     "migrar": "node --loader ts-node/esm src/scripts/migrarAMongoDB.ts",
-    "crear-admins": "node --loader ts-node/esm src/scripts/crearAdminInicial.ts"
+    "crear-admins": "node --loader ts-node/esm src/scripts/crearAdminInicial.ts",
+    "seed:empresa-modulo": "tsx src/scripts/seedEmpresaConModulo.ts"
   },
   "keywords": [],
   "author": "",
@@ -44,6 +45,7 @@
     "concurrently": "^9.1.2",
     "nodemon": "^3.1.10",
     "ts-node": "^10.9.2",
+    "tsx": "^4.20.6",
     "typescript": "^5.8.3"
   }
 }
