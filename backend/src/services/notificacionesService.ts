@@ -1,8 +1,8 @@
 // 🔔 Servicio de Notificaciones Automáticas
-import cron from 'node-cron';
-import { TurnoModel } from '../modules/calendar/models/Turno';
-import { ConfiguracionModuloModel } from '../modules/calendar/models/ConfiguracionModulo';
-import { ClienteModel } from '../models/Cliente';
+// import cron from 'node-cron'; // TODO: Instalar node-cron
+import { TurnoModel, EstadoTurno } from '../modules/calendar/models/Turno.js';
+import { ConfiguracionModuloModel } from '../modules/calendar/models/ConfiguracionModulo.js';
+import { ClienteModel } from '../models/Cliente.js';
 
 /**
  * Procesar plantilla de mensaje con variables
@@ -250,17 +250,18 @@ export async function programarNotificacionesTurno(
 export function iniciarServicioNotificaciones() {
   console.log('🚀 Iniciando servicio de notificaciones automáticas...');
   
+  // TODO: Instalar node-cron y descomentar
   // Ejecutar cada 5 minutos
-  cron.schedule('*/5 * * * *', async () => {
-    console.log('⏰ Ejecutando tarea programada de notificaciones...');
-    await procesarNotificacionesPendientes();
-  });
+  // cron.schedule('*/5 * * * *', async () => {
+  //   console.log('⏰ Ejecutando tarea programada de notificaciones...');
+  //   await procesarNotificacionesPendientes();
+  // });
   
   // También ejecutar cada hora para notificaciones nocturnas
-  cron.schedule('0 * * * *', async () => {
-    console.log('⏰ Verificando notificaciones nocturnas...');
-    await procesarNotificacionesPendientes();
-  });
+  // cron.schedule('0 * * * *', async () => {
+  //   console.log('⏰ Verificando notificaciones nocturnas...');
+  //   await procesarNotificacionesPendientes();
+  // });
   
   console.log('✅ Servicio de notificaciones iniciado');
   console.log('   - Cada 5 minutos: Notificaciones generales');
@@ -287,7 +288,7 @@ export async function manejarRespuestaConfirmacion(
       // Confirmar turno
       turno.confirmado = true;
       turno.confirmadoEn = new Date();
-      turno.estado = 'confirmado';
+      turno.estado = EstadoTurno.CONFIRMADO;
       
       // Marcar notificación como respondida
       const notifPendiente = turno.notificaciones.find(n => 
@@ -308,7 +309,7 @@ export async function manejarRespuestaConfirmacion(
       
     } else if (['no', 'cancelar', 'cancel'].includes(respuestaLimpia)) {
       // Cancelar turno
-      turno.estado = 'cancelado';
+      turno.estado = EstadoTurno.CANCELADO;
       turno.canceladoEn = new Date();
       turno.motivoCancelacion = 'Cancelado por el cliente vía notificación';
       

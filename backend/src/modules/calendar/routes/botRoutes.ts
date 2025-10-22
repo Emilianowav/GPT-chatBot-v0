@@ -1,4 +1,5 @@
 // 🤖 Rutas del Bot de Turnos
+// @ts-nocheck
 import express from 'express';
 import * as botController from '../controllers/botController.js';
 

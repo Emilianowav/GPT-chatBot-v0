@@ -1,6 +1,6 @@
 // ⚙️ Rutas de Configuración del Módulo
 import { Router } from 'express';
-import * as configuracionController from '../controllers/configuracionController';
+import * as configuracionController from '../controllers/configuracionController.js';
 
 const router = Router();
 

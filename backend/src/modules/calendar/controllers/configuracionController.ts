@@ -1,6 +1,6 @@
 // ⚙️ Controlador de Configuración del Módulo
 import { Request, Response } from 'express';
-import { ConfiguracionModuloModel, TipoNegocio } from '../models/ConfiguracionModulo';
+import { ConfiguracionModuloModel, TipoNegocio } from '../models/ConfiguracionModulo.js';
 
 /**
  * Obtener configuración del módulo para una empresa

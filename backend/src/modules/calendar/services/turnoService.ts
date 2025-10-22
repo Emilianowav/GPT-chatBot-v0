@@ -6,12 +6,13 @@ import { verificarDisponibilidad } from './disponibilidadService.js';
 
 export interface CrearTurnoData {
   empresaId: string;
-  agenteId: string;
+  agenteId?: string;
   clienteId: string;
   fechaInicio: Date;
   duracion: number;
   servicio?: string;
   notas?: string;
+  datos?: Record<string, any>; // Campos dinámicos
   creadoPor: 'bot' | 'admin' | 'agente' | 'cliente';
 }
 

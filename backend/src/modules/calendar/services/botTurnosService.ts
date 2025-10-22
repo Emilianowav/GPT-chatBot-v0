@@ -1,8 +1,8 @@
 // 🤖 Servicio del Bot de Turnos - Sistema de Puntos
 import { ConfiguracionBotModel } from '../models/ConfiguracionBot.js';
-import { ConversacionBotModel } from '../models/ConversacionBot.js';
+import { ConversacionBotModel, IConversacionBot } from '../models/ConversacionBot.js';
 import { ConfiguracionModuloModel } from '../models/ConfiguracionModulo.js';
-import { TurnoModel } from '../models/Turno.js';
+import { TurnoModel, EstadoTurno } from '../models/Turno.js';
 import { ClienteModel } from '../../../models/Cliente.js';
 import { AgenteModel } from '../models/Agente.js';
 import * as turnoService from './turnoService.js';
@@ -45,7 +45,9 @@ export async function procesarMensaje(
       const minutosInactivo = (Date.now() - conversacion.ultimaInteraccion.getTime()) / 60000;
       if (minutosInactivo > configBot.timeoutMinutos) {
         // Timeout - reiniciar conversación
-        conversacion.finalizar(false);
+        conversacion.activa = false;
+        conversacion.completada = false;
+        conversacion.finalizadaEn = new Date();
         await conversacion.save();
         conversacion = null;
       }
@@ -62,7 +64,11 @@ export async function procesarMensaje(
     }
     
     // 4. Agregar mensaje del usuario al historial
-    conversacion.agregarMensaje('usuario', mensaje);
+    conversacion.historial.push({
+      tipo: 'usuario',
+      mensaje,
+      timestamp: new Date()
+    });
     
     // 5. Procesar según el flujo actual
     let respuesta: string;
@@ -82,7 +88,12 @@ export async function procesarMensaje(
     }
     
     // 6. Agregar respuesta del bot al historial
-    conversacion.agregarMensaje('bot', respuesta);
+    conversacion.historial.push({
+      tipo: 'bot',
+      mensaje: respuesta,
+      timestamp: new Date()
+    });
+    conversacion.ultimaInteraccion = new Date();
     
     // 7. Guardar conversación
     await conversacion.save();
@@ -189,7 +200,8 @@ async function procesarCreacionTurno(
         return '❌ La fecha no puede ser en el pasado. Por favor elige una fecha futura.';
       }
       
-      conversacion.actualizarDatos('fecha', fecha.toISOString());
+      conversacion.datosCapturados.set('fecha', fecha.toISOString());
+      conversacion.markModified('datosCapturados');
       conversacion.pasoActual = 'seleccionar_hora';
       
       return '🕐 Excelente! Ahora dime la hora deseada en formato HH:MM\nEjemplo: 14:30';
@@ -201,7 +213,8 @@ async function procesarCreacionTurno(
         return '❌ Hora inválida. Por favor usa el formato HH:MM\nEjemplo: 14:30';
       }
       
-      conversacion.actualizarDatos('hora', hora);
+      conversacion.datosCapturados.set('hora', hora);
+      conversacion.markModified('datosCapturados');
       
       // Si hay agentes, preguntar por agente
       if (config?.usaAgentes) {
@@ -223,11 +236,13 @@ async function procesarCreacionTurno(
       }
       
       const agenteSeleccionado = agentes[numeroAgente - 1];
-      conversacion.actualizarDatos('agenteId', agenteSeleccionado._id.toString());
+      conversacion.datosCapturados.set('agenteId', agenteSeleccionado._id.toString());
+      conversacion.markModified('datosCapturados');
       
       // Pasar a campos personalizados
       conversacion.pasoActual = 'campos_personalizados';
-      conversacion.actualizarDatos('indiceCampo', 0);
+      conversacion.datosCapturados.set('indiceCampo', 0);
+      conversacion.markModified('datosCapturados');
       return await solicitarCamposPersonalizados(empresaId, config, 0);
       
     case 'campos_personalizados':
@@ -240,7 +255,9 @@ async function procesarCreacionTurno(
         return await crearTurnoFinal(conversacion, empresaId, config);
       } else if (mensaje === '2') {
         // Cancelar
-        conversacion.finalizar(false);
+        conversacion.activa = false;
+        conversacion.completada = false;
+        conversacion.finalizadaEn = new Date();
         return '❌ Turno cancelado.\n\n' + configBot.mensajeBienvenida;
       } else {
         return '❌ Por favor responde 1 para confirmar o 2 para cancelar.';
@@ -333,11 +350,13 @@ async function capturarCampoPersonalizado(
   }
   
   // Guardar valor
-  conversacion.actualizarDatos(`campo_${campo.clave}`, valorValido.valor);
+  conversacion.datosCapturados.set(`campo_${campo.clave}`, valorValido.valor);
+  conversacion.markModified('datosCapturados');
   
   // Pasar al siguiente campo
   const siguienteIndice = indice + 1;
-  conversacion.actualizarDatos('indiceCampo', siguienteIndice);
+  conversacion.datosCapturados.set('indiceCampo', siguienteIndice);
+  conversacion.markModified('datosCapturados');
   
   if (siguienteIndice >= campos.length) {
     // Todos los campos capturados
@@ -445,7 +464,9 @@ async function crearTurnoFinal(
     });
     
     // Finalizar conversación
-    conversacion.finalizar(true);
+    conversacion.activa = false;
+    conversacion.completada = true;
+    conversacion.finalizadaEn = new Date();
     
     let mensaje = `✅ *¡Listo!* Tu ${config.nomenclatura.turno} ha sido agendado.\n\n`;
     mensaje += `📅 ${fecha.toLocaleDateString('es-AR')} a las ${datos.get('hora')}\n`;
@@ -566,12 +587,14 @@ async function procesarCancelacion(
   }
   
   const turno = turnos[numero - 1];
-  turno.estado = 'cancelado';
+  turno.estado = EstadoTurno.CANCELADO;
   turno.canceladoEn = new Date();
   turno.motivoCancelacion = 'Cancelado por el cliente vía bot';
   await turno.save();
   
-  conversacion.finalizar(true);
+  conversacion.activa = false;
+  conversacion.completada = true;
+  conversacion.finalizadaEn = new Date();
   
   return '✅ Turno cancelado exitosamente.\n\n¡Hasta pronto! 👋';
 }
@@ -587,13 +610,13 @@ function verificarHorarioAtencion(horarios: any): boolean {
     return false;
   }
   
-  const [horaInicio, minInicio] = horarios.inicio.split(':').map(Number);
-  const [horaFin, minFin] = horarios.fin.split(':').map(Number);
+  const [horaInicio, minutosInicio] = horarios.inicio.split(':').map(Number);
+  const [horaFin, minutosFin] = horarios.fin.split(':').map(Number);
   
-  const minInicio = horaInicio * 60 + minInicio;
-  const minFin = horaFin * 60 + minFin;
+  const minutosInicioTotal = horaInicio * 60 + minutosInicio;
+  const minutosFinTotal = horaFin * 60 + minutosFin;
   
-  return horaActual >= minInicio && horaActual <= minFin;
+  return horaActual >= minutosInicioTotal && horaActual <= minutosFinTotal;
 }
 
 function parsearFecha(texto: string): Date | null {
