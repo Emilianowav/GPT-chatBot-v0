@@ -6,23 +6,41 @@ import mongoose, { Schema, Document } from 'mongoose';
  */
 export interface PasoBot {
   id: string;
-  tipo: 'menu' | 'input' | 'confirmacion' | 'accion';
-  mensaje: string;
+  orden: number; // Orden de ejecución
+  activo: boolean; // Si está activo o no
+  tipo: 'menu' | 'input' | 'confirmacion' | 'finalizar';
+  etiqueta: string; // Nombre descriptivo del paso (ej: "Solicitar Fecha")
+  mensaje: string; // Mensaje que muestra el bot
+  
+  // Para tipo 'input'
+  campoACapturar?: string; // Nombre del campo (ej: "fecha", "hora", "nombre")
+  guardarEn?: 'datos' | 'turno'; // Dónde guardar: datos del turno o datos adicionales
+  claveGuardado?: string; // Clave específica para guardar (ej: "datos.origen")
+  
+  // Validación
+  validacion?: {
+    tipo: 'fecha' | 'hora' | 'numero' | 'texto' | 'email' | 'telefono';
+    requerido: boolean;
+    min?: number;
+    max?: number;
+    formato?: string; // Para regex personalizado
+    mensajeError?: string;
+  };
+  
+  // Para tipo 'menu'
   opciones?: {
     numero: number;
     texto: string;
-    siguientePaso: string;
-    accion?: string; // 'crear_turno', 'consultar_turnos', 'cancelar_turno'
+    siguientePaso?: string; // ID del siguiente paso
+    finalizarFlujo?: boolean; // Si esta opción termina el flujo
   }[];
-  campoACapturar?: string; // Para tipo 'input'
-  validacion?: {
-    tipo: 'fecha' | 'hora' | 'numero' | 'texto';
-    min?: number;
-    max?: number;
-    formato?: string;
-  };
-  mensajeError?: string;
-  siguientePaso?: string;
+  
+  // Navegación
+  siguientePaso?: string; // ID del siguiente paso (para input)
+  finalizarFlujo?: boolean; // Si este paso termina el flujo
+  
+  // Acciones especiales
+  accion?: 'crear_turno' | 'consultar_turnos' | 'cancelar_turno' | 'ninguna';
 }
 
 /**
@@ -114,26 +132,43 @@ const ConfiguracionBotSchema = new Schema<IConfiguracionBot>({
         pasoInicial: String,
         pasos: [{
           id: String,
+          orden: Number,
+          activo: { type: Boolean, default: true },
           tipo: {
             type: String,
-            enum: ['menu', 'input', 'confirmacion', 'accion']
+            enum: ['menu', 'input', 'confirmacion', 'finalizar']
           },
+          etiqueta: String,
           mensaje: String,
+          campoACapturar: String,
+          guardarEn: {
+            type: String,
+            enum: ['datos', 'turno']
+          },
+          claveGuardado: String,
+          validacion: {
+            tipo: {
+              type: String,
+              enum: ['fecha', 'hora', 'numero', 'texto', 'email', 'telefono']
+            },
+            requerido: Boolean,
+            min: Number,
+            max: Number,
+            formato: String,
+            mensajeError: String
+          },
           opciones: [{
             numero: Number,
             texto: String,
             siguientePaso: String,
-            accion: String
+            finalizarFlujo: Boolean
           }],
-          campoACapturar: String,
-          validacion: {
-            tipo: String,
-            min: Number,
-            max: Number,
-            formato: String
-          },
-          mensajeError: String,
-          siguientePaso: String
+          siguientePaso: String,
+          finalizarFlujo: Boolean,
+          accion: {
+            type: String,
+            enum: ['crear_turno', 'consultar_turnos', 'cancelar_turno', 'ninguna']
+          }
         }]
       },
       consultarTurnos: {
