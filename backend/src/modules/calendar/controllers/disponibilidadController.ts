@@ -47,6 +47,37 @@ export async function obtenerSlotsDisponibles(req: Request, res: Response) {
 }
 
 /**
+ * GET /api/modules/calendar/disponibilidad/:agenteId/horarios
+ * Obtener días y horarios disponibles de un agente
+ */
+export async function obtenerHorariosAgente(req: Request, res: Response) {
+  try {
+    const empresaId = (req as any).user?.empresaId;
+    if (!empresaId) {
+      return res.status(401).json({
+        success: false,
+        message: 'No autenticado'
+      });
+    }
+
+    const { agenteId } = req.params;
+    
+    const horarios = await disponibilidadService.obtenerDisponibilidadAgente(agenteId);
+
+    res.json({
+      success: true,
+      disponibilidad: horarios
+    });
+  } catch (error: any) {
+    console.error('Error al obtener horarios del agente:', error);
+    res.status(500).json({
+      success: false,
+      message: error.message || 'Error al obtener horarios del agente'
+    });
+  }
+}
+
+/**
  * POST /api/modules/calendar/disponibilidad/verificar
  * Verificar si un horario está disponible
  */

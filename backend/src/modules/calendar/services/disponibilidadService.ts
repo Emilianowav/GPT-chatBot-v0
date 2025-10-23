@@ -125,6 +125,21 @@ function hayConflicto(
 }
 
 /**
+ * Obtiene la disponibilidad general de un agente (días y horarios)
+ */
+export async function obtenerDisponibilidadAgente(agenteId: string) {
+  const agente = await AgenteModel.findById(agenteId);
+  if (!agente) throw new Error('Agente no encontrado');
+
+  return {
+    disponibilidad: agente.disponibilidad.filter(d => d.activo),
+    modoAtencion: agente.modoAtencion,
+    duracionTurnoPorDefecto: agente.duracionTurnoPorDefecto,
+    bufferEntreturnos: agente.bufferEntreturnos
+  };
+}
+
+/**
  * Verifica si un horario está disponible para reservar
  */
 export async function verificarDisponibilidad(

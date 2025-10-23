@@ -67,6 +67,9 @@ router.put('/agentes/:id/disponibilidad', agenteController.configurarDisponibili
 
 // ========== RUTAS DE DISPONIBILIDAD ==========
 
+// Obtener horarios disponibles del agente (debe ir antes de slots)
+router.get('/disponibilidad/:agenteId/horarios', disponibilidadController.obtenerHorariosAgente);
+
 // Obtener slots disponibles
 router.get('/disponibilidad/:agenteId', disponibilidadController.obtenerSlotsDisponibles);
 
