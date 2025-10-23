@@ -43,7 +43,9 @@ console.log('🔧 WebSocket Server creado');
 const allowedOrigins = [
   'http://localhost:3000',
   'http://localhost:3001',
-  'https://momento-ebon.vercel.app'
+  'https://momento-ebon.vercel.app',
+  'https://www.momentoia.co',
+  'https://momentoia.co' // Sin www también
 ];
 
 app.use(cors({
