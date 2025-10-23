@@ -1,6 +1,17 @@
 // 👤 Modelo de Cliente
 import mongoose, { Schema, Document } from 'mongoose';
 
+export interface PreferenciasComunicacion {
+  aceptaWhatsApp: boolean;
+  aceptaSMS: boolean;
+  aceptaEmail: boolean;
+  recordatorioTurnos: boolean; // Recibir recordatorios de turnos
+  diasAnticipacionRecordatorio: number; // Días de anticipación (ej: 1 = un día antes)
+  horaRecordatorio: string; // Hora preferida para recordatorios (HH:mm)
+  notificacionesPromocion: boolean; // Recibir ofertas/promociones
+  notificacionesDisponibilidad: boolean; // Recibir cuando hay turnos disponibles
+}
+
 export interface ICliente extends Document {
   empresaId: string;
   nombre: string;
@@ -16,6 +27,7 @@ export interface ICliente extends Document {
   notas?: string;
   origen: 'chatbot' | 'manual';
   chatbotUserId?: string; // ID del usuario en el chatbot si viene de ahí
+  preferencias: PreferenciasComunicacion;
   activo: boolean;
   creadoEn: Date;
   actualizadoEn: Date;
@@ -82,6 +94,28 @@ const ClienteSchema = new Schema<ICliente>({
   chatbotUserId: {
     type: String,
     index: true
+  },
+  preferencias: {
+    type: {
+      aceptaWhatsApp: { type: Boolean, default: true },
+      aceptaSMS: { type: Boolean, default: false },
+      aceptaEmail: { type: Boolean, default: true },
+      recordatorioTurnos: { type: Boolean, default: true },
+      diasAnticipacionRecordatorio: { type: Number, default: 1 },
+      horaRecordatorio: { type: String, default: '10:00' },
+      notificacionesPromocion: { type: Boolean, default: false },
+      notificacionesDisponibilidad: { type: Boolean, default: false }
+    },
+    default: () => ({
+      aceptaWhatsApp: true,
+      aceptaSMS: false,
+      aceptaEmail: true,
+      recordatorioTurnos: true,
+      diasAnticipacionRecordatorio: 1,
+      horaRecordatorio: '10:00',
+      notificacionesPromocion: false,
+      notificacionesDisponibilidad: false
+    })
   },
   activo: {
     type: Boolean,

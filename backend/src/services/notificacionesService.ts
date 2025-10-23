@@ -269,6 +269,98 @@ export function iniciarServicioNotificaciones() {
 }
 
 /**
+ * Notificar a clientes sobre disponibilidad de turnos
+ * Útil para llenar espacios vacíos o cancelaciones de último momento
+ */
+export async function notificarDisponibilidad(
+  empresaId: string,
+  agenteId: string,
+  fecha: Date,
+  mensaje: string
+): Promise<{ enviados: number; errores: number }> {
+  try {
+    console.log('📢 Notificando disponibilidad de turnos...');
+    
+    // Buscar clientes que acepten notificaciones de disponibilidad
+    const clientes = await ClienteModel.find({
+      empresaId,
+      activo: true,
+      'preferencias.notificacionesDisponibilidad': true,
+      'preferencias.aceptaWhatsApp': true
+    });
+    
+    console.log(`📋 Encontrados ${clientes.length} clientes interesados`);
+    
+    let enviados = 0;
+    let errores = 0;
+    
+    for (const cliente of clientes) {
+      try {
+        const enviada = await enviarNotificacion(
+          cliente.telefono,
+          mensaje,
+          empresaId
+        );
+        
+        if (enviada) {
+          enviados++;
+        } else {
+          errores++;
+        }
+        
+        // Pequeña pausa entre envíos para no saturar
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        
+      } catch (error) {
+        console.error(`❌ Error enviando a ${cliente.telefono}:`, error);
+        errores++;
+      }
+    }
+    
+    console.log(`✅ Notificaciones enviadas: ${enviados}, Errores: ${errores}`);
+    
+    return { enviados, errores };
+    
+  } catch (error) {
+    console.error('❌ Error en notificarDisponibilidad:', error);
+    throw error;
+  }
+}
+
+/**
+ * Notificar cuando se cancela un turno (para ofrecer el espacio)
+ */
+export async function notificarCancelacion(
+  turnoId: string
+): Promise<void> {
+  try {
+    const turno = await TurnoModel.findById(turnoId).populate('agenteId');
+    
+    if (!turno) {
+      throw new Error('Turno no encontrado');
+    }
+    
+    const { fecha, hora } = formatearFechaHora(new Date(turno.fechaInicio));
+    const agente = (turno.agenteId as any);
+    
+    const mensaje = `🔔 ¡Turno disponible!\n\n` +
+      `Se liberó un espacio para el ${fecha} a las ${hora}${agente ? ` con ${agente.nombre} ${agente.apellido}` : ''}.\n\n` +
+      `¿Te interesa? Responde SÍ para reservarlo.`;
+    
+    await notificarDisponibilidad(
+      turno.empresaId,
+      turno.agenteId as any,
+      new Date(turno.fechaInicio),
+      mensaje
+    );
+    
+  } catch (error) {
+    console.error('❌ Error en notificarCancelacion:', error);
+    throw error;
+  }
+}
+
+/**
  * Manejar respuesta de confirmación del cliente
  */
 export async function manejarRespuestaConfirmacion(
