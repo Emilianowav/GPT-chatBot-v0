@@ -1,5 +1,5 @@
 // 👤 API de Clientes
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000/api';
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';
 
 function getHeaders(): HeadersInit {
   const token = localStorage.getItem('auth_token');
@@ -48,7 +48,7 @@ export interface CrearClienteData {
  * Obtener todos los clientes
  */
 export async function obtenerClientes(soloActivos: boolean = false): Promise<Cliente[]> {
-  const url = `${API_BASE_URL}/clientes${soloActivos ? '?activos=true' : ''}`;
+  const url = `${API_BASE_URL}/api/clientes${soloActivos ? '?activos=true' : ''}`;
   
   const response = await fetch(url, {
     method: 'GET',
@@ -68,7 +68,7 @@ export async function obtenerClientes(soloActivos: boolean = false): Promise<Cli
  * Obtener un cliente por ID
  */
 export async function obtenerClientePorId(clienteId: string): Promise<Cliente> {
-  const response = await fetch(`${API_BASE_URL}/clientes/${clienteId}`, {
+  const response = await fetch(`${API_BASE_URL}/api/clientes/${clienteId}`, {
     method: 'GET',
     headers: getHeaders()
   });
@@ -86,7 +86,7 @@ export async function obtenerClientePorId(clienteId: string): Promise<Cliente> {
  * Buscar clientes por término
  */
 export async function buscarClientes(termino: string): Promise<Cliente[]> {
-  const response = await fetch(`${API_BASE_URL}/clientes/buscar?q=${encodeURIComponent(termino)}`, {
+  const response = await fetch(`${API_BASE_URL}/api/clientes/buscar?q=${encodeURIComponent(termino)}`, {
     method: 'GET',
     headers: getHeaders()
   });
@@ -104,7 +104,7 @@ export async function buscarClientes(termino: string): Promise<Cliente[]> {
  * Crear un nuevo cliente
  */
 export async function crearCliente(data: CrearClienteData): Promise<Cliente> {
-  const response = await fetch(`${API_BASE_URL}/clientes`, {
+  const response = await fetch(`${API_BASE_URL}/api/clientes`, {
     method: 'POST',
     headers: getHeaders(),
     body: JSON.stringify(data)
@@ -126,7 +126,7 @@ export async function actualizarCliente(
   clienteId: string,
   data: Partial<CrearClienteData>
 ): Promise<Cliente> {
-  const response = await fetch(`${API_BASE_URL}/clientes/${clienteId}`, {
+  const response = await fetch(`${API_BASE_URL}/api/clientes/${clienteId}`, {
     method: 'PATCH',
     headers: getHeaders(),
     body: JSON.stringify(data)
@@ -145,7 +145,7 @@ export async function actualizarCliente(
  * Eliminar un cliente permanentemente
  */
 export async function eliminarCliente(clienteId: string): Promise<void> {
-  const response = await fetch(`${API_BASE_URL}/clientes/${clienteId}`, {
+  const response = await fetch(`${API_BASE_URL}/api/clientes/${clienteId}`, {
     method: 'DELETE',
     headers: getHeaders()
   });

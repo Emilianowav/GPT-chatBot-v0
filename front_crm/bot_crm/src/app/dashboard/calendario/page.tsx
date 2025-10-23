@@ -12,6 +12,7 @@ import { useTurnos, useEstadisticas } from '@/hooks/useTurnos';
 import { useAgentes } from '@/hooks/useAgentes';
 import ListaTurnos from '@/components/calendar/ListaTurnos';
 import FormularioTurno from '@/components/calendar/FormularioTurno';
+import Modal from '@/components/common/Modal';
 import styles from './calendario.module.css';
 
 export default function CalendarioPage() {
@@ -22,7 +23,8 @@ export default function CalendarioPage() {
   const { estadisticas } = useEstadisticas();
   const { agentes } = useAgentes(true);
   
-  const [mostrarFormulario, setMostrarFormulario] = useState(false);
+  const [modalNuevoTurno, setModalNuevoTurno] = useState(false);
+  const empresaId = typeof window !== 'undefined' ? localStorage.getItem('empresa_id') || '' : '';
 
   useEffect(() => {
     if (!authLoading && !isAuthenticated) {
@@ -38,7 +40,7 @@ export default function CalendarioPage() {
   
   const handleCrearTurno = async (data: any) => {
     await crearTurno(data);
-    setMostrarFormulario(false);
+    setModalNuevoTurno(false);
     cargarTurnosDelDia();
   };
   
@@ -85,17 +87,27 @@ export default function CalendarioPage() {
               <p>Gestiona los turnos de tus agentes y clientes</p>
             </div>
             <div className={styles.headerRight}>
+              <Link href="/dashboard/calendario/configuracion">
+                <button className={styles.btnSecondary}>
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <circle cx="12" cy="12" r="3"/>
+                    <path d="M12 1v6m0 6v6M1 12h6m6 0h6"/>
+                  </svg>
+                  Configuración
+                </button>
+              </Link>
               <Link href="/dashboard/calendario/agentes">
                 <button className={styles.btnSecondary}>
                   <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <path d="M12 5v14M5 12h14"/>
+                    <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+                    <circle cx="9" cy="7" r="4"/>
                   </svg>
                   Gestionar Agentes
                 </button>
               </Link>
               <button 
                 className={styles.btnPrimary}
-                onClick={() => setMostrarFormulario(true)}
+                onClick={() => setModalNuevoTurno(true)}
                 disabled={agentes.length === 0}
               >
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -180,15 +192,7 @@ export default function CalendarioPage() {
           </div>
 
           {/* Main Content */}
-          {mostrarFormulario ? (
-            <div className={styles.formularioContainer}>
-              <FormularioTurno
-                onSubmit={handleCrearTurno}
-                onCancel={() => setMostrarFormulario(false)}
-              />
-            </div>
-          ) : (
-            <div className={styles.mainContent}>
+          <div className={styles.mainContent}>
               {/* Lista de Turnos */}
               <div className={styles.turnosSection}>
                 <div className={styles.sectionHeader}>
@@ -218,10 +222,9 @@ export default function CalendarioPage() {
                 )}
               </div>
             </div>
-          )}
 
-          {!mostrarFormulario && (
-            <div className={styles.infoBanner}>
+          {/* Info Banner */}
+          <div className={styles.infoBanner}>
               <div className={styles.bannerIcon}>💡</div>
               <div className={styles.bannerContent}>
                 <h3>¿Cómo funciona el módulo de Calendario?</h3>
@@ -248,7 +251,19 @@ export default function CalendarioPage() {
                 </button>
               </Link>
             </div>
-          )}
+
+          {/* Modales */}
+          <Modal
+            isOpen={modalNuevoTurno}
+            onClose={() => setModalNuevoTurno(false)}
+            title="📅 Nuevo Turno"
+            size="medium"
+          >
+            <FormularioTurno
+              onSubmit={handleCrearTurno}
+              onCancel={() => setModalNuevoTurno(false)}
+            />
+          </Modal>
         </div>
       </ModuleGuard>
     </DashboardLayout>

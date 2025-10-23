@@ -4,6 +4,11 @@
 import { useState, useEffect } from 'react';
 import { useAgentes } from '@/hooks/useAgentes';
 import { useDisponibilidad } from '@/hooks/useDisponibilidad';
+import { useConfiguracion } from '@/hooks/useConfiguracion';
+import SelectorCliente from '@/components/clientes/SelectorCliente';
+import type { Cliente } from '@/lib/clientesApi';
+import * as configuracionApi from '@/lib/configuracionApi';
+import * as calendarApi from '@/lib/calendarApi';
 import styles from './FormularioTurno.module.css';
 
 interface FormularioTurnoProps {
@@ -12,21 +17,36 @@ interface FormularioTurnoProps {
 }
 
 export default function FormularioTurno({ onSubmit, onCancel }: FormularioTurnoProps) {
+  const empresaId = typeof window !== 'undefined' ? localStorage.getItem('empresa_id') || '' : '';
+  const { configuracion, loading: loadingConfig } = useConfiguracion(empresaId);
   const { agentes, loading: loadingAgentes } = useAgentes(true);
   const { slots, cargarSlots, loading: loadingSlots } = useDisponibilidad();
 
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<any>({
     agenteId: '',
     clienteId: '',
     fecha: '',
     horaInicio: '',
     duracion: 30,
-    servicio: '',
-    notas: ''
+    notas: '',
+    datos: {} // Campos dinámicos
   });
 
+  const [clienteSeleccionado, setClienteSeleccionado] = useState<Cliente | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [disponibilidadAgente, setDisponibilidadAgente] = useState<calendarApi.DisponibilidadAgente | null>(null);
+  const [diasDisponibles, setDiasDisponibles] = useState<number[]>([]);
+
+  // Cargar disponibilidad del agente cuando cambia
+  useEffect(() => {
+    if (formData.agenteId) {
+      cargarDisponibilidadAgente();
+    } else {
+      setDisponibilidadAgente(null);
+      setDiasDisponibles([]);
+    }
+  }, [formData.agenteId]);
 
   // Cargar slots cuando cambia agente o fecha
   useEffect(() => {
@@ -35,19 +55,89 @@ export default function FormularioTurno({ onSubmit, onCancel }: FormularioTurnoP
     }
   }, [formData.agenteId, formData.fecha, formData.duracion, cargarSlots]);
 
+  const cargarDisponibilidadAgente = async () => {
+    try {
+      const disp = await calendarApi.obtenerHorariosAgente(formData.agenteId);
+      console.log('📅 Disponibilidad del agente:', disp);
+      setDisponibilidadAgente(disp);
+      setDiasDisponibles(disp.disponibilidad.map((d: any) => d.diaSemana));
+    } catch (err) {
+      console.error('Error al cargar disponibilidad del agente:', err);
+    }
+  };
+
+  // Verificar si una fecha está disponible
+  const esFechaDisponible = (fecha: Date): boolean => {
+    if (!disponibilidadAgente || diasDisponibles.length === 0) return true;
+    const diaSemana = fecha.getDay();
+    return diasDisponibles.includes(diaSemana);
+  };
+
+  // Obtener horarios disponibles para la fecha seleccionada
+  const getHorariosDisponibles = (): { inicio: string; fin: string } | null => {
+    if (!formData.fecha || !disponibilidadAgente) return null;
+    
+    const fecha = new Date(formData.fecha + 'T00:00:00');
+    const diaSemana = fecha.getDay();
+    const disp = disponibilidadAgente.disponibilidad.find(d => d.diaSemana === diaSemana);
+    
+    return disp ? { inicio: disp.horaInicio, fin: disp.horaFin } : null;
+  };
+
+  // Inicializar campos dinámicos con valores por defecto
+  useEffect(() => {
+    if (configuracion?.camposPersonalizados) {
+      const datosPorDefecto: any = {};
+      configuracion.camposPersonalizados.forEach(campo => {
+        if (campo.valorPorDefecto !== undefined) {
+          datosPorDefecto[campo.clave] = campo.valorPorDefecto;
+        }
+      });
+      setFormData((prev: any) => ({
+        ...prev,
+        datos: { ...prev.datos, ...datosPorDefecto }
+      }));
+    }
+  }, [configuracion]);
+
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
-    setFormData(prev => ({
+    setFormData((prev: any) => ({
       ...prev,
       [name]: name === 'duracion' ? parseInt(value) || 30 : value
+    }));
+  };
+
+  const handleDatosDinamicosChange = (clave: string, valor: any) => {
+    setFormData((prev: any) => ({
+      ...prev,
+      datos: {
+        ...prev.datos,
+        [clave]: valor
+      }
     }));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!formData.agenteId || !formData.clienteId || !formData.fecha || !formData.horaInicio) {
-      setError('Todos los campos son requeridos');
+    // Validar campos requeridos según configuración
+    const camposRequeridos = configuracion?.camposPersonalizados?.filter(c => c.requerido) || [];
+    for (const campo of camposRequeridos) {
+      if (!formData.datos[campo.clave]) {
+        setError(`El campo "${campo.etiqueta}" es requerido`);
+        return;
+      }
+    }
+
+    if (!formData.clienteId || !formData.fecha || !formData.horaInicio) {
+      setError('Todos los campos obligatorios son requeridos');
+      return;
+    }
+
+    // Validar agente si es requerido
+    if (configuracion?.agenteRequerido && !formData.agenteId) {
+      setError('Debes seleccionar un agente');
       return;
     }
 
@@ -59,11 +149,11 @@ export default function FormularioTurno({ onSubmit, onCancel }: FormularioTurnoP
       const fechaInicio = new Date(`${formData.fecha}T${formData.horaInicio}`);
 
       await onSubmit({
-        agenteId: formData.agenteId,
+        agenteId: formData.agenteId || undefined,
         clienteId: formData.clienteId,
         fechaInicio: fechaInicio.toISOString(),
         duracion: formData.duracion,
-        servicio: formData.servicio,
+        datos: formData.datos, // Campos dinámicos
         notas: formData.notas
       });
     } catch (err: any) {
@@ -73,10 +163,116 @@ export default function FormularioTurno({ onSubmit, onCancel }: FormularioTurnoP
     }
   };
 
+  // Renderizar campo dinámico
+  const renderCampoDinamico = (campo: configuracionApi.CampoPersonalizado) => {
+    const valor = formData.datos[campo.clave] || '';
+
+    switch (campo.tipo) {
+      case configuracionApi.TipoCampo.TEXTO:
+        return (
+          <input
+            type="text"
+            value={valor}
+            onChange={(e) => handleDatosDinamicosChange(campo.clave, e.target.value)}
+            placeholder={campo.placeholder}
+            required={campo.requerido}
+          />
+        );
+
+      case configuracionApi.TipoCampo.NUMERO:
+        return (
+          <input
+            type="number"
+            value={valor}
+            onChange={(e) => handleDatosDinamicosChange(campo.clave, parseInt(e.target.value) || 0)}
+            placeholder={campo.placeholder}
+            required={campo.requerido}
+            min={campo.validacion?.min}
+            max={campo.validacion?.max}
+          />
+        );
+
+      case configuracionApi.TipoCampo.FECHA:
+        return (
+          <input
+            type="date"
+            value={valor}
+            onChange={(e) => handleDatosDinamicosChange(campo.clave, e.target.value)}
+            required={campo.requerido}
+          />
+        );
+
+      case configuracionApi.TipoCampo.HORA:
+        return (
+          <input
+            type="time"
+            value={valor}
+            onChange={(e) => handleDatosDinamicosChange(campo.clave, e.target.value)}
+            required={campo.requerido}
+          />
+        );
+
+      case configuracionApi.TipoCampo.SELECT:
+        return (
+          <select
+            value={valor}
+            onChange={(e) => handleDatosDinamicosChange(campo.clave, e.target.value)}
+            required={campo.requerido}
+          >
+            <option value="">Seleccionar...</option>
+            {campo.opciones?.map(opcion => (
+              <option key={opcion} value={opcion}>{opcion}</option>
+            ))}
+          </select>
+        );
+
+      case configuracionApi.TipoCampo.TEXTAREA:
+        return (
+          <textarea
+            value={valor}
+            onChange={(e) => handleDatosDinamicosChange(campo.clave, e.target.value)}
+            placeholder={campo.placeholder}
+            required={campo.requerido}
+            rows={3}
+          />
+        );
+
+      case configuracionApi.TipoCampo.BOOLEAN:
+        return (
+          <label className={styles.checkbox}>
+            <input
+              type="checkbox"
+              checked={valor || false}
+              onChange={(e) => handleDatosDinamicosChange(campo.clave, e.target.checked)}
+            />
+            <span>{campo.etiqueta}</span>
+          </label>
+        );
+
+      default:
+        return (
+          <input
+            type="text"
+            value={valor}
+            onChange={(e) => handleDatosDinamicosChange(campo.clave, e.target.value)}
+            placeholder={campo.placeholder}
+            required={campo.requerido}
+          />
+        );
+    }
+  };
+
+  if (loadingConfig) {
+    return (
+      <div className={styles.loading}>
+        <div className={styles.spinner}></div>
+        <p>Cargando configuración...</p>
+      </div>
+    );
+  }
+
   return (
     <form className={styles.form} onSubmit={handleSubmit}>
-      <h2>Nuevo Turno</h2>
-
       {error && (
         <div className={styles.error}>
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -88,33 +284,37 @@ export default function FormularioTurno({ onSubmit, onCancel }: FormularioTurnoP
         </div>
       )}
 
-      <div className={styles.field}>
-        <label>Agente *</label>
-        <select
-          name="agenteId"
-          value={formData.agenteId}
-          onChange={handleChange}
-          required
-          disabled={loadingAgentes}
-        >
-          <option value="">Seleccionar agente...</option>
-          {agentes.map(agente => (
-            <option key={agente._id} value={agente._id}>
-              {agente.nombre} {agente.apellido} {agente.especialidad && `- ${agente.especialidad}`}
-            </option>
-          ))}
-        </select>
-      </div>
+      {/* Agente (solo si está configurado) */}
+      {configuracion?.usaAgentes && (
+        <div className={styles.field}>
+          <label>{configuracion.nomenclatura.agente} {configuracion.agenteRequerido && '*'}</label>
+          <select
+            name="agenteId"
+            value={formData.agenteId}
+            onChange={handleChange}
+            required={configuracion.agenteRequerido}
+            disabled={loadingAgentes}
+          >
+            <option value="">Seleccionar {configuracion.nomenclatura.agente.toLowerCase()}...</option>
+            {agentes.map(agente => (
+              <option key={agente._id} value={agente._id}>
+                {agente.nombre} {agente.apellido} {agente.especialidad && `- ${agente.especialidad}`}
+              </option>
+            ))}
+          </select>
+        </div>
+      )}
 
       <div className={styles.field}>
-        <label>Cliente (Teléfono o ID) *</label>
-        <input
-          type="text"
-          name="clienteId"
-          value={formData.clienteId}
-          onChange={handleChange}
+        <label>Cliente *</label>
+        <SelectorCliente
+          onSelect={(cliente) => {
+            setClienteSeleccionado(cliente);
+            setFormData(prev => ({ ...prev, clienteId: cliente?._id || '' }));
+          }}
+          clienteSeleccionado={clienteSeleccionado}
+          placeholder="Buscar cliente por nombre, teléfono o email..."
           required
-          placeholder="+54 11 1234-5678"
         />
       </div>
 
@@ -129,6 +329,15 @@ export default function FormularioTurno({ onSubmit, onCancel }: FormularioTurnoP
             required
             min={new Date().toISOString().split('T')[0]}
           />
+          {formData.agenteId && disponibilidadAgente && (
+            <small style={{ color: '#666', fontSize: '0.85rem', marginTop: '0.25rem' }}>
+              {diasDisponibles.length > 0 ? (
+                `Días disponibles: ${diasDisponibles.map(d => ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'][d]).join(', ')}`
+              ) : (
+                'Este agente no tiene días configurados'
+              )}
+            </small>
+          )}
         </div>
 
         <div className={styles.field}>
@@ -182,16 +391,27 @@ export default function FormularioTurno({ onSubmit, onCancel }: FormularioTurnoP
         </div>
       )}
 
-      <div className={styles.field}>
-        <label>Servicio</label>
-        <input
-          type="text"
-          name="servicio"
-          value={formData.servicio}
-          onChange={handleChange}
-          placeholder="Consulta, Corte de pelo, etc."
-        />
-      </div>
+      {/* Campos Dinámicos Personalizados */}
+      {configuracion?.camposPersonalizados && configuracion.camposPersonalizados.length > 0 && (
+        <>
+          <div className={styles.divider}>
+            <span>Información Específica</span>
+          </div>
+          {configuracion.camposPersonalizados
+            .sort((a, b) => a.orden - b.orden)
+            .map((campo) => (
+              <div key={campo.clave} className={styles.field}>
+                <label>
+                  {campo.etiqueta} {campo.requerido && '*'}
+                </label>
+                {renderCampoDinamico(campo)}
+                {campo.validacion?.mensaje && (
+                  <small className={styles.fieldHelp}>{campo.validacion.mensaje}</small>
+                )}
+              </div>
+            ))}
+        </>
+      )}
 
       <div className={styles.field}>
         <label>Notas</label>

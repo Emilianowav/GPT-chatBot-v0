@@ -166,12 +166,22 @@
 .disponibilidad {
   padding-top: 1rem;
   border-top: 1px solid #e0e0e0;
+  margin-top: 1rem;
 }
 
-.disponibilidad strong {
-  display: block;
+.disponibilidadHeader {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
   margin-bottom: 0.75rem;
   color: #2c3e50;
+}
+
+.disponibilidadHeader svg {
+  color: #667eea;
+}
+
+.disponibilidadHeader strong {
   font-size: 0.9rem;
 }
 
@@ -179,22 +189,77 @@
   display: grid;
   grid-template-columns: repeat(7, 1fr);
   gap: 0.5rem;
+  margin-bottom: 0.75rem;
 }
 
 .dia {
-  padding: 0.5rem;
+  padding: 0.5rem 0.25rem;
   text-align: center;
   background: #f8f9fa;
   border-radius: 6px;
-  font-size: 0.75rem;
+  font-size: 0.7rem;
   font-weight: 600;
   color: #95a5a6;
   cursor: help;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  transition: all 0.2s;
+}
+
+.dia:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.diaNombre {
+  font-size: 0.7rem;
+  text-transform: uppercase;
+}
+
+.diaHorario {
+  font-size: 0.65rem;
+  font-weight: 500;
+  opacity: 0.8;
 }
 
 .diaActivo {
-  background: #e8f5e9;
+  background: linear-gradient(135deg, #e8f5e9 0%, #c8e6c9 100%);
   color: #27ae60;
+  border: 1px solid #a5d6a7;
+}
+
+.horarioResumen {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 0.75rem;
+  background: #f0f4ff;
+  border-radius: 6px;
+  font-size: 0.8rem;
+  color: #667eea;
+}
+
+.horarioResumen svg {
+  flex-shrink: 0;
+}
+
+.sinDisponibilidad {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem;
+  background: #fff3cd;
+  border: 1px solid #ffc107;
+  border-radius: 8px;
+  color: #856404;
+  font-size: 0.85rem;
+  margin-top: 1rem;
+}
+
+.sinDisponibilidad svg {
+  flex-shrink: 0;
+  color: #ffc107;
 }
 
 .agenteAcciones {

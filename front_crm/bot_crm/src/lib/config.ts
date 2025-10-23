@@ -21,6 +21,9 @@ export const config = {
   }
 };
 
+// Exportación adicional para compatibilidad
+export const API_BASE_URL = `${config.apiUrl}/api`;
+
 // Verificar que las variables estén configuradas en producción
 if (typeof window !== 'undefined' && config.isProduction) {
   if (!process.env.NEXT_PUBLIC_API_URL) {

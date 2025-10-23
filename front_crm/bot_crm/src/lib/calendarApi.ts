@@ -1,5 +1,5 @@
 // 📅 API Client para el módulo de Calendario
-const API_BASE_URL = 'http://localhost:3000/api/modules/calendar';
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';
 
 // Helper para obtener el token
 function getAuthToken(): string | null {
@@ -77,7 +77,7 @@ export async function obtenerTurnos(filtros?: {
     });
   }
 
-  const response = await fetch(`${API_BASE_URL}/turnos?${params}`, {
+  const response = await fetch(`${API_BASE_URL}/api/modules/calendar/turnos?${params}`, {
     headers: getHeaders()
   });
 
@@ -86,7 +86,7 @@ export async function obtenerTurnos(filtros?: {
 }
 
 export async function obtenerTurnosDelDia() {
-  const response = await fetch(`${API_BASE_URL}/turnos/hoy`, {
+  const response = await fetch(`${API_BASE_URL}/api/modules/calendar/turnos/hoy`, {
     headers: getHeaders()
   });
 
@@ -95,7 +95,7 @@ export async function obtenerTurnosDelDia() {
 }
 
 export async function crearTurno(data: CrearTurnoData) {
-  const response = await fetch(`${API_BASE_URL}/turnos`, {
+  const response = await fetch(`${API_BASE_URL}/api/modules/calendar/turnos`, {
     method: 'POST',
     headers: getHeaders(),
     body: JSON.stringify(data)
@@ -110,7 +110,7 @@ export async function crearTurno(data: CrearTurnoData) {
 }
 
 export async function cancelarTurno(turnoId: string, motivo: string) {
-  const response = await fetch(`${API_BASE_URL}/turnos/${turnoId}`, {
+  const response = await fetch(`${API_BASE_URL}/api/modules/calendar/turnos/${turnoId}`, {
     method: 'DELETE',
     headers: getHeaders(),
     body: JSON.stringify({ motivo })
@@ -129,7 +129,7 @@ export async function actualizarEstadoTurno(
   estado: string,
   motivoCancelacion?: string
 ) {
-  const response = await fetch(`${API_BASE_URL}/turnos/${turnoId}/estado`, {
+  const response = await fetch(`${API_BASE_URL}/api/modules/calendar/turnos/${turnoId}/estado`, {
     method: 'PATCH',
     headers: getHeaders(),
     body: JSON.stringify({ estado, motivoCancelacion })
@@ -148,7 +148,7 @@ export async function obtenerEstadisticas(fechaDesde?: string, fechaHasta?: stri
   if (fechaDesde) params.append('fechaDesde', fechaDesde);
   if (fechaHasta) params.append('fechaHasta', fechaHasta);
 
-  const response = await fetch(`${API_BASE_URL}/turnos/estadisticas?${params}`, {
+  const response = await fetch(`${API_BASE_URL}/api/modules/calendar/turnos/estadisticas?${params}`, {
     headers: getHeaders()
   });
 
@@ -201,7 +201,7 @@ export interface CrearAgenteData {
 
 export async function obtenerAgentes(soloActivos: boolean = false) {
   const params = soloActivos ? '?activos=true' : '';
-  const response = await fetch(`${API_BASE_URL}/agentes${params}`, {
+  const response = await fetch(`${API_BASE_URL}/api/modules/calendar/agentes${params}`, {
     headers: getHeaders()
   });
 
@@ -210,7 +210,7 @@ export async function obtenerAgentes(soloActivos: boolean = false) {
 }
 
 export async function obtenerAgentePorId(agenteId: string) {
-  const response = await fetch(`${API_BASE_URL}/agentes/${agenteId}`, {
+  const response = await fetch(`${API_BASE_URL}/api/modules/calendar/agentes/${agenteId}`, {
     headers: getHeaders()
   });
 
@@ -220,7 +220,7 @@ export async function obtenerAgentePorId(agenteId: string) {
 
 export async function crearAgente(data: CrearAgenteData) {
   const headers = getHeaders();
-  const url = `${API_BASE_URL}/agentes`;
+  const url = `${API_BASE_URL}/api/modules/calendar/agentes`;
   const body = JSON.stringify(data);
   
   console.log('🚀 crearAgente - Request details:');
@@ -253,7 +253,7 @@ export async function crearAgente(data: CrearAgenteData) {
 }
 
 export async function actualizarAgente(agenteId: string, data: Partial<CrearAgenteData>) {
-  const response = await fetch(`${API_BASE_URL}/agentes/${agenteId}`, {
+  const response = await fetch(`${API_BASE_URL}/api/modules/calendar/agentes/${agenteId}`, {
     method: 'PATCH',
     headers: getHeaders(),
     body: JSON.stringify(data)
@@ -271,7 +271,7 @@ export async function configurarDisponibilidad(
   agenteId: string,
   disponibilidad: Disponibilidad[]
 ) {
-  const response = await fetch(`${API_BASE_URL}/agentes/${agenteId}/disponibilidad`, {
+  const response = await fetch(`${API_BASE_URL}/api/modules/calendar/agentes/${agenteId}/disponibilidad`, {
     method: 'PUT',
     headers: getHeaders(),
     body: JSON.stringify({ disponibilidad })
@@ -286,7 +286,7 @@ export async function configurarDisponibilidad(
 }
 
 export async function eliminarAgente(agenteId: string) {
-  const response = await fetch(`${API_BASE_URL}/agentes/${agenteId}`, {
+  const response = await fetch(`${API_BASE_URL}/api/modules/calendar/agentes/${agenteId}`, {
     method: 'DELETE',
     headers: getHeaders()
   });
@@ -301,11 +301,36 @@ export async function eliminarAgente(agenteId: string) {
 
 // ========== DISPONIBILIDAD ==========
 
+export interface Disponibilidad {
+  diaSemana: number; // 0=Domingo, 1=Lunes, etc.
+  horaInicio: string; // HH:mm
+  horaFin: string; // HH:mm
+  activo: boolean;
+}
+
+export interface DisponibilidadAgente {
+  disponibilidad: Disponibilidad[];
+  modoAtencion: string;
+  duracionTurnoPorDefecto: number;
+  bufferEntreturnos: number;
+}
+
 export interface Slot {
   fecha: string;
   disponible: boolean;
   agenteId: string;
   duracion: number;
+}
+
+export async function obtenerHorariosAgente(agenteId: string): Promise<DisponibilidadAgente> {
+  const response = await fetch(
+    `${API_BASE_URL}/api/modules/calendar/disponibilidad/${agenteId}/horarios`,
+    { headers: getHeaders() }
+  );
+
+  if (!response.ok) throw new Error('Error al obtener horarios del agente');
+  const data = await response.json();
+  return data.disponibilidad;
 }
 
 export async function obtenerSlotsDisponibles(
@@ -317,7 +342,7 @@ export async function obtenerSlotsDisponibles(
   if (duracion) params.append('duracion', duracion.toString());
 
   const response = await fetch(
-    `${API_BASE_URL}/disponibilidad/${agenteId}?${params}`,
+    `${API_BASE_URL}/api/modules/calendar/disponibilidad/${agenteId}?${params}`,
     { headers: getHeaders() }
   );
 
@@ -330,7 +355,7 @@ export async function verificarDisponibilidad(
   fechaInicio: string,
   duracion: number
 ) {
-  const response = await fetch(`${API_BASE_URL}/disponibilidad/verificar`, {
+  const response = await fetch(`${API_BASE_URL}/api/modules/calendar/disponibilidad/verificar`, {
     method: 'POST',
     headers: getHeaders(),
     body: JSON.stringify({ agenteId, fechaInicio, duracion })

@@ -15,6 +15,16 @@ export default function FormularioAgente({
   onCancel, 
   agenteInicial 
 }: FormularioAgenteProps) {
+  const diasSemana = [
+    { id: 1, nombre: 'Lunes' },
+    { id: 2, nombre: 'Martes' },
+    { id: 3, nombre: 'Miércoles' },
+    { id: 4, nombre: 'Jueves' },
+    { id: 5, nombre: 'Viernes' },
+    { id: 6, nombre: 'Sábado' },
+    { id: 0, nombre: 'Domingo' }
+  ];
+
   const [formData, setFormData] = useState({
     nombre: agenteInicial?.nombre || '',
     apellido: agenteInicial?.apellido || '',
@@ -27,7 +37,13 @@ export default function FormularioAgente({
     duracionTurnoPorDefecto: agenteInicial?.duracionTurnoPorDefecto || 30,
     bufferEntreturnos: agenteInicial?.bufferEntreturnos || 5,
     capacidadSimultanea: agenteInicial?.capacidadSimultanea || 1,
-    maximoTurnosPorDia: agenteInicial?.maximoTurnosPorDia || 0
+    maximoTurnosPorDia: agenteInicial?.maximoTurnosPorDia || 0,
+    disponibilidad: agenteInicial?.disponibilidad || diasSemana.slice(0, 5).map(dia => ({
+      diaSemana: dia.id,
+      horaInicio: '09:00',
+      horaFin: '18:00',
+      activo: true
+    }))
   });
 
   const [loading, setLoading] = useState(false);
@@ -42,6 +58,59 @@ export default function FormularioAgente({
         ? parseInt(value) || 0 
         : value
     }));
+  };
+
+  const handleDisponibilidadChange = (diaSemana: number, campo: string, valor: any) => {
+    setFormData(prev => {
+      const disponibilidad = [...prev.disponibilidad];
+      const index = disponibilidad.findIndex(d => d.diaSemana === diaSemana);
+      
+      if (index >= 0) {
+        disponibilidad[index] = {
+          ...disponibilidad[index],
+          [campo]: valor
+        };
+      } else {
+        disponibilidad.push({
+          diaSemana,
+          horaInicio: '09:00',
+          horaFin: '18:00',
+          activo: true,
+          [campo]: valor
+        });
+      }
+      
+      return { ...prev, disponibilidad };
+    });
+  };
+
+  const toggleDia = (diaSemana: number) => {
+    setFormData(prev => {
+      const disponibilidad = [...prev.disponibilidad];
+      const index = disponibilidad.findIndex(d => d.diaSemana === diaSemana);
+      
+      if (index >= 0) {
+        disponibilidad[index].activo = !disponibilidad[index].activo;
+      } else {
+        disponibilidad.push({
+          diaSemana,
+          horaInicio: '09:00',
+          horaFin: '18:00',
+          activo: true
+        });
+      }
+      
+      return { ...prev, disponibilidad };
+    });
+  };
+
+  const getDiaDisponibilidad = (diaSemana: number) => {
+    return formData.disponibilidad.find((d: any) => d.diaSemana === diaSemana) || {
+      diaSemana,
+      horaInicio: '09:00',
+      horaFin: '18:00',
+      activo: false
+    };
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -246,6 +315,55 @@ export default function FormularioAgente({
           </div>
         </div>
       )}
+
+      {/* Disponibilidad por día */}
+      <div className={styles.disponibilidadSection}>
+        <h3>📅 Disponibilidad Semanal</h3>
+        <p style={{ color: '#666', fontSize: '0.9rem', marginBottom: '1rem' }}>
+          Configura los días y horarios en que este agente está disponible
+        </p>
+        
+        <div className={styles.diasGrid}>
+          {diasSemana.map(dia => {
+            const disp = getDiaDisponibilidad(dia.id);
+            return (
+              <div key={dia.id} className={`${styles.diaCard} ${disp.activo ? styles.diaActivo : ''}`}>
+                <div className={styles.diaHeader}>
+                  <label className={styles.diaCheckbox}>
+                    <input
+                      type="checkbox"
+                      checked={disp.activo}
+                      onChange={() => toggleDia(dia.id)}
+                    />
+                    <span className={styles.diaNombre}>{dia.nombre}</span>
+                  </label>
+                </div>
+                
+                {disp.activo && (
+                  <div className={styles.diaHorarios}>
+                    <div className={styles.horarioField}>
+                      <label>Desde</label>
+                      <input
+                        type="time"
+                        value={disp.horaInicio}
+                        onChange={(e) => handleDisponibilidadChange(dia.id, 'horaInicio', e.target.value)}
+                      />
+                    </div>
+                    <div className={styles.horarioField}>
+                      <label>Hasta</label>
+                      <input
+                        type="time"
+                        value={disp.horaFin}
+                        onChange={(e) => handleDisponibilidadChange(dia.id, 'horaFin', e.target.value)}
+                      />
+                    </div>
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      </div>
 
       <div className={styles.actions}>
         <button 

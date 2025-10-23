@@ -58,14 +58,8 @@ export default function ListaAgentes({
           </div>
 
           <div className={styles.agenteBody}>
+            {/* Información de Contacto */}
             <div className={styles.contacto}>
-              <div className={styles.contactoItem}>
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
-                  <polyline points="22,6 12,13 2,6"/>
-                </svg>
-                <span>{agente.email}</span>
-              </div>
               {agente.telefono && (
                 <div className={styles.contactoItem}>
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -74,11 +68,14 @@ export default function ListaAgentes({
                   <span>{agente.telefono}</span>
                 </div>
               )}
+              <div className={styles.contactoItem}>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
+                  <polyline points="22,6 12,13 2,6"/>
+                </svg>
+                <span>{agente.email}</span>
+              </div>
             </div>
-
-            {agente.descripcion && (
-              <p className={styles.descripcion}>{agente.descripcion}</p>
-            )}
 
             <div className={styles.detalles}>
               <div className={styles.detalle}>
@@ -137,9 +134,18 @@ export default function ListaAgentes({
               )}
             </div>
 
-            {agente.disponibilidad && agente.disponibilidad.length > 0 && (
+            {/* Disponibilidad Semanal */}
+            {agente.disponibilidad && agente.disponibilidad.length > 0 ? (
               <div className={styles.disponibilidad}>
-                <strong>Disponibilidad:</strong>
+                <div className={styles.disponibilidadHeader}>
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
+                    <line x1="16" y1="2" x2="16" y2="6"/>
+                    <line x1="8" y1="2" x2="8" y2="6"/>
+                    <line x1="3" y1="10" x2="21" y2="10"/>
+                  </svg>
+                  <strong>Disponibilidad:</strong>
+                </div>
                 <div className={styles.diasGrid}>
                   {DIAS_SEMANA.map((dia, index) => {
                     const disp = agente.disponibilidad.find(d => d.diaSemana === index && d.activo);
@@ -149,11 +155,43 @@ export default function ListaAgentes({
                         className={`${styles.dia} ${disp ? styles.diaActivo : ''}`}
                         title={disp ? `${disp.horaInicio} - ${disp.horaFin}` : 'No disponible'}
                       >
-                        {dia}
+                        <span className={styles.diaNombre}>{dia}</span>
+                        {disp && (
+                          <span className={styles.diaHorario}>
+                            {disp.horaInicio.substring(0, 5)}
+                          </span>
+                        )}
                       </div>
                     );
                   })}
                 </div>
+                {(() => {
+                  const diasActivos = agente.disponibilidad.filter(d => d.activo);
+                  if (diasActivos.length > 0) {
+                    const primerDia = diasActivos[0];
+                    return (
+                      <div className={styles.horarioResumen}>
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                          <circle cx="12" cy="12" r="10"/>
+                          <polyline points="12 6 12 12 16 14"/>
+                        </svg>
+                        <span>
+                          Horario típico: {primerDia.horaInicio} - {primerDia.horaFin}
+                        </span>
+                      </div>
+                    );
+                  }
+                  return null;
+                })()}
+              </div>
+            ) : (
+              <div className={styles.sinDisponibilidad}>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <circle cx="12" cy="12" r="10"/>
+                  <line x1="12" y1="8" x2="12" y2="12"/>
+                  <line x1="12" y1="16" x2="12.01" y2="16"/>
+                </svg>
+                <span>Sin horarios configurados</span>
               </div>
             )}
           </div>
