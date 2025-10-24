@@ -16,7 +16,7 @@ import Modal from '@/components/common/Modal';
 import styles from './calendario.module.css';
 
 export default function CalendarioPage() {
-  const { isAuthenticated, loading: authLoading } = useAuth();
+  const { isAuthenticated, empresa, loading: authLoading } = useAuth();
   const router = useRouter();
   
   const { turnos, loading: loadingTurnos, cargarTurnosDelDia, crearTurno, cancelarTurno, actualizarEstado } = useTurnos();
@@ -87,6 +87,19 @@ export default function CalendarioPage() {
               <p>Gestiona los turnos de tus agentes y clientes</p>
             </div>
             <div className={styles.headerRight}>
+              {empresa?.role === 'admin' && (
+                <Link href="/dashboard/usuarios">
+                  <button className={styles.btnSecondary}>
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+                      <circle cx="9" cy="7" r="4"/>
+                      <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
+                      <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+                    </svg>
+                    Usuarios
+                  </button>
+                </Link>
+              )}
               <Link href="/dashboard/calendario/configuracion">
                 <button className={styles.btnSecondary}>
                   <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">

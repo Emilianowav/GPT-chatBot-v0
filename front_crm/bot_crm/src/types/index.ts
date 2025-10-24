@@ -41,6 +41,8 @@ export interface EmpresaAuth {
   empresaId: string;
   empresaNombre: string;
   token: string;
+  role?: string;
+  username?: string;
 }
 
 export interface DashboardData {

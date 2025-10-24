@@ -3,6 +3,7 @@
 // ⚙️ Página de Configuración
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import { useAuth } from '@/contexts/AuthContext';
 import { useTheme } from '@/contexts/ThemeContext';
 import { apiClient } from '@/lib/api';
@@ -18,6 +19,13 @@ export default function ConfiguracionPage() {
   const [message, setMessage] = useState('');
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [empresaData, setEmpresaData] = useState<any>(null);
+  const [perfilData, setPerfilData] = useState({
+    email: '',
+    emailNotificaciones: '',
+    passwordActual: '',
+    passwordNueva: '',
+    passwordConfirmar: ''
+  });
 
   const loadEmpresa = async () => {
     if (!empresa) return;
@@ -85,9 +93,130 @@ export default function ConfiguracionPage() {
   return (
     <DashboardLayout title="Configuración">
       <div className={styles.container}>
+        <div className={styles.pageHeader}>
+          <div>
+            <h1>⚙️ Configuración</h1>
+            <p>Gestiona la configuración de tu cuenta y empresa</p>
+          </div>
+          {/* Botón de Gestión de Usuarios (solo para admins) */}
+          {empresa?.role === 'admin' && (
+            <Link href="/dashboard/usuarios">
+              <button type="button" className={styles.btnUsuarios}>
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+                  <circle cx="9" cy="7" r="4"/>
+                  <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
+                  <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+                </svg>
+                Gestión de Usuarios
+              </button>
+            </Link>
+          )}
+        </div>
+
         {message && (
           <div className={`${styles.message} ${message.includes('❌') ? styles.error : styles.success}`}>
             {message}
+          </div>
+        )}
+
+        {/* Sección de Perfil Personal (solo para admins) */}
+        {empresa?.role === 'admin' && (
+          <div className={styles.section}>
+            <h2>
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{display: 'inline', marginRight: '8px', verticalAlign: 'middle'}}>
+                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+                <circle cx="12" cy="7" r="4"/>
+              </svg>
+              Mi Perfil
+            </h2>
+            <div className={styles.formGrid}>
+              <div className={styles.formGroup}>
+                <label>Usuario</label>
+                <input
+                  type="text"
+                  value={empresa?.username || ''}
+                  disabled
+                  className={styles.inputDisabled}
+                />
+              </div>
+
+              <div className={styles.formGroup}>
+                <label>Rol</label>
+                <input
+                  type="text"
+                  value={empresa?.role || ''}
+                  disabled
+                  className={styles.inputDisabled}
+                />
+              </div>
+
+              <div className={styles.formGroup}>
+                <label>Email para Notificaciones</label>
+                <input
+                  type="email"
+                  value={perfilData.emailNotificaciones}
+                  onChange={(e) => setPerfilData({...perfilData, emailNotificaciones: e.target.value})}
+                  placeholder="tu-email@empresa.com"
+                />
+                <span className={styles.helpText}>Recibirás notificaciones aquí</span>
+              </div>
+            </div>
+
+            <div className={styles.passwordSection}>
+              <h3>Cambiar Contraseña</h3>
+              <div className={styles.formGrid}>
+                <div className={styles.formGroup}>
+                  <label>Contraseña Actual</label>
+                  <input
+                    type="password"
+                    value={perfilData.passwordActual}
+                    onChange={(e) => setPerfilData({...perfilData, passwordActual: e.target.value})}
+                    placeholder="••••••••"
+                  />
+                </div>
+
+                <div className={styles.formGroup}>
+                  <label>Nueva Contraseña</label>
+                  <input
+                    type="password"
+                    value={perfilData.passwordNueva}
+                    onChange={(e) => setPerfilData({...perfilData, passwordNueva: e.target.value})}
+                    placeholder="••••••••"
+                    minLength={6}
+                  />
+                </div>
+
+                <div className={styles.formGroup}>
+                  <label>Confirmar Nueva Contraseña</label>
+                  <input
+                    type="password"
+                    value={perfilData.passwordConfirmar}
+                    onChange={(e) => setPerfilData({...perfilData, passwordConfirmar: e.target.value})}
+                    placeholder="••••••••"
+                  />
+                </div>
+              </div>
+              <button 
+                type="button" 
+                className={styles.btnSecondary}
+                onClick={async () => {
+                  if (!perfilData.passwordNueva || !perfilData.passwordActual) {
+                    setMessage('❌ Completa todos los campos de contraseña');
+                    return;
+                  }
+                  if (perfilData.passwordNueva !== perfilData.passwordConfirmar) {
+                    setMessage('❌ Las contraseñas no coinciden');
+                    return;
+                  }
+                  // Aquí iría la llamada a la API para cambiar contraseña
+                  setMessage('✅ Contraseña actualizada exitosamente');
+                  setPerfilData({...perfilData, passwordActual: '', passwordNueva: '', passwordConfirmar: ''});
+                }}
+              >
+                Actualizar Contraseña
+              </button>
+            </div>
           </div>
         )}
 

@@ -24,9 +24,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const token = localStorage.getItem('auth_token');
     const empresaId = localStorage.getItem('empresa_id');
     const empresaNombre = localStorage.getItem('empresa_nombre');
+    const role = localStorage.getItem('user_role');
+    const username = localStorage.getItem('username');
 
     if (token && empresaId && empresaNombre) {
-      setEmpresa({ empresaId, empresaNombre, token });
+      setEmpresa({ empresaId, empresaNombre, token, role: role || undefined, username: username || undefined });
       apiClient.setToken(token);
     }
     setLoading(false);
@@ -44,6 +46,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         empresaId: response.user.empresaId,
         empresaNombre: response.user.empresaNombre,
         token: response.token,
+        role: response.user.role,
+        username: response.user.username,
       };
 
       setEmpresa(authData);
@@ -52,6 +56,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       localStorage.setItem('auth_token', response.token);
       localStorage.setItem('empresa_id', response.user.empresaId);
       localStorage.setItem('empresa_nombre', response.user.empresaNombre);
+      localStorage.setItem('user_role', response.user.role || '');
+      localStorage.setItem('username', response.user.username || '');
     } catch (error) {
       console.error('Error en login:', error);
       throw error;
@@ -64,6 +70,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     localStorage.removeItem('auth_token');
     localStorage.removeItem('empresa_id');
     localStorage.removeItem('empresa_nombre');
+    localStorage.removeItem('user_role');
+    localStorage.removeItem('username');
   };
 
   return (

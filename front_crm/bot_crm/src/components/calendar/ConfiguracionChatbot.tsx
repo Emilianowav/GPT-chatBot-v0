@@ -6,6 +6,16 @@ import { useConfiguracion } from '@/hooks/useConfiguracion';
 import * as configuracionApi from '@/lib/configuracionApi';
 import styles from './ConfiguracionChatbot.module.css';
 
+interface AccionCondicional {
+  tipo: 'continuar' | 'terminar' | 'saltar_a';
+  condicion?: {
+    valor: string | number; // Valor esperado para activar la acción
+    operador: 'igual' | 'diferente' | 'contiene' | 'mayor' | 'menor';
+  };
+  mensaje?: string; // Mensaje a mostrar al ejecutar la acción
+  saltarAPaso?: number; // Número de paso al que saltar (si tipo es 'saltar_a')
+}
+
 interface PasoChatbot {
   orden: number;
   tipo: 'seleccion' | 'texto' | 'numero' | 'fecha' | 'confirmacion';
@@ -20,6 +30,12 @@ interface PasoChatbot {
     mensajeError?: string;
   };
   mensajeExito?: string;
+  // Condicionales y acciones
+  condicionales?: AccionCondicional[]; // Acciones basadas en la respuesta
+  esCondicional?: boolean; // Si este paso es condicional (filtro)
+  // Configuración específica para confirmación/selección
+  terminarSiNo?: boolean; // Si debe terminar la conversación cuando la respuesta es "No"
+  mensajeDespedida?: string; // Mensaje a mostrar al terminar por respuesta negativa
 }
 
 interface FlujoChatbot {
@@ -173,6 +189,41 @@ export default function ConfiguracionChatbot({ empresaId }: ConfiguracionChatbot
       paso.orden = i + 1;
     });
     
+    setPasos(nuevosPasos);
+  };
+
+  const agregarCondicional = (index: number) => {
+    const nuevosPasos = [...pasos];
+    if (!nuevosPasos[index].condicionales) {
+      nuevosPasos[index].condicionales = [];
+    }
+    
+    nuevosPasos[index].condicionales!.push({
+      tipo: 'continuar',
+      condicion: {
+        valor: '',
+        operador: 'igual'
+      },
+      mensaje: ''
+    });
+    
+    setPasos(nuevosPasos);
+  };
+
+  const eliminarCondicional = (pasoIndex: number, condIndex: number) => {
+    const nuevosPasos = [...pasos];
+    nuevosPasos[pasoIndex].condicionales = nuevosPasos[pasoIndex].condicionales?.filter((_, i) => i !== condIndex);
+    setPasos(nuevosPasos);
+  };
+
+  const actualizarCondicional = (pasoIndex: number, condIndex: number, cambios: Partial<AccionCondicional>) => {
+    const nuevosPasos = [...pasos];
+    if (nuevosPasos[pasoIndex].condicionales) {
+      nuevosPasos[pasoIndex].condicionales![condIndex] = {
+        ...nuevosPasos[pasoIndex].condicionales![condIndex],
+        ...cambios
+      };
+    }
     setPasos(nuevosPasos);
   };
 
@@ -438,6 +489,184 @@ export default function ConfiguracionChatbot({ empresaId }: ConfiguracionChatbot
                         />
                       </div>
                     )}
+
+                    {/* Configuración especial para Confirmación y Selección */}
+                    {(paso.tipo === 'confirmacion' || paso.tipo === 'seleccion') && (
+                      <div className={styles.terminacionSection}>
+                        <div className={styles.checkboxGroup}>
+                          <label className={styles.checkbox}>
+                            <input
+                              type="checkbox"
+                              checked={paso.terminarSiNo || false}
+                              onChange={(e) => actualizarPaso(index, {
+                                terminarSiNo: e.target.checked,
+                                mensajeDespedida: paso.mensajeDespedida || ''
+                              })}
+                            />
+                            <span>
+                              {paso.tipo === 'confirmacion' 
+                                ? '🛑 Terminar conversación si responde "No"'
+                                : '🛑 Terminar conversación en respuesta específica'
+                              }
+                            </span>
+                          </label>
+                        </div>
+
+                        {paso.terminarSiNo && (
+                          <div className={styles.field}>
+                            <label>
+                              {paso.tipo === 'confirmacion' 
+                                ? 'Mensaje de despedida (cuando dice "No")'
+                                : 'Mensaje de despedida'
+                              }
+                            </label>
+                            <textarea
+                              value={paso.mensajeDespedida || ''}
+                              onChange={(e) => actualizarPaso(index, {
+                                mensajeDespedida: e.target.value
+                              })}
+                              rows={3}
+                              placeholder={
+                                paso.tipo === 'confirmacion'
+                                  ? 'Ej: Lo siento, solo atendemos viajes para mañana. ¡Hasta pronto!'
+                                  : 'Ej: Gracias por tu interés. ¡Hasta pronto!'
+                              }
+                            />
+                            <small>
+                              💡 Este mensaje se mostrará cuando el usuario responda negativamente
+                              {paso.tipo === 'seleccion' && ' (configura qué opción termina en las condicionales)'}
+                            </small>
+                          </div>
+                        )}
+                      </div>
+                    )}
+
+                    {/* Sección de Condicionales */}
+                    <div className={styles.condicionalesSection}>
+                      <div className={styles.condicionalesHeader}>
+                        <h5>🔀 Condicionales (Acciones según respuesta)</h5>
+                        <button
+                          type="button"
+                          onClick={() => agregarCondicional(index)}
+                          className={styles.btnAgregarPequeño}
+                        >
+                          + Agregar Condicional
+                        </button>
+                      </div>
+                      
+                      {paso.condicionales && paso.condicionales.length > 0 ? (
+                        <div className={styles.condicionalesList}>
+                          {paso.condicionales.map((cond, condIndex) => (
+                            <div key={condIndex} className={styles.condicionalCard}>
+                              <div className={styles.condicionalHeader}>
+                                <span>Condicional #{condIndex + 1}</span>
+                                <button
+                                  type="button"
+                                  onClick={() => eliminarCondicional(index, condIndex)}
+                                  className={styles.btnEliminarPequeño}
+                                >
+                                  ×
+                                </button>
+                              </div>
+
+                              <div className={styles.grid2}>
+                                <div className={styles.field}>
+                                  <label>Si la respuesta es:</label>
+                                  <select
+                                    value={cond.condicion?.operador || 'igual'}
+                                    onChange={(e) => actualizarCondicional(index, condIndex, {
+                                      condicion: {
+                                        ...cond.condicion!,
+                                        operador: e.target.value as any
+                                      }
+                                    })}
+                                  >
+                                    <option value="igual">Igual a</option>
+                                    <option value="diferente">Diferente de</option>
+                                    <option value="contiene">Contiene</option>
+                                    <option value="mayor">Mayor que</option>
+                                    <option value="menor">Menor que</option>
+                                  </select>
+                                </div>
+
+                                <div className={styles.field}>
+                                  <label>Valor:</label>
+                                  <input
+                                    type="text"
+                                    value={cond.condicion?.valor || ''}
+                                    onChange={(e) => actualizarCondicional(index, condIndex, {
+                                      condicion: {
+                                        ...cond.condicion!,
+                                        valor: e.target.value
+                                      }
+                                    })}
+                                    placeholder={paso.tipo === 'seleccion' ? 'Ej: 1, 2, Sí, No' : 'Valor esperado'}
+                                  />
+                                  {paso.tipo === 'seleccion' && paso.opciones && (
+                                    <small>Opciones: {paso.opciones.map((o, i) => `${i + 1}=${o}`).join(', ')}</small>
+                                  )}
+                                </div>
+                              </div>
+
+                              <div className={styles.field}>
+                                <label>Entonces:</label>
+                                <select
+                                  value={cond.tipo}
+                                  onChange={(e) => actualizarCondicional(index, condIndex, {
+                                    tipo: e.target.value as any
+                                  })}
+                                >
+                                  <option value="continuar">✅ Continuar con el siguiente paso</option>
+                                  <option value="terminar">🛑 Terminar la conversación</option>
+                                  <option value="saltar_a">⏭️ Saltar a otro paso</option>
+                                </select>
+                              </div>
+
+                              {cond.tipo === 'saltar_a' && (
+                                <div className={styles.field}>
+                                  <label>Saltar al paso:</label>
+                                  <select
+                                    value={cond.saltarAPaso || ''}
+                                    onChange={(e) => actualizarCondicional(index, condIndex, {
+                                      saltarAPaso: parseInt(e.target.value)
+                                    })}
+                                  >
+                                    <option value="">Seleccionar paso...</option>
+                                    {pasos.map((p, i) => (
+                                      i !== index && (
+                                        <option key={i} value={p.orden}>
+                                          Paso {p.orden}: {p.pregunta.substring(0, 30)}...
+                                        </option>
+                                      )
+                                    ))}
+                                  </select>
+                                </div>
+                              )}
+
+                              <div className={styles.field}>
+                                <label>Mensaje a mostrar:</label>
+                                <input
+                                  type="text"
+                                  value={cond.mensaje || ''}
+                                  onChange={(e) => actualizarCondicional(index, condIndex, {
+                                    mensaje: e.target.value
+                                  })}
+                                  placeholder={
+                                    cond.tipo === 'terminar' 
+                                      ? 'Ej: Lo siento, solo atendemos viajes para mañana. ¡Hasta pronto!' 
+                                      : 'Mensaje opcional'
+                                  }
+                                />
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <div className={styles.emptyCondicionales}>
+                          <p>Sin condicionales. El bot continuará al siguiente paso siempre.</p>
+                        </div>
+                      )}
+                    </div>
                   </div>
                 </div>
               ))}
