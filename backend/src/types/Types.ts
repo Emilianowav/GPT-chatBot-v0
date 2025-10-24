@@ -69,6 +69,8 @@ export type Limites = {
   integraciones: number;
   exportacionesMensuales: number;
   agentesSimultaneos: number;
+  maxUsuarios?: number;
+  maxAdmins?: number;
 };
 
 export type Uso = {

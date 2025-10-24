@@ -1,6 +1,7 @@
 // 🔐 Servicio de Autenticación
 import jwt from 'jsonwebtoken';
 import { AdminUserModel } from '../models/AdminUser.js';
+import { UsuarioEmpresaModel } from '../models/UsuarioEmpresa.js';
 import { EmpresaModel } from '../models/Empresa.js';
 
 const JWT_SECRET = process.env.JWT_SECRET || 'neural_secret_key_change_in_production';
@@ -34,11 +35,30 @@ export async function login(username: string, password: string): Promise<LoginRe
   try {
     console.log('🔐 Intento de login:', { username });
 
-    // Buscar usuario
-    const user = await AdminUserModel.findOne({ 
+    // Buscar primero en UsuarioEmpresa (nuevo sistema)
+    let user = await UsuarioEmpresaModel.findOne({ 
       username: username.toLowerCase(),
       activo: true 
     });
+
+    // Si no se encuentra, buscar en AdminUser (sistema antiguo)
+    if (!user) {
+      const adminUser = await AdminUserModel.findOne({ 
+        username: username.toLowerCase(),
+        activo: true 
+      });
+
+      if (!adminUser) {
+        console.log('❌ Usuario no encontrado:', username);
+        return {
+          success: false,
+          message: 'Usuario o contraseña incorrectos'
+        };
+      }
+
+      // Convertir AdminUser a formato compatible
+      user = adminUser as any;
+    }
 
     if (!user) {
       console.log('❌ Usuario no encontrado:', username);
@@ -77,7 +97,7 @@ export async function login(username: string, password: string): Promise<LoginRe
       userId: user._id.toString(),
       username: user.username,
       empresaId: user.empresaId,
-      role: user.role
+      role: (user as any).rol || (user as any).role // Compatibilidad con ambos modelos
     };
 
     const token = jwt.sign(payload, JWT_SECRET, { expiresIn: JWT_EXPIRES_IN });
@@ -92,7 +112,7 @@ export async function login(username: string, password: string): Promise<LoginRe
         username: user.username,
         empresaId: user.empresaId,
         empresaNombre: empresa.nombre,
-        role: user.role,
+        role: (user as any).rol || (user as any).role,
         email: user.email
       }
     };

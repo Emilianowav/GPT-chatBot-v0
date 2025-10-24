@@ -12,7 +12,8 @@
     "tunnel": "ngrok http 3000",
     "migrar": "node --loader ts-node/esm src/scripts/migrarAMongoDB.ts",
     "crear-admins": "node --loader ts-node/esm src/scripts/crearAdminInicial.ts",
-    "seed:empresa-modulo": "tsx src/scripts/seedEmpresaConModulo.ts"
+    "seed:empresa-modulo": "tsx src/scripts/seedEmpresaConModulo.ts",
+    "migrate:usuarios": "node --loader ts-node/esm src/scripts/migrateEmpresasUsuarios.ts"
   },
   "keywords": [],
   "author": "",

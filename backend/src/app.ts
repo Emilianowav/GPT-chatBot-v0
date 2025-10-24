@@ -14,6 +14,7 @@ import empresaRoutes from "./routes/empresaRoutes.js";
 import conversacionesRoutes from "./routes/conversacionesRoutes.js";
 import clienteRoutes from "./routes/clienteRoutes.js";
 import calendarRoutes from "./modules/calendar/routes/calendarRoutes.js";
+import usuarioEmpresaRoutes from "./routes/usuarioEmpresaRoutes.js";
 import { errorHandler } from "./middlewares/errorHandler.js";
 import { connectDB } from "./config/database.js";
 
@@ -81,6 +82,7 @@ app.use((req, res, next) => {
 // Rutas
 app.use("/api/auth", authRoutes);
 app.use("/api/empresas", empresaRoutes);
+app.use("/api/usuarios-empresa", usuarioEmpresaRoutes);
 app.use("/api/clientes", clienteRoutes);
 app.use("/api/conversaciones", conversacionesRoutes);
 app.use("/api/openai", openaiRoutes);

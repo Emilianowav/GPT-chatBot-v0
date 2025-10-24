@@ -95,7 +95,10 @@ const EmpresaSchema = new Schema<IEmpresa>(
       almacenamiento: { type: Number, default: 250 },
       integraciones: { type: Number, default: 1 },
       exportacionesMensuales: { type: Number, default: 0 },
-      agentesSimultaneos: { type: Number, default: 0 }
+      agentesSimultaneos: { type: Number, default: 0 },
+      // Límites de usuarios de empresa (staff)
+      maxUsuarios: { type: Number, default: 5 }, // Plan base: 5 usuarios
+      maxAdmins: { type: Number, default: 1 }    // Plan base: 1 admin
     },
     
     // Uso actual
