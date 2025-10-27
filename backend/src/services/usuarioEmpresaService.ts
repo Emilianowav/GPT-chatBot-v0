@@ -24,6 +24,7 @@ export interface UpdateUsuarioInput {
   telefono?: string;
   activo?: boolean;
   avatar?: string;
+  password?: string;
 }
 
 /**
@@ -53,21 +54,7 @@ export async function crearUsuario(data: CreateUsuarioInput) {
       };
     }
 
-    // Si es admin, verificar límite de admins
-    if (data.rol === 'admin') {
-      const adminsActuales = await UsuarioEmpresaModel.countDocuments({
-        empresaId: data.empresaId,
-        rol: 'admin',
-        activo: true
-      });
-
-      if (adminsActuales >= (empresa.limites?.maxAdmins || 1)) {
-        return {
-          success: false,
-          message: `Límite de administradores alcanzado (${empresa.limites?.maxAdmins || 1}). Actualiza tu plan para agregar más administradores.`
-        };
-      }
-    }
+    // No hay límite específico de admins, solo el límite total de usuarios
 
     // Verificar que el username no existe
     const existingUser = await UsuarioEmpresaModel.findOne({ 
@@ -234,22 +221,7 @@ export async function actualizarUsuario(usuarioId: string, data: UpdateUsuarioIn
       };
     }
 
-    // Si se está cambiando el rol a admin, verificar límite
-    if (data.rol === 'admin' && usuario.rol !== 'admin') {
-      const empresa = await EmpresaModel.findOne({ nombre: usuario.empresaId });
-      const adminsActuales = await UsuarioEmpresaModel.countDocuments({
-        empresaId: usuario.empresaId,
-        rol: 'admin',
-        activo: true
-      });
-
-      if (adminsActuales >= (empresa?.limites?.maxAdmins || 1)) {
-        return {
-          success: false,
-          message: `Límite de administradores alcanzado (${empresa?.limites?.maxAdmins || 1})`
-        };
-      }
-    }
+    // No hay límite específico de admins al cambiar rol
 
     // Actualizar campos
     if (data.nombre) usuario.nombre = data.nombre;
@@ -260,6 +232,7 @@ export async function actualizarUsuario(usuarioId: string, data: UpdateUsuarioIn
     if (data.telefono !== undefined) usuario.telefono = data.telefono;
     if (data.activo !== undefined) usuario.activo = data.activo;
     if (data.avatar !== undefined) usuario.avatar = data.avatar;
+    if (data.password) usuario.password = data.password; // Se hasheará automáticamente por el pre-save hook
 
     await usuario.save();
 
@@ -387,11 +360,11 @@ export async function obtenerEstadisticas(empresaId: string) {
         porRol: rolesCounts,
         limites: {
           maxUsuarios: empresa?.limites?.maxUsuarios || 5,
-          maxAdmins: empresa?.limites?.maxAdmins || 1
+          maxAdmins: 999 // Sin límite de admins
         },
         disponibles: {
           usuarios: (empresa?.limites?.maxUsuarios || 5) - activos,
-          admins: (empresa?.limites?.maxAdmins || 1) - rolesCounts.admin
+          admins: 999 // Sin límite de admins
         }
       }
     };
