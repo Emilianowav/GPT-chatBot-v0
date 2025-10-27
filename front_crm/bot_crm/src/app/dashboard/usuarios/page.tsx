@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import DashboardLayout from '@/components/DashboardLayout/DashboardLayout';
 import Modal from '@/components/common/Modal';
+import { API_BASE_URL } from '@/lib/config';
 import styles from './usuarios.module.css';
 
 interface UsuarioEmpresa {
@@ -83,7 +84,7 @@ export default function UsuariosPage() {
   const loadUsuarios = async () => {
     try {
       setLoading(true);
-      const response = await fetch('http://localhost:3000/api/usuarios-empresa', {
+      const response = await fetch(`${API_BASE_URL}/usuarios-empresa`, {
         headers: {
           'Authorization': `Bearer ${empresa?.token}`
         }
@@ -102,7 +103,7 @@ export default function UsuariosPage() {
 
   const loadEstadisticas = async () => {
     try {
-      const response = await fetch('http://localhost:3000/api/usuarios-empresa/estadisticas', {
+      const response = await fetch(`${API_BASE_URL}/usuarios-empresa/estadisticas`, {
         headers: {
           'Authorization': `Bearer ${empresa?.token}`
         }
@@ -124,7 +125,7 @@ export default function UsuariosPage() {
   const handleCrearUsuario = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      const response = await fetch('http://localhost:3000/api/usuarios-empresa', {
+      const response = await fetch(`${API_BASE_URL}/usuarios-empresa`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -167,7 +168,7 @@ export default function UsuariosPage() {
         updateData.password = formData.password;
       }
 
-      const response = await fetch(`http://localhost:3000/api/usuarios-empresa/${usuarioEditar.id}`, {
+      const response = await fetch(`${API_BASE_URL}/usuarios-empresa/${usuarioEditar.id}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -197,7 +198,7 @@ export default function UsuariosPage() {
     if (!confirm('¿Estás seguro de desactivar este usuario?')) return;
     
     try {
-      const response = await fetch(`http://localhost:3000/api/usuarios-empresa/${id}`, {
+      const response = await fetch(`${API_BASE_URL}/usuarios-empresa/${id}`, {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${empresa?.token}`
