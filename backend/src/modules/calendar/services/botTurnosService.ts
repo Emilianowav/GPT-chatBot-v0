@@ -432,7 +432,7 @@ async function crearTurnoFinal(
         nombre: 'Cliente',
         apellido: 'WhatsApp',
         telefono: conversacion.clienteTelefono,
-        origen: 'bot'
+        origen: 'chatbot'
       });
     }
     
