@@ -38,7 +38,13 @@ async function enviarNotificacion(
     console.log('  Mensaje:', mensaje);
     
     // Obtener configuración de la empresa para el phoneNumberId
-    const empresa = await EmpresaModel.findOne({ _id: empresaId });
+    // empresaId puede ser el nombre de la empresa o el ObjectId
+    const empresa = await EmpresaModel.findOne({ 
+      $or: [
+        { nombre: empresaId },
+        { _id: empresaId }
+      ]
+    });
     
     if (!empresa) {
       console.error('❌ Empresa no encontrada:', empresaId);
