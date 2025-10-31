@@ -23,7 +23,24 @@ export async function crearTurno(req: Request, res: Response) {
     if (!clienteId || !fechaInicio || !duracion) {
       return res.status(400).json({
         success: false,
-        message: 'Faltan campos requeridos'
+        message: 'Faltan campos requeridos: clienteId, fechaInicio, duracion'
+      });
+    }
+
+    // Validar que agenteId sea requerido
+    if (!agenteId) {
+      return res.status(400).json({
+        success: false,
+        message: 'El campo agenteId es obligatorio'
+      });
+    }
+
+    // Validar formato de fecha
+    const fecha = new Date(fechaInicio);
+    if (isNaN(fecha.getTime())) {
+      return res.status(400).json({
+        success: false,
+        message: 'Formato de fecha inválido. Use formato ISO 8601 (ej: 2024-11-15T14:30:00Z)'
       });
     }
 
@@ -31,7 +48,7 @@ export async function crearTurno(req: Request, res: Response) {
       empresaId,
       agenteId,
       clienteId,
-      fechaInicio: new Date(fechaInicio),
+      fechaInicio: fecha,
       duracion,
       datos: datos || {}, // Campos dinámicos
       notas,
