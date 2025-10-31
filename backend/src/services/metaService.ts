@@ -9,13 +9,31 @@ const modoDev = process.env.MODO_DEV === "true";
 function formatPhoneNumberForWhatsapp(number: string): string {
   let cleaned = number.replace(/\D/g, '');
 
-  if (cleaned.startsWith('549')) {
-    cleaned = '54' + cleaned.slice(3);
+  // Si ya tiene el formato correcto 549XXXXXXXXXX, dejarlo
+  if (cleaned.startsWith('549') && cleaned.length >= 12) {
+    console.log("📞 Número formateado:", cleaned);
+    return cleaned;
   }
-  if (cleaned.startsWith('540')) {
-    cleaned = '54' + cleaned.slice(3);
+
+  // Si empieza con 54 pero no tiene el 9, agregarlo
+  if (cleaned.startsWith('54') && !cleaned.startsWith('549')) {
+    // Remover el 0 del código de área si existe
+    cleaned = cleaned.replace(/^540/, '54');
+    // Remover el 15 si existe
+    cleaned = cleaned.replace(/^54(\d{2,4})15/, '54$1');
+    // Agregar el 9 después del 54
+    cleaned = '549' + cleaned.slice(2);
   }
-  cleaned = cleaned.replace(/^54(\d{2,4})15/, '54$1');
+
+  // Si no empieza con 54, asumir que es un número argentino sin código de país
+  if (!cleaned.startsWith('54')) {
+    // Remover 0 inicial del código de área
+    cleaned = cleaned.replace(/^0/, '');
+    // Remover 15
+    cleaned = cleaned.replace(/^(\d{2,4})15/, '$1');
+    // Agregar 549
+    cleaned = '549' + cleaned;
+  }
 
   console.log("📞 Número formateado:", cleaned);
   return cleaned;
