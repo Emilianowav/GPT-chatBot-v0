@@ -168,12 +168,51 @@ function calcularRangoFechas(rangoHorario: any): { inicio: Date, fin: Date } {
 }
 
 /**
+ * Verificar si hoy corresponde enviar según la frecuencia configurada
+ */
+function debeEnviarHoy(frecuencia: any): boolean {
+  const ahora = new Date();
+  const diaSemana = ahora.getDay(); // 0 = Domingo, 6 = Sábado
+  const diaMes = ahora.getDate();
+  
+  if (!frecuencia) {
+    return true; // Por defecto, enviar todos los días
+  }
+  
+  switch (frecuencia.tipo) {
+    case 'diaria':
+      return true;
+      
+    case 'semanal':
+      // Verificar si hoy está en los días configurados
+      return frecuencia.diasSemana && frecuencia.diasSemana.includes(diaSemana);
+      
+    case 'mensual':
+      // Verificar si hoy es el día del mes configurado
+      return frecuencia.diaMes === diaMes;
+      
+    case 'personalizada':
+      // Para personalizada, siempre enviar (se controla por intervalo de horas)
+      return true;
+      
+    default:
+      return true;
+  }
+}
+
+/**
  * Enviar notificaciones diarias para una empresa específica
  */
 async function enviarNotificacionesDiariasPorEmpresa(config: any) {
   const { empresaId, notificacionDiariaAgentes, nomenclatura } = config;
   
   if (!notificacionDiariaAgentes || !notificacionDiariaAgentes.activa) {
+    return;
+  }
+  
+  // Verificar si hoy corresponde enviar según frecuencia
+  if (!debeEnviarHoy(notificacionDiariaAgentes.frecuencia)) {
+    console.log(`⏭️ Hoy no corresponde enviar para empresa ${empresaId} según frecuencia configurada`);
     return;
   }
   
@@ -235,28 +274,75 @@ async function enviarNotificacionesDiariasPorEmpresa(config: any) {
 }
 
 /**
+ * Aplicar filtros de horario a los turnos
+ */
+function aplicarFiltroHorario(turnos: any[], filtroHorario: any): any[] {
+  if (!filtroHorario || !filtroHorario.activo || filtroHorario.tipo === 'todo_el_dia') {
+    return turnos;
+  }
+  
+  return turnos.filter(turno => {
+    const hora = new Date(turno.fechaInicio).getHours();
+    
+    switch (filtroHorario.tipo) {
+      case 'manana':
+        return hora >= 6 && hora < 12;
+      case 'tarde':
+        return hora >= 12 && hora < 20;
+      case 'noche':
+        return hora >= 20 || hora < 6;
+      case 'personalizado':
+        if (filtroHorario.horaInicio && filtroHorario.horaFin) {
+          const [horaIni] = filtroHorario.horaInicio.split(':').map(Number);
+          const [horaFin] = filtroHorario.horaFin.split(':').map(Number);
+          return hora >= horaIni && hora < horaFin;
+        }
+        return true;
+      default:
+        return true;
+    }
+  });
+}
+
+/**
  * Enviar notificación diaria a un agente específico
  */
 async function enviarNotificacionDiariaAgente(
   agente: any,
   empresaId: string,
-  hoy: Date,
-  manana: Date,
+  inicio: Date,
+  fin: Date,
   config: any,
   nomenclatura: any
 ) {
-  if (!agente.telefono) {
-    console.log(`⚠️ Agente ${agente._id} no tiene teléfono configurado`);
-    return;
-  }
+  console.log(`📤 Enviando notificación diaria a agente: ${agente.nombre} ${agente.apellido}`);
   
-  // Buscar turnos del día para este agente
-  const turnos = await TurnoModel.find({
+  // Construir query base
+  const query: any = {
     empresaId,
     agenteId: agente._id,
-    fechaInicio: { $gte: hoy, $lt: manana },
-    estado: { $in: ['pendiente', 'confirmado'] }
-  }).sort({ fechaInicio: 1 });
+    fechaInicio: { $gte: inicio, $lt: fin }
+  };
+  
+  // Aplicar filtro de estado
+  if (config.filtroEstado && config.filtroEstado.activo && config.filtroEstado.estados.length > 0) {
+    query.estado = { $in: config.filtroEstado.estados };
+  } else {
+    query.estado = { $in: ['pendiente', 'confirmado'] };
+  }
+  
+  // Aplicar filtro de tipo
+  if (config.filtroTipo && config.filtroTipo.activo && config.filtroTipo.tipos.length > 0) {
+    query.tipoReserva = { $in: config.filtroTipo.tipos };
+  }
+  
+  // Buscar turnos del agente
+  let turnos = await TurnoModel.find(query)
+    .populate('clienteId')
+    .sort({ fechaInicio: 1 });
+  
+  // Aplicar filtro de horario
+  turnos = aplicarFiltroHorario(turnos, config.filtroHorario);
   
   if (turnos.length === 0 && !config.enviarATodos) {
     // No tiene turnos y no se envía a todos

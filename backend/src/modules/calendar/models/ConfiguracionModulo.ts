@@ -67,6 +67,14 @@ export interface NotificacionDiariaAgentes {
   enviarATodos: boolean;      // true = todos los agentes, false = solo agentes con turnos
   plantillaMensaje: string;   // Plantilla del mensaje de resumen
   
+  // Configuración de ciclo/frecuencia
+  frecuencia: {
+    tipo: 'diaria' | 'semanal' | 'mensual' | 'personalizada';
+    diasSemana?: number[];    // [0,1,2,3,4,5,6] = Dom, Lun, Mar, Mie, Jue, Vie, Sab
+    diaMes?: number;          // 1-31 para mensual
+    horasIntervalo?: number;  // Para personalizada: cada X horas
+  };
+  
   // Filtros de rango horario
   rangoHorario: {
     activo: boolean;
@@ -74,6 +82,26 @@ export interface NotificacionDiariaAgentes {
     diasAdelante?: number;    // Para 'proximos_dias': 1, 2, 7, etc.
     fechaInicio?: string;     // Para 'personalizado': "2024-11-15"
     fechaFin?: string;        // Para 'personalizado': "2024-11-20"
+  };
+  
+  // Filtros de horario del día (para filtrar turnos)
+  filtroHorario: {
+    activo: boolean;
+    tipo: 'manana' | 'tarde' | 'noche' | 'personalizado' | 'todo_el_dia';
+    horaInicio?: string;      // "08:00" para personalizado
+    horaFin?: string;         // "12:00" para personalizado
+  };
+  
+  // Filtros por estado de turno
+  filtroEstado: {
+    activo: boolean;
+    estados: ('pendiente' | 'confirmado' | 'en_curso')[];
+  };
+  
+  // Filtros por tipo/categoría de turno
+  filtroTipo: {
+    activo: boolean;
+    tipos: string[];          // ['viaje', 'traslado', etc.]
   };
   
   incluirDetalles: {
@@ -260,6 +288,16 @@ const NotificacionDiariaAgentesSchema = new Schema<NotificacionDiariaAgentes>(
       type: String,
       default: 'Buenos días! Estos son tus {turnos} de hoy:'
     },
+    frecuencia: {
+      tipo: {
+        type: String,
+        enum: ['diaria', 'semanal', 'mensual', 'personalizada'],
+        default: 'diaria'
+      },
+      diasSemana: [Number],
+      diaMes: Number,
+      horasIntervalo: Number
+    },
     rangoHorario: {
       activo: { type: Boolean, default: false },
       tipo: { 
@@ -270,6 +308,27 @@ const NotificacionDiariaAgentesSchema = new Schema<NotificacionDiariaAgentes>(
       diasAdelante: Number,
       fechaInicio: String,
       fechaFin: String
+    },
+    filtroHorario: {
+      activo: { type: Boolean, default: false },
+      tipo: {
+        type: String,
+        enum: ['manana', 'tarde', 'noche', 'personalizado', 'todo_el_dia'],
+        default: 'todo_el_dia'
+      },
+      horaInicio: String,
+      horaFin: String
+    },
+    filtroEstado: {
+      activo: { type: Boolean, default: false },
+      estados: {
+        type: [String],
+        default: ['pendiente', 'confirmado']
+      }
+    },
+    filtroTipo: {
+      activo: { type: Boolean, default: false },
+      tipos: [String]
     },
     incluirDetalles: {
       origen: { type: Boolean, default: true },
