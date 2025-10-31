@@ -169,7 +169,35 @@ export async function obtenerTurnos(filtros: {
 
   const total = await TurnoModel.countDocuments(query);
 
-  return { turnos, total };
+  // Buscar información de clientes manualmente (ya que clienteId es String)
+  const { ClienteModel } = await import('../../../models/Cliente.js');
+  
+  const turnosConClientes = await Promise.all(
+    turnos.map(async (turno) => {
+      const turnoObj = turno.toObject();
+      try {
+        const cliente = await ClienteModel.findOne({ 
+          _id: turno.clienteId,
+          empresaId: filtros.empresaId
+        }).select('nombre apellido telefono email');
+        
+        return {
+          ...turnoObj,
+          clienteInfo: cliente ? {
+            _id: cliente._id,
+            nombre: cliente.nombre,
+            apellido: cliente.apellido,
+            telefono: cliente.telefono,
+            email: cliente.email
+          } : null
+        };
+      } catch (error) {
+        return turnoObj;
+      }
+    })
+  );
+
+  return { turnos: turnosConClientes, total };
 }
 
 /**
