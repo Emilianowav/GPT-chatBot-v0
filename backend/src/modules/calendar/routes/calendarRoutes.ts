@@ -5,6 +5,7 @@ import { authenticate } from '../../../middlewares/authMiddleware.js';
 import * as turnoController from '../controllers/turnoController.js';
 import * as agenteController from '../controllers/agenteController.js';
 import * as disponibilidadController from '../controllers/disponibilidadController.js';
+import * as notificacionController from '../controllers/notificacionController.js';
 import configuracionRoutes from './configuracionRoutes.js';
 import botRoutes from './botRoutes.js';
 
@@ -75,5 +76,16 @@ router.get('/disponibilidad/:agenteId', disponibilidadController.obtenerSlotsDis
 
 // Verificar disponibilidad
 router.post('/disponibilidad/verificar', disponibilidadController.verificarDisponibilidad);
+
+// ========== RUTAS DE NOTIFICACIONES ==========
+
+// Enviar notificación de prueba
+router.post('/notificaciones/prueba', notificacionController.enviarNotificacionPrueba);
+
+// Obtener agentes para selector
+router.get('/notificaciones/agentes/:empresaId', notificacionController.obtenerAgentesParaNotificaciones);
+
+// Obtener clientes para selector
+router.get('/notificaciones/clientes/:empresaId', notificacionController.obtenerClientesParaNotificaciones);
 
 export default router;

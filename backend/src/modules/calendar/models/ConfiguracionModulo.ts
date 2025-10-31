@@ -45,14 +45,35 @@ export interface CampoPersonalizado {
 export interface NotificacionAutomatica {
   activa: boolean;
   tipo: 'recordatorio' | 'confirmacion';
-  momento: 'noche_anterior' | 'mismo_dia' | 'horas_antes' | 'personalizado';
-  horaEnvio?: string;         // "22:00" para envío nocturno
+  destinatario: 'cliente' | 'agente' | 'clientes_especificos' | 'agentes_especificos';
+  momento: 'noche_anterior' | 'mismo_dia' | 'horas_antes' | 'personalizado' | 'inmediata' | 'hora_exacta';
+  horaEnvio?: string;         // "22:00" para envío nocturno o hora exacta
   horasAntes?: number;        // Para 'horas_antes': 24, 1, etc.
   diasAntes?: number;         // 0 = mismo día, 1 = día anterior
   plantillaMensaje: string;   // Plantilla con variables: {origen}, {destino}, {hora}, etc.
   requiereConfirmacion: boolean;
   mensajeConfirmacion?: string;
   mensajeCancelacion?: string;
+  
+  // Destinatarios específicos (IDs)
+  clientesEspecificos?: string[];  // Array de IDs de clientes
+  agentesEspecificos?: string[];   // Array de IDs de agentes
+}
+
+// Notificaciones diarias para agentes (resumen de turnos del día)
+export interface NotificacionDiariaAgentes {
+  activa: boolean;
+  horaEnvio: string;          // "06:00" - hora del resumen diario
+  enviarATodos: boolean;      // true = todos los agentes, false = solo agentes con turnos
+  plantillaMensaje: string;   // Plantilla del mensaje de resumen
+  incluirDetalles: {
+    origen: boolean;
+    destino: boolean;
+    nombreCliente: boolean;
+    telefonoCliente: boolean;
+    horaReserva: boolean;
+    notasInternas: boolean;
+  };
 }
 
 export interface Nomenclatura {
@@ -92,6 +113,9 @@ export interface IConfiguracionModulo extends Document {
   
   // Notificaciones automáticas
   notificaciones: NotificacionAutomatica[];
+  
+  // Notificación diaria para agentes
+  notificacionDiariaAgentes?: NotificacionDiariaAgentes;
   
   // Confirmación de turnos
   requiereConfirmacion: boolean;
@@ -176,9 +200,14 @@ const NotificacionAutomaticaSchema = new Schema<NotificacionAutomatica>(
       enum: ['recordatorio', 'confirmacion'],
       required: true
     },
+    destinatario: {
+      type: String,
+      enum: ['cliente', 'agente', 'clientes_especificos', 'agentes_especificos'],
+      default: 'cliente'
+    },
     momento: {
       type: String,
-      enum: ['noche_anterior', 'mismo_dia', 'horas_antes', 'personalizado'],
+      enum: ['noche_anterior', 'mismo_dia', 'horas_antes', 'personalizado', 'inmediata', 'hora_exacta'],
       required: true
     },
     horaEnvio: String,
@@ -193,7 +222,39 @@ const NotificacionAutomaticaSchema = new Schema<NotificacionAutomatica>(
       default: false
     },
     mensajeConfirmacion: String,
-    mensajeCancelacion: String
+    mensajeCancelacion: String,
+    clientesEspecificos: [String],
+    agentesEspecificos: [String]
+  },
+  { _id: false }
+);
+
+const NotificacionDiariaAgentesSchema = new Schema<NotificacionDiariaAgentes>(
+  {
+    activa: {
+      type: Boolean,
+      default: false
+    },
+    horaEnvio: {
+      type: String,
+      default: '06:00'
+    },
+    enviarATodos: {
+      type: Boolean,
+      default: false
+    },
+    plantillaMensaje: {
+      type: String,
+      default: 'Buenos días! Estos son tus {turnos} de hoy:'
+    },
+    incluirDetalles: {
+      origen: { type: Boolean, default: true },
+      destino: { type: Boolean, default: true },
+      nombreCliente: { type: Boolean, default: true },
+      telefonoCliente: { type: Boolean, default: false },
+      horaReserva: { type: Boolean, default: true },
+      notasInternas: { type: Boolean, default: false }
+    }
   },
   { _id: false }
 );
@@ -271,6 +332,11 @@ const ConfiguracionModuloSchema = new Schema<IConfiguracionModulo>(
     notificaciones: {
       type: [NotificacionAutomaticaSchema],
       default: []
+    },
+    
+    notificacionDiariaAgentes: {
+      type: NotificacionDiariaAgentesSchema,
+      default: undefined
     },
     
     requiereConfirmacion: {

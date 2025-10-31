@@ -3,6 +3,9 @@
 import { TurnoModel, EstadoTurno } from '../modules/calendar/models/Turno.js';
 import { ConfiguracionModuloModel } from '../modules/calendar/models/ConfiguracionModulo.js';
 import { ClienteModel } from '../models/Cliente.js';
+import { AgenteModel } from '../modules/calendar/models/Agente.js';
+import { enviarMensajeWhatsAppTexto } from '../services/metaService.js';
+import { EmpresaModel } from '../models/Empresa.js';
 
 /**
  * Procesar plantilla de mensaje con variables
@@ -36,7 +39,7 @@ function formatearFechaHora(fecha: Date): { fecha: string; hora: string } {
 }
 
 /**
- * Enviar notificación (integración con sistema de mensajería)
+ * Enviar notificación vía WhatsApp usando el número del chatbot
  */
 async function enviarNotificacion(
   telefono: string, 
@@ -44,17 +47,33 @@ async function enviarNotificacion(
   empresaId: string
 ): Promise<boolean> {
   try {
-    // TODO: Integrar con tu sistema de mensajería (WhatsApp, SMS, etc.)
     console.log('📤 Enviando notificación:');
     console.log('  Teléfono:', telefono);
     console.log('  Empresa:', empresaId);
     console.log('  Mensaje:', mensaje);
     
-    // Aquí irá la integración con tu API de WhatsApp/SMS
-    // Por ejemplo:
-    // await whatsappAPI.sendMessage(telefono, mensaje);
+    // Obtener configuración de la empresa para el phoneNumberId
+    const empresa = await EmpresaModel.findOne({ _id: empresaId });
     
+    if (!empresa) {
+      console.error('❌ Empresa no encontrada:', empresaId);
+      return false;
+    }
+    
+    // Obtener phoneNumberId de la empresa
+    const phoneNumberId = (empresa as any).phoneNumberId;
+    
+    if (!phoneNumberId) {
+      console.error('❌ phoneNumberId no configurado para empresa:', empresaId);
+      return false;
+    }
+    
+    // Enviar mensaje vía WhatsApp API
+    await enviarMensajeWhatsAppTexto(telefono, mensaje, phoneNumberId);
+    
+    console.log('✅ Notificación enviada exitosamente');
     return true;
+    
   } catch (error) {
     console.error('❌ Error al enviar notificación:', error);
     return false;
@@ -92,17 +111,6 @@ export async function procesarNotificacionesPendientes() {
           continue;
         }
         
-        // Obtener datos del cliente
-        const cliente = await ClienteModel.findOne({ 
-          _id: turno.clienteId,
-          empresaId: turno.empresaId
-        });
-        
-        if (!cliente) {
-          console.log(`⚠️ Cliente no encontrado: ${turno.clienteId}`);
-          continue;
-        }
-        
         // Procesar cada notificación pendiente
         for (let i = 0; i < turno.notificaciones.length; i++) {
           const notif = turno.notificaciones[i];
@@ -111,8 +119,50 @@ export async function procesarNotificacionesPendientes() {
             continue;
           }
           
+          // Determinar destinatario
+          const esParaCliente = (notif as any).destinatario !== 'agente';
+          let telefono: string;
+          let nombreDestinatario: string;
+          
+          if (esParaCliente) {
+            // Obtener datos del cliente
+            const cliente = await ClienteModel.findOne({ 
+              _id: turno.clienteId,
+              empresaId: turno.empresaId
+            });
+            
+            if (!cliente) {
+              console.log(`⚠️ Cliente no encontrado: ${turno.clienteId}`);
+              continue;
+            }
+            
+            telefono = cliente.telefono;
+            nombreDestinatario = `${cliente.nombre} ${cliente.apellido}`;
+          } else {
+            // Obtener datos del agente
+            if (!turno.agenteId) {
+              console.log(`⚠️ Turno sin agente asignado: ${turno._id}`);
+              continue;
+            }
+            
+            const agente = await AgenteModel.findById(turno.agenteId);
+            if (!agente || !agente.telefono) {
+              console.log(`⚠️ Agente sin teléfono: ${turno.agenteId}`);
+              continue;
+            }
+            
+            telefono = agente.telefono;
+            nombreDestinatario = `${agente.nombre} ${agente.apellido}`;
+          }
+          
           // Preparar variables para la plantilla
           const { fecha, hora } = formatearFechaHora(new Date(turno.fechaInicio));
+          
+          // Obtener cliente para variables
+          const cliente = await ClienteModel.findOne({ 
+            _id: turno.clienteId,
+            empresaId: turno.empresaId
+          });
           
           const variables: Record<string, any> = {
             // Variables básicas
@@ -120,7 +170,8 @@ export async function procesarNotificacionesPendientes() {
             hora,
             duracion: `${turno.duracion} minutos`,
             turno: configuracion.nomenclatura.turno.toLowerCase(),
-            cliente: `${cliente.nombre} ${cliente.apellido}`,
+            cliente: cliente ? `${cliente.nombre} ${cliente.apellido}` : '',
+            telefono: cliente?.telefono || '',
             
             // Agente (si existe)
             agente: (turno.agenteId as any)?.nombre 
@@ -136,7 +187,7 @@ export async function procesarNotificacionesPendientes() {
           
           // Enviar notificación
           const enviada = await enviarNotificacion(
-            cliente.telefono,
+            telefono,
             mensaje,
             turno.empresaId
           );
@@ -146,7 +197,7 @@ export async function procesarNotificacionesPendientes() {
             turno.notificaciones[i].enviada = true;
             turno.notificaciones[i].enviadaEn = new Date();
             
-            console.log(`✅ Notificación enviada para turno ${turno._id}`);
+            console.log(`✅ Notificación enviada para turno ${turno._id} a ${esParaCliente ? 'cliente' : 'agente'}`);
           }
         }
         
@@ -194,6 +245,11 @@ export async function programarNotificacionesTurno(
       let fechaEnvio: Date;
       
       switch (configNotif.momento) {
+        case 'inmediata':
+          // Enviar inmediatamente
+          fechaEnvio = new Date();
+          break;
+          
         case 'noche_anterior':
           // Enviar la noche anterior a la hora configurada
           fechaEnvio = new Date(fechaTurno);

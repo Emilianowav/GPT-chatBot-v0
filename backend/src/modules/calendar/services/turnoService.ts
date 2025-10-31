@@ -124,18 +124,14 @@ export async function crearTurno(data: CrearTurnoData): Promise<ITurno> {
     estado: config?.requiereConfirmacionAgente 
       ? EstadoTurno.PENDIENTE 
       : EstadoTurno.CONFIRMADO,
-    servicio: data.servicio,
+    datos: data.datos || {}, // Campos dinámicos
     notas: data.notas,
     creadoPor: data.creadoPor,
     confirmado: !config?.requiereConfirmacionAgente,
-    recordatorio24h: false,
-    recordatorio1h: false
+    notificaciones: [] // Se programarán después
   });
 
   await turno.save();
-
-  // TODO: Notificar al agente si está configurado
-  // TODO: Programar recordatorios
 
   return turno;
 }
