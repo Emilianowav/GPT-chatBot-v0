@@ -118,6 +118,56 @@ export async function enviarNotificacionesDiariasAgentes() {
 }
 
 /**
+ * Calcular rango de fechas según configuración de filtros
+ */
+function calcularRangoFechas(rangoHorario: any): { inicio: Date, fin: Date } {
+  const ahora = new Date();
+  let inicio = new Date(ahora);
+  inicio.setHours(0, 0, 0, 0);
+  let fin = new Date(inicio);
+  
+  if (!rangoHorario || !rangoHorario.activo) {
+    // Por defecto: solo hoy
+    fin.setDate(fin.getDate() + 1);
+    return { inicio, fin };
+  }
+  
+  switch (rangoHorario.tipo) {
+    case 'hoy':
+      fin.setDate(fin.getDate() + 1);
+      break;
+      
+    case 'manana':
+      inicio.setDate(inicio.getDate() + 1);
+      fin.setDate(fin.getDate() + 2);
+      break;
+      
+    case 'proximos_dias':
+      const dias = rangoHorario.diasAdelante || 1;
+      fin.setDate(fin.getDate() + dias + 1);
+      break;
+      
+    case 'personalizado':
+      if (rangoHorario.fechaInicio) {
+        inicio = new Date(rangoHorario.fechaInicio);
+        inicio.setHours(0, 0, 0, 0);
+      }
+      if (rangoHorario.fechaFin) {
+        fin = new Date(rangoHorario.fechaFin);
+        fin.setHours(23, 59, 59, 999);
+      } else {
+        fin.setDate(inicio.getDate() + 1);
+      }
+      break;
+      
+    default:
+      fin.setDate(fin.getDate() + 1);
+  }
+  
+  return { inicio, fin };
+}
+
+/**
  * Enviar notificaciones diarias para una empresa específica
  */
 async function enviarNotificacionesDiariasPorEmpresa(config: any) {
@@ -127,31 +177,42 @@ async function enviarNotificacionesDiariasPorEmpresa(config: any) {
     return;
   }
   
-  // Obtener fecha de hoy (inicio y fin del día)
-  const hoy = new Date();
-  hoy.setHours(0, 0, 0, 0);
-  const manana = new Date(hoy);
-  manana.setDate(manana.getDate() + 1);
+  // Calcular rango de fechas según filtros
+  const { inicio, fin } = calcularRangoFechas(notificacionDiariaAgentes.rangoHorario);
   
-  // Buscar todos los agentes activos
-  let agentes = await AgenteModel.find({ empresaId, activo: true });
+  console.log(`📅 Rango de fechas: ${inicio.toISOString()} - ${fin.toISOString()}`);
   
-  if (agentes.length === 0) {
-    console.log(`⚠️ No hay agentes activos para empresa ${empresaId}`);
-    return;
-  }
+  // Buscar agentes según configuración
+  let agentes;
   
-  // Si no se envía a todos, filtrar solo agentes con turnos
-  if (!notificacionDiariaAgentes.enviarATodos) {
+  if (notificacionDiariaAgentes.agentesEspecificos && notificacionDiariaAgentes.agentesEspecificos.length > 0) {
+    // Solo agentes específicos
+    agentes = await AgenteModel.find({ 
+      _id: { $in: notificacionDiariaAgentes.agentesEspecificos },
+      empresaId, 
+      activo: true 
+    });
+  } else if (notificacionDiariaAgentes.enviarATodos) {
+    // Todos los agentes activos
+    agentes = await AgenteModel.find({ empresaId, activo: true });
+  } else {
+    // Solo agentes con turnos en el rango
     const agentesConTurnos = await TurnoModel.distinct('agenteId', {
       empresaId,
-      fechaInicio: { $gte: hoy, $lt: manana },
+      fechaInicio: { $gte: inicio, $lt: fin },
       estado: { $in: ['pendiente', 'confirmado'] }
     });
     
-    agentes = agentes.filter(agente => 
-      agentesConTurnos.some(id => id?.toString() === agente._id.toString())
-    );
+    agentes = await AgenteModel.find({
+      _id: { $in: agentesConTurnos },
+      empresaId,
+      activo: true
+    });
+  }
+  
+  if (agentes.length === 0) {
+    console.log(`⚠️ No hay agentes para notificar en empresa ${empresaId}`);
+    return;
   }
   
   console.log(`📤 Enviando notificaciones a ${agentes.length} agentes de empresa ${empresaId}`);
@@ -162,8 +223,8 @@ async function enviarNotificacionesDiariasPorEmpresa(config: any) {
       await enviarNotificacionDiariaAgente(
         agente,
         empresaId,
-        hoy,
-        manana,
+        inicio,
+        fin,
         notificacionDiariaAgentes,
         nomenclatura
       );

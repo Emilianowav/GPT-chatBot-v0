@@ -66,6 +66,16 @@ export interface NotificacionDiariaAgentes {
   horaEnvio: string;          // "06:00" - hora del resumen diario
   enviarATodos: boolean;      // true = todos los agentes, false = solo agentes con turnos
   plantillaMensaje: string;   // Plantilla del mensaje de resumen
+  
+  // Filtros de rango horario
+  rangoHorario: {
+    activo: boolean;
+    tipo: 'hoy' | 'manana' | 'proximos_dias' | 'personalizado';
+    diasAdelante?: number;    // Para 'proximos_dias': 1, 2, 7, etc.
+    fechaInicio?: string;     // Para 'personalizado': "2024-11-15"
+    fechaFin?: string;        // Para 'personalizado': "2024-11-20"
+  };
+  
   incluirDetalles: {
     origen: boolean;
     destino: boolean;
@@ -74,6 +84,9 @@ export interface NotificacionDiariaAgentes {
     horaReserva: boolean;
     notasInternas: boolean;
   };
+  
+  // Agentes específicos (si no se envía a todos)
+  agentesEspecificos?: string[];
 }
 
 export interface Nomenclatura {
@@ -247,6 +260,17 @@ const NotificacionDiariaAgentesSchema = new Schema<NotificacionDiariaAgentes>(
       type: String,
       default: 'Buenos días! Estos son tus {turnos} de hoy:'
     },
+    rangoHorario: {
+      activo: { type: Boolean, default: false },
+      tipo: { 
+        type: String, 
+        enum: ['hoy', 'manana', 'proximos_dias', 'personalizado'],
+        default: 'hoy'
+      },
+      diasAdelante: Number,
+      fechaInicio: String,
+      fechaFin: String
+    },
     incluirDetalles: {
       origen: { type: Boolean, default: true },
       destino: { type: Boolean, default: true },
@@ -254,7 +278,8 @@ const NotificacionDiariaAgentesSchema = new Schema<NotificacionDiariaAgentes>(
       telefonoCliente: { type: Boolean, default: false },
       horaReserva: { type: Boolean, default: true },
       notasInternas: { type: Boolean, default: false }
-    }
+    },
+    agentesEspecificos: [String]
   },
   { _id: false }
 );

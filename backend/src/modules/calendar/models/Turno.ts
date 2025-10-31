@@ -23,8 +23,8 @@ export interface NotificacionTurno {
 export interface ITurno extends Document {
   empresaId: string;
   
-  // Agente/Recurso (ahora opcionales)
-  agenteId?: mongoose.Types.ObjectId;
+  // Agente/Recurso (agenteId es obligatorio)
+  agenteId: mongoose.Types.ObjectId;
   recursoId?: mongoose.Types.ObjectId;
   
   clienteId: string;
@@ -87,7 +87,7 @@ const TurnoSchema = new Schema<ITurno>(
     agenteId: {
       type: Schema.Types.ObjectId,
       ref: 'Agente',
-      required: false,
+      required: true,
       index: true
     },
     recursoId: {
