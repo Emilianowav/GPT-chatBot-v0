@@ -348,7 +348,7 @@ Escribe el número de la opción que necesites.`,
           inicio: '00:00',
           fin: '23:59',
           diasSemana: [0, 1, 2, 3, 4, 5, 6], // Todos los días
-          mensajeFueraHorario: '⏰ Nuestro horario de atención es de {inicio} a {fin}.\n\nDejanos tu consulta y te responderemos a la brevedad. ¡Gracias!'
+          mensajeFueraHorario: '' // No se usa porque el bot funciona 24/7
         },
         
         requiereConfirmacion: true,
@@ -561,7 +561,7 @@ Escribe el número de la opción que necesites.`,
     console.log('');
     console.log('🤖 BOT DE PASOS:');
     console.log('   ✅ Activo');
-    console.log('   Horario: 06:00 - 22:00 (todos los días)');
+    console.log('   Horario: 24/7 (sin restricciones)');
     console.log('   Funciones: Reservar, Consultar, Cancelar');
     console.log('   Notificaciones: Recordatorio 24h antes');
     console.log('');
