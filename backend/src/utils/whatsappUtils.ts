@@ -9,6 +9,18 @@ interface Payload {
         messages?: Array<{
           from?: string;
           text?: { body?: string };
+          interactive?: {
+            type?: string;
+            button_reply?: {
+              id?: string;
+              title?: string;
+            };
+            list_reply?: {
+              id?: string;
+              title?: string;
+            };
+          };
+          type?: string;
         }>;
         contacts?: Array<{
           profile?: { name?: string };
@@ -29,6 +41,8 @@ interface WhatsAppDatos {
   mensaje: string | null;
   profileName: string | null;
   phoneNumberId: string | null;
+  tipoMensaje?: string;
+  respuestaInteractiva?: string;
   error?: string;
 }
 
@@ -51,9 +65,35 @@ export function extraerDatosDePayloadWhatsApp(payload: Payload): WhatsAppDatos {
 
   const telefonoCliente = mensajeObj.from?.replace(/\D/g, '') ?? null;
   const telefonoEmpresa = metadata.display_phone_number?.replace(/\D/g, '') ?? null;
-  const mensaje = mensajeObj.text?.body ?? null;
   const profileName = contacto?.profile?.name ?? null;
   const phoneNumberId = metadata.phone_number_id ?? null;
+  
+  // Detectar tipo de mensaje
+  const tipoMensaje = mensajeObj.type || 'text';
+  let mensaje: string | null = null;
+  let respuestaInteractiva: string | null = null;
 
-  return { telefonoCliente, telefonoEmpresa, mensaje, profileName, phoneNumberId };
+  if (tipoMensaje === 'interactive') {
+    // Mensaje interactivo (botón o lista)
+    if (mensajeObj.interactive?.button_reply) {
+      respuestaInteractiva = mensajeObj.interactive.button_reply.id ?? null;
+      mensaje = mensajeObj.interactive.button_reply.title ?? null;
+    } else if (mensajeObj.interactive?.list_reply) {
+      respuestaInteractiva = mensajeObj.interactive.list_reply.id ?? null;
+      mensaje = mensajeObj.interactive.list_reply.title ?? null;
+    }
+  } else {
+    // Mensaje de texto normal
+    mensaje = mensajeObj.text?.body ?? null;
+  }
+
+  return { 
+    telefonoCliente, 
+    telefonoEmpresa, 
+    mensaje, 
+    profileName, 
+    phoneNumberId,
+    tipoMensaje,
+    respuestaInteractiva
+  };
 }

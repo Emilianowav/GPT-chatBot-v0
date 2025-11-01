@@ -36,6 +36,7 @@ export interface IAgente extends Document {
   especialidad?: string;
   descripcion?: string;
   titulo?: string;
+  sector?: string; // Sector al que pertenece el agente (opcional)
   
   // Configuración de atención
   modoAtencion: ModoAtencion;
@@ -107,6 +108,7 @@ const AgenteSchema = new Schema<IAgente>(
     especialidad: String,
     descripcion: String,
     titulo: String,
+    sector: String,
     
     // Configuración de atención
     modoAtencion: {

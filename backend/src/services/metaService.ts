@@ -91,3 +91,144 @@ export const enviarMensajeWhatsAppTexto = async (
   console.log("✅ Mensaje enviado:", data);
   return data;
 };
+
+/**
+ * Enviar mensaje con botones interactivos
+ * @param numero Número del cliente
+ * @param texto Contenido del mensaje
+ * @param botones Array de botones (máximo 3)
+ * @param phoneNumberId ID de número de empresa
+ */
+export const enviarMensajeConBotones = async (
+  numero: string,
+  texto: string,
+  botones: Array<{ id: string; title: string }>,
+  phoneNumberId: string
+) => {
+  console.log("📨 Enviando mensaje con botones vía Meta WhatsApp API...");
+
+  if (modoDev) {
+    console.log("[DEV] Simulación de envío con botones:", { numero, texto, botones });
+    return;
+  }
+
+  const numeroFormateado = formatPhoneNumberForWhatsapp(numero);
+  const token = getMetaToken();
+  
+  console.log('🔑 Token (primeros 20 chars):', token?.substring(0, 20) + '...');
+  console.log('📱 Phone Number ID:', phoneNumberId);
+
+  const API_URL = `https://graph.facebook.com/v18.0/${phoneNumberId}/messages`;
+
+  const payload = {
+    messaging_product: "whatsapp",
+    to: numeroFormateado,
+    type: "interactive",
+    interactive: {
+      type: "button",
+      body: {
+        text: texto
+      },
+      action: {
+        buttons: botones.slice(0, 3).map(btn => ({
+          type: "reply",
+          reply: {
+            id: btn.id,
+            title: btn.title.substring(0, 20) // Máximo 20 caracteres
+          }
+        }))
+      }
+    }
+  };
+
+  const res = await fetch(API_URL, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${token}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(payload),
+  });
+
+  if (!res.ok) {
+    const errorText = await res.text();
+    console.error("❌ Error al enviar mensaje con botones:", errorText);
+    throw new Error(errorText);
+  }
+
+  const data = await res.json();
+  console.log("✅ Mensaje con botones enviado:", data);
+  return data;
+};
+
+/**
+ * Enviar mensaje con lista de opciones
+ * @param numero Número del cliente
+ * @param texto Contenido del mensaje
+ * @param botonTexto Texto del botón para abrir la lista
+ * @param opciones Array de opciones (máximo 10)
+ * @param phoneNumberId ID de número de empresa
+ */
+export const enviarMensajeConLista = async (
+  numero: string,
+  texto: string,
+  botonTexto: string,
+  opciones: Array<{ id: string; title: string; description?: string }>,
+  phoneNumberId: string
+) => {
+  console.log("📨 Enviando mensaje con lista vía Meta WhatsApp API...");
+
+  if (modoDev) {
+    console.log("[DEV] Simulación de envío con lista:", { numero, texto, opciones });
+    return;
+  }
+
+  const numeroFormateado = formatPhoneNumberForWhatsapp(numero);
+  const token = getMetaToken();
+  
+  const API_URL = `https://graph.facebook.com/v18.0/${phoneNumberId}/messages`;
+
+  const payload = {
+    messaging_product: "whatsapp",
+    to: numeroFormateado,
+    type: "interactive",
+    interactive: {
+      type: "list",
+      body: {
+        text: texto
+      },
+      action: {
+        button: botonTexto.substring(0, 20),
+        sections: [
+          {
+            title: "Opciones",
+            rows: opciones.slice(0, 10).map(opt => ({
+              id: opt.id,
+              title: opt.title.substring(0, 24),
+              description: opt.description?.substring(0, 72)
+            }))
+          }
+        ]
+      }
+    }
+  };
+
+  const res = await fetch(API_URL, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${token}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(payload),
+  });
+
+  if (!res.ok) {
+    const errorText = await res.text();
+    console.error("❌ Error al enviar mensaje con lista:", errorText);
+    throw new Error(errorText);
+  }
+
+  const data = await res.json();
+  console.log("✅ Mensaje con lista enviado:", data);
+  return data;
+};

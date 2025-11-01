@@ -2,6 +2,7 @@
 import { TurnoModel, ITurno, EstadoTurno } from '../models/Turno.js';
 import { AgenteModel, ModoAtencion } from '../models/Agente.js';
 import { ConfiguracionCalendarioModel } from '../models/ConfiguracionCalendario.js';
+import { ClienteModel } from '../../../models/Cliente.js';
 import { verificarDisponibilidad } from './disponibilidadService.js';
 
 export interface CrearTurnoData {
@@ -170,8 +171,6 @@ export async function obtenerTurnos(filtros: {
   const total = await TurnoModel.countDocuments(query);
 
   // Buscar información de clientes manualmente (ya que clienteId es String)
-  const { ClienteModel } = await import('../../../models/Cliente.js');
-  
   const turnosConClientes = await Promise.all(
     turnos.map(async (turno) => {
       const turnoObj = turno.toObject();
@@ -179,7 +178,7 @@ export async function obtenerTurnos(filtros: {
         const cliente = await ClienteModel.findOne({ 
           _id: turno.clienteId,
           empresaId: filtros.empresaId
-        }).select('nombre apellido telefono email');
+        }).select('nombre apellido telefono email dni');
         
         return {
           ...turnoObj,
@@ -188,7 +187,8 @@ export async function obtenerTurnos(filtros: {
             nombre: cliente.nombre,
             apellido: cliente.apellido,
             telefono: cliente.telefono,
-            email: cliente.email
+            email: cliente.email,
+            documento: cliente.dni
           } : null
         };
       } catch (error) {

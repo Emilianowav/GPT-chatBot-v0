@@ -12,6 +12,8 @@ import { enviarConversacionPorEmail } from '../utils/conversacionReporter.js';
 import { encode } from 'gpt-tokenizer';
 import { wss } from '../app.js';
 import * as botTurnosService from '../modules/calendar/services/botTurnosService.js';
+import { buscarOCrearClienteDesdeWhatsApp } from '../services/clienteAutoService.js';
+import { procesarMensajeFlujoNotificaciones } from '../services/flujoNotificacionesService.js';
 
 import type { EmpresaConfig } from '../types/Types.js';
 
@@ -35,12 +37,14 @@ export const recibirMensaje = async (req: Request, res: Response, next: NextFunc
       return;
     }
 
-    const { telefonoCliente, telefonoEmpresa, mensaje, profileName, phoneNumberId, error } = extraerDatosDePayloadWhatsApp(entrada);
+    const { telefonoCliente, telefonoEmpresa, mensaje, profileName, phoneNumberId, tipoMensaje, respuestaInteractiva, error } = extraerDatosDePayloadWhatsApp(entrada);
     
     console.log('📋 Datos extraídos del webhook:', {
       telefonoCliente,
       telefonoEmpresa,
       phoneNumberId,
+      tipoMensaje,
+      respuestaInteractiva,
       mensaje: mensaje?.substring(0, 50)
     });
     
@@ -71,6 +75,19 @@ export const recibirMensaje = async (req: Request, res: Response, next: NextFunc
     if (!usuario.nombre && profileName) usuario.nombre = profileName;
     if (!usuario.empresaTelefono) usuario.empresaTelefono = telefonoEmpresa;
 
+    // 🆕 Crear o actualizar cliente en la base de datos
+    try {
+      await buscarOCrearClienteDesdeWhatsApp({
+        telefono: telefonoCliente,
+        profileName: profileName ?? undefined,
+        empresaId: (empresa as any)._id?.toString() || empresa.nombre,
+        chatbotUserId: usuario.id
+      });
+    } catch (errorCliente) {
+      console.error('⚠️ Error al crear/actualizar cliente:', errorCliente);
+      // No interrumpir el flujo si falla la creación del cliente
+    }
+
     // 🧹 Borrado del historial al recibir "limpiar"
     if (/^limpiar$/i.test(mensaje.trim())) {
       usuario.historial = [];
@@ -85,6 +102,32 @@ export const recibirMensaje = async (req: Request, res: Response, next: NextFunc
       await enviarMensajeWhatsAppTexto(telefonoCliente, '✅ Historial de conversación limpiado. Podés empezar de nuevo cuando quieras.', phoneNumberId);
       res.sendStatus(200);
       return;
+    }
+
+    // 🚗 FLUJO DE NOTIFICACIONES DE VIAJES - Procesar PRIMERO
+    try {
+      const procesadoPorNotificaciones = await procesarMensajeFlujoNotificaciones(
+        telefonoCliente,
+        mensaje,
+        respuestaInteractiva,
+        telefonoEmpresa
+      );
+
+      if (procesadoPorNotificaciones) {
+        // El flujo de notificaciones manejó el mensaje
+        usuario.num_mensajes_recibidos += 1;
+        usuario.num_mensajes_enviados += 1;
+        usuario.interacciones += 1;
+        usuario.ultimaInteraccion = new Date().toISOString();
+        usuario.ultimo_status = 'flujo_notificaciones';
+        await actualizarUsuario(usuario);
+
+        res.sendStatus(200);
+        return;
+      }
+    } catch (errorNotificaciones) {
+      console.error('⚠️ Error en flujo de notificaciones, continuando con flujo normal:', errorNotificaciones);
+      // Si el flujo de notificaciones falla, continuar con el flujo normal
     }
 
     // 🤖 BOT DE TURNOS - Procesar ANTES de OpenAI

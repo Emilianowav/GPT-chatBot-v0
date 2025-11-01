@@ -25,8 +25,10 @@ export interface ICliente extends Document {
   fechaNacimiento?: Date;
   dni?: string;
   notas?: string;
+  sector?: string; // Sector al que está asignado el cliente
   origen: 'chatbot' | 'manual';
   chatbotUserId?: string; // ID del usuario en el chatbot si viene de ahí
+  profileName?: string; // Nombre del perfil de WhatsApp
   preferencias: PreferenciasComunicacion;
   activo: boolean;
   creadoEn: Date;
@@ -85,6 +87,10 @@ const ClienteSchema = new Schema<ICliente>({
   notas: {
     type: String
   },
+  sector: {
+    type: String,
+    trim: true
+  },
   origen: {
     type: String,
     enum: ['chatbot', 'manual'],
@@ -94,6 +100,10 @@ const ClienteSchema = new Schema<ICliente>({
   chatbotUserId: {
     type: String,
     index: true
+  },
+  profileName: {
+    type: String,
+    trim: true
   },
   preferencias: {
     type: {

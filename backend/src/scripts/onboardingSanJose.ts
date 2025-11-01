@@ -342,11 +342,11 @@ Escribe el número de la opción que necesites.`,
         
         timeoutMinutos: 15,
         
-        // Configuración de horarios de atención
+        // Configuración de horarios de atención (24/7)
         horariosAtencion: {
-          activo: true,
-          inicio: '06:00',
-          fin: '22:00',
+          activo: false, // Desactivado para funcionamiento 24/7
+          inicio: '00:00',
+          fin: '23:59',
           diasSemana: [0, 1, 2, 3, 4, 5, 6], // Todos los días
           mensajeFueraHorario: '⏰ Nuestro horario de atención es de {inicio} a {fin}.\n\nDejanos tu consulta y te responderemos a la brevedad. ¡Gracias!'
         },

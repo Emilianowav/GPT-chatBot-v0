@@ -238,11 +238,11 @@ const ConfiguracionBotSchema = new Schema<IConfiguracionBot>({
       mensajeFueraHorario: String
     },
     default: {
-      activo: false,
-      inicio: '09:00',
-      fin: '18:00',
-      diasSemana: [1, 2, 3, 4, 5], // Lunes a viernes
-      mensajeFueraHorario: '⏰ Nuestro horario de atención es de {inicio} a {fin}, de lunes a viernes.'
+      activo: false, // Desactivado por defecto para funcionamiento 24/7
+      inicio: '00:00',
+      fin: '23:59',
+      diasSemana: [0, 1, 2, 3, 4, 5, 6], // Todos los días
+      mensajeFueraHorario: '⏰ Nuestro horario de atención es de {inicio} a {fin}.'
     }
   },
   

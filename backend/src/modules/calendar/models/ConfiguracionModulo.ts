@@ -58,6 +58,10 @@ export interface NotificacionAutomatica {
   // Destinatarios específicos (IDs)
   clientesEspecificos?: string[];  // Array de IDs de clientes
   agentesEspecificos?: string[];   // Array de IDs de agentes
+  
+  // Opciones especiales para agentes
+  esAgendaAgente?: boolean;        // Indica si es una notificación de agenda para agentes
+  enviarTodosTurnosDia?: boolean;  // Enviar todos los turnos del día automáticamente
 }
 
 // Notificaciones diarias para agentes (resumen de turnos del día)
@@ -265,7 +269,15 @@ const NotificacionAutomaticaSchema = new Schema<NotificacionAutomatica>(
     mensajeConfirmacion: String,
     mensajeCancelacion: String,
     clientesEspecificos: [String],
-    agentesEspecificos: [String]
+    agentesEspecificos: [String],
+    esAgendaAgente: {
+      type: Boolean,
+      default: false
+    },
+    enviarTodosTurnosDia: {
+      type: Boolean,
+      default: false
+    }
   },
   { _id: false }
 );
