@@ -82,6 +82,16 @@
   font-size: 0.75rem;
 }
 
+.sector {
+  display: inline-block;
+  padding: 0.2rem 0.6rem;
+  background: rgba(255, 255, 255, 0.25);
+  border-radius: 12px;
+  font-size: 0.75rem;
+  margin-left: 0.5rem;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
 .agenteEstado {
   flex-shrink: 0;
 }

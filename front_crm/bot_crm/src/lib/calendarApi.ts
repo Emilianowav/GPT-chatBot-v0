@@ -52,6 +52,21 @@ export interface Turno {
   confirmado: boolean;
   creadoEn: string;
   actualizadoEn: string;
+  clienteInfo?: {
+    _id: string;
+    nombre: string;
+    apellido: string;
+    telefono?: string;
+    email?: string;
+  };
+  datos?: {
+    origen?: string;
+    destino?: string;
+    pasajeros?: number;
+    equipaje?: string;
+    observaciones?: string;
+    [key: string]: any;
+  };
 }
 
 export interface CrearTurnoData {
@@ -168,6 +183,7 @@ export interface Agente {
   especialidad?: string;
   descripcion?: string;
   titulo?: string;
+  sector?: string;
   modoAtencion: 'turnos_programados' | 'turnos_libres' | 'mixto';
   disponibilidad: Disponibilidad[];
   duracionTurnoPorDefecto: number;

@@ -55,11 +55,11 @@ export default function ConfiguracionBot({ empresaId }: ConfiguracionBotProps) {
         mensajeError: configuracion.mensajeError,
         timeoutMinutos: configuracion.timeoutMinutos,
         horariosAtencion: configuracion.horariosAtencion || {
-          activo: false,
-          inicio: '09:00',
-          fin: '18:00',
-          diasSemana: [1, 2, 3, 4, 5],
-          mensajeFueraHorario: '⏰ Nuestro horario de atención es de {inicio} a {fin}, de lunes a viernes.'
+          activo: false, // Desactivado por defecto (24/7)
+          inicio: '00:00',
+          fin: '23:59',
+          diasSemana: [0, 1, 2, 3, 4, 5, 6], // Todos los días
+          mensajeFueraHorario: '⏰ Nuestro horario de atención es de {inicio} a {fin}.'
         },
         requiereConfirmacion: configuracion.requiereConfirmacion,
         permiteCancelacion: configuracion.permiteCancelacion,

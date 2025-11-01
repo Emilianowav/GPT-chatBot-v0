@@ -1,7 +1,7 @@
 'use client';
 
 // 📅 Página principal del módulo de Calendario/Turnos
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useAuth } from '@/contexts/AuthContext';
@@ -11,6 +11,7 @@ import Breadcrumb from '@/components/Breadcrumb/Breadcrumb';
 import { useTurnos, useEstadisticas } from '@/hooks/useTurnos';
 import { useAgentes } from '@/hooks/useAgentes';
 import ListaTurnos from '@/components/calendar/ListaTurnos';
+import CalendarioMensual from '@/components/calendar/CalendarioMensual';
 import FormularioTurno from '@/components/calendar/FormularioTurno';
 import Modal from '@/components/common/Modal';
 import styles from './calendario.module.css';
@@ -19,11 +20,13 @@ export default function CalendarioPage() {
   const { isAuthenticated, empresa, loading: authLoading } = useAuth();
   const router = useRouter();
   
-  const { turnos, loading: loadingTurnos, cargarTurnosDelDia, crearTurno, cancelarTurno, actualizarEstado } = useTurnos();
+  const { turnos, loading: loadingTurnos, cargarTurnos, cargarTurnosDelDia, crearTurno, cancelarTurno, actualizarEstado } = useTurnos();
   const { estadisticas } = useEstadisticas();
   const { agentes } = useAgentes(true);
   
   const [modalNuevoTurno, setModalNuevoTurno] = useState(false);
+  const [vistaCalendario, setVistaCalendario] = useState(true); // true = calendario, false = lista
+  const [mesActual, setMesActual] = useState(new Date());
   const empresaId = typeof window !== 'undefined' ? localStorage.getItem('empresa_id') || '' : '';
 
   useEffect(() => {
@@ -32,26 +35,66 @@ export default function CalendarioPage() {
     }
   }, [isAuthenticated, authLoading, router]);
   
+  // Carga inicial del mes actual - SIN dependencias circulares
   useEffect(() => {
     if (isAuthenticated) {
-      cargarTurnosDelDia();
+      const year = mesActual.getFullYear();
+      const month = mesActual.getMonth();
+      const primerDia = new Date(year, month, 1, 0, 0, 0, 0);
+      const ultimoDia = new Date(year, month + 1, 0, 23, 59, 59, 999);
+      
+      console.log('📅 Cargando turnos del mes:', {
+        desde: primerDia.toLocaleDateString('es-AR'),
+        hasta: ultimoDia.toLocaleDateString('es-AR')
+      });
+      
+      cargarTurnos({
+        fechaDesde: primerDia.toISOString(),
+        fechaHasta: ultimoDia.toISOString()
+      });
     }
-  }, [isAuthenticated, cargarTurnosDelDia]);
+  }, [isAuthenticated, mesActual]); // Solo depende de mesActual, NO de funciones
   
+  // Función para recargar el mes actual
+  const recargarTurnosMes = useCallback(() => {
+    const year = mesActual.getFullYear();
+    const month = mesActual.getMonth();
+    const primerDia = new Date(year, month, 1, 0, 0, 0, 0);
+    const ultimoDia = new Date(year, month + 1, 0, 23, 59, 59, 999);
+    
+    console.log('🔄 Recargando turnos del mes actual');
+    
+    cargarTurnos({
+      fechaDesde: primerDia.toISOString(),
+      fechaHasta: ultimoDia.toISOString()
+    });
+  }, [mesActual, cargarTurnos]);
+
+  // Handler para cuando el calendario cambia de mes
+  const handleCambiarMes = useCallback((primerDia: Date, ultimoDia: Date) => {
+    console.log('📆 Cambiando a mes:', {
+      desde: primerDia.toLocaleDateString('es-AR'),
+      hasta: ultimoDia.toLocaleDateString('es-AR')
+    });
+    
+    // Solo actualizar el estado, el useEffect se encargará de cargar
+    setMesActual(new Date(primerDia.getFullYear(), primerDia.getMonth(), 1));
+  }, []);
+
   const handleCrearTurno = async (data: any) => {
     await crearTurno(data);
     setModalNuevoTurno(false);
-    cargarTurnosDelDia();
+    recargarTurnosMes();
   };
   
   const handleCancelarTurno = async (turnoId: string, motivo: string) => {
     await cancelarTurno(turnoId, motivo);
-    cargarTurnosDelDia();
+    recargarTurnosMes();
   };
   
   const handleActualizarEstado = async (turnoId: string, estado: string) => {
     await actualizarEstado(turnoId, estado);
-    cargarTurnosDelDia();
+    recargarTurnosMes();
   };
 
   if (authLoading) {
@@ -116,6 +159,15 @@ export default function CalendarioPage() {
                     <circle cx="9" cy="7" r="4"/>
                   </svg>
                   Gestionar Agentes
+                </button>
+              </Link>
+              <Link href="/dashboard/calendario/gestion-turnos">
+                <button className={styles.btnSecondary}>
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <path d="M12 20h9"/>
+                    <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/>
+                  </svg>
+                  Gestión de Turnos
                 </button>
               </Link>
               <button 
@@ -192,13 +244,26 @@ export default function CalendarioPage() {
               <div className={styles.statContent}>
                 <h3>Próximo Turno</h3>
                 <p className={styles.statNumber}>
-                  {turnos.length > 0 && turnos[0] ? 
-                    new Date(turnos[0].fechaInicio).toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' }) 
-                    : '--:--'
-                  }
+                  {(() => {
+                    const ahora = new Date();
+                    const proximoTurno = turnos
+                      .filter(t => new Date(t.fechaInicio) > ahora)
+                      .sort((a, b) => new Date(a.fechaInicio).getTime() - new Date(b.fechaInicio).getTime())[0];
+                    
+                    return proximoTurno
+                      ? new Date(proximoTurno.fechaInicio).toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' })
+                      : '--:--';
+                  })()}
                 </p>
                 <span className={styles.statChange}>
-                  {turnos.length === 0 ? 'No hay turnos pendientes' : 'Hoy'}
+                  {(() => {
+                    const ahora = new Date();
+                    const proximoTurno = turnos
+                      .filter(t => new Date(t.fechaInicio) > ahora)
+                      .sort((a, b) => new Date(a.fechaInicio).getTime() - new Date(b.fechaInicio).getTime())[0];
+                    
+                    return proximoTurno ? 'Hoy' : 'No hay turnos pendientes';
+                  })()}
                 </span>
               </div>
             </div>
@@ -206,26 +271,69 @@ export default function CalendarioPage() {
 
           {/* Main Content */}
           <div className={styles.mainContent}>
-              {/* Lista de Turnos */}
+              {/* Turnos / Calendario */}
               <div className={styles.turnosSection}>
                 <div className={styles.sectionHeader}>
-                  <h2>Turnos del Día</h2>
-                  <button 
-                    className={styles.btnText}
-                    onClick={() => cargarTurnosDelDia()}
-                  >
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                      <polyline points="23 4 23 10 17 10"/>
-                      <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/>
-                    </svg>
-                    Actualizar
-                  </button>
+                  <h2>{vistaCalendario ? 'Calendario Mensual' : 'Turnos del Día'}</h2>
+                  <div style={{ display: 'flex', gap: '0.5rem' }}>
+                    <button 
+                      className={`${styles.btnToggle} ${vistaCalendario ? styles.btnToggleActive : ''}`}
+                      onClick={() => setVistaCalendario(true)}
+                      title="Vista Calendario"
+                    >
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                        <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
+                        <line x1="16" y1="2" x2="16" y2="6"/>
+                        <line x1="8" y1="2" x2="8" y2="6"/>
+                        <line x1="3" y1="10" x2="21" y2="10"/>
+                      </svg>
+                      Calendario
+                    </button>
+                    <button 
+                      className={`${styles.btnToggle} ${!vistaCalendario ? styles.btnToggleActive : ''}`}
+                      onClick={() => setVistaCalendario(false)}
+                      title="Vista Lista"
+                    >
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                        <line x1="8" y1="6" x2="21" y2="6"/>
+                        <line x1="8" y1="12" x2="21" y2="12"/>
+                        <line x1="8" y1="18" x2="21" y2="18"/>
+                        <line x1="3" y1="6" x2="3.01" y2="6"/>
+                        <line x1="3" y1="12" x2="3.01" y2="12"/>
+                        <line x1="3" y1="18" x2="3.01" y2="18"/>
+                      </svg>
+                      Lista
+                    </button>
+                    {!vistaCalendario && (
+                      <button 
+                        className={styles.btnText}
+                        onClick={() => cargarTurnosDelDia()}
+                      >
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                          <polyline points="23 4 23 10 17 10"/>
+                          <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/>
+                        </svg>
+                        Actualizar
+                      </button>
+                    )}
+                  </div>
                 </div>
                 {loadingTurnos ? (
                   <div className={styles.loading}>
                     <div className={styles.spinner}></div>
                     <p>Cargando turnos...</p>
                   </div>
+                ) : vistaCalendario ? (
+                  <CalendarioMensual
+                    turnos={turnos}
+                    agentes={agentes.map(a => ({ id: a._id, nombre: a.nombre, apellido: a.apellido }))}
+                    mesInicial={mesActual}
+                    onCambiarMes={handleCambiarMes}
+                    onSeleccionarTurno={(turno) => {
+                      console.log('Turno seleccionado:', turno);
+                      // Aquí puedes abrir un modal con detalles del turno
+                    }}
+                  />
                 ) : (
                   <ListaTurnos 
                     turnos={turnos}

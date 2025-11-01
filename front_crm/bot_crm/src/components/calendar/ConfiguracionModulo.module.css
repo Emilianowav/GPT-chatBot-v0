@@ -1,5 +1,14 @@
 /* ⚙️ Estilos de Configuración del Módulo */
 
+/* Mejorar contraste de tips */
+.fieldTip {
+  color: #555;
+  font-size: 0.85rem;
+  display: block;
+  margin-top: 0.25rem;
+  font-weight: 500;
+}
+
 .container {
   max-width: 1200px;
   margin: 0 auto;
@@ -230,7 +239,7 @@
 
 .checkboxGroup {
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
   gap: 0.75rem;
   margin: 1rem 0;
 }
@@ -265,6 +274,35 @@
   display: flex;
   flex-direction: column;
   gap: 1.5rem;
+}
+
+.btnAgregarCampo {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 1rem;
+  background: transparent;
+  border: 2px dashed #667eea;
+  border-radius: 12px;
+  color: #667eea;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s;
+  margin-top: 0.5rem;
+}
+
+.btnAgregarCampo:hover {
+  background: rgba(102, 126, 234, 0.05);
+  border-color: #764ba2;
+  color: #764ba2;
+  transform: translateY(-2px);
+}
+
+.iconoMas {
+  font-size: 1.5rem;
+  font-weight: 700;
 }
 
 .campoCard {
@@ -305,6 +343,51 @@
 
 .btnEliminar:hover {
   background: #c0392b;
+}
+
+.btnToggle {
+  width: 32px;
+  height: 32px;
+  background: transparent;
+  border: 2px solid #667eea;
+  color: #667eea;
+  border-radius: 6px;
+  font-size: 0.875rem;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.btnToggle:hover {
+  background: #667eea;
+  color: white;
+}
+
+.btnCerrarInfo {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  width: 28px;
+  height: 28px;
+  background: transparent;
+  border: none;
+  color: #999;
+  font-size: 1.25rem;
+  cursor: pointer;
+  border-radius: 4px;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+}
+
+.btnCerrarInfo:hover {
+  background: rgba(0, 0, 0, 0.05);
+  color: #333;
 }
 
 /* Notificaciones */
@@ -424,13 +507,74 @@
   font-weight: 600;
 }
 
+/* Recurrencia */
+.recurrenciaSection {
+  margin-top: 1.5rem;
+  padding-top: 1.5rem;
+  border-top: 2px dashed #e0e0e0;
+}
+
+.recurrenciaConfig {
+  background: #f8f9fa;
+  border: 2px solid #e0e0e0;
+  border-radius: 8px;
+  padding: 1.5rem;
+  margin-top: 1rem;
+}
+
+.diasSemana {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.diaSemana {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  background: white;
+  border: 2px solid #e0e0e0;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.diaSemana input[type="checkbox"]:checked + span {
+  font-weight: 600;
+  color: #667eea;
+}
+
+.diaSemana:has(input[type="checkbox"]:checked) {
+  background: #f0f4ff;
+  border-color: #667eea;
+}
+
+.diaSemana:hover {
+  border-color: #667eea;
+  transform: translateY(-2px);
+}
+
+.recurrenciaResumen {
+  margin-top: 1rem;
+  padding: 1rem;
+  background: linear-gradient(135deg, #f0f4ff 0%, #e8f5e9 100%);
+  border-left: 4px solid #667eea;
+  border-radius: 8px;
+  font-size: 0.95rem;
+  color: black;
+  line-height: 1.6;
+}
+
 /* Info Box Mejorado */
 .infoBox {
   background: linear-gradient(135deg, #f0f4ff 0%, #e8f5e9 100%);
   border-left: 4px solid #667eea;
   padding: 1.5rem;
+  padding-right: 3rem;
   border-radius: 8px;
   margin-bottom: 1.5rem;
+  position: relative;
 }
 
 .infoBox h4 {
@@ -488,4 +632,315 @@
   .btnAgregar {
     width: 100%;
   }
+}
+
+/* MultiSelect */
+.multiSelect {
+  max-height: 200px;
+  overflow-y: auto;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  padding: 0.5rem;
+  background: #f9f9f9;
+}
+
+.checkboxItem {
+  display: flex;
+  align-items: center;
+  padding: 0.5rem;
+  cursor: pointer;
+  border-radius: 4px;
+  transition: background 0.2s;
+}
+
+.checkboxItem:hover {
+  background: #e8e8e8;
+}
+
+.checkboxItem input[type="checkbox"] {
+  margin-right: 0.5rem;
+  cursor: pointer;
+}
+
+.checkboxItem span {
+  font-size: 0.9rem;
+  color: #333;
+}
+
+/* Botón de prueba */
+.btnPrueba {
+  padding: 0.75rem 1.5rem;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: transform 0.2s, box-shadow 0.2s;
+  margin-bottom: 0.5rem;
+}
+
+.btnPrueba:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+}
+
+.btnPrueba:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* ========================================
+   🎨 ESTILOS MEJORADOS DE NOTIFICACIONES
+   ======================================== */
+
+/* Tarjeta de notificación mejorada */
+.notifCard {
+  background: white;
+  border: 2px solid #e8ecf4;
+  border-radius: 16px;
+  padding: 0;
+  overflow: hidden;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.notifCard:hover {
+  border-color: #667eea;
+  box-shadow: 0 4px 16px rgba(102, 126, 234, 0.15);
+}
+
+/* Notificación inactiva */
+.notifInactiva {
+  opacity: 0.6;
+  background: #f8f9fa;
+}
+
+.notifInactiva .notifHeader {
+  background: linear-gradient(135deg, #95a5a6 0%, #7f8c8d 100%);
+}
+
+/* Header de notificación */
+.notifHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1.25rem 1.5rem;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.notifHeader:hover {
+  background: linear-gradient(135deg, #5568d3 0%, #6a3f8f 100%);
+}
+
+.notifHeaderLeft {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  flex: 1;
+  min-width: 0; /* Para que funcione el text-overflow */
+}
+
+.notifHeaderInfo {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  flex: 1;
+  min-width: 0;
+}
+
+.notifHeaderTitle {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.notifHeaderTitle h4 {
+  margin: 0;
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: white;
+}
+
+/* Preview cuando está plegado */
+.notifHeaderPreview {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  font-size: 0.9rem;
+  opacity: 0.95;
+}
+
+.previewItem {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.25rem 0.5rem;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 6px;
+  font-size: 0.85rem;
+  white-space: nowrap;
+}
+
+.previewSeparator {
+  opacity: 0.6;
+  font-weight: bold;
+}
+
+/* Badges */
+.badgeAgenda,
+.badgeAuto {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.25rem 0.75rem;
+  border-radius: 12px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  background: rgba(255, 255, 255, 0.25);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+.badgeAuto {
+  background: rgba(76, 175, 80, 0.3);
+  border-color: rgba(76, 175, 80, 0.5);
+}
+
+/* Acciones del header */
+.notifHeaderActions {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+/* Toggle Switch (ON/OFF) */
+.switchToggle {
+  position: relative;
+  display: inline-block;
+  width: 52px;
+  height: 28px;
+  cursor: pointer;
+}
+
+.switchToggle input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.switchSlider {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(255, 255, 255, 0.3);
+  border: 2px solid rgba(255, 255, 255, 0.5);
+  border-radius: 28px;
+  transition: all 0.3s ease;
+}
+
+.switchSlider:before {
+  content: "";
+  position: absolute;
+  height: 20px;
+  width: 20px;
+  left: 2px;
+  bottom: 2px;
+  background-color: white;
+  border-radius: 50%;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.switchToggle input:checked + .switchSlider {
+  background-color: #4caf50;
+  border-color: #4caf50;
+}
+
+.switchToggle input:checked + .switchSlider:before {
+  transform: translateX(24px);
+}
+
+.switchToggle:hover .switchSlider {
+  box-shadow: 0 0 8px rgba(255, 255, 255, 0.5);
+}
+
+/* Botón toggle (▶/▼) */
+.btnToggle {
+  background: rgba(255, 255, 255, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  color: white;
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+}
+
+.btnToggle:hover {
+  background: rgba(255, 255, 255, 0.3);
+  transform: scale(1.1);
+}
+
+/* Botón eliminar */
+.btnEliminar {
+  background: rgba(231, 76, 60, 0.2);
+  border: 1px solid rgba(231, 76, 60, 0.4);
+  color: white;
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 1.2rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+}
+
+.btnEliminar:hover {
+  background: rgba(231, 76, 60, 0.4);
+  transform: scale(1.1);
+}
+
+/* Contenido de la notificación */
+.notifCard > div:not(.notifHeader) {
+  padding: 1.5rem;
+}
+
+/* Grid mejorado */
+.grid2 {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 1.5rem;
+  margin-bottom: 1.5rem;
+}
+
+/* Animaciones */
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.notifCard > div:not(.notifHeader) {
+  animation: slideDown 0.3s ease;
 }

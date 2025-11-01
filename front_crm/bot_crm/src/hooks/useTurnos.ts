@@ -48,8 +48,7 @@ export function useTurnos() {
       setLoading(true);
       setError(null);
       const response = await calendarApi.crearTurno(data);
-      // Recargar turnos después de crear
-      await cargarTurnos();
+      // NO recargar automáticamente - el componente padre lo hará con los filtros correctos
       return response.turno;
     } catch (err: any) {
       setError(err.message);
@@ -57,22 +56,21 @@ export function useTurnos() {
     } finally {
       setLoading(false);
     }
-  }, [cargarTurnos]);
+  }, []);
 
   const cancelarTurno = useCallback(async (turnoId: string, motivo: string) => {
     try {
       setLoading(true);
       setError(null);
       await calendarApi.cancelarTurno(turnoId, motivo);
-      // Recargar turnos después de cancelar
-      await cargarTurnos();
+      // NO recargar automáticamente - el componente padre lo hará con los filtros correctos
     } catch (err: any) {
       setError(err.message);
       throw err;
     } finally {
       setLoading(false);
     }
-  }, [cargarTurnos]);
+  }, []);
 
   const actualizarEstado = useCallback(async (
     turnoId: string,
@@ -83,15 +81,14 @@ export function useTurnos() {
       setLoading(true);
       setError(null);
       await calendarApi.actualizarEstadoTurno(turnoId, estado, motivoCancelacion);
-      // Recargar turnos después de actualizar
-      await cargarTurnos();
+      // NO recargar automáticamente - el componente padre lo hará con los filtros correctos
     } catch (err: any) {
       setError(err.message);
       throw err;
     } finally {
       setLoading(false);
     }
-  }, [cargarTurnos]);
+  }, []);
 
   return {
     turnos,
@@ -127,9 +124,10 @@ export function useEstadisticas() {
     }
   }, []);
 
-  useEffect(() => {
-    cargarEstadisticas();
-  }, [cargarEstadisticas]);
+  // NO cargar automáticamente - el componente padre decidirá cuándo cargar
+  // useEffect(() => {
+  //   cargarEstadisticas();
+  // }, [cargarEstadisticas]);
 
   return {
     estadisticas,

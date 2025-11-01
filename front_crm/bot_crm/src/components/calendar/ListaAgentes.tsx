@@ -49,6 +49,9 @@ export default function ListaAgentes({
               {agente.especialidad && (
                 <span className={styles.especialidad}>{agente.especialidad}</span>
               )}
+              {agente.sector && (
+                <span className={styles.sector}>🏢 {agente.sector}</span>
+              )}
             </div>
             <div className={styles.agenteEstado}>
               <span className={agente.activo ? styles.activo : styles.inactivo}>

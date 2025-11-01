@@ -27,9 +27,11 @@ export interface PasoBot {
     numero: number;
     texto: string;
     siguientePaso?: string;
+    pasoAnterior?: string;
     finalizarFlujo?: boolean;
   }[];
   siguientePaso?: string;
+  pasoAnterior?: string;
   finalizarFlujo?: boolean;
   accion?: 'crear_turno' | 'consultar_turnos' | 'cancelar_turno' | 'ninguna';
 }
@@ -500,6 +502,17 @@ function ModalEditarPaso({ paso, onClose, onSave }: ModalEditarPasoProps) {
                     />
                   </div>
 
+                  <div className={styles.field}>
+                    <label>⬅️ Volver al Paso Anterior (ID)</label>
+                    <input
+                      type="text"
+                      value={opcion.pasoAnterior || ''}
+                      onChange={(e) => actualizarOpcion(index, 'pasoAnterior', e.target.value)}
+                      placeholder="ID del paso anterior para modificar"
+                    />
+                    <small>Permite volver a un paso previo para modificar datos</small>
+                  </div>
+
                   <div className={styles.checkbox}>
                     <input
                       type="checkbox"
@@ -523,16 +536,29 @@ function ModalEditarPaso({ paso, onClose, onSave }: ModalEditarPasoProps) {
             <h4>Navegación</h4>
 
             {pasoEditado.tipo !== 'menu' && (
-              <div className={styles.field}>
-                <label>Siguiente Paso (ID)</label>
-                <input
-                  type="text"
-                  value={pasoEditado.siguientePaso || ''}
-                  onChange={(e) => handleChange('siguientePaso', e.target.value)}
-                  placeholder="ID del siguiente paso"
-                />
-                <small>Dejar vacío si es el último paso</small>
-              </div>
+              <>
+                <div className={styles.field}>
+                  <label>Siguiente Paso (ID)</label>
+                  <input
+                    type="text"
+                    value={pasoEditado.siguientePaso || ''}
+                    onChange={(e) => handleChange('siguientePaso', e.target.value)}
+                    placeholder="ID del siguiente paso"
+                  />
+                  <small>Dejar vacío si es el último paso</small>
+                </div>
+
+                <div className={styles.field}>
+                  <label>⬅️ Volver al Paso Anterior (ID)</label>
+                  <input
+                    type="text"
+                    value={pasoEditado.pasoAnterior || ''}
+                    onChange={(e) => handleChange('pasoAnterior', e.target.value)}
+                    placeholder="ID del paso anterior para modificar"
+                  />
+                  <small>Permite volver a un paso previo para modificar datos</small>
+                </div>
+              </>
             )}
 
             <div className={styles.checkbox}>

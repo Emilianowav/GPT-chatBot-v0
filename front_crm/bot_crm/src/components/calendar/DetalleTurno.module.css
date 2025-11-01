@@ -1,0 +1,304 @@
+/* 📋 Estilos del Modal de Detalle del Turno */
+
+.overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10000;
+  animation: fadeIn 0.2s;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.modal {
+  background: white;
+  border-radius: 16px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  max-width: 600px;
+  width: 90%;
+  max-height: 90vh;
+  overflow-y: auto;
+  animation: slideUp 0.3s;
+}
+
+@keyframes slideUp {
+  from {
+    transform: translateY(50px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+/* Header */
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  padding: 2rem;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.titulo {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #2c3e50;
+  margin: 0;
+}
+
+.subtitulo {
+  font-size: 0.875rem;
+  color: #7f8c8d;
+  margin: 0.25rem 0 0 0;
+  text-transform: capitalize;
+}
+
+.btnCerrar {
+  background: transparent;
+  border: none;
+  font-size: 1.5rem;
+  color: #999;
+  cursor: pointer;
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+  transition: all 0.2s;
+  line-height: 1;
+}
+
+.btnCerrar:hover {
+  background: #f0f0f0;
+  color: #333;
+}
+
+/* Estado */
+.estadoContainer {
+  padding: 1.5rem 2rem;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.estadoBadge {
+  display: inline-block;
+  padding: 0.5rem 1rem;
+  border-radius: 20px;
+  color: white;
+  font-weight: 600;
+  font-size: 0.875rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+/* Secciones */
+.seccion {
+  padding: 1.5rem 2rem;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.seccion:last-child {
+  border-bottom: none;
+}
+
+.seccionTitulo {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #2c3e50;
+  margin: 0 0 1rem 0;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+/* Horario */
+.horario {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.horarioItem {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.75rem;
+  background: #f8f9fa;
+  border-radius: 8px;
+}
+
+/* Info Cards */
+.infoCard {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.infoItem {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.75rem;
+  background: #f8f9fa;
+  border-radius: 8px;
+}
+
+.label {
+  font-weight: 600;
+  color: #7f8c8d;
+  font-size: 0.875rem;
+}
+
+.valor {
+  font-weight: 500;
+  color: #2c3e50;
+  font-size: 0.875rem;
+  text-align: right;
+}
+
+.link {
+  color: #667eea;
+  text-decoration: none;
+  transition: color 0.2s;
+}
+
+.link:hover {
+  color: #5568d3;
+  text-decoration: underline;
+}
+
+/* Notas */
+.notasCard {
+  padding: 1rem;
+  background: #fff8e1;
+  border-left: 4px solid #ffc107;
+  border-radius: 8px;
+  color: #5d4037;
+  font-size: 0.875rem;
+  line-height: 1.6;
+  white-space: pre-wrap;
+}
+
+/* Acciones */
+.acciones {
+  padding: 1.5rem 2rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  background: #f8f9fa;
+  border-radius: 0 0 16px 16px;
+}
+
+.btnAccion {
+  flex: 1;
+  min-width: 120px;
+  padding: 0.75rem 1.5rem;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 0.875rem;
+  cursor: pointer;
+  transition: all 0.2s;
+  border: 2px solid #e0e0e0;
+  background: white;
+  color: #666;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+}
+
+.btnAccion:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.btnConfirmar {
+  background: #2196f3;
+  border-color: #2196f3;
+  color: white;
+}
+
+.btnConfirmar:hover {
+  background: #1976d2;
+  border-color: #1976d2;
+}
+
+.btnIniciar {
+  background: #9c27b0;
+  border-color: #9c27b0;
+  color: white;
+}
+
+.btnIniciar:hover {
+  background: #7b1fa2;
+  border-color: #7b1fa2;
+}
+
+.btnCompletar {
+  background: #4caf50;
+  border-color: #4caf50;
+  color: white;
+}
+
+.btnCompletar:hover {
+  background: #388e3c;
+  border-color: #388e3c;
+}
+
+.btnCancelar {
+  background: white;
+  border-color: #f44336;
+  color: #f44336;
+}
+
+.btnCancelar:hover {
+  background: #f44336;
+  color: white;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .modal {
+    width: 95%;
+    max-height: 95vh;
+  }
+
+  .header {
+    padding: 1.5rem;
+  }
+
+  .seccion {
+    padding: 1rem 1.5rem;
+  }
+
+  .acciones {
+    padding: 1rem 1.5rem;
+    flex-direction: column;
+  }
+
+  .btnAccion {
+    width: 100%;
+  }
+
+  .horarioItem,
+  .infoItem {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+  }
+
+  .valor {
+    text-align: left;
+  }
+}

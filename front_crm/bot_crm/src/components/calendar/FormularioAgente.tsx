@@ -33,6 +33,7 @@ export default function FormularioAgente({
     especialidad: agenteInicial?.especialidad || '',
     titulo: agenteInicial?.titulo || '',
     descripcion: agenteInicial?.descripcion || '',
+    sector: agenteInicial?.sector || '',
     modoAtencion: agenteInicial?.modoAtencion || 'turnos_programados',
     duracionTurnoPorDefecto: agenteInicial?.duracionTurnoPorDefecto || 30,
     bufferEntreturnos: agenteInicial?.bufferEntreturnos || 5,
@@ -220,6 +221,20 @@ export default function FormularioAgente({
             placeholder="Cardiología, Peluquería, etc."
           />
         </div>
+      </div>
+
+      <div className={styles.field}>
+        <label>🏢 Sector</label>
+        <input
+          type="text"
+          name="sector"
+          value={formData.sector}
+          onChange={handleChange}
+          placeholder="Ventas, Soporte, Administración, etc."
+        />
+        <small style={{ color: '#666', fontSize: '0.85rem', marginTop: '0.25rem', display: 'block' }}>
+          Sector o departamento al que pertenece el agente (opcional)
+        </small>
       </div>
 
       <div className={styles.field}>

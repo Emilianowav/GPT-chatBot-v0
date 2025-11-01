@@ -55,7 +55,8 @@ export interface CampoPersonalizado {
 export interface NotificacionAutomatica {
   activa: boolean;
   tipo: 'recordatorio' | 'confirmacion';
-  momento: 'noche_anterior' | 'mismo_dia' | 'horas_antes' | 'personalizado';
+  destinatario: 'cliente' | 'agente' | 'clientes_especificos' | 'agentes_especificos';
+  momento: 'noche_anterior' | 'mismo_dia' | 'horas_antes' | 'personalizado' | 'inmediata' | 'hora_exacta';
   horaEnvio?: string;
   horasAntes?: number;
   diasAntes?: number;
@@ -63,6 +64,44 @@ export interface NotificacionAutomatica {
   requiereConfirmacion: boolean;
   mensajeConfirmacion?: string;
   mensajeCancelacion?: string;
+  clientesEspecificos?: string[];
+  agentesEspecificos?: string[];
+  esAgendaAgente?: boolean; // Indica si es una notificación de agenda para agentes
+  enviarTodosTurnosDia?: boolean; // Enviar todos los turnos del día al agente (sin necesidad de seleccionar)
+  // Recurrencia
+  esRecurrente?: boolean; // Si la notificación se repite
+  recurrencia?: {
+    tipo: 'semanal' | 'mensual'; // Tipo de recurrencia
+    intervalo: number; // Cada cuántas semanas/meses
+    diasSemana?: number[]; // Para semanal: 0=Domingo, 1=Lunes, etc.
+    diaMes?: number; // Para mensual: día del mes (1-31, -1=último día)
+    horaEnvio: string; // Hora específica de envío (HH:mm)
+    fechaInicio?: Date; // Fecha de inicio de la recurrencia
+    fechaFin?: Date; // Fecha de fin (opcional)
+  };
+}
+
+export interface NotificacionDiariaAgentes {
+  activa: boolean;
+  horaEnvio: string;
+  enviarATodos: boolean;
+  plantillaMensaje: string;
+  rangoHorario: {
+    activo: boolean;
+    tipo: 'hoy' | 'manana' | 'proximos_dias' | 'personalizado';
+    diasAdelante?: number;
+    fechaInicio?: string;
+    fechaFin?: string;
+  };
+  incluirDetalles: {
+    origen: boolean;
+    destino: boolean;
+    nombreCliente: boolean;
+    telefonoCliente: boolean;
+    horaReserva: boolean;
+    notasInternas: boolean;
+  };
+  agentesEspecificos?: string[];
 }
 
 export interface Nomenclatura {
@@ -91,6 +130,7 @@ export interface ConfiguracionModulo {
   duracionPorDefecto: number;
   permiteDuracionVariable: boolean;
   notificaciones: NotificacionAutomatica[];
+  notificacionDiariaAgentes?: NotificacionDiariaAgentes;
   requiereConfirmacion: boolean;
   tiempoLimiteConfirmacion?: number;
   chatbotActivo: boolean;

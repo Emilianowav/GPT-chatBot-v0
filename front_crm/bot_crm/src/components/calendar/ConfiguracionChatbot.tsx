@@ -7,13 +7,14 @@ import * as configuracionApi from '@/lib/configuracionApi';
 import styles from './ConfiguracionChatbot.module.css';
 
 interface AccionCondicional {
-  tipo: 'continuar' | 'terminar' | 'saltar_a';
+  tipo: 'continuar' | 'terminar' | 'saltar_a' | 'volver_a';
   condicion?: {
     valor: string | number; // Valor esperado para activar la acción
     operador: 'igual' | 'diferente' | 'contiene' | 'mayor' | 'menor';
   };
   mensaje?: string; // Mensaje a mostrar al ejecutar la acción
   saltarAPaso?: number; // Número de paso al que saltar (si tipo es 'saltar_a')
+  volverAPaso?: number; // Número de paso al que volver (si tipo es 'volver_a')
 }
 
 interface PasoChatbot {
@@ -619,6 +620,7 @@ export default function ConfiguracionChatbot({ empresaId }: ConfiguracionChatbot
                                   <option value="continuar">✅ Continuar con el siguiente paso</option>
                                   <option value="terminar">🛑 Terminar la conversación</option>
                                   <option value="saltar_a">⏭️ Saltar a otro paso</option>
+                                  <option value="volver_a">⬅️ Volver al paso anterior</option>
                                 </select>
                               </div>
 
@@ -643,6 +645,28 @@ export default function ConfiguracionChatbot({ empresaId }: ConfiguracionChatbot
                                 </div>
                               )}
 
+                              {cond.tipo === 'volver_a' && (
+                                <div className={styles.field}>
+                                  <label>⬅️ Volver al paso:</label>
+                                  <select
+                                    value={cond.volverAPaso || ''}
+                                    onChange={(e) => actualizarCondicional(index, condIndex, {
+                                      volverAPaso: parseInt(e.target.value)
+                                    })}
+                                  >
+                                    <option value="">Seleccionar paso anterior...</option>
+                                    {pasos.map((p, i) => (
+                                      i < index && (
+                                        <option key={i} value={p.orden}>
+                                          Paso {p.orden}: {p.pregunta.substring(0, 30)}...
+                                        </option>
+                                      )
+                                    ))}
+                                  </select>
+                                  <small>Solo se muestran pasos anteriores al actual</small>
+                                </div>
+                              )}
+
                               <div className={styles.field}>
                                 <label>Mensaje a mostrar:</label>
                                 <input
@@ -654,6 +678,8 @@ export default function ConfiguracionChatbot({ empresaId }: ConfiguracionChatbot
                                   placeholder={
                                     cond.tipo === 'terminar' 
                                       ? 'Ej: Lo siento, solo atendemos viajes para mañana. ¡Hasta pronto!' 
+                                      : cond.tipo === 'volver_a'
+                                      ? 'Ej: Volvamos a ese paso para modificar el dato...'
                                       : 'Mensaje opcional'
                                   }
                                 />

@@ -145,8 +145,30 @@ export default function FormularioTurno({ onSubmit, onCancel }: FormularioTurnoP
       setLoading(true);
       setError(null);
 
+      // Validar formato de fecha y hora
+      if (!formData.fecha || !formData.horaInicio) {
+        setError('Fecha y hora son requeridos');
+        setLoading(false);
+        return;
+      }
+
+      // Validar formato de hora (HH:MM)
+      const horaRegex = /^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/;
+      if (!horaRegex.test(formData.horaInicio)) {
+        setError('Formato de hora inválido. Use HH:MM (ej: 14:30)');
+        setLoading(false);
+        return;
+      }
+
       // Combinar fecha y hora
-      const fechaInicio = new Date(`${formData.fecha}T${formData.horaInicio}`);
+      const fechaInicio = new Date(`${formData.fecha}T${formData.horaInicio}:00`);
+      
+      // Verificar que la fecha sea válida
+      if (isNaN(fechaInicio.getTime())) {
+        setError('Fecha u hora inválida');
+        setLoading(false);
+        return;
+      }
 
       await onSubmit({
         agenteId: formData.agenteId || undefined,
@@ -310,7 +332,7 @@ export default function FormularioTurno({ onSubmit, onCancel }: FormularioTurnoP
         <SelectorCliente
           onSelect={(cliente) => {
             setClienteSeleccionado(cliente);
-            setFormData(prev => ({ ...prev, clienteId: cliente?._id || '' }));
+            setFormData((prev: any) => ({ ...prev, clienteId: cliente?._id || '' }));
           }}
           clienteSeleccionado={clienteSeleccionado}
           placeholder="Buscar cliente por nombre, teléfono o email..."
@@ -372,9 +394,11 @@ export default function FormularioTurno({ onSubmit, onCancel }: FormularioTurnoP
             >
               <option value="">Seleccionar horario...</option>
               {slots.map((slot, index) => {
-                const hora = new Date(slot.fecha).toLocaleTimeString('es-AR', {
+                const fecha = new Date(slot.fecha);
+                const hora = fecha.toLocaleTimeString('es-AR', {
                   hour: '2-digit',
-                  minute: '2-digit'
+                  minute: '2-digit',
+                  hour12: false  // Formato de 24 horas
                 });
                 return (
                   <option key={index} value={hora}>

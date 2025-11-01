@@ -1,0 +1,442 @@
+/* 📅 Estilos del Calendario Mensual */
+
+.container {
+  background: white;
+  border-radius: 12px;
+  padding: 1.5rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* Filtros de Agentes */
+.filtros {
+  margin-bottom: 2rem;
+  padding-bottom: 1.5rem;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.filtros h3 {
+  font-size: 1rem;
+  font-weight: 600;
+  margin-bottom: 1rem;
+  color: #333;
+}
+
+.agentesChips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.chip {
+  padding: 0.5rem 1rem;
+  border-radius: 20px;
+  border: 2px solid #e0e0e0;
+  background: white;
+  color: #666;
+  font-size: 0.875rem;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.chip:hover {
+  border-color: #667eea;
+  color: #667eea;
+}
+
+.chipActive {
+  background: #667eea;
+  border-color: #667eea;
+  color: white;
+}
+
+/* Header del Calendario */
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1.5rem;
+}
+
+.mesAnio {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #333;
+  text-transform: capitalize;
+}
+
+.navButton {
+  background: white;
+  border: 2px solid #e0e0e0;
+  border-radius: 8px;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.navButton:hover {
+  border-color: #667eea;
+  background: #f7f9ff;
+}
+
+.navButton svg {
+  color: #666;
+}
+
+.navButton:hover svg {
+  color: #667eea;
+}
+
+/* Días de la semana */
+.diasSemana {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.diaSemana {
+  text-align: center;
+  font-weight: 600;
+  font-size: 0.875rem;
+  color: #999;
+  padding: 0.5rem;
+}
+
+/* Grid del calendario */
+.grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 0.5rem;
+}
+
+.dia {
+  position: relative;
+  aspect-ratio: 1;
+  border: 2px solid #f0f0f0;
+  border-radius: 8px;
+  padding: 0.5rem;
+  background: white;
+  cursor: pointer;
+  transition: all 0.2s;
+  z-index: 1;
+}
+
+.dia:hover {
+  z-index: 100;
+}
+
+.dia:hover {
+  border-color: #667eea;
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.15);
+  transform: translateY(-2px);
+}
+
+.diaVacio {
+  border: none;
+  cursor: default;
+}
+
+.diaVacio:hover {
+  transform: none;
+  box-shadow: none;
+}
+
+.diaHoy {
+  border-color: #667eea;
+  background: #f7f9ff;
+}
+
+.diaConTurnos {
+  background: #fafbff;
+}
+
+.diaNumero {
+  font-weight: 600;
+  font-size: 0.875rem;
+  color: #333;
+  margin-bottom: 0.25rem;
+}
+
+.diaHoy .diaNumero {
+  color: #667eea;
+  font-weight: 700;
+}
+
+/* Indicador de turnos */
+.indicadorTurnos {
+  display: flex;
+  gap: 3px;
+  align-items: center;
+  margin-top: 0.5rem;
+}
+
+.puntito {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+}
+
+.masTurnos {
+  font-size: 0.7rem;
+  color: #999;
+  margin-left: 2px;
+}
+
+/* Popup con turnos */
+.popup {
+  position: absolute;
+  top: calc(100% - 0.5rem); /* Más pegado al día */
+  left: 50%;
+  transform: translateX(-50%);
+  margin-top: 0;
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+  padding: 1rem;
+  padding-top: 2rem; /* Más espacio arriba para el puente */
+  min-width: 350px;
+  max-width: 450px;
+  z-index: 1001;
+  animation: fadeIn 0.2s;
+  pointer-events: auto;
+}
+
+/* Puente invisible GRANDE entre día y popup */
+.popup::before {
+  content: '';
+  position: absolute;
+  top: -2rem; /* Más alto */
+  left: -2rem; /* Más ancho */
+  right: -2rem;
+  height: 2.5rem; /* Mucho más alto */
+  background: transparent;
+  pointer-events: auto;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateX(-50%) translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+}
+
+/* Flecha del popup */
+.popup::after {
+  content: '';
+  position: absolute;
+  top: 0.5rem;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 0;
+  height: 0;
+  border-left: 8px solid transparent;
+  border-right: 8px solid transparent;
+  border-bottom: 8px solid white;
+  z-index: 1;
+}
+
+.popupHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 1rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.popupHeader > div {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.popupHeader strong {
+  font-size: 1rem;
+  color: #333;
+}
+
+.cantidadTurnos {
+  font-size: 0.875rem;
+  color: #999;
+}
+
+.btnCerrar {
+  background: transparent;
+  border: none;
+  font-size: 1.25rem;
+  color: #999;
+  cursor: pointer;
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+  transition: all 0.2s;
+  line-height: 1;
+}
+
+.btnCerrar:hover {
+  background: #f0f0f0;
+  color: #333;
+}
+
+/* Filtros dentro del popup */
+.popupFiltros {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.75rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.popupFiltrosLabel {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #666;
+  white-space: nowrap;
+}
+
+.popupChips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.375rem;
+}
+
+.popupChip {
+  padding: 0.25rem 0.75rem;
+  border-radius: 12px;
+  border: 1.5px solid #e0e0e0;
+  background: white;
+  color: #666;
+  font-size: 0.75rem;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-weight: 500;
+}
+
+.popupChip:hover {
+  border-color: #667eea;
+  color: #667eea;
+  background: #f7f9ff;
+}
+
+.popupChipActive {
+  background: #667eea;
+  border-color: #667eea;
+  color: white;
+}
+
+.popupChipActive:hover {
+  background: #5568d3;
+  border-color: #5568d3;
+}
+
+.popupTurnos {
+  max-height: 300px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+/* Item de turno en popup */
+.turnoItem {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem;
+  border-radius: 8px;
+  background: #f8f9fa;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.turnoItem:hover {
+  background: #f0f2ff;
+}
+
+.turnoHora {
+  font-weight: 700;
+  font-size: 0.875rem;
+  color: #667eea;
+  min-width: 50px;
+}
+
+.turnoInfo {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.turnoAgente {
+  font-weight: 600;
+  font-size: 0.875rem;
+  color: #333;
+}
+
+.turnoCliente {
+  font-size: 0.8rem;
+  color: #666;
+}
+
+.turnoDocumento,
+.turnoTelefono,
+.turnoDuracion,
+.turnoNotas {
+  font-size: 0.75rem;
+  color: #888;
+  margin-top: 0.125rem;
+}
+
+.turnoNotas {
+  font-style: italic;
+  max-width: 200px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.turnoEstado {
+  width: 8px;
+  height: 100%;
+  border-radius: 4px;
+  flex-shrink: 0;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .container {
+    padding: 1rem;
+  }
+
+  .mesAnio {
+    font-size: 1.25rem;
+  }
+
+  .dia {
+    padding: 0.25rem;
+  }
+
+  .diaNumero {
+    font-size: 0.75rem;
+  }
+
+  .popup {
+    min-width: 250px;
+    left: 0;
+    right: 0;
+    transform: none;
+    margin: 0.5rem;
+  }
+
+  .popup::before {
+    left: 20px;
+  }
+}
