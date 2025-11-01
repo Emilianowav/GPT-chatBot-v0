@@ -62,6 +62,18 @@ export interface NotificacionAutomatica {
   // Opciones especiales para agentes
   esAgendaAgente?: boolean;        // Indica si es una notificación de agenda para agentes
   enviarTodosTurnosDia?: boolean;  // Enviar todos los turnos del día automáticamente
+  
+  // Recurrencia
+  esRecurrente?: boolean;          // Si la notificación es recurrente
+  recurrencia?: {
+    tipo: 'semanal' | 'mensual';
+    intervalo: number;             // Cada cuántas semanas/meses
+    horaEnvio: string;             // Hora de envío
+    diasSemana?: number[];         // [0-6] para semanal
+    diaMes?: number;               // 1-31 o -1 (último día) para mensual
+    fechaInicio?: Date;            // Fecha de inicio (opcional)
+    fechaFin?: Date;               // Fecha de fin (opcional)
+  };
 }
 
 // Notificaciones diarias para agentes (resumen de turnos del día)
@@ -277,6 +289,22 @@ const NotificacionAutomaticaSchema = new Schema<NotificacionAutomatica>(
     enviarTodosTurnosDia: {
       type: Boolean,
       default: false
+    },
+    esRecurrente: {
+      type: Boolean,
+      default: false
+    },
+    recurrencia: {
+      tipo: {
+        type: String,
+        enum: ['semanal', 'mensual']
+      },
+      intervalo: Number,
+      horaEnvio: String,
+      diasSemana: [Number],
+      diaMes: Number,
+      fechaInicio: Date,
+      fechaFin: Date
     }
   },
   { _id: false }

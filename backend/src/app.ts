@@ -23,6 +23,7 @@ import {
   shouldRefreshMetaToken
 } from "./services/metaTokenService.js";
 import { iniciarServicioNotificaciones } from "./services/notificacionesService.js";
+import { procesarNotificacionesProgramadas } from "./services/notificacionesAutomaticasService.js";
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -165,7 +166,18 @@ app.use(errorHandler);
     console.log('🔔 Iniciando servicio de notificaciones...');
     iniciarServicioNotificaciones();
 
-    // 6. Iniciar servidor
+    // 6. Iniciar cron job para notificaciones programadas (cada minuto)
+    console.log('⏰ Iniciando cron job de notificaciones programadas...');
+    setInterval(async () => {
+      await procesarNotificacionesProgramadas();
+    }, 60 * 1000); // Cada 60 segundos
+
+    // Ejecutar una vez al iniciar
+    setTimeout(async () => {
+      await procesarNotificacionesProgramadas();
+    }, 5000); // Esperar 5 segundos después del inicio
+
+    // 7. Iniciar servidor
     server.listen(PORT, () => {
       console.log(`🚀 Servidor corriendo en puerto ${PORT}`);
       console.log(`📊 MongoDB: Conectado`);

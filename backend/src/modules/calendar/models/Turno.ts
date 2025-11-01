@@ -2,6 +2,7 @@
 import mongoose, { Schema, Document } from 'mongoose';
 
 export enum EstadoTurno {
+  NO_CONFIRMADO = 'no_confirmado',
   PENDIENTE = 'pendiente',
   CONFIRMADO = 'confirmado',
   EN_CURSO = 'en_curso',
@@ -119,7 +120,7 @@ const TurnoSchema = new Schema<ITurno>(
     estado: {
       type: String,
       enum: Object.values(EstadoTurno),
-      default: EstadoTurno.PENDIENTE,
+      default: EstadoTurno.NO_CONFIRMADO,
       index: true
     },
     
