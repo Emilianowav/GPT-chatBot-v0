@@ -224,13 +224,28 @@ export class FlowManager {
     flowName: string,
     initialData?: Record<string, any>
   ): Promise<FlowResult> {
+    console.log(`🎬 [FlowManager.startFlow] Iniciando flujo programático`);
+    console.log(`   Teléfono: ${telefono}`);
+    console.log(`   EmpresaId: ${empresaId}`);
+    console.log(`   Flujo: ${flowName}`);
+    console.log(`   Data inicial:`, initialData);
+    
     const flow = this.flows[flowName];
     
     if (!flow) {
+      console.error(`❌ Flujo no encontrado: ${flowName}`);
       throw new Error(`Flujo no encontrado: ${flowName}`);
     }
     
+    console.log(`✅ Flujo encontrado: ${flowName} (prioridad: ${flow.priority})`);
+    
+    console.log(`📊 Obteniendo o creando estado...`);
     const state = await this.getOrCreateState(telefono, empresaId);
+    console.log(`📊 Estado obtenido:`, {
+      flujo_activo: state.flujo_activo,
+      estado_actual: state.estado_actual,
+      prioridad: state.prioridad
+    });
     
     // Si hay un flujo activo de mayor prioridad, encolar
     if (state.flujo_activo) {

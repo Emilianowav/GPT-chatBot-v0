@@ -177,11 +177,23 @@ export async function enviarNotificacionConfirmacionViajes(
   // IMPORTANTE: 
   // 1. Usar el NOMBRE de la empresa, no el ObjectId
   // 2. Usar teléfono NORMALIZADO (sin +)
-  await iniciarFlujoNotificacionViajes(
-    telefonoNormalizado,  // ✅ Sin + para coincidir con webhook
-    empresaDoc.nombre,    // ✅ Usar nombre, no _id
-    viajes
-  );
+  console.log('🔄 Iniciando flujo con:', {
+    telefono: telefonoNormalizado,
+    empresaId: empresaDoc.nombre,
+    cantidadViajes: viajes.length
+  });
+  
+  try {
+    await iniciarFlujoNotificacionViajes(
+      telefonoNormalizado,  // ✅ Sin + para coincidir con webhook
+      empresaDoc.nombre,    // ✅ Usar nombre, no _id
+      viajes
+    );
+    console.log('✅ Flujo iniciado correctamente');
+  } catch (errorFlujo) {
+    console.error('❌ Error al iniciar flujo:', errorFlujo);
+    throw errorFlujo;
+  }
 
   console.log('✅ Notificación enviada y flujo iniciado exitosamente');
 }

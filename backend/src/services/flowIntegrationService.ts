@@ -43,9 +43,12 @@ export async function iniciarFlujoNotificacionViajes(
 ): Promise<void> {
   try {
     console.log(`🚗 Iniciando flujo de notificación de viajes para ${telefono}`);
-    console.log(`   Viajes:`, viajes.length);
+    console.log(`   EmpresaId: ${empresaId}`);
+    console.log(`   Viajes: ${viajes.length}`);
+    console.log(`   Datos de viajes:`, JSON.stringify(viajes, null, 2));
     
-    await flowManager.startFlow(
+    console.log('📞 Llamando a flowManager.startFlow...');
+    const result = await flowManager.startFlow(
       telefono,
       empresaId,
       'notificacion_viajes',
@@ -54,9 +57,11 @@ export async function iniciarFlujoNotificacionViajes(
       }
     );
     
+    console.log('✅ flowManager.startFlow completado:', result);
     console.log('✅ Flujo de notificación de viajes iniciado correctamente');
   } catch (error) {
     console.error('❌ Error iniciando flujo de notificación de viajes:', error);
+    console.error('❌ Stack trace:', (error as Error).stack);
     throw error;
   }
 }
