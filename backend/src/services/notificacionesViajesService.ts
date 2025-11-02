@@ -5,6 +5,7 @@ import { EmpresaModel } from '../models/Empresa.js';
 import { enviarMensajeWhatsAppTexto } from './metaService.js';
 import { buscarEmpresaPorTelefono } from '../utils/empresaUtilsMongo.js';
 import { iniciarFlujoNotificacionViajes } from './flowIntegrationService.js';
+import { normalizarTelefono } from '../utils/telefonoUtils.js';
 
 interface ViajeInfo {
   _id: string;
@@ -156,19 +157,29 @@ export async function enviarNotificacionConfirmacionViajes(
   mensaje += `2️⃣ Editar un viaje específico\n\n`;
   mensaje += `Responde con el número de la opción.`;
 
+  // ⚠️ CRÍTICO: Normalizar teléfono (sin +, espacios, guiones)
+  // Debe coincidir con el formato usado en whatsappController
+  const telefonoNormalizado = normalizarTelefono(clienteTelefono);
+  
+  console.log('📞 Teléfono normalizado:', {
+    original: clienteTelefono,
+    normalizado: telefonoNormalizado
+  });
+
   // Enviar mensaje
   await enviarMensajeWhatsAppTexto(
-    clienteTelefono,
+    clienteTelefono,  // Meta API acepta con o sin +
     mensaje,
     phoneNumberId
   );
 
   // Iniciar flujo de notificaciones
-  // IMPORTANTE: Usar el NOMBRE de la empresa, no el ObjectId
-  // El FlowManager y whatsappController usan empresa.nombre como empresaId
+  // IMPORTANTE: 
+  // 1. Usar el NOMBRE de la empresa, no el ObjectId
+  // 2. Usar teléfono NORMALIZADO (sin +)
   await iniciarFlujoNotificacionViajes(
-    clienteTelefono,
-    empresaDoc.nombre,  // ✅ Usar nombre, no _id
+    telefonoNormalizado,  // ✅ Sin + para coincidir con webhook
+    empresaDoc.nombre,    // ✅ Usar nombre, no _id
     viajes
   );
 
