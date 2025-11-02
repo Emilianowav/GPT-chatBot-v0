@@ -164,9 +164,11 @@ export async function enviarNotificacionConfirmacionViajes(
   );
 
   // Iniciar flujo de notificaciones
+  // IMPORTANTE: Usar el NOMBRE de la empresa, no el ObjectId
+  // El FlowManager y whatsappController usan empresa.nombre como empresaId
   await iniciarFlujoNotificacionViajes(
     clienteTelefono,
-    empresaDoc._id.toString(),
+    empresaDoc.nombre,  // ✅ Usar nombre, no _id
     viajes
   );
 

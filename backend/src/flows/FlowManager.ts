@@ -1,5 +1,6 @@
 // 🧠 Motor central de gestión de flujos dinámicos
 import { ConversationStateModel } from '../models/ConversationState.js';
+import { EmpresaModel } from '../models/Empresa.js';
 import type { Flow, FlowContext, FlowResult, FlowRegistry } from './types.js';
 import { FlowLogger } from '../utils/flowLogger.js';
 
@@ -250,12 +251,23 @@ export class FlowManager {
       state.flujos_pendientes.unshift(state.flujo_activo);
     }
     
+    // Obtener phoneNumberId de la empresa
+    let phoneNumberId = '';
+    try {
+      const empresa = await EmpresaModel.findOne({ nombre: empresaId });
+      if (empresa && empresa.phoneNumberId) {
+        phoneNumberId = empresa.phoneNumberId;
+      }
+    } catch (error) {
+      console.error('⚠️ Error obteniendo phoneNumberId:', error);
+    }
+    
     // Iniciar el nuevo flujo
     const context: FlowContext = {
       telefono,
       empresaId,
       mensaje: '',
-      phoneNumberId: '', // Se llenará al enviar
+      phoneNumberId,  // ✅ Ahora tiene el phoneNumberId correcto
       data: initialData
     };
     
