@@ -106,11 +106,12 @@ export const recibirMensaje = async (req: Request, res: Response, next: NextFunc
 
     // 🚗 FLUJO DE NOTIFICACIONES DE VIAJES - Procesar PRIMERO
     try {
+      const empresaId = (empresa as any)._id?.toString() || empresa.nombre;
       const procesadoPorNotificaciones = await procesarMensajeFlujoNotificaciones(
         telefonoCliente,
         mensaje,
         respuestaInteractiva,
-        telefonoEmpresa
+        empresaId
       );
 
       if (procesadoPorNotificaciones) {

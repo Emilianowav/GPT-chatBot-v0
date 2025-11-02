@@ -1,22 +1,71 @@
-// 🔔 Servicio de Confirmación Interactiva de Turnos
-import TurnoModel, { EstadoTurno } from '../models/Turno';
-import { ClienteModel } from '../../../models/Cliente';
-import { AgenteModel } from '../models/Agente';
-import { enviarMensajeWhatsAppTexto } from '../../../services/metaService';
-import { EmpresaModel } from '../../../models/Empresa';
+// 🔔 Servicio de Confirmación Interactiva de Turnos (Dinámico y Configurable)
+import { TurnoModel, EstadoTurno } from '../models/Turno.js';
+import { ClienteModel } from '../../../models/Cliente.js';
+import { AgenteModel } from '../models/Agente.js';
+import { enviarMensajeWhatsAppTexto } from '../../../services/metaService.js';
+import { EmpresaModel } from '../../../models/Empresa.js';
+import { ConfiguracionModuloModel } from '../models/ConfiguracionModulo.js';
 
 interface SesionConfirmacion {
   clienteId: string;
   telefono: string;
+  empresaId: string;
   turnos: any[];
   paso: 'inicial' | 'seleccion_turno' | 'edicion_campo';
   turnoEditando?: number;
-  campoEditando?: 'origen' | 'destino' | 'hora';
+  campoEditando?: string; // Ahora es dinámico (puede ser cualquier campo)
+  camposEditables?: string[]; // Lista de campos que se pueden editar
+  nomenclatura?: any; // Nomenclatura de la empresa (turno, turnos, etc.)
   timestamp: Date;
 }
 
 // Almacenamiento temporal de sesiones (en producción usar Redis)
 const sesionesActivas = new Map<string, SesionConfirmacion>();
+
+/**
+ * Obtener configuración de campos editables de la empresa
+ */
+async function obtenerConfiguracionEmpresa(empresaId: string) {
+  try {
+    const config = await ConfiguracionModuloModel.findOne({ empresaId });
+    
+    if (!config) {
+      // Configuración por defecto
+      return {
+        nomenclatura: {
+          turno: 'Turno',
+          turnos: 'Turnos'
+        },
+        camposEditables: ['origen', 'destino', 'hora'],
+        camposPersonalizados: []
+      };
+    }
+
+    // Extraer campos editables de los campos personalizados
+    const camposEditables = ['hora']; // Hora siempre es editable
+    const camposPersonalizados = config.camposPersonalizados || [];
+    
+    // Agregar campos personalizados que sean editables
+    camposPersonalizados.forEach((campo: any) => {
+      if (campo.clave && !['id', '_id', 'clienteId', 'agenteId', 'empresaId'].includes(campo.clave)) {
+        camposEditables.push(campo.clave);
+      }
+    });
+
+    return {
+      nomenclatura: config.nomenclatura || { turno: 'Turno', turnos: 'Turnos' },
+      camposEditables,
+      camposPersonalizados
+    };
+  } catch (error) {
+    console.error('Error obteniendo configuración:', error);
+    return {
+      nomenclatura: { turno: 'Turno', turnos: 'Turnos' },
+      camposEditables: ['origen', 'destino', 'hora'],
+      camposPersonalizados: []
+    };
+  }
+}
 
 /**
  * Procesar respuesta del cliente a notificación de confirmación
@@ -68,6 +117,7 @@ export async function procesarRespuestaConfirmacion(
     const sesion: SesionConfirmacion = {
       clienteId: cliente._id.toString(),
       telefono,
+      empresaId,
       turnos: turnosPendientes,
       paso: 'edicion_campo',
       turnoEditando: numeroSeleccionado - 1,
@@ -76,7 +126,7 @@ export async function procesarRespuestaConfirmacion(
     sesionesActivas.set(telefono, sesion);
     
     const turno = turnosPendientes[numeroSeleccionado - 1];
-    const respuesta = generarMensajeEdicionTurno(turno, numeroSeleccionado);
+    const respuesta = await generarMensajeEdicionTurno(turno, numeroSeleccionado, empresaId);
     return { procesado: true, respuesta };
   }
 
@@ -116,7 +166,7 @@ async function procesarSesionActiva(
       sesion.timestamp = new Date();
       
       const turno = sesion.turnos[numeroSeleccionado - 1];
-      const respuesta = generarMensajeEdicionTurno(turno, numeroSeleccionado);
+      const respuesta = await generarMensajeEdicionTurno(turno, numeroSeleccionado, sesion.empresaId);
       return { procesado: true, respuesta };
     }
     
@@ -154,10 +204,12 @@ async function confirmarTodosTurnos(
       if (!turno.notificaciones) turno.notificaciones = [];
       turno.notificaciones.push({
         tipo: 'confirmacion',
+        programadaPara: new Date(),
         enviada: true,
-        fechaEnvio: new Date(),
+        enviadaEn: new Date(),
+        plantilla: 'confirmacion_interactiva',
         respuesta: 'CONFIRMADO',
-        fechaRespuesta: new Date()
+        respondidoEn: new Date()
       });
       
       await turno.save();
@@ -175,9 +227,12 @@ async function confirmarTodosTurnos(
 }
 
 /**
- * Generar mensaje de edición de turno
+ * Generar mensaje de edición de turno (DINÁMICO)
  */
-function generarMensajeEdicionTurno(turno: any, numero: number): string {
+async function generarMensajeEdicionTurno(turno: any, numero: number, empresaId: string): Promise<string> {
+  const config = await obtenerConfiguracionEmpresa(empresaId);
+  const { nomenclatura, camposEditables, camposPersonalizados } = config;
+  
   const fechaInicio = new Date(turno.fechaInicio);
   const hora = fechaInicio.toLocaleTimeString('es-AR', {
     hour: '2-digit',
@@ -185,25 +240,64 @@ function generarMensajeEdicionTurno(turno: any, numero: number): string {
     hour12: false
   });
   
-  const origen = turno.datos?.origen || 'No especificado';
-  const destino = turno.datos?.destino || 'No especificado';
+  // Construir datos actuales dinámicamente
+  let datosActuales = `🕐 *Hora actual:* ${hora}\n`;
   
-  return `✏️ *Editando Viaje #${numero}*
+  // Agregar campos personalizados
+  camposPersonalizados.forEach((campo: any) => {
+    const valor = turno.datos?.[campo.clave] || 'No especificado';
+    const icono = obtenerIconoCampo(campo.clave);
+    datosActuales += `${icono} *${campo.etiqueta}:* ${valor}\n`;
+  });
+  
+  // Construir opciones de edición dinámicamente
+  let opciones = '';
+  let opcionNumero = 1;
+  
+  // Agregar opción para cada campo editable
+  camposEditables.forEach((campo: string) => {
+    const campoConfig = camposPersonalizados.find((c: any) => c.clave === campo);
+    const etiqueta = campoConfig?.etiqueta || (campo === 'hora' ? 'Hora' : campo.charAt(0).toUpperCase() + campo.slice(1));
+    opciones += `${opcionNumero}️⃣ Cambiar ${etiqueta.toLowerCase()}\n`;
+    opcionNumero++;
+  });
+  
+  // Opciones fijas
+  opciones += `${opcionNumero}️⃣ Confirmar este ${nomenclatura.turno.toLowerCase()}\n`;
+  opcionNumero++;
+  opciones += `${opcionNumero}️⃣ Cancelar este ${nomenclatura.turno.toLowerCase()}\n`;
+  opciones += `0️⃣ Volver atrás`;
+  
+  return `✏️ *Editando ${nomenclatura.turno} #${numero}*
 
-📍 *Origen actual:* ${origen}
-📍 *Destino actual:* ${destino}
-🕐 *Hora actual:* ${hora}
+${datosActuales}
+*¿Qué deseas modificar?*
 
-¿Qué deseas modificar?
-
-1️⃣ Cambiar origen
-2️⃣ Cambiar destino
-3️⃣ Cambiar hora
-4️⃣ Confirmar este viaje
-5️⃣ Cancelar este viaje
-0️⃣ Volver atrás
+${opciones}
 
 Escribe el número de la opción.`;
+}
+
+/**
+ * Obtener icono según el tipo de campo
+ */
+function obtenerIconoCampo(campo: string): string {
+  const iconos: Record<string, string> = {
+    'origen': '📍',
+    'destino': '📍',
+    'hora': '🕐',
+    'pasajeros': '👥',
+    'equipaje': '🧳',
+    'servicio': '📋',
+    'comensales': '👥',
+    'ocasion': '🎉',
+    'preferencias': '🍽️',
+    'motivoConsulta': '📝',
+    'telefono': '📞',
+    'email': '📧',
+    'notas': '📝'
+  };
+  return iconos[campo] || '📌';
 }
 
 /**
@@ -329,9 +423,10 @@ async function guardarCampoEditado(
       sesion.campoEditando = undefined;
       sesion.timestamp = new Date();
       
+      const mensajeEdicion = await generarMensajeEdicionTurno(turno, sesion.turnoEditando! + 1, empresaId);
       return {
         procesado: true,
-        respuesta: `✅ ${campo.charAt(0).toUpperCase() + campo.slice(1)} actualizado a: *${valor}*\n\n${generarMensajeEdicionTurno(turno, sesion.turnoEditando! + 1)}`
+        respuesta: `✅ ${campo.charAt(0).toUpperCase() + campo.slice(1)} actualizado a: *${valor}*\n\n${mensajeEdicion}`
       };
     }
     
@@ -361,9 +456,10 @@ async function guardarCampoEditado(
       sesion.campoEditando = undefined;
       sesion.timestamp = new Date();
       
+      const mensajeEdicion = await generarMensajeEdicionTurno(turno, sesion.turnoEditando! + 1, empresaId);
       return {
         procesado: true,
-        respuesta: `✅ Hora actualizada a: *${valor}*\n\n${generarMensajeEdicionTurno(turno, sesion.turnoEditando! + 1)}`
+        respuesta: `✅ Hora actualizada a: *${valor}*\n\n${mensajeEdicion}`
       };
     }
     
@@ -465,6 +561,7 @@ export async function enviarNotificacionConfirmacion(
       const sesion: SesionConfirmacion = {
         clienteId: clienteId,
         telefono: cliente.telefono,
+        empresaId,
         turnos: turnos,
         paso: 'inicial',
         timestamp: new Date()
@@ -473,9 +570,27 @@ export async function enviarNotificacionConfirmacion(
     }
 
     // Obtener configuración de empresa para phoneNumberId
-    const empresa = await EmpresaModel.findOne({ _id: empresaId });
+    // empresaId puede ser el nombre o el _id
+    let empresa;
+    
+    // Verificar si empresaId es un ObjectId válido (24 caracteres hexadecimales)
+    const isValidObjectId = /^[0-9a-fA-F]{24}$/.test(empresaId);
+    
+    if (isValidObjectId) {
+      // Si es un ObjectId válido, buscar por _id o nombre
+      empresa = await EmpresaModel.findOne({ 
+        $or: [
+          { _id: empresaId },
+          { nombre: empresaId }
+        ]
+      });
+    } else {
+      // Si no es un ObjectId, buscar solo por nombre
+      empresa = await EmpresaModel.findOne({ nombre: empresaId });
+    }
+    
     if (!empresa?.phoneNumberId) {
-      console.error('No se encontró phoneNumberId para la empresa');
+      console.error('No se encontró phoneNumberId para la empresa:', empresaId);
       return false;
     }
 
@@ -486,8 +601,10 @@ export async function enviarNotificacionConfirmacion(
       if (!turno.notificaciones) turno.notificaciones = [];
       turno.notificaciones.push({
         tipo: 'confirmacion',
+        programadaPara: new Date(), // Fecha programada (ahora)
         enviada: true,
-        fechaEnvio: new Date()
+        enviadaEn: new Date(),
+        plantilla: 'confirmacion_interactiva'
       });
       await turno.save();
     }

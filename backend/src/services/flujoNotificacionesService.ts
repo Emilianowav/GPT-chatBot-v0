@@ -17,20 +17,22 @@ const estadosConversacion = new Map<string, EstadoConversacion>();
  * @param clienteTelefono Teléfono del cliente
  * @param mensaje Mensaje del cliente
  * @param respuestaInteractiva ID de respuesta interactiva (si aplica)
- * @param empresaTelefono Teléfono de la empresa
+ * @param empresaId ID o nombre de la empresa
  * @returns true si el mensaje fue procesado por el flujo, false si debe continuar con flujo normal
  */
 export async function procesarMensajeFlujoNotificaciones(
   clienteTelefono: string,
   mensaje: string,
   respuestaInteractiva: string | undefined,
-  empresaTelefono: string
+  empresaId: string
 ): Promise<boolean> {
-  const clave = `${clienteTelefono}_${empresaTelefono}`;
+  const clave = `${clienteTelefono}_${empresaId}`;
   const estadoActual = estadosConversacion.get(clave);
 
   console.log('🔄 Procesando flujo de notificaciones:', {
     clienteTelefono,
+    empresaId,
+    mensaje,
     respuestaInteractiva,
     estadoActual: estadoActual?.estado
   });
@@ -40,7 +42,7 @@ export async function procesarMensajeFlujoNotificaciones(
     const resultadoConfirmacion = await confirmacionTurnosService.procesarRespuestaConfirmacion(
       clienteTelefono,
       mensaje,
-      empresaTelefono
+      empresaId
     );
 
     if (resultadoConfirmacion.procesado) {
@@ -61,7 +63,7 @@ export async function procesarMensajeFlujoNotificaciones(
     return await procesarRespuestaInteractiva(
       clienteTelefono,
       respuestaInteractiva,
-      empresaTelefono,
+      empresaId,
       clave
     );
   }
@@ -72,7 +74,7 @@ export async function procesarMensajeFlujoNotificaciones(
       clienteTelefono,
       mensaje,
       estadoActual,
-      empresaTelefono,
+      empresaId,
       clave
     );
   }
