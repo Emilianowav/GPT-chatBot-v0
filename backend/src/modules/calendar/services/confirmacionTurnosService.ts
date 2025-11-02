@@ -23,6 +23,13 @@ interface SesionConfirmacion {
 const sesionesActivas = new Map<string, SesionConfirmacion>();
 
 /**
+ * Obtener sesión activa de un teléfono
+ */
+export function obtenerSesion(telefono: string): SesionConfirmacion | undefined {
+  return sesionesActivas.get(telefono);
+}
+
+/**
  * Obtener configuración de campos editables de la empresa
  */
 async function obtenerConfiguracionEmpresa(empresaId: string) {

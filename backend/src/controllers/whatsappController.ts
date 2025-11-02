@@ -14,6 +14,7 @@ import { wss } from '../app.js';
 import * as botTurnosService from '../modules/calendar/services/botTurnosService.js';
 import { buscarOCrearClienteDesdeWhatsApp } from '../services/clienteAutoService.js';
 import { procesarMensajeFlujoNotificaciones } from '../services/flujoNotificacionesService.js';
+import * as gestorFlujos from '../services/gestorFlujos.js';
 
 import type { EmpresaConfig } from '../types/Types.js';
 
@@ -88,6 +89,42 @@ export const recibirMensaje = async (req: Request, res: Response, next: NextFunc
       // No interrumpir el flujo si falla la creación del cliente
     }
 
+    // 🎯 GESTOR DE FLUJOS DINÁMICOS - Sistema unificado de procesamiento
+    try {
+      const empresaId = (empresa as any)._id?.toString() || empresa.nombre;
+      
+      const resultadoFlujo = await gestorFlujos.procesarMensaje(
+        telefonoCliente,
+        mensaje,
+        empresaId
+      );
+
+      if (resultadoFlujo.procesado) {
+        console.log(`✅ Mensaje procesado por flujo: ${resultadoFlujo.flujoEjecutado}`);
+        
+        // Enviar respuesta si el flujo lo requiere
+        if (resultadoFlujo.debeEnviarRespuesta && resultadoFlujo.respuesta) {
+          await enviarMensajeWhatsAppTexto(telefonoCliente, resultadoFlujo.respuesta, phoneNumberId);
+        }
+        
+        // Actualizar usuario
+        usuario.num_mensajes_recibidos += 1;
+        usuario.num_mensajes_enviados += 1;
+        usuario.interacciones += 1;
+        usuario.ultimaInteraccion = new Date().toISOString();
+        usuario.ultimo_status = resultadoFlujo.flujoEjecutado || 'flujo_dinamico';
+        await actualizarUsuario(usuario);
+
+        res.sendStatus(200);
+        return;
+      }
+      
+      console.log('⚠️ Ningún flujo procesó el mensaje, continuando con OpenAI');
+    } catch (errorFlujos) {
+      console.error('⚠️ Error en gestor de flujos, continuando con OpenAI:', errorFlujos);
+      // Si el gestor de flujos falla, continuar con OpenAI
+    }
+
     // 🧹 Borrado del historial al recibir "limpiar"
     if (/^limpiar$/i.test(mensaje.trim())) {
       usuario.historial = [];
@@ -102,62 +139,6 @@ export const recibirMensaje = async (req: Request, res: Response, next: NextFunc
       await enviarMensajeWhatsAppTexto(telefonoCliente, '✅ Historial de conversación limpiado. Podés empezar de nuevo cuando quieras.', phoneNumberId);
       res.sendStatus(200);
       return;
-    }
-
-    // 🚗 FLUJO DE NOTIFICACIONES DE VIAJES - Procesar PRIMERO
-    try {
-      const empresaId = (empresa as any)._id?.toString() || empresa.nombre;
-      const procesadoPorNotificaciones = await procesarMensajeFlujoNotificaciones(
-        telefonoCliente,
-        mensaje,
-        respuestaInteractiva,
-        empresaId
-      );
-
-      if (procesadoPorNotificaciones) {
-        // El flujo de notificaciones manejó el mensaje
-        usuario.num_mensajes_recibidos += 1;
-        usuario.num_mensajes_enviados += 1;
-        usuario.interacciones += 1;
-        usuario.ultimaInteraccion = new Date().toISOString();
-        usuario.ultimo_status = 'flujo_notificaciones';
-        await actualizarUsuario(usuario);
-
-        res.sendStatus(200);
-        return;
-      }
-    } catch (errorNotificaciones) {
-      console.error('⚠️ Error en flujo de notificaciones, continuando con flujo normal:', errorNotificaciones);
-      // Si el flujo de notificaciones falla, continuar con el flujo normal
-    }
-
-    // 🤖 BOT DE TURNOS - Procesar SOLO si no hay flujo de notificaciones activo
-    // El bot de turnos NO debe interceptar mensajes cuando hay confirmaciones pendientes
-    try {
-      const respuestaBot = await botTurnosService.procesarMensaje(
-        mensaje,
-        telefonoCliente,
-        (empresa as any)._id?.toString() || empresa.nombre || ''
-      );
-      
-      if (respuestaBot) {
-        // El bot manejó el mensaje
-        await enviarMensajeWhatsAppTexto(telefonoCliente, respuestaBot, phoneNumberId);
-        
-        // Actualizar usuario
-        usuario.num_mensajes_recibidos += 1;
-        usuario.num_mensajes_enviados += 1;
-        usuario.interacciones += 1;
-        usuario.ultimaInteraccion = new Date().toISOString();
-        usuario.ultimo_status = 'bot_turnos';
-        await actualizarUsuario(usuario);
-        
-        res.sendStatus(200);
-        return;
-      }
-    } catch (errorBot) {
-      console.error('⚠️ Error en bot de turnos, continuando con flujo normal:', errorBot);
-      // Si el bot falla, continuar con el flujo normal de OpenAI
     }
 
     const mensajeMinuscula = mensaje.toLowerCase();
