@@ -1,5 +1,7 @@
 // 🚗 Servicio de Notificaciones de Viajes - SIMPLIFICADO
 import { TurnoModel } from '../modules/calendar/models/Turno.js';
+import { ClienteModel } from '../models/Cliente.js';
+import { EmpresaModel } from '../models/Empresa.js';
 import { enviarMensajeWhatsAppTexto } from './metaService.js';
 import { buscarEmpresaPorTelefono } from '../utils/empresaUtilsMongo.js';
 import { iniciarFlujoNotificacionViajes } from './flowIntegrationService.js';
@@ -23,21 +25,44 @@ export async function enviarNotificacionConfirmacionViajes(
   modoPrueba: boolean = false
 ): Promise<void> {
   console.log('📅 Enviando notificación de confirmación de viajes...');
+  console.log(`   Cliente: ${clienteTelefono}`);
+  console.log(`   Empresa: ${empresaTelefono}`);
 
-  // Buscar empresa
-  const empresa = await buscarEmpresaPorTelefono(empresaTelefono);
-  if (!empresa) {
-    console.error('❌ Empresa no encontrada');
-    return;
+  // 1. Buscar empresa en MongoDB (documento completo con _id)
+  console.log('🔍 Buscando empresa en MongoDB por teléfono:', empresaTelefono);
+  const empresaDoc = await EmpresaModel.findOne({ 
+    telefono: new RegExp(empresaTelefono.replace(/\D/g, '')) 
+  });
+  
+  if (!empresaDoc) {
+    console.error('❌ Empresa no encontrada en MongoDB');
+    throw new Error('Empresa no encontrada');
   }
-
-  const phoneNumberId = (empresa as any).phoneNumberId;
+  
+  console.log('✅ Empresa encontrada:', empresaDoc.nombre);
+  
+  const phoneNumberId = empresaDoc.phoneNumberId;
   if (!phoneNumberId) {
     console.error('❌ phoneNumberId no configurado para la empresa');
-    return;
+    throw new Error('phoneNumberId no configurado');
   }
 
-  // Obtener turnos del cliente
+  // 2. Buscar cliente por teléfono y empresaId
+  console.log('🔍 Buscando cliente por teléfono:', clienteTelefono);
+  const cliente = await ClienteModel.findOne({
+    empresaId: empresaDoc.nombre, // Los clientes usan el nombre de la empresa
+    telefono: clienteTelefono
+  });
+
+  if (!cliente) {
+    console.error('❌ Cliente no encontrado');
+    throw new Error(`Cliente no encontrado con teléfono ${clienteTelefono}`);
+  }
+  
+  console.log('✅ Cliente encontrado:', cliente.nombre, cliente.apellido);
+  console.log('   Cliente ID:', cliente._id.toString());
+
+  // 3. Definir rango de fechas
   let fechaInicio: Date;
   let fechaFin: Date;
   
@@ -60,15 +85,26 @@ export async function enviarNotificacionConfirmacionViajes(
     fechaFin.setHours(23, 59, 59, 999);
   }
 
-  const turnos = await TurnoModel.find({
-    empresaId: (empresa as any)._id?.toString() || empresa.nombre,
-    clienteId: clienteTelefono,
+  console.log('📅 Rango de búsqueda:');
+  console.log('   Desde:', fechaInicio.toISOString());
+  console.log('   Hasta:', fechaFin.toISOString());
+
+  // 4. Buscar turnos del cliente
+  const query = {
+    empresaId: empresaDoc.nombre, // Los turnos usan el nombre de la empresa
+    clienteId: cliente._id.toString(), // Usar el _id del cliente
     fechaInicio: {
       $gte: fechaInicio,
       $lte: fechaFin
     },
     estado: { $in: ['pendiente', 'confirmado'] }
-  }).sort({ fechaInicio: 1 }).limit(10);
+  };
+  
+  console.log('🔍 Query de búsqueda de turnos:', JSON.stringify(query, null, 2));
+  
+  const turnos = await TurnoModel.find(query)
+    .sort({ fechaInicio: 1 })
+    .limit(10);
 
   if (turnos.length === 0) {
     const mensaje = modoPrueba 
@@ -130,7 +166,7 @@ export async function enviarNotificacionConfirmacionViajes(
   // Iniciar flujo de notificaciones
   await iniciarFlujoNotificacionViajes(
     clienteTelefono,
-    (empresa as any)._id?.toString() || empresa.nombre,
+    empresaDoc._id.toString(),
     viajes
   );
 
