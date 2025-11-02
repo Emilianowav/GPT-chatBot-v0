@@ -380,8 +380,19 @@ export const enviarNotificacionPrueba = async (req: Request, res: Response): Pro
       return;
     }
 
-    // Buscar empresa para obtener su teléfono
-    const empresa = await EmpresaModel.findById(empresaId);
+    // Buscar empresa por nombre o ID
+    let empresa;
+    
+    // Intentar buscar por ObjectId primero
+    if (empresaId.match(/^[0-9a-fA-F]{24}$/)) {
+      empresa = await EmpresaModel.findById(empresaId);
+    }
+    
+    // Si no se encontró o no es un ObjectId válido, buscar por nombre
+    if (!empresa) {
+      empresa = await EmpresaModel.findOne({ nombre: empresaId });
+    }
+    
     if (!empresa || !empresa.telefono) {
       res.status(404).json({
         success: false,
