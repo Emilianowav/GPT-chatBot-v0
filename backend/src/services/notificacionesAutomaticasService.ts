@@ -28,6 +28,11 @@ export async function procesarNotificacionesProgramadas() {
       for (const notif of config.notificaciones) {
         if (!notif.activa) continue;
 
+        // ✅ Solo procesar notificaciones automáticas
+        if (notif.ejecucion === 'manual') {
+          continue; // Las manuales solo se envían con "Enviar Prueba"
+        }
+
         // Verificar si es hora de enviar
         const debeEnviar = verificarSiDebeEnviar(notif, horaActual, diaActual);
 
@@ -210,9 +215,26 @@ async function obtenerTurnosParaNotificacion(empresaId: string, notif: any) {
   // Buscar turnos
   const query: any = {
     empresaId,
-    fechaInicio: { $gte: fechaInicio, $lte: fechaFin },
-    estado: { $in: ['no_confirmado', 'pendiente', 'confirmado'] }
+    fechaInicio: { $gte: fechaInicio, $lte: fechaFin }
   };
+
+  // ✅ FILTRO 1: Estados
+  if (notif.filtros?.estados && notif.filtros.estados.length > 0) {
+    query.estado = { $in: notif.filtros.estados };
+  } else {
+    // Default: solo turnos activos
+    query.estado = { $in: ['no_confirmado', 'pendiente', 'confirmado'] };
+  }
+
+  // ✅ FILTRO 2: Solo turnos sin notificación previa
+  if (notif.filtros?.soloSinNotificar) {
+    query['notificaciones.enviada'] = { $ne: true };
+  }
+
+  // ✅ FILTRO 3: Tipo de reserva
+  if (notif.filtros?.tipoReserva && notif.filtros.tipoReserva.length > 0) {
+    query.tipoReserva = { $in: notif.filtros.tipoReserva };
+  }
 
   // Filtrar por destinatario
   if (notif.destinatario === 'clientes_especificos' && notif.clientesEspecificos) {
@@ -221,10 +243,44 @@ async function obtenerTurnosParaNotificacion(empresaId: string, notif: any) {
     query.agenteId = { $in: notif.agentesEspecificos };
   }
 
-  const turnos = await TurnoModel.find(query)
+  // ✅ FILTRO 4: Agentes específicos (adicional)
+  if (notif.filtros?.agenteIds && notif.filtros.agenteIds.length > 0) {
+    query.agenteId = { $in: notif.filtros.agenteIds };
+  }
+
+  // Aplicar límite si está configurado
+  const limite = notif.filtros?.limite || 1000;
+
+  let turnos = await TurnoModel.find(query)
     .populate('agenteId')
     .populate('clienteId')
-    .sort({ fechaInicio: 1 });
+    .sort({ fechaInicio: 1 })
+    .limit(limite);
+
+  // ✅ FILTRO 5: Hora mínima y máxima (post-query)
+  if (notif.filtros?.horaMinima || notif.filtros?.horaMaxima) {
+    turnos = turnos.filter(turno => {
+      const fechaTurno = new Date(turno.fechaInicio);
+      const horaTurno = `${fechaTurno.getHours().toString().padStart(2, '0')}:${fechaTurno.getMinutes().toString().padStart(2, '0')}`;
+
+      if (notif.filtros?.horaMinima && horaTurno < notif.filtros.horaMinima) {
+        return false;
+      }
+
+      if (notif.filtros?.horaMaxima && horaTurno > notif.filtros.horaMaxima) {
+        return false;
+      }
+
+      return true;
+    });
+  }
+
+  console.log(`🔍 Filtros aplicados: ${turnos.length} turnos encontrados`);
+  if (notif.filtros) {
+    console.log('  - Estados:', notif.filtros.estados || 'todos');
+    console.log('  - Hora:', `${notif.filtros.horaMinima || '00:00'} - ${notif.filtros.horaMaxima || '23:59'}`);
+    console.log('  - Solo sin notificar:', notif.filtros.soloSinNotificar || false);
+  }
 
   return turnos;
 }

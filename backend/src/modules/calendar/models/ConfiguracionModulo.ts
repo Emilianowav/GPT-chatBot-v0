@@ -74,6 +74,20 @@ export interface NotificacionAutomatica {
     fechaInicio?: Date;            // Fecha de inicio (opcional)
     fechaFin?: Date;               // Fecha de fin (opcional)
   };
+  
+  // Tipo de ejecución
+  ejecucion?: 'automatica' | 'manual';  // Manual = solo con "Enviar Prueba"
+  
+  // Filtros avanzados (solo para ejecución automática)
+  filtros?: {
+    estados?: string[];            // Estados a incluir: ['no_confirmado', 'pendiente']
+    horaMinima?: string;           // Hora mínima del turno: "08:00"
+    horaMaxima?: string;           // Hora máxima del turno: "20:00"
+    agenteIds?: string[];          // IDs de agentes específicos
+    tipoReserva?: string[];        // Tipos de reserva: ['viaje', 'traslado']
+    limite?: number;               // Máximo de turnos a enviar
+    soloSinNotificar?: boolean;    // Solo turnos que no han recibido notificación
+  };
 }
 
 // Notificaciones diarias para agentes (resumen de turnos del día)
@@ -305,6 +319,20 @@ const NotificacionAutomaticaSchema = new Schema<NotificacionAutomatica>(
       diaMes: Number,
       fechaInicio: Date,
       fechaFin: Date
+    },
+    ejecucion: {
+      type: String,
+      enum: ['automatica', 'manual'],
+      default: 'automatica'
+    },
+    filtros: {
+      estados: [String],
+      horaMinima: String,
+      horaMaxima: String,
+      agenteIds: [String],
+      tipoReserva: [String],
+      limite: Number,
+      soloSinNotificar: Boolean
     }
   },
   { _id: false }
