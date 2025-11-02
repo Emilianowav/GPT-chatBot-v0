@@ -85,6 +85,16 @@ function verificarSiDebeEnviar(
   }
 
   // Si no es recurrente, verificar momento de envío
+  if (notif.momento === 'horas_antes_turno') {
+    // Para "X horas antes del turno", siempre verificar (se ejecuta cada minuto)
+    return true;
+  }
+  
+  if (notif.momento === 'dia_antes_turno' && notif.horaEnvioDiaAntes) {
+    // Para "X días antes a hora específica", verificar hora
+    return notif.horaEnvioDiaAntes === horaActual;
+  }
+  
   if (notif.momento === 'noche_anterior' || notif.momento === 'hora_exacta') {
     return notif.horaEnvio === horaActual;
   }
@@ -186,28 +196,49 @@ async function obtenerTurnosParaNotificacion(empresaId: string, notif: any) {
   let fechaFin: Date;
 
   // Determinar rango de fechas según el momento
-  if (notif.momento === 'noche_anterior') {
-    // Turnos de mañana
+  if (notif.momento === 'horas_antes_turno' && notif.horasAntesTurno) {
+    // ✅ NUEVO: X horas antes de cada turno
+    // Buscar turnos que empiecen en las próximas X horas (con margen de ±5 minutos)
+    const horasMs = notif.horasAntesTurno * 60 * 60 * 1000;
+    fechaInicio = new Date(ahora.getTime() + horasMs - 5 * 60 * 1000); // -5 min
+    fechaFin = new Date(ahora.getTime() + horasMs + 5 * 60 * 1000);    // +5 min
+    
+  } else if (notif.momento === 'dia_antes_turno' && notif.diasAntes && notif.horaEnvioDiaAntes) {
+    // ✅ NUEVO: X días antes a una hora específica
+    // Ejemplo: 1 día antes a las 22:00
+    // Si ahora son las 22:00, buscar turnos de mañana
+    const [hora, minutos] = notif.horaEnvioDiaAntes.split(':').map(Number);
+    const horaActual = `${ahora.getHours().toString().padStart(2, '0')}:${ahora.getMinutes().toString().padStart(2, '0')}`;
+    
+    if (horaActual !== notif.horaEnvioDiaAntes) {
+      return []; // No es la hora configurada
+    }
+    
+    // Buscar turnos de dentro de X días
+    fechaInicio = new Date(ahora);
+    fechaInicio.setDate(fechaInicio.getDate() + notif.diasAntes);
+    fechaInicio.setHours(0, 0, 0, 0);
+
+    fechaFin = new Date(fechaInicio);
+    fechaFin.setHours(23, 59, 59, 999);
+    
+  } else if (notif.momento === 'noche_anterior') {
+    // Turnos de mañana (mantener compatibilidad)
     fechaInicio = new Date(ahora);
     fechaInicio.setDate(fechaInicio.getDate() + 1);
     fechaInicio.setHours(0, 0, 0, 0);
 
     fechaFin = new Date(fechaInicio);
     fechaFin.setHours(23, 59, 59, 999);
+    
   } else if (notif.momento === 'mismo_dia' || notif.momento === 'hora_exacta') {
-    // Turnos de hoy
+    // Turnos de hoy (mantener compatibilidad)
     fechaInicio = new Date(ahora);
     fechaInicio.setHours(0, 0, 0, 0);
 
     fechaFin = new Date(fechaInicio);
     fechaFin.setHours(23, 59, 59, 999);
-  } else if (notif.momento === 'horas_antes' && notif.horasAntes) {
-    // Turnos en X horas
-    fechaInicio = new Date(ahora.getTime() + notif.horasAntes * 60 * 60 * 1000);
-    fechaInicio.setMinutes(0, 0, 0);
-
-    fechaFin = new Date(fechaInicio);
-    fechaFin.setMinutes(59, 59, 999);
+    
   } else {
     return [];
   }

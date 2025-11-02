@@ -46,10 +46,11 @@ export interface NotificacionAutomatica {
   activa: boolean;
   tipo: 'recordatorio' | 'confirmacion';
   destinatario: 'cliente' | 'agente' | 'clientes_especificos' | 'agentes_especificos';
-  momento: 'noche_anterior' | 'mismo_dia' | 'horas_antes' | 'personalizado' | 'inmediata' | 'hora_exacta';
+  momento: 'noche_anterior' | 'mismo_dia' | 'horas_antes_turno' | 'dia_antes_turno' | 'hora_exacta' | 'personalizado';
   horaEnvio?: string;         // "22:00" para envío nocturno o hora exacta
-  horasAntes?: number;        // Para 'horas_antes': 24, 1, etc.
-  diasAntes?: number;         // 0 = mismo día, 1 = día anterior
+  horasAntesTurno?: number;   // Para 'horas_antes_turno': 24, 2, 1, etc. (basado en hora del turno)
+  diasAntes?: number;         // Para 'dia_antes_turno': 1, 2, 3 días antes
+  horaEnvioDiaAntes?: string; // Para 'dia_antes_turno': hora específica "22:00"
   plantillaMensaje: string;   // Plantilla con variables: {origen}, {destino}, {hora}, etc.
   requiereConfirmacion: boolean;
   mensajeConfirmacion?: string;
@@ -278,12 +279,13 @@ const NotificacionAutomaticaSchema = new Schema<NotificacionAutomatica>(
     },
     momento: {
       type: String,
-      enum: ['noche_anterior', 'mismo_dia', 'horas_antes', 'personalizado', 'inmediata', 'hora_exacta'],
+      enum: ['noche_anterior', 'mismo_dia', 'horas_antes_turno', 'dia_antes_turno', 'hora_exacta', 'personalizado'],
       required: true
     },
     horaEnvio: String,
-    horasAntes: Number,
+    horasAntesTurno: Number,
     diasAntes: Number,
+    horaEnvioDiaAntes: String,
     plantillaMensaje: {
       type: String,
       required: true
