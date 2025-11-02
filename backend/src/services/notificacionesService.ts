@@ -254,9 +254,18 @@ export async function programarNotificacionesTurno(
       let fechaEnvio: Date;
       
       switch (configNotif.momento) {
-        case 'inmediata':
-          // Enviar inmediatamente
-          fechaEnvio = new Date();
+        case 'horas_antes_turno':
+          // Enviar X horas antes del turno
+          fechaEnvio = new Date(fechaTurno);
+          fechaEnvio.setHours(fechaEnvio.getHours() - (configNotif.horasAntesTurno || 24));
+          break;
+          
+        case 'dia_antes_turno':
+          // Enviar X días antes a hora específica
+          fechaEnvio = new Date(fechaTurno);
+          fechaEnvio.setDate(fechaEnvio.getDate() - (configNotif.diasAntes || 1));
+          const [horaAntes, minutoAntes] = (configNotif.horaEnvioDiaAntes || '22:00').split(':');
+          fechaEnvio.setHours(parseInt(horaAntes), parseInt(minutoAntes), 0, 0);
           break;
           
         case 'noche_anterior':
@@ -274,10 +283,11 @@ export async function programarNotificacionesTurno(
           fechaEnvio.setHours(parseInt(horaDia), parseInt(minutoDia), 0, 0);
           break;
           
-        case 'horas_antes':
-          // Enviar X horas antes
+        case 'hora_exacta':
+          // Enviar a hora exacta del día
           fechaEnvio = new Date(fechaTurno);
-          fechaEnvio.setHours(fechaEnvio.getHours() - (configNotif.horasAntes || 24));
+          const [horaExacta, minutoExacta] = (configNotif.horaEnvio || '09:00').split(':');
+          fechaEnvio.setHours(parseInt(horaExacta), parseInt(minutoExacta), 0, 0);
           break;
           
         default:
