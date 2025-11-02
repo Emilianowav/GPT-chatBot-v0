@@ -36,6 +36,11 @@ export async function generarSlotsDisponibles(
   const [horaInicio, minInicio] = disponibilidad.horaInicio.split(':').map(Number);
   const [horaFin, minFin] = disponibilidad.horaFin.split(':').map(Number);
   
+  console.log('📅 Generando slots:');
+  console.log('  - Horario:', `${disponibilidad.horaInicio} - ${disponibilidad.horaFin}`);
+  console.log('  - Duración slot:', duracionSlot, 'min');
+  console.log('  - Buffer:', agente.bufferEntreturnos, 'min');
+  
   let horaActual = new Date(fecha);
   horaActual.setHours(horaInicio, minInicio, 0, 0);
   
@@ -56,6 +61,8 @@ export async function generarSlotsDisponibles(
       horaActual.getTime() + (duracionSlot + agente.bufferEntreturnos) * 60000
     );
   }
+  
+  console.log('  - Slots generados:', slots.length);
 
   // 3. Marcar slots ocupados por turnos existentes
   const inicioDelDia = new Date(fecha);
@@ -100,7 +107,11 @@ export async function generarSlotsDisponibles(
     }
   }
 
-  return slots.filter(s => s.disponible);
+  const slotsDisponibles = slots.filter(s => s.disponible);
+  console.log('  - Slots disponibles (después de filtrar):', slotsDisponibles.length);
+  console.log('  - Slots ocupados/bloqueados:', slots.length - slotsDisponibles.length);
+  
+  return slotsDisponibles;
 }
 
 /**
