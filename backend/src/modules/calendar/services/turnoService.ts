@@ -33,10 +33,15 @@ export async function crearTurno(data: CrearTurnoData): Promise<ITurno> {
     empresaId: data.empresaId 
   });
   
+  console.log('🔍 DEBUG - Buscando configuración del módulo para:', data.empresaId);
   const configModulo = await ConfiguracionModuloModel.findOne({
     empresaId: data.empresaId,
     activo: true
   });
+  console.log('🔍 DEBUG - ConfigModulo encontrada:', configModulo ? 'SÍ' : 'NO');
+  if (configModulo) {
+    console.log('🔍 DEBUG - Notificaciones en config:', configModulo.notificaciones?.length || 0);
+  }
 
   // 3. Validar anticipación mínima
   const ahora = new Date();
@@ -124,32 +129,74 @@ export async function crearTurno(data: CrearTurnoData): Promise<ITurno> {
   // 7. Programar notificaciones basadas en la configuración del módulo
   const notificacionesProgramadas: any[] = [];
   
+  console.log('🔍 DEBUG - Iniciando programación de notificaciones...');
+  console.log('🔍 DEBUG - configModulo existe:', !!configModulo);
+  console.log('🔍 DEBUG - configModulo.notificaciones:', configModulo?.notificaciones);
+  
   if (configModulo?.notificaciones && configModulo.notificaciones.length > 0) {
+    console.log('🔍 DEBUG - Procesando', configModulo.notificaciones.length, 'notificaciones');
+    
     for (const notifConfig of configModulo.notificaciones) {
-      if (!notifConfig.activa || notifConfig.ejecucion === 'manual') continue;
+      console.log('🔍 DEBUG - Notif:', notifConfig.tipo, 'activa:', notifConfig.activa, 'ejecucion:', notifConfig.ejecucion);
+      
+      if (!notifConfig.activa || notifConfig.ejecucion === 'manual') {
+        console.log('🔍 DEBUG - Notif saltada (inactiva o manual)');
+        continue;
+      }
       
       // Calcular cuándo debe enviarse
       let fechaProgramada: Date | null = null;
       
+      console.log('🔍 DEBUG - Momento:', notifConfig.momento);
+      console.log('🔍 DEBUG - Fecha turno:', data.fechaInicio);
+      console.log('🔍 DEBUG - Fecha actual:', new Date());
+      
       if (notifConfig.momento === 'horas_antes_turno' && notifConfig.horasAntesTurno) {
         fechaProgramada = new Date(data.fechaInicio.getTime() - notifConfig.horasAntesTurno * 60 * 60 * 1000);
+        console.log('🔍 DEBUG - Horas antes:', notifConfig.horasAntesTurno);
+        console.log('🔍 DEBUG - Calculada fecha para horas_antes_turno:', fechaProgramada);
       } else if (notifConfig.momento === 'dia_antes_turno' && notifConfig.diasAntes && notifConfig.horaEnvioDiaAntes) {
         const [hora, minutos] = notifConfig.horaEnvioDiaAntes.split(':').map(Number);
         fechaProgramada = new Date(data.fechaInicio);
         fechaProgramada.setDate(fechaProgramada.getDate() - notifConfig.diasAntes);
         fechaProgramada.setHours(hora, minutos, 0, 0);
+        console.log('🔍 DEBUG - Calculada fecha para dia_antes_turno:', fechaProgramada);
+      } else if (notifConfig.momento === 'mismo_dia' || notifConfig.momento === 'hora_exacta') {
+        // Para notificaciones del mismo día, programar para la hora configurada
+        if (notifConfig.horaEnvio) {
+          const [hora, minutos] = notifConfig.horaEnvio.split(':').map(Number);
+          fechaProgramada = new Date(data.fechaInicio);
+          fechaProgramada.setHours(hora, minutos, 0, 0);
+          console.log('🔍 DEBUG - Calculada fecha para mismo_dia:', fechaProgramada);
+        }
+      } else {
+        console.log('🔍 DEBUG - ⚠️ Momento no reconocido o faltan parámetros');
       }
       
-      if (fechaProgramada && fechaProgramada > new Date()) {
-        notificacionesProgramadas.push({
-          tipo: notifConfig.tipo,
-          programadaPara: fechaProgramada,
-          enviada: false,
-          plantilla: notifConfig.plantillaMensaje
-        });
+      if (fechaProgramada) {
+        const esFutura = fechaProgramada > new Date();
+        console.log('🔍 DEBUG - Fecha programada es futura?:', esFutura, '(', fechaProgramada, 'vs', new Date(), ')');
+        
+        if (esFutura) {
+          console.log('🔍 DEBUG - ✅ Notificación agregada:', notifConfig.tipo);
+          notificacionesProgramadas.push({
+            tipo: notifConfig.tipo,
+            programadaPara: fechaProgramada,
+            enviada: false,
+            plantilla: notifConfig.plantillaMensaje
+          });
+        } else {
+          console.log('🔍 DEBUG - ❌ Notificación NO agregada (fecha pasada)');
+        }
+      } else {
+        console.log('🔍 DEBUG - ❌ Notificación NO agregada (fecha nula)');
       }
     }
+  } else {
+    console.log('🔍 DEBUG - ❌ No hay notificaciones en configModulo');
   }
+  
+  console.log('🔍 DEBUG - Total notificaciones programadas:', notificacionesProgramadas.length);
 
   const turno = new TurnoModel({
     empresaId: data.empresaId,
@@ -158,13 +205,11 @@ export async function crearTurno(data: CrearTurnoData): Promise<ITurno> {
     fechaInicio: data.fechaInicio,
     fechaFin,
     duracion: data.duracion,
-    estado: config?.requiereConfirmacionAgente 
-      ? EstadoTurno.PENDIENTE 
-      : EstadoTurno.CONFIRMADO,
+    estado: EstadoTurno.PENDIENTE,  // ✅ SIEMPRE PENDIENTE POR DEFECTO
     datos: data.datos || {}, // Campos dinámicos
     notas: data.notas,
     creadoPor: data.creadoPor,
-    confirmado: !config?.requiereConfirmacionAgente,
+    confirmado: false,  // ✅ SIEMPRE REQUIERE CONFIRMACIÓN
     notificaciones: notificacionesProgramadas
   });
 
