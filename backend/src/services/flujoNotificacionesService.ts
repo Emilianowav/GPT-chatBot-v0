@@ -17,22 +17,20 @@ const estadosConversacion = new Map<string, EstadoConversacion>();
  * @param clienteTelefono Teléfono del cliente
  * @param mensaje Mensaje del cliente
  * @param respuestaInteractiva ID de respuesta interactiva (si aplica)
- * @param empresaId ID o nombre de la empresa
+ * @param empresaTelefono Teléfono de la empresa
  * @returns true si el mensaje fue procesado por el flujo, false si debe continuar con flujo normal
  */
 export async function procesarMensajeFlujoNotificaciones(
   clienteTelefono: string,
   mensaje: string,
   respuestaInteractiva: string | undefined,
-  empresaId: string
+  empresaTelefono: string
 ): Promise<boolean> {
-  const clave = `${clienteTelefono}_${empresaId}`;
+  const clave = `${clienteTelefono}_${empresaTelefono}`;
   const estadoActual = estadosConversacion.get(clave);
 
   console.log('🔄 Procesando flujo de notificaciones:', {
     clienteTelefono,
-    empresaId,
-    mensaje,
     respuestaInteractiva,
     estadoActual: estadoActual?.estado
   });
@@ -42,49 +40,17 @@ export async function procesarMensajeFlujoNotificaciones(
     const resultadoConfirmacion = await confirmacionTurnosService.procesarRespuestaConfirmacion(
       clienteTelefono,
       mensaje,
-      empresaId
+      empresaTelefono
     );
 
-    console.log('🔍 Resultado de confirmación:', resultadoConfirmacion);
-
     if (resultadoConfirmacion.procesado) {
-      console.log('✅ Mensaje procesado por sistema de confirmación - Enviando respuesta');
-      
-      // Enviar respuesta al cliente
-      if (resultadoConfirmacion.respuesta) {
-        const { EmpresaModel } = await import('../models/Empresa.js');
-        const { enviarMensajeWhatsAppTexto } = await import('../services/metaService.js');
-        
-        // Buscar empresa para obtener phoneNumberId
-        const isValidObjectId = /^[0-9a-fA-F]{24}$/.test(empresaId);
-        let empresa;
-        
-        if (isValidObjectId) {
-          empresa = await EmpresaModel.findOne({ 
-            $or: [{ _id: empresaId }, { nombre: empresaId }]
-          });
-        } else {
-          empresa = await EmpresaModel.findOne({ nombre: empresaId });
-        }
-        
-        if (empresa?.phoneNumberId) {
-          await enviarMensajeWhatsAppTexto(
-            clienteTelefono,
-            resultadoConfirmacion.respuesta,
-            empresa.phoneNumberId
-          );
-          console.log('✅ Respuesta enviada al cliente');
-        }
-      }
-      
+      console.log('✅ Mensaje procesado por sistema de confirmación');
       // El nuevo sistema manejó el mensaje, limpiar estado antiguo si existe
       if (estadoActual) {
         estadosConversacion.delete(clave);
       }
       return true;
     }
-    
-    console.log('⚠️ Sistema de confirmación no procesó el mensaje');
   } catch (errorConfirmacion) {
     console.error('⚠️ Error en sistema de confirmación:', errorConfirmacion);
     // Continuar con el flujo antiguo si el nuevo falla
@@ -95,7 +61,7 @@ export async function procesarMensajeFlujoNotificaciones(
     return await procesarRespuestaInteractiva(
       clienteTelefono,
       respuestaInteractiva,
-      empresaId,
+      empresaTelefono,
       clave
     );
   }
@@ -106,7 +72,7 @@ export async function procesarMensajeFlujoNotificaciones(
       clienteTelefono,
       mensaje,
       estadoActual,
-      empresaId,
+      empresaTelefono,
       clave
     );
   }

@@ -24,8 +24,7 @@ import {
 } from "./services/metaTokenService.js";
 import { iniciarServicioNotificaciones } from "./services/notificacionesService.js";
 import { procesarNotificacionesProgramadas } from "./services/notificacionesAutomaticasService.js";
-import { inicializarFlujosPorDefecto } from "./services/gestorFlujos.js";
-import { EmpresaModel } from "./models/Empresa.js";
+import { initializeFlows } from "./flows/index.js";
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -101,6 +100,10 @@ app.use(errorHandler);
     console.log('🔌 Conectando a MongoDB...');
     await connectDB();
     
+    // 1.5. Inicializar sistema de flujos dinámicos
+    console.log('🔄 Inicializando sistema de flujos...');
+    initializeFlows();
+    
     // 2. Token refresh al iniciar
     if (shouldRefreshMetaToken()) {
       console.log("🔄 Refrescando token Meta al iniciar la app...");
@@ -164,20 +167,7 @@ app.use(errorHandler);
       console.log('👂 WebSocket Server escuchando...');
     });
 
-    // 5. Inicializar flujos por defecto para todas las empresas
-    console.log('🎯 Inicializando flujos dinámicos...');
-    try {
-      const empresas = await EmpresaModel.find({});
-      for (const empresa of empresas) {
-        const empresaId = empresa._id?.toString() || empresa.nombre;
-        await inicializarFlujosPorDefecto(empresaId);
-      }
-      console.log(`✅ Flujos inicializados para ${empresas.length} empresas`);
-    } catch (errorFlujos) {
-      console.error('⚠️ Error inicializando flujos:', errorFlujos);
-    }
-
-    // 6. Iniciar servicio de notificaciones automáticas
+    // 5. Iniciar servicio de notificaciones automáticas
     console.log('🔔 Iniciando servicio de notificaciones...');
     iniciarServicioNotificaciones();
 
