@@ -22,13 +22,11 @@ export const menuPrincipalFlow: Flow = {
       'cancelar', 'cancelación', 'eliminar'
     ];
     
-    // Activar si es un saludo o palabra clave
+    // SOLO activar si es un saludo o palabra clave
+    // NO activar con números solos (pueden ser respuestas a otros flujos)
     const esIntencion = keywords.some(kw => mensajeLower.includes(kw));
     
-    // También activar si es un número del 1 al 3 (opciones del menú)
-    const esOpcionMenu = /^[123]$/.test(mensajeLower);
-    
-    return esIntencion || esOpcionMenu;
+    return esIntencion;
   },
   
   async start(context: FlowContext): Promise<FlowResult> {

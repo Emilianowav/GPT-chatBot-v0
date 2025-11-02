@@ -364,10 +364,10 @@ export const enviarNotificacionPrueba = async (req: Request, res: Response): Pro
       return;
     }
 
-    // Importar dinámicamente el servicio de confirmación
-    const { enviarNotificacionConfirmacion } = await import('../services/confirmacionTurnosService.js');
+    // Importar servicios necesarios
     const { ClienteModel } = await import('../../../models/Cliente.js');
-    const { TurnoModel } = await import('../models/Turno.js');
+    const { EmpresaModel } = await import('../../../models/Empresa.js');
+    const { enviarNotificacionConfirmacionViajes } = await import('../../../services/notificacionesViajesService.js');
 
     // Buscar un cliente de prueba (el primero de la empresa)
     const clientePrueba = await ClienteModel.findOne({ empresaId }).limit(1);
@@ -380,60 +380,30 @@ export const enviarNotificacionPrueba = async (req: Request, res: Response): Pro
       return;
     }
 
-    // Buscar turnos del cliente para mañana (o crear uno ficticio)
-    const manana = new Date();
-    manana.setDate(manana.getDate() + 1);
-    manana.setHours(14, 30, 0, 0);
-
-    let turnosPrueba = await TurnoModel.find({
-      clienteId: clientePrueba._id,
-      empresaId,
-      fechaInicio: {
-        $gte: new Date(manana.setHours(0, 0, 0, 0)),
-        $lt: new Date(manana.setHours(23, 59, 59, 999))
-      }
-    }).limit(3);
-
-    // Si no hay turnos, crear uno ficticio temporal
-    if (turnosPrueba.length === 0) {
-      const turnoFicticio = {
-        _id: 'prueba_' + Date.now(),
-        clienteId: clientePrueba._id,
-        empresaId,
-        fechaInicio: manana,
-        fechaFin: new Date(manana.getTime() + 60 * 60 * 1000),
-        duracion: 60,
-        estado: 'pendiente',
-        datos: {
-          origen: 'Av. Corrientes 1234 (PRUEBA)',
-          destino: 'Av. Santa Fe 5678 (PRUEBA)',
-          pasajeros: 2
-        },
-        notificaciones: [],
-        save: async function() { return this; }
-      };
-      turnosPrueba = [turnoFicticio as any];
+    // Buscar empresa para obtener su teléfono
+    const empresa = await EmpresaModel.findById(empresaId);
+    if (!empresa || !empresa.telefono) {
+      res.status(404).json({
+        success: false,
+        message: 'No se encontró la empresa o no tiene teléfono configurado'
+      });
+      return;
     }
 
-    // Enviar notificación
-    const enviado = await enviarNotificacionConfirmacion(
-      clientePrueba._id.toString(),
-      turnosPrueba,
-      empresaId
+    console.log(`📨 Enviando notificación de prueba a ${clientePrueba.telefono}`);
+    console.log(`   Empresa: ${empresa.nombre} (${empresa.telefono})`);
+
+    // Enviar notificación usando el nuevo sistema de flujos
+    await enviarNotificacionConfirmacionViajes(
+      clientePrueba.telefono,
+      empresa.telefono
     );
 
-    if (enviado) {
-      res.json({
-        success: true,
-        message: `Notificación de prueba enviada a ${clientePrueba.nombre || clientePrueba.telefono}`,
-        telefono: clientePrueba.telefono
-      });
-    } else {
-      res.status(500).json({
-        success: false,
-        message: 'Error al enviar la notificación de prueba'
-      });
-    }
+    res.json({
+      success: true,
+      message: `Notificación de prueba enviada a ${clientePrueba.nombre || clientePrueba.telefono}`,
+      telefono: clientePrueba.telefono
+    });
 
   } catch (error: any) {
     console.error('Error al enviar notificación de prueba:', error);
