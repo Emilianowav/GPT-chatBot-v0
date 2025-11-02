@@ -24,9 +24,14 @@ export async function crearAgente(req: Request, res: Response) {
       especialidad,
       descripcion,
       titulo,
+      sector,
+      modoAtencion,
+      disponibilidad,
       duracionTurnoPorDefecto,
       bufferEntreturnos,
-      maximoTurnosPorDia
+      capacidadSimultanea,
+      maximoTurnosPorDia,
+      activo
     } = req.body;
 
     if (!nombre || !apellido || !email) {
@@ -45,9 +50,14 @@ export async function crearAgente(req: Request, res: Response) {
       especialidad,
       descripcion,
       titulo,
+      sector,
+      modoAtencion,
+      disponibilidad,
       duracionTurnoPorDefecto,
       bufferEntreturnos,
-      maximoTurnosPorDia
+      capacidadSimultanea,
+      maximoTurnosPorDia,
+      activo
     });
 
     res.status(201).json({

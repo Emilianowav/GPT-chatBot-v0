@@ -10,9 +10,14 @@ export interface CrearAgenteData {
   especialidad?: string;
   descripcion?: string;
   titulo?: string;
+  sector?: string;
+  modoAtencion?: 'turnos_programados' | 'turnos_libres' | 'mixto';
+  disponibilidad?: Disponibilidad[];
   duracionTurnoPorDefecto?: number;
   bufferEntreturnos?: number;
+  capacidadSimultanea?: number;
   maximoTurnosPorDia?: number;
+  activo?: boolean;
 }
 
 /**
@@ -31,8 +36,12 @@ export async function crearAgente(data: CrearAgenteData): Promise<IAgente> {
 
   const agente = new AgenteModel({
     ...data,
-    disponibilidad: [],
-    activo: true
+    disponibilidad: data.disponibilidad || [],
+    activo: data.activo !== undefined ? data.activo : true,
+    modoAtencion: data.modoAtencion || 'turnos_programados',
+    duracionTurnoPorDefecto: data.duracionTurnoPorDefecto || 30,
+    bufferEntreturnos: data.bufferEntreturnos || 5,
+    capacidadSimultanea: data.capacidadSimultanea || 1
   });
 
   await agente.save();

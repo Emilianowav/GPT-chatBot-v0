@@ -2,6 +2,7 @@
 import { TurnoModel, ITurno, EstadoTurno } from '../models/Turno.js';
 import { AgenteModel, ModoAtencion } from '../models/Agente.js';
 import { ConfiguracionCalendarioModel } from '../models/ConfiguracionCalendario.js';
+import { ConfiguracionModuloModel } from '../models/ConfiguracionModulo.js';
 import { ClienteModel } from '../../../models/Cliente.js';
 import { verificarDisponibilidad } from './disponibilidadService.js';
 
@@ -27,9 +28,14 @@ export async function crearTurno(data: CrearTurnoData): Promise<ITurno> {
     throw new Error('Agente no encontrado');
   }
 
-  // 2. Obtener configuración
+  // 2. Obtener configuraciones
   const config = await ConfiguracionCalendarioModel.findOne({ 
     empresaId: data.empresaId 
+  });
+  
+  const configModulo = await ConfiguracionModuloModel.findOne({
+    empresaId: data.empresaId,
+    activo: true
   });
 
   // 3. Validar anticipación mínima
@@ -115,6 +121,36 @@ export async function crearTurno(data: CrearTurnoData): Promise<ITurno> {
   // 6. Crear turno
   const fechaFin = new Date(data.fechaInicio.getTime() + data.duracion * 60000);
 
+  // 7. Programar notificaciones basadas en la configuración del módulo
+  const notificacionesProgramadas: any[] = [];
+  
+  if (configModulo?.notificaciones && configModulo.notificaciones.length > 0) {
+    for (const notifConfig of configModulo.notificaciones) {
+      if (!notifConfig.activa || notifConfig.ejecucion === 'manual') continue;
+      
+      // Calcular cuándo debe enviarse
+      let fechaProgramada: Date | null = null;
+      
+      if (notifConfig.momento === 'horas_antes_turno' && notifConfig.horasAntesTurno) {
+        fechaProgramada = new Date(data.fechaInicio.getTime() - notifConfig.horasAntesTurno * 60 * 60 * 1000);
+      } else if (notifConfig.momento === 'dia_antes_turno' && notifConfig.diasAntes && notifConfig.horaEnvioDiaAntes) {
+        const [hora, minutos] = notifConfig.horaEnvioDiaAntes.split(':').map(Number);
+        fechaProgramada = new Date(data.fechaInicio);
+        fechaProgramada.setDate(fechaProgramada.getDate() - notifConfig.diasAntes);
+        fechaProgramada.setHours(hora, minutos, 0, 0);
+      }
+      
+      if (fechaProgramada && fechaProgramada > new Date()) {
+        notificacionesProgramadas.push({
+          tipo: notifConfig.tipo,
+          programadaPara: fechaProgramada,
+          enviada: false,
+          plantilla: notifConfig.plantillaMensaje
+        });
+      }
+    }
+  }
+
   const turno = new TurnoModel({
     empresaId: data.empresaId,
     agenteId: data.agenteId,
@@ -129,10 +165,12 @@ export async function crearTurno(data: CrearTurnoData): Promise<ITurno> {
     notas: data.notas,
     creadoPor: data.creadoPor,
     confirmado: !config?.requiereConfirmacionAgente,
-    notificaciones: [] // Se programarán después
+    notificaciones: notificacionesProgramadas
   });
 
   await turno.save();
+  
+  console.log(`✅ Turno creado con ${notificacionesProgramadas.length} notificaciones programadas`);
 
   return turno;
 }
