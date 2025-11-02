@@ -152,25 +152,42 @@ export async function crearTurno(data: CrearTurnoData): Promise<ITurno> {
       console.log('🔍 DEBUG - Fecha actual:', new Date());
       
       if (notifConfig.momento === 'horas_antes_turno' && notifConfig.horasAntesTurno) {
+        // X horas antes del turno
         fechaProgramada = new Date(data.fechaInicio.getTime() - notifConfig.horasAntesTurno * 60 * 60 * 1000);
         console.log('🔍 DEBUG - Horas antes:', notifConfig.horasAntesTurno);
         console.log('🔍 DEBUG - Calculada fecha para horas_antes_turno:', fechaProgramada);
+        
       } else if (notifConfig.momento === 'dia_antes_turno' && notifConfig.diasAntes && notifConfig.horaEnvioDiaAntes) {
+        // X días antes a una hora específica
         const [hora, minutos] = notifConfig.horaEnvioDiaAntes.split(':').map(Number);
         fechaProgramada = new Date(data.fechaInicio);
         fechaProgramada.setDate(fechaProgramada.getDate() - notifConfig.diasAntes);
         fechaProgramada.setHours(hora, minutos, 0, 0);
         console.log('🔍 DEBUG - Calculada fecha para dia_antes_turno:', fechaProgramada);
+        
+      } else if (notifConfig.momento === 'noche_anterior') {
+        // Noche anterior a una hora específica (por defecto 22:00)
+        const horaEnvio = notifConfig.horaEnvio || '22:00';
+        const [hora, minutos] = horaEnvio.split(':').map(Number);
+        fechaProgramada = new Date(data.fechaInicio);
+        fechaProgramada.setDate(fechaProgramada.getDate() - 1); // 1 día antes
+        fechaProgramada.setHours(hora, minutos, 0, 0);
+        console.log('🔍 DEBUG - Hora envío noche anterior:', horaEnvio);
+        console.log('🔍 DEBUG - Calculada fecha para noche_anterior:', fechaProgramada);
+        
       } else if (notifConfig.momento === 'mismo_dia' || notifConfig.momento === 'hora_exacta') {
-        // Para notificaciones del mismo día, programar para la hora configurada
+        // Mismo día a una hora específica
         if (notifConfig.horaEnvio) {
           const [hora, minutos] = notifConfig.horaEnvio.split(':').map(Number);
           fechaProgramada = new Date(data.fechaInicio);
           fechaProgramada.setHours(hora, minutos, 0, 0);
           console.log('🔍 DEBUG - Calculada fecha para mismo_dia:', fechaProgramada);
+        } else {
+          console.log('🔍 DEBUG - ⚠️ mismo_dia requiere horaEnvio');
         }
+        
       } else {
-        console.log('🔍 DEBUG - ⚠️ Momento no reconocido o faltan parámetros');
+        console.log('🔍 DEBUG - ⚠️ Momento no reconocido:', notifConfig.momento);
       }
       
       if (fechaProgramada) {
