@@ -57,6 +57,8 @@ export class FlowManager {
     // 2️⃣ Si hay un flujo activo, continuar con él
     if (state.flujo_activo && this.flows[state.flujo_activo]) {
       console.log(`▶️ Continuando flujo activo: ${state.flujo_activo}`);
+      console.log(`   Estado actual: ${state.estado_actual}`);
+      console.log(`   Mensaje: "${context.mensaje}"`);
       
       const flow = this.flows[state.flujo_activo];
       const estadoAnterior = state.estado_actual || '';

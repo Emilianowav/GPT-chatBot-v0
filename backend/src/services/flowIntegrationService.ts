@@ -43,11 +43,12 @@ export async function iniciarFlujoNotificacionViajes(
 ): Promise<void> {
   try {
     console.log(`🚗 Iniciando flujo de notificación de viajes para ${telefono}`);
+    console.log(`   Viajes:`, viajes.length);
     
     await flowManager.startFlow(
       telefono,
       empresaId,
-      'notificaciones_viajes',
+      'notificacion_viajes',
       {
         viajes
       }

@@ -1,7 +1,8 @@
-// 🔔 Flujo de Confirmación de Turnos
+// 🔔 Flujo de Confirmación de Turnos (Configurable)
 import type { Flow, FlowContext, FlowResult } from './types.js';
 import { enviarMensajeWhatsAppTexto, enviarMensajeConBotones } from '../services/metaService.js';
-import * as confirmacionService from '../modules/calendar/services/confirmacionTurnosService.js';
+import { TurnoModel } from '../modules/calendar/models/Turno.js';
+import { ClienteModel } from '../models/Cliente.js';
 
 export const confirmacionTurnosFlow: Flow = {
   name: 'confirmacion_turnos',
@@ -9,7 +10,7 @@ export const confirmacionTurnosFlow: Flow = {
   version: '1.0.0',
   
   async shouldActivate(context: FlowContext): Promise<boolean> {
-    // Este flujo se activa programáticamente, no por detección
+    // Este flujo se activa programáticamente desde notificaciones
     return false;
   },
   

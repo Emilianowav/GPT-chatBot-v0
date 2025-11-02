@@ -1,9 +1,8 @@
 // 🔄 Registro central de flujos
 import { flowManager } from './FlowManager.js';
 import { confirmacionTurnosFlow } from './confirmacionTurnosFlow.js';
-import { reservaTurnosFlow } from './reservaTurnosFlow.js';
-import { notificacionesViajesFlow } from './notificacionesViajesFlow.js';
-import { conversacionGeneralFlow } from './conversacionGeneralFlow.js';
+import { notificacionViajesFlow } from './notificacionViajesFlow.js';
+import { menuPrincipalFlow } from './menuPrincipalFlow.js';
 
 /**
  * Inicializar y registrar todos los flujos
@@ -14,17 +13,15 @@ export function initializeFlows(): void {
   // Registrar flujos en orden de prioridad (de mayor a menor)
   // Los flujos se evalúan en el orden de prioridad definido en cada uno
   
-  flowManager.registerFlow(confirmacionTurnosFlow);
-  flowManager.registerFlow(notificacionesViajesFlow);
-  flowManager.registerFlow(reservaTurnosFlow);
-  flowManager.registerFlow(conversacionGeneralFlow); // Fallback
+  flowManager.registerFlow(confirmacionTurnosFlow);    // Urgente - Confirmación de turnos
+  flowManager.registerFlow(notificacionViajesFlow);    // Urgente - Notificaciones de viajes
+  flowManager.registerFlow(menuPrincipalFlow);         // Normal - Menú principal (Reserva/Consulta/Cancelación)
   
   console.log('✅ Sistema de flujos inicializado correctamente');
   console.log('📋 Flujos registrados:');
   console.log('   1. confirmacion_turnos (urgente)');
-  console.log('   2. notificaciones_viajes (urgente)');
-  console.log('   3. reserva_turnos (normal)');
-  console.log('   4. conversacion_general (baja - fallback)');
+  console.log('   2. notificacion_viajes (urgente)');
+  console.log('   3. menu_principal (normal - Reserva/Consulta/Cancelación)');
 }
 
 export { flowManager } from './FlowManager.js';
