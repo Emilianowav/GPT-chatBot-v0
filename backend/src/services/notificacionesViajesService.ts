@@ -15,10 +15,12 @@ interface ViajeInfo {
  * Enviar notificación de confirmación de viajes del día siguiente
  * @param clienteTelefono Teléfono del cliente
  * @param empresaTelefono Teléfono de la empresa
+ * @param modoPrueba Si es true, busca turnos en los próximos 7 días
  */
 export async function enviarNotificacionConfirmacionViajes(
   clienteTelefono: string,
-  empresaTelefono: string
+  empresaTelefono: string,
+  modoPrueba: boolean = false
 ): Promise<void> {
   console.log('📅 Enviando notificación de confirmación de viajes...');
 
@@ -35,28 +37,51 @@ export async function enviarNotificacionConfirmacionViajes(
     return;
   }
 
-  // Obtener turnos del cliente para mañana
-  const manana = new Date();
-  manana.setDate(manana.getDate() + 1);
-  manana.setHours(0, 0, 0, 0);
-
-  const finDia = new Date(manana);
-  finDia.setHours(23, 59, 59, 999);
+  // Obtener turnos del cliente
+  let fechaInicio: Date;
+  let fechaFin: Date;
+  
+  if (modoPrueba) {
+    // Modo prueba: buscar turnos en los próximos 7 días
+    console.log('🧪 Modo prueba: buscando turnos en los próximos 7 días');
+    fechaInicio = new Date();
+    fechaInicio.setHours(0, 0, 0, 0);
+    
+    fechaFin = new Date();
+    fechaFin.setDate(fechaFin.getDate() + 7);
+    fechaFin.setHours(23, 59, 59, 999);
+  } else {
+    // Modo normal: solo mañana
+    fechaInicio = new Date();
+    fechaInicio.setDate(fechaInicio.getDate() + 1);
+    fechaInicio.setHours(0, 0, 0, 0);
+    
+    fechaFin = new Date(fechaInicio);
+    fechaFin.setHours(23, 59, 59, 999);
+  }
 
   const turnos = await TurnoModel.find({
     empresaId: (empresa as any)._id?.toString() || empresa.nombre,
     clienteId: clienteTelefono,
     fechaInicio: {
-      $gte: manana,
-      $lte: finDia
+      $gte: fechaInicio,
+      $lte: fechaFin
     },
     estado: { $in: ['pendiente', 'confirmado'] }
-  }).sort({ fechaInicio: 1 });
+  }).sort({ fechaInicio: 1 }).limit(10);
 
   if (turnos.length === 0) {
-    console.log('ℹ️ No hay viajes programados para mañana');
-    return;
+    const mensaje = modoPrueba 
+      ? 'ℹ️ No hay viajes programados en los próximos 7 días'
+      : 'ℹ️ No hay viajes programados para mañana';
+    console.log(mensaje);
+    throw new Error(mensaje);
   }
+  
+  console.log(`✅ Encontrados ${turnos.length} turnos`);
+  turnos.forEach((turno, i) => {
+    console.log(`   ${i + 1}. ${new Date(turno.fechaInicio).toLocaleString('es-AR')}`);
+  });
 
   // Construir información de viajes
   const viajes: ViajeInfo[] = turnos.map((turno) => {

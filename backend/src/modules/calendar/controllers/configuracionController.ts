@@ -404,10 +404,11 @@ export const enviarNotificacionPrueba = async (req: Request, res: Response): Pro
     console.log(`📨 Enviando notificación de prueba a ${clientePrueba.telefono}`);
     console.log(`   Empresa: ${empresa.nombre} (${empresa.telefono})`);
 
-    // Enviar notificación usando el nuevo sistema de flujos
+    // Enviar notificación usando el nuevo sistema de flujos (modo prueba)
     await enviarNotificacionConfirmacionViajes(
       clientePrueba.telefono,
-      empresa.telefono
+      empresa.telefono,
+      true // modoPrueba: busca turnos en los próximos 7 días
     );
 
     res.json({
