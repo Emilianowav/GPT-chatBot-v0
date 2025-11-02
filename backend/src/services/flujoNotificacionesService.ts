@@ -45,14 +45,46 @@ export async function procesarMensajeFlujoNotificaciones(
       empresaId
     );
 
+    console.log('🔍 Resultado de confirmación:', resultadoConfirmacion);
+
     if (resultadoConfirmacion.procesado) {
-      console.log('✅ Mensaje procesado por sistema de confirmación');
+      console.log('✅ Mensaje procesado por sistema de confirmación - Enviando respuesta');
+      
+      // Enviar respuesta al cliente
+      if (resultadoConfirmacion.respuesta) {
+        const { EmpresaModel } = await import('../models/Empresa.js');
+        const { enviarMensajeWhatsAppTexto } = await import('../services/metaService.js');
+        
+        // Buscar empresa para obtener phoneNumberId
+        const isValidObjectId = /^[0-9a-fA-F]{24}$/.test(empresaId);
+        let empresa;
+        
+        if (isValidObjectId) {
+          empresa = await EmpresaModel.findOne({ 
+            $or: [{ _id: empresaId }, { nombre: empresaId }]
+          });
+        } else {
+          empresa = await EmpresaModel.findOne({ nombre: empresaId });
+        }
+        
+        if (empresa?.phoneNumberId) {
+          await enviarMensajeWhatsAppTexto(
+            clienteTelefono,
+            resultadoConfirmacion.respuesta,
+            empresa.phoneNumberId
+          );
+          console.log('✅ Respuesta enviada al cliente');
+        }
+      }
+      
       // El nuevo sistema manejó el mensaje, limpiar estado antiguo si existe
       if (estadoActual) {
         estadosConversacion.delete(clave);
       }
       return true;
     }
+    
+    console.log('⚠️ Sistema de confirmación no procesó el mensaje');
   } catch (errorConfirmacion) {
     console.error('⚠️ Error en sistema de confirmación:', errorConfirmacion);
     // Continuar con el flujo antiguo si el nuevo falla

@@ -131,7 +131,8 @@ export const recibirMensaje = async (req: Request, res: Response, next: NextFunc
       // Si el flujo de notificaciones falla, continuar con el flujo normal
     }
 
-    // 🤖 BOT DE TURNOS - Procesar ANTES de OpenAI
+    // 🤖 BOT DE TURNOS - Procesar SOLO si no hay flujo de notificaciones activo
+    // El bot de turnos NO debe interceptar mensajes cuando hay confirmaciones pendientes
     try {
       const respuestaBot = await botTurnosService.procesarMensaje(
         mensaje,

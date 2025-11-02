@@ -12,8 +12,7 @@ import { useTurnos, useEstadisticas } from '@/hooks/useTurnos';
 import { useAgentes } from '@/hooks/useAgentes';
 import ListaTurnos from '@/components/calendar/ListaTurnos';
 import CalendarioMensual from '@/components/calendar/CalendarioMensual';
-import FormularioTurno from '@/components/calendar/FormularioTurno';
-import Modal from '@/components/common/Modal';
+import ModalTurno from '@/components/calendar/ModalTurno';
 import styles from './calendario.module.css';
 
 export default function CalendarioPage() {
@@ -374,17 +373,11 @@ export default function CalendarioPage() {
             </div>
 
           {/* Modales */}
-          <Modal
+          <ModalTurno
             isOpen={modalNuevoTurno}
             onClose={() => setModalNuevoTurno(false)}
-            title="📅 Nuevo Turno"
-            size="medium"
-          >
-            <FormularioTurno
-              onSubmit={handleCrearTurno}
-              onCancel={() => setModalNuevoTurno(false)}
-            />
-          </Modal>
+            onSubmit={handleCrearTurno}
+          />
         </div>
       </ModuleGuard>
     </DashboardLayout>

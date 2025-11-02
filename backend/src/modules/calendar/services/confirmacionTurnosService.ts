@@ -76,12 +76,17 @@ export async function procesarRespuestaConfirmacion(
   empresaId: string
 ): Promise<{ procesado: boolean; respuesta?: string }> {
   
+  console.log('🔍 procesarRespuestaConfirmacion llamado:', { telefono, mensaje, empresaId });
+  
   const mensajeNormalizado = mensaje.trim().toLowerCase();
   
   // Verificar si hay una sesión activa
   const sesion = sesionesActivas.get(telefono);
   
+  console.log('🔍 Sesión encontrada:', sesion ? 'SÍ' : 'NO', sesion ? `paso: ${sesion.paso}, turnos: ${sesion.turnos.length}` : '');
+  
   if (sesion) {
+    console.log('✅ Procesando sesión activa');
     return await procesarSesionActiva(sesion, mensajeNormalizado, empresaId);
   }
   
@@ -142,11 +147,58 @@ async function procesarSesionActiva(
   empresaId: string
 ): Promise<{ procesado: boolean; respuesta?: string }> {
   
+  console.log('🔍 procesarSesionActiva - paso:', sesion.paso, 'mensaje:', mensaje);
+  
   // Limpiar sesiones antiguas (más de 10 minutos)
   const tiempoLimite = 10 * 60 * 1000;
   if (Date.now() - sesion.timestamp.getTime() > tiempoLimite) {
     sesionesActivas.delete(sesion.telefono);
     return { procesado: false };
+  }
+
+  // ✅ PASO INICIAL: Usuario responde a la notificación
+  if (sesion.paso === 'inicial') {
+    console.log('✅ Procesando paso inicial');
+    
+    // Opción 1: Confirmar todos
+    if (mensaje === '1') {
+      console.log('✅ Usuario eligió confirmar todos');
+      sesionesActivas.delete(sesion.telefono);
+      return await confirmarTodosTurnos(sesion.turnos, sesion.telefono, empresaId);
+    }
+    
+    // Opción 2: Editar un turno
+    if (mensaje === '2') {
+      console.log('✅ Usuario eligió editar');
+      if (sesion.turnos.length === 1) {
+        // Si solo hay un turno, ir directo a edición
+        sesion.paso = 'edicion_campo';
+        sesion.turnoEditando = 0;
+        sesion.timestamp = new Date();
+        const respuesta = await generarMensajeEdicionTurno(sesion.turnos[0], 1, empresaId);
+        return { procesado: true, respuesta };
+      } else {
+        // Si hay múltiples turnos, mostrar lista
+        sesion.paso = 'seleccion_turno';
+        sesion.timestamp = new Date();
+        const respuesta = generarMensajeSeleccionTurno(sesion.turnos);
+        return { procesado: true, respuesta };
+      }
+    }
+    
+    // Cancelar
+    if (mensaje === '0' || mensaje === 'cancelar') {
+      sesionesActivas.delete(sesion.telefono);
+      return {
+        procesado: true,
+        respuesta: '❌ Operación cancelada. Tus turnos siguen pendientes de confirmación.'
+      };
+    }
+    
+    return {
+      procesado: true,
+      respuesta: '❌ Opción inválida. Por favor responde:\n1️⃣ Para confirmar\n2️⃣ Para editar\n0️⃣ Para cancelar'
+    };
   }
 
   if (sesion.paso === 'seleccion_turno') {
@@ -224,6 +276,33 @@ async function confirmarTodosTurnos(
     : `✅ Se confirmaron ${confirmados} de ${turnos.length} viajes.\n\nSi necesitas ayuda, contáctanos.`;
 
   return { procesado: true, respuesta };
+}
+
+/**
+ * Generar mensaje de selección de turno
+ */
+function generarMensajeSeleccionTurno(turnos: any[]): string {
+  let mensaje = '📋 *Tus viajes pendientes:*\n\n';
+  
+  turnos.forEach((turno, index) => {
+    const fechaInicio = new Date(turno.fechaInicio);
+    const hora = fechaInicio.toLocaleTimeString('es-AR', {
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: false
+    });
+    
+    const origen = turno.datos?.origen || 'No especificado';
+    const destino = turno.datos?.destino || 'No especificado';
+    
+    mensaje += `${index + 1}️⃣ *Viaje ${index + 1}*\n`;
+    mensaje += `   📍 ${origen} → ${destino}\n`;
+    mensaje += `   🕐 ${hora}\n\n`;
+  });
+  
+  mensaje += '\n*Selecciona el número del viaje que deseas editar:*';
+  
+  return mensaje;
 }
 
 /**
@@ -549,25 +628,21 @@ export async function enviarNotificacionConfirmacion(
     mensaje += `━━━━━━━━━━━━━━━━━━\n\n`;
     mensaje += `*¿Qué deseas hacer?*\n\n`;
     mensaje += `1️⃣ Confirmar ${turnos.length > 1 ? 'todos los viajes' : 'el viaje'}\n`;
-    if (turnos.length > 1) {
-      mensaje += `2️⃣ Editar un viaje específico\n`;
-    } else {
-      mensaje += `2️⃣ Editar este viaje\n`;
-    }
-    mensaje += `\nResponde con el número de la opción.`;
+    mensaje += `2️⃣ Editar ${turnos.length > 1 ? 'un viaje específico' : 'este viaje'}\n\n`;
+    mensaje += 'Responde con el número de la opción.';
 
-    // Crear sesión si hay múltiples turnos
-    if (turnos.length > 1) {
-      const sesion: SesionConfirmacion = {
-        clienteId: clienteId,
-        telefono: cliente.telefono,
-        empresaId,
-        turnos: turnos,
-        paso: 'inicial',
-        timestamp: new Date()
-      };
-      sesionesActivas.set(cliente.telefono, sesion);
-    }
+    // ✅ SIEMPRE crear sesión cuando se envía la notificación
+    const sesion: SesionConfirmacion = {
+      clienteId: clienteId,
+      telefono: cliente.telefono,
+      empresaId,
+      turnos: turnos,
+      paso: 'inicial',
+      timestamp: new Date()
+    };
+    sesionesActivas.set(cliente.telefono, sesion);
+    
+    console.log('✅ Sesión de confirmación creada para:', cliente.telefono, 'con', turnos.length, 'turnos');
 
     // Obtener configuración de empresa para phoneNumberId
     // empresaId puede ser el nombre o el _id

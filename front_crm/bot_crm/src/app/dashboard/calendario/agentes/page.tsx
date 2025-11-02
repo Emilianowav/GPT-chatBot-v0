@@ -9,8 +9,7 @@ import ModuleGuard from '@/components/ModuleGuard';
 import Breadcrumb from '@/components/Breadcrumb/Breadcrumb';
 import { useAgentes } from '@/hooks/useAgentes';
 import ListaAgentes from '@/components/calendar/ListaAgentes';
-import FormularioAgente from '@/components/calendar/FormularioAgente';
-import Modal from '@/components/common/Modal';
+import ModalAgente from '@/components/calendar/ModalAgente';
 import styles from './agentes.module.css';
 
 export default function AgentesPage() {
@@ -140,19 +139,13 @@ export default function AgentesPage() {
             />
           )}
 
-          {/* Modal Formulario */}
-          <Modal
+          {/* Modal Agente */}
+          <ModalAgente
             isOpen={modalFormulario}
             onClose={handleCancelar}
-            title={agenteEditar ? '✏️ Editar Agente' : '👨‍⚕️ Nuevo Agente'}
-            size="large"
-          >
-            <FormularioAgente
-              onSubmit={agenteEditar ? handleActualizar : handleCrear}
-              onCancel={handleCancelar}
-              agenteInicial={agenteEditar}
-            />
-          </Modal>
+            onSubmit={agenteEditar ? handleActualizar : handleCrear}
+            agenteInicial={agenteEditar}
+          />
         </div>
       </ModuleGuard>
     </DashboardLayout>

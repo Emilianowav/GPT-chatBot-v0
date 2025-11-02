@@ -56,10 +56,11 @@ export interface NotificacionAutomatica {
   activa: boolean;
   tipo: 'recordatorio' | 'confirmacion';
   destinatario: 'cliente' | 'agente' | 'clientes_especificos' | 'agentes_especificos';
-  momento: 'noche_anterior' | 'mismo_dia' | 'horas_antes' | 'personalizado' | 'inmediata' | 'hora_exacta';
+  momento: 'noche_anterior' | 'mismo_dia' | 'horas_antes_turno' | 'dia_antes_turno' | 'hora_exacta' | 'personalizado';
   horaEnvio?: string;
-  horasAntes?: number;
-  diasAntes?: number;
+  horasAntesTurno?: number;      // Para 'horas_antes_turno': 24, 2, 1, etc.
+  diasAntes?: number;            // Para 'dia_antes_turno': 1, 2, 3 días antes
+  horaEnvioDiaAntes?: string;    // Para 'dia_antes_turno': hora específica "22:00"
   plantillaMensaje: string;
   requiereConfirmacion: boolean;
   mensajeConfirmacion?: string;
@@ -78,6 +79,18 @@ export interface NotificacionAutomatica {
     horaEnvio: string; // Hora específica de envío (HH:mm)
     fechaInicio?: Date; // Fecha de inicio de la recurrencia
     fechaFin?: Date; // Fecha de fin (opcional)
+  };
+  // Tipo de ejecución
+  ejecucion?: 'automatica' | 'manual'; // Manual = solo con "Enviar Prueba"
+  // Filtros avanzados
+  filtros?: {
+    estados?: string[]; // Estados a incluir: ['no_confirmado', 'pendiente']
+    horaMinima?: string; // Hora mínima del turno: "08:00"
+    horaMaxima?: string; // Hora máxima del turno: "20:00"
+    agenteIds?: string[]; // IDs de agentes específicos
+    tipoReserva?: string[]; // Tipos de reserva: ['viaje', 'traslado']
+    limite?: number; // Máximo de turnos a enviar
+    soloSinNotificar?: boolean; // Solo turnos que no han recibido notificación
   };
 }
 

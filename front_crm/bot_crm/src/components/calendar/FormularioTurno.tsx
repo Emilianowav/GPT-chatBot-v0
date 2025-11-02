@@ -349,7 +349,6 @@ export default function FormularioTurno({ onSubmit, onCancel }: FormularioTurnoP
             value={formData.fecha}
             onChange={handleChange}
             required
-            min={new Date().toISOString().split('T')[0]}
           />
           {formData.agenteId && disponibilidadAgente && (
             <small style={{ color: '#666', fontSize: '0.85rem', marginTop: '0.25rem' }}>

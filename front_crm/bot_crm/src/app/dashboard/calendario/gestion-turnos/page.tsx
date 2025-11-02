@@ -35,8 +35,9 @@ export default function GestionTurnosPage() {
   // Estado para formulario de edición
   const [formEdicion, setFormEdicion] = useState({
     agenteId: '',
-    fechaInicio: '',
-    fechaFin: '',
+    fecha: '',
+    horaInicio: '',
+    horaFin: '',
     notas: '',
     datos: {} as any
   });
@@ -117,11 +118,15 @@ export default function GestionTurnosPage() {
   const abrirModalEdicion = (turno: Turno) => {
     setTurnoSeleccionado(turno);
     
+    const fechaInicio = new Date(turno.fechaInicio);
+    const fechaFin = turno.fechaFin ? new Date(turno.fechaFin) : null;
+    
     // Cargar datos del turno en el formulario
     setFormEdicion({
       agenteId: typeof turno.agenteId === 'string' ? turno.agenteId : (turno.agenteId as any)?._id || '',
-      fechaInicio: new Date(turno.fechaInicio).toISOString().slice(0, 16),
-      fechaFin: turno.fechaFin ? new Date(turno.fechaFin).toISOString().slice(0, 16) : '',
+      fecha: fechaInicio.toISOString().split('T')[0],
+      horaInicio: `${fechaInicio.getHours().toString().padStart(2, '0')}:${fechaInicio.getMinutes().toString().padStart(2, '0')}`,
+      horaFin: fechaFin ? `${fechaFin.getHours().toString().padStart(2, '0')}:${fechaFin.getMinutes().toString().padStart(2, '0')}` : '',
       notas: turno.notas || '',
       datos: turno.datos || {}
     });
@@ -142,8 +147,8 @@ export default function GestionTurnosPage() {
         },
         body: JSON.stringify({
           agenteId: formEdicion.agenteId,
-          fechaInicio: new Date(formEdicion.fechaInicio).toISOString(),
-          fechaFin: formEdicion.fechaFin ? new Date(formEdicion.fechaFin).toISOString() : undefined,
+          fechaInicio: new Date(`${formEdicion.fecha}T${formEdicion.horaInicio}:00`).toISOString(),
+          fechaFin: formEdicion.horaFin ? new Date(`${formEdicion.fecha}T${formEdicion.horaFin}:00`).toISOString() : undefined,
           notas: formEdicion.notas,
           datos: formEdicion.datos
         })
@@ -484,23 +489,55 @@ export default function GestionTurnosPage() {
                       </select>
                     </div>
 
-                    {/* Fecha y Hora de Inicio */}
+                    {/* Fecha */}
                     <div className={styles.field}>
-                      <label>📅 Fecha y Hora de Inicio *</label>
+                      <label>📅 Fecha *</label>
                       <input
-                        type="datetime-local"
-                        value={formEdicion.fechaInicio}
-                        onChange={(e) => setFormEdicion({ ...formEdicion, fechaInicio: e.target.value })}
+                        type="date"
+                        value={formEdicion.fecha}
+                        onChange={(e) => setFormEdicion({ ...formEdicion, fecha: e.target.value })}
                       />
                     </div>
 
-                    {/* Fecha y Hora de Fin */}
+                    {/* Hora de Inicio */}
                     <div className={styles.field}>
-                      <label>⏰ Fecha y Hora de Fin</label>
+                      <label>⏰ Hora de Inicio *</label>
                       <input
-                        type="datetime-local"
-                        value={formEdicion.fechaFin}
-                        onChange={(e) => setFormEdicion({ ...formEdicion, fechaFin: e.target.value })}
+                        type="text"
+                        value={formEdicion.horaInicio}
+                        onChange={(e) => {
+                          let valor = e.target.value.replace(/[^0-9:]/g, '');
+                          if (valor.length === 2 && !valor.includes(':')) {
+                            valor = valor + ':';
+                          }
+                          if (valor.length <= 5) {
+                            setFormEdicion({ ...formEdicion, horaInicio: valor });
+                          }
+                        }}
+                        placeholder="HH:MM (ej: 14:30)"
+                        maxLength={5}
+                        style={{ fontFamily: 'monospace' }}
+                      />
+                    </div>
+
+                    {/* Hora de Fin */}
+                    <div className={styles.field}>
+                      <label>⏰ Hora de Fin</label>
+                      <input
+                        type="text"
+                        value={formEdicion.horaFin}
+                        onChange={(e) => {
+                          let valor = e.target.value.replace(/[^0-9:]/g, '');
+                          if (valor.length === 2 && !valor.includes(':')) {
+                            valor = valor + ':';
+                          }
+                          if (valor.length <= 5) {
+                            setFormEdicion({ ...formEdicion, horaFin: valor });
+                          }
+                        }}
+                        placeholder="HH:MM (ej: 15:00)"
+                        maxLength={5}
+                        style={{ fontFamily: 'monospace' }}
                       />
                     </div>
 
@@ -591,7 +628,7 @@ export default function GestionTurnosPage() {
                   <button 
                     className={styles.btnPrimary}
                     onClick={handleGuardarEdicion}
-                    disabled={!formEdicion.agenteId || !formEdicion.fechaInicio}
+                    disabled={!formEdicion.agenteId || !formEdicion.fecha || !formEdicion.horaInicio}
                   >
                     💾 Guardar Cambios
                   </button>

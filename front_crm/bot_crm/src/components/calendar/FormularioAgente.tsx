@@ -363,6 +363,9 @@ export default function FormularioAgente({
                         value={disp.horaInicio}
                         onChange={(e) => handleDisponibilidadChange(dia.id, 'horaInicio', e.target.value)}
                       />
+                      <small style={{ color: '#666', fontSize: '0.75rem' }}>
+                        {disp.horaInicio} (formato 24h)
+                      </small>
                     </div>
                     <div className={styles.horarioField}>
                       <label>Hasta</label>
@@ -371,6 +374,9 @@ export default function FormularioAgente({
                         value={disp.horaFin}
                         onChange={(e) => handleDisponibilidadChange(dia.id, 'horaFin', e.target.value)}
                       />
+                      <small style={{ color: '#666', fontSize: '0.75rem' }}>
+                        {disp.horaFin} (formato 24h)
+                      </small>
                     </div>
                   </div>
                 )}

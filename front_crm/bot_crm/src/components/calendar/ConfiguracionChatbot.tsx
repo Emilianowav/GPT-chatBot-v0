@@ -248,11 +248,7 @@ export default function ConfiguracionChatbot({ empresaId }: ConfiguracionChatbot
     try {
       setGuardando(true);
       // Aquí iría la lógica para guardar la configuración
-      setMensaje({
-        tipo: 'success',
-        texto: '✅ Configuración del chatbot guardada exitosamente'
-      });
-      setTimeout(() => setMensaje(null), 3000);
+      // No mostrar mensaje aquí, lo maneja el componente padre
     } catch (err: any) {
       setMensaje({
         tipo: 'error',
@@ -336,7 +332,7 @@ export default function ConfiguracionChatbot({ empresaId }: ConfiguracionChatbot
         </div>
       </div>
 
-      {/* Configuración de Pasos */}
+      {/* Configuración de Pasos - CREAR TURNO */}
       {flujoActivo === 'crear' && (
         <div className={styles.section}>
           <div className={styles.sectionHeader}>
@@ -746,6 +742,161 @@ export default function ConfiguracionChatbot({ empresaId }: ConfiguracionChatbot
                 <em>... {pasos.length - 3} pasos más ...</em>
               </div>
             )}
+          </div>
+        </div>
+      )}
+
+      {/* Configuración de Pasos - CONSULTAR TURNOS */}
+      {flujoActivo === 'consultar' && (
+        <div className={styles.section}>
+          <div className={styles.sectionHeader}>
+            <h3>🔍 Flujo de Consulta de Turnos</h3>
+          </div>
+
+          <div className={styles.infoBox}>
+            <p>
+              <strong>💡 ¿Cómo funciona?</strong> Cuando un cliente quiere consultar sus turnos, el bot le mostrará:
+            </p>
+            <ul>
+              <li>📋 Lista de turnos activos (pendientes y confirmados)</li>
+              <li>📅 Fecha y hora de cada turno</li>
+              <li>👤 Agente asignado (si aplica)</li>
+              <li>📍 Detalles adicionales (origen, destino, etc.)</li>
+            </ul>
+          </div>
+
+          <div className={styles.flujoConsultaCard}>
+            <h4>📱 Ejemplo de Conversación:</h4>
+            <div className={styles.conversacionEjemplo}>
+              <div className={styles.mensajeUsuario}>
+                <strong>Usuario:</strong> Quiero consultar mis turnos
+              </div>
+              <div className={styles.mensajeBot}>
+                <strong>Bot:</strong> 📋 Estos son tus turnos activos:
+                <div style={{ marginTop: '0.5rem', paddingLeft: '1rem' }}>
+                  <div><strong>1. Turno para mañana 15/11</strong></div>
+                  <div>🕐 Hora: 10:00 AM</div>
+                  <div>👤 Agente: Dr. Juan Pérez</div>
+                  <div>📍 Origen: San Juan 1234</div>
+                  <div>📍 Destino: Mendoza 5678</div>
+                  <br />
+                  <div><strong>2. Turno para 20/11</strong></div>
+                  <div>🕐 Hora: 3:00 PM</div>
+                  <div>👤 Agente: Dr. María González</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className={styles.field}>
+            <label>🎨 Personalizar mensaje de respuesta</label>
+            <textarea
+              rows={5}
+              placeholder="📋 Estos son tus {turnos} activos:\n\n{lista_turnos}\n\n¿Necesitas modificar o cancelar alguno?"
+              className={styles.textarea}
+            />
+            <small>Variables disponibles: {'{turnos}'}, {'{lista_turnos}'}, {'{cantidad}'}</small>
+          </div>
+
+          <div className={styles.field}>
+            <label>📭 Mensaje cuando no hay turnos</label>
+            <input
+              type="text"
+              placeholder="No tienes turnos programados en este momento. ¿Quieres crear uno?"
+            />
+          </div>
+        </div>
+      )}
+
+      {/* Configuración de Pasos - CANCELAR TURNO */}
+      {flujoActivo === 'cancelar' && (
+        <div className={styles.section}>
+          <div className={styles.sectionHeader}>
+            <h3>❌ Flujo de Cancelación de Turnos</h3>
+          </div>
+
+          <div className={styles.infoBox}>
+            <p>
+              <strong>💡 ¿Cómo funciona?</strong> El bot guiará al cliente para cancelar un turno:
+            </p>
+            <ol>
+              <li>Muestra los turnos activos del cliente</li>
+              <li>El cliente selecciona cuál cancelar</li>
+              <li>Solicita confirmación de la cancelación</li>
+              <li>Cancela el turno y envía confirmación</li>
+            </ol>
+          </div>
+
+          <div className={styles.flujoConsultaCard}>
+            <h4>📱 Ejemplo de Conversación:</h4>
+            <div className={styles.conversacionEjemplo}>
+              <div className={styles.mensajeUsuario}>
+                <strong>Usuario:</strong> Quiero cancelar un turno
+              </div>
+              <div className={styles.mensajeBot}>
+                <strong>Bot:</strong> 📋 ¿Cuál turno deseas cancelar?
+                <div className={styles.opciones}>
+                  <div>1. Turno del 15/11 a las 10:00 AM</div>
+                  <div>2. Turno del 20/11 a las 3:00 PM</div>
+                </div>
+              </div>
+              <div className={styles.mensajeUsuario}>
+                <strong>Usuario:</strong> 1
+              </div>
+              <div className={styles.mensajeBot}>
+                <strong>Bot:</strong> ¿Estás seguro que deseas cancelar el turno del 15/11 a las 10:00 AM?
+                <div className={styles.opciones}>
+                  <div>1. Sí, cancelar</div>
+                  <div>2. No, mantener el turno</div>
+                </div>
+              </div>
+              <div className={styles.mensajeUsuario}>
+                <strong>Usuario:</strong> 1
+              </div>
+              <div className={styles.mensajeBot}>
+                <strong>Bot:</strong> ✅ Tu turno ha sido cancelado exitosamente.
+              </div>
+            </div>
+          </div>
+
+          <div className={styles.field}>
+            <label>⚠️ Mensaje de confirmación</label>
+            <input
+              type="text"
+              placeholder="¿Estás seguro que deseas cancelar el turno del {fecha} a las {hora}?"
+            />
+            <small>Variables: {'{fecha}'}, {'{hora}'}, {'{agente}'}, {'{turno}'}</small>
+          </div>
+
+          <div className={styles.field}>
+            <label>✅ Mensaje de éxito</label>
+            <input
+              type="text"
+              placeholder="Tu {turno} ha sido cancelado exitosamente."
+            />
+          </div>
+
+          <div className={styles.field}>
+            <label>❌ Mensaje de error</label>
+            <input
+              type="text"
+              placeholder="No se pudo cancelar el {turno}. Por favor, contacta con soporte."
+            />
+          </div>
+
+          <div className={styles.checkboxGroup}>
+            <label className={styles.checkbox}>
+              <input type="checkbox" defaultChecked />
+              <span>Solicitar motivo de cancelación</span>
+            </label>
+            <label className={styles.checkbox}>
+              <input type="checkbox" defaultChecked />
+              <span>Enviar notificación al agente</span>
+            </label>
+            <label className={styles.checkbox}>
+              <input type="checkbox" />
+              <span>Permitir cancelación solo con X horas de anticipación</span>
+            </label>
           </div>
         </div>
       )}

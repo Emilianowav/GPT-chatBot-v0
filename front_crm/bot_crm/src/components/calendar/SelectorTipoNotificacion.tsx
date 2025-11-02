@@ -71,20 +71,19 @@ Te recordamos tu {turno} para mañana:
   {
     id: 'confirmacion_diaria',
     nombre: 'Confirmación Diaria',
-    descripcion: 'Solicita confirmación a los clientes el día del turno',
+    descripcion: 'Solicita confirmación a los clientes la noche anterior (22:00)',
     icono: '✅',
     tipo: 'confirmacion_diaria',
     destinatario: 'cliente',
-    plantillaMensaje: `Hola {cliente}! 👋
-
-Tu {turno} es HOY a las {hora}
+    plantillaMensaje: `🚗 *Recordatorio de viaje para mañana*
 
 📍 *Origen:* {origen}
 📍 *Destino:* {destino}
-👤 *Agente:* {agente}
+🕐 *Hora:* {hora}
+👥 *Pasajeros:* {pasajeros}
 
-Por favor confirma respondiendo *SÍ* o *NO* 🙏`,
-    momento: 'hora_exacta'
+¿Confirmas tu viaje? Responde *SÍ* o *NO*`,
+    momento: 'noche_anterior'
   }
 ];
 

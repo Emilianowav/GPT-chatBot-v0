@@ -208,11 +208,14 @@ export interface CrearAgenteData {
   especialidad?: string;
   descripcion?: string;
   titulo?: string;
+  sector?: string;
   modoAtencion?: 'turnos_programados' | 'turnos_libres' | 'mixto';
+  disponibilidad?: Disponibilidad[];
   duracionTurnoPorDefecto?: number;
   bufferEntreturnos?: number;
   capacidadSimultanea?: number;
   maximoTurnosPorDia?: number;
+  activo?: boolean;
 }
 
 export async function obtenerAgentes(soloActivos: boolean = false) {

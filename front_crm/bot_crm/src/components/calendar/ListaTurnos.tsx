@@ -99,7 +99,8 @@ export default function ListaTurnos({ turnos, onCancelar, onActualizarEstado }: 
                   </svg>
                   {fechaInicio.toLocaleTimeString('es-AR', { 
                     hour: '2-digit', 
-                    minute: '2-digit' 
+                    minute: '2-digit',
+                    hour12: false
                   })}
                 </div>
                 <div 
