@@ -43,16 +43,13 @@ export async function generarSlotsDisponibles(
   horaLimite.setHours(horaFin, minFin, 0, 0);
   
   while (horaActual < horaLimite) {
-    const finSlot = new Date(horaActual.getTime() + duracionSlot * 60000);
-    
-    if (finSlot <= horaLimite) {
-      slots.push({
-        fecha: new Date(horaActual),
-        disponible: true,
-        agenteId: (agente._id as any).toString(),
-        duracion: duracionSlot
-      });
-    }
+    // Permitir slots que empiecen antes de la hora límite
+    slots.push({
+      fecha: new Date(horaActual),
+      disponible: true,
+      agenteId: (agente._id as any).toString(),
+      duracion: duracionSlot
+    });
     
     // Avanzar por duración + buffer
     horaActual = new Date(
