@@ -25,11 +25,20 @@ export async function generarSlotsDisponibles(
   
   // 1. Obtener disponibilidad del agente para ese día
   const diaSemana = fecha.getDay();
-  const disponibilidad = agente.disponibilidad.find(
+  let disponibilidad = agente.disponibilidad.find(
     d => d.diaSemana === diaSemana && d.activo
   );
   
-  if (!disponibilidad) return []; // No trabaja ese día
+  // Si no tiene disponibilidad configurada, permitir todo el día (24/7)
+  if (!disponibilidad) {
+    console.log('⚠️ Agente sin disponibilidad configurada para este día, usando horario completo');
+    disponibilidad = {
+      diaSemana,
+      horaInicio: '00:00',
+      horaFin: '23:59',
+      activo: true
+    } as any;
+  }
 
   // 2. Generar slots según horario
   const slots: Slot[] = [];

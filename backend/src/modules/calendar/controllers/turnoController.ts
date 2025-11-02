@@ -198,6 +198,42 @@ export async function obtenerTurnoPorId(req: Request, res: Response) {
 }
 
 /**
+ * PUT /api/modules/calendar/turnos/:id
+ * Actualizar turno completo
+ */
+export async function actualizarTurno(req: Request, res: Response) {
+  try {
+    const empresaId = (req as any).user?.empresaId;
+    if (!empresaId) {
+      return res.status(401).json({
+        success: false,
+        message: 'No autenticado'
+      });
+    }
+
+    const { id } = req.params;
+    const datosActualizacion = req.body;
+
+    const turno = await turnoService.actualizarTurno(
+      id,
+      empresaId,
+      datosActualizacion
+    );
+
+    res.json({
+      success: true,
+      turno
+    });
+  } catch (error: any) {
+    console.error('Error al actualizar turno:', error);
+    res.status(400).json({
+      success: false,
+      message: error.message || 'Error al actualizar turno'
+    });
+  }
+}
+
+/**
  * PATCH /api/modules/calendar/turnos/:id/estado
  * Actualizar estado de un turno
  */

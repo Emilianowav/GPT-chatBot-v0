@@ -212,6 +212,9 @@ export async function configurarDisponibilidad(req: Request, res: Response) {
     const { id } = req.params;
     const { disponibilidad } = req.body;
 
+    console.log('📅 Configurando disponibilidad:');
+    console.log(JSON.stringify(disponibilidad, null, 2));
+
     if (!disponibilidad || !Array.isArray(disponibilidad)) {
       return res.status(400).json({
         success: false,

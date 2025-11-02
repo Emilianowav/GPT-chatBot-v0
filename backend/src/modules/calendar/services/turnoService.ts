@@ -212,6 +212,42 @@ export async function obtenerTurnoPorId(
 }
 
 /**
+ * Actualizar turno completo
+ */
+export async function actualizarTurno(
+  turnoId: string,
+  empresaId: string,
+  datosActualizacion: Partial<ITurno>
+): Promise<ITurno> {
+  const turno = await TurnoModel.findOne({ _id: turnoId, empresaId });
+  if (!turno) throw new Error('Turno no encontrado');
+
+  // Actualizar campos permitidos
+  if (datosActualizacion.fechaInicio) {
+    turno.fechaInicio = new Date(datosActualizacion.fechaInicio);
+    
+    // Recalcular fechaFin si cambió la duración o fecha
+    const duracion = datosActualizacion.duracion || turno.duracion;
+    turno.fechaFin = new Date(turno.fechaInicio.getTime() + duracion * 60000);
+  }
+  
+  if (datosActualizacion.duracion) {
+    turno.duracion = datosActualizacion.duracion;
+    turno.fechaFin = new Date(turno.fechaInicio.getTime() + datosActualizacion.duracion * 60000);
+  }
+  
+  if (datosActualizacion.agenteId) turno.agenteId = datosActualizacion.agenteId as any;
+  if (datosActualizacion.clienteId) turno.clienteId = datosActualizacion.clienteId as any;
+  if (datosActualizacion.estado) turno.estado = datosActualizacion.estado;
+  if (datosActualizacion.notas !== undefined) turno.notas = datosActualizacion.notas;
+  if (datosActualizacion.datos) turno.datos = datosActualizacion.datos;
+
+  await turno.save();
+
+  return turno;
+}
+
+/**
  * Actualizar estado de un turno
  */
 export async function actualizarEstadoTurno(

@@ -37,6 +37,9 @@ router.get('/turnos', turnoController.obtenerTurnos);
 // Obtener turno por ID
 router.get('/turnos/:id', turnoController.obtenerTurnoPorId);
 
+// Actualizar turno completo
+router.put('/turnos/:id', turnoController.actualizarTurno);
+
 // Actualizar estado de turno
 router.patch('/turnos/:id/estado', turnoController.actualizarEstadoTurno);
 
