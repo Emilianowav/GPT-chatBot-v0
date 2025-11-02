@@ -1,5 +1,6 @@
 // 🔄 Servicio de Flujo de Notificaciones de Viajes
 import * as notificacionesService from './notificacionesViajesService.js';
+import * as confirmacionTurnosService from '../modules/calendar/services/confirmacionTurnosService.js';
 
 // Estado temporal de conversaciones (en producción usar Redis o MongoDB)
 interface EstadoConversacion {
@@ -33,6 +34,27 @@ export async function procesarMensajeFlujoNotificaciones(
     respuestaInteractiva,
     estadoActual: estadoActual?.estado
   });
+
+  // 🆕 NUEVO SISTEMA DE CONFIRMACIÓN INTERACTIVA
+  try {
+    const resultadoConfirmacion = await confirmacionTurnosService.procesarRespuestaConfirmacion(
+      clienteTelefono,
+      mensaje,
+      empresaTelefono
+    );
+
+    if (resultadoConfirmacion.procesado) {
+      console.log('✅ Mensaje procesado por sistema de confirmación');
+      // El nuevo sistema manejó el mensaje, limpiar estado antiguo si existe
+      if (estadoActual) {
+        estadosConversacion.delete(clave);
+      }
+      return true;
+    }
+  } catch (errorConfirmacion) {
+    console.error('⚠️ Error en sistema de confirmación:', errorConfirmacion);
+    // Continuar con el flujo antiguo si el nuevo falla
+  }
 
   // Si hay respuesta interactiva, procesarla
   if (respuestaInteractiva) {
