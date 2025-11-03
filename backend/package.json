@@ -17,7 +17,8 @@
     "limpiar:estados": "tsx src/scripts/limpiarConversationStates.ts",
     "normalizar:telefonos": "tsx src/scripts/normalizarTelefonos.ts",
     "limpiar:completo": "tsx src/scripts/limpiarEstadosCompleto.ts",
-    "verificar:bd": "tsx src/scripts/verificarBD.ts"
+    "verificar:bd": "tsx src/scripts/verificarBD.ts",
+    "limpiar:duplicados": "tsx src/scripts/limpiarDuplicados.ts"
   },
   "keywords": [],
   "author": "",

@@ -170,8 +170,8 @@ export async function enviarNotificacionConfirmacionViajes(
 
   // ⚠️ CRÍTICO: Normalizar teléfono (sin +, espacios, guiones)
   // Debe coincidir con el formato usado en whatsappController
-  // IMPORTANTE: Usar el teléfono del cliente en la BD (que puede tener el formato correcto)
-  const telefonoParaFlujo = normalizarTelefono(cliente.telefono);
+  // IMPORTANTE: Usar el teléfono del PARÁMETRO (no el de la BD, puede estar incorrecto)
+  const telefonoParaFlujo = normalizarTelefono(clienteTelefono);
   
   console.log('📞 Teléfonos:', {
     clienteTelefonoOriginal: clienteTelefono,
