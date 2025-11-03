@@ -3,6 +3,7 @@ import { ConversationStateModel } from '../models/ConversationState.js';
 import { EmpresaModel } from '../models/Empresa.js';
 import type { Flow, FlowContext, FlowResult, FlowRegistry } from './types.js';
 import { FlowLogger } from '../utils/flowLogger.js';
+import { enviarMensajeWhatsAppTexto } from '../services/metaService.js';
 
 export class FlowManager {
   private flows: FlowRegistry = {};
@@ -66,6 +67,17 @@ export class FlowManager {
     
     // 2️⃣ Si hay un flujo activo, continuar con él
     if (state.flujo_activo && this.flows[state.flujo_activo]) {
+      // Verificar si el flujo está pausado
+      if (state.pausado) {
+        console.log(`⏸️ Flujo pausado: ${state.flujo_activo} - Ignorando mensaje`);
+        await enviarMensajeWhatsAppTexto(
+          telefono,
+          '⏸️ Tu conversación está pausada temporalmente. Un agente te contactará pronto.',
+          context.phoneNumberId
+        );
+        return { handled: true, result: { success: true } };
+      }
+      
       console.log(`▶️ Continuando flujo activo: ${state.flujo_activo}`);
       console.log(`   Estado actual: ${state.estado_actual}`);
       console.log(`   Mensaje: "${context.mensaje}"`);

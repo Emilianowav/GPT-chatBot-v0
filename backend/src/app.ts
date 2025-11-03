@@ -15,6 +15,7 @@ import conversacionesRoutes from "./routes/conversacionesRoutes.js";
 import clienteRoutes from "./routes/clienteRoutes.js";
 import calendarRoutes from "./modules/calendar/routes/calendarRoutes.js";
 import usuarioEmpresaRoutes from "./routes/usuarioEmpresaRoutes.js";
+import flowRoutes from "./routes/flowRoutes.js";
 import { errorHandler } from "./middlewares/errorHandler.js";
 import { connectDB } from "./config/database.js";
 
@@ -90,6 +91,7 @@ app.use("/api/conversaciones", conversacionesRoutes);
 app.use("/api/openai", openaiRoutes);
 app.use("/api/whatsapp", whatsappRoutes);
 app.use("/api/modules/calendar", calendarRoutes);
+app.use("/api/flows", flowRoutes);
 app.use("/api", statusRoutes);
 app.use(errorHandler);
 

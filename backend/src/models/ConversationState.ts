@@ -9,6 +9,7 @@ export interface IConversationState extends Document {
   data: Record<string, any>;
   flujos_pendientes: string[];
   prioridad: 'normal' | 'urgente' | 'baja';
+  pausado: boolean;
   ultima_interaccion: Date;
   createdAt: Date;
   updatedAt: Date;
@@ -46,6 +47,10 @@ const ConversationStateSchema = new Schema<IConversationState>(
       type: String,
       enum: ['normal', 'urgente', 'baja'],
       default: 'normal'
+    },
+    pausado: {
+      type: Boolean,
+      default: false
     },
     ultima_interaccion: {
       type: Date,

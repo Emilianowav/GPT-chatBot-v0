@@ -39,10 +39,10 @@ export const menuPrincipalFlow: Flow = {
       // Obtener configuración del bot
       const configBot = await ConfiguracionBotModel.findOne({ empresaId });
       
-      const mensajeBienvenida = configBot?.mensajeBienvenida || 
-        '¡Hola! ¿En qué puedo ayudarte?';
-      
-      const mensajeMenu = `${mensajeBienvenida}\n\nSeleccioná una opción:\n\n1️⃣ Reservar turno\n2️⃣ Consultar mis turnos\n3️⃣ Cancelar turno\n\nRespondé con el número de la opción.`;
+      // Si hay mensaje de bienvenida personalizado, usarlo completo
+      // Si no, usar el mensaje por defecto
+      const mensajeMenu = configBot?.mensajeBienvenida || 
+        '¡Hola! 👋\n\n¿En qué puedo ayudarte?\n\n1️⃣ Reservar turno\n2️⃣ Consultar mis turnos\n3️⃣ Cancelar turno\n\nRespondé con el número de la opción.';
       
       await enviarMensajeWhatsAppTexto(telefono, mensajeMenu, context.phoneNumberId);
       
