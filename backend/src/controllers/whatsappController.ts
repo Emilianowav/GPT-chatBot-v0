@@ -183,9 +183,10 @@ export const recibirMensaje = async (req: Request, res: Response, next: NextFunc
       console.error('❌ [DEBUG] result:', result);
       console.error('❌ [DEBUG] FlowContext usado:', flowContext);
       
+      // Mensaje más útil para el usuario
       await enviarMensajeWhatsAppTexto(
         telefonoCliente,
-        'Disculpá, hubo un problema al procesar tu mensaje. Por favor, intentá de nuevo.',
+        '❌ No entendí tu mensaje. Escribí "menu" para ver las opciones disponibles.',
         phoneNumberId
       );
       res.sendStatus(200);

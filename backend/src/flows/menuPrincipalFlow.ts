@@ -96,30 +96,164 @@ export const menuPrincipalFlow: Flow = {
     
     // Estados de reserva
     if (state === 'reserva_esperando_fecha') {
-      // TODO: Procesar fecha
+      const fechaTexto = mensaje.trim().toLowerCase();
+      let fecha: Date;
+      
+      // Procesar fecha
+      if (fechaTexto === 'hoy') {
+        fecha = new Date();
+      } else if (fechaTexto === 'mañana' || fechaTexto === 'manana') {
+        fecha = new Date();
+        fecha.setDate(fecha.getDate() + 1);
+      } else {
+        // Intentar parsear DD/MM/AAAA
+        const match = fechaTexto.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+        if (!match) {
+          await enviarMensajeWhatsAppTexto(
+            telefono,
+            '❌ Formato de fecha inválido. Por favor, usá DD/MM/AAAA o escribí "hoy" o "mañana".',
+            context.phoneNumberId
+          );
+          return {
+            success: true,
+            nextState: 'reserva_esperando_fecha',
+            data
+          };
+        }
+        
+        const [, dia, mes, anio] = match;
+        fecha = new Date(parseInt(anio), parseInt(mes) - 1, parseInt(dia));
+        
+        if (isNaN(fecha.getTime())) {
+          await enviarMensajeWhatsAppTexto(
+            telefono,
+            '❌ Fecha inválida. Por favor, verificá el formato DD/MM/AAAA.',
+            context.phoneNumberId
+          );
+          return {
+            success: true,
+            nextState: 'reserva_esperando_fecha',
+            data
+          };
+        }
+      }
+      
       await enviarMensajeWhatsAppTexto(
         telefono,
-        '¿A qué hora querés el turno? (formato HH:MM)',
+        '¿A qué hora querés el turno? (formato HH:MM, ejemplo: 14:30)',
         context.phoneNumberId
       );
       return {
         success: true,
         nextState: 'reserva_esperando_hora',
-        data: { ...data, fecha: mensaje }
+        data: { ...data, fecha, fechaTexto: mensaje }
       };
     }
     
     if (state === 'reserva_esperando_hora') {
-      // TODO: Crear turno
-      await enviarMensajeWhatsAppTexto(
-        telefono,
-        `✅ Turno reservado para ${data.fecha} a las ${mensaje}.\n\nEscribí "menu" para volver al menú principal.`,
-        context.phoneNumberId
-      );
-      return {
-        success: true,
-        end: true
-      };
+      const horaTexto = mensaje.trim();
+      
+      // Intentar parsear hora en diferentes formatos
+      let match = horaTexto.match(/^(\d{1,2}):(\d{2})$/);
+      if (!match) {
+        // Intentar formato sin dos puntos (ej: 1230 -> 12:30)
+        match = horaTexto.match(/^(\d{2})(\d{2})$/);
+      }
+      
+      if (!match) {
+        await enviarMensajeWhatsAppTexto(
+          telefono,
+          '❌ Formato de hora inválido. Por favor, usá HH:MM (ejemplo: 14:30 o 1430).',
+          context.phoneNumberId
+        );
+        return {
+          success: true,
+          nextState: 'reserva_esperando_hora',
+          data
+        };
+      }
+      
+      const [, horaStr, minutoStr] = match;
+      const hora = parseInt(horaStr);
+      const minuto = parseInt(minutoStr);
+      
+      if (hora < 0 || hora > 23 || minuto < 0 || minuto > 59) {
+        await enviarMensajeWhatsAppTexto(
+          telefono,
+          '❌ Hora inválida. La hora debe estar entre 00:00 y 23:59.',
+          context.phoneNumberId
+        );
+        return {
+          success: true,
+          nextState: 'reserva_esperando_hora',
+          data
+        };
+      }
+      
+      // Crear turno en la BD
+      try {
+        const cliente = await ClienteModel.findOne({
+          telefono,
+          empresaId
+        });
+        
+        if (!cliente) {
+          await enviarMensajeWhatsAppTexto(
+            telefono,
+            '❌ No se pudo encontrar tu información. Por favor, contactá con soporte.',
+            context.phoneNumberId
+          );
+          return {
+            success: true,
+            end: true
+          };
+        }
+        
+        const fechaInicio = new Date(data.fecha);
+        fechaInicio.setHours(hora, minuto, 0, 0);
+        
+        const fechaFin = new Date(fechaInicio);
+        fechaFin.setMinutes(fechaFin.getMinutes() + 30); // Duración por defecto: 30 min
+        
+        const nuevoTurno = await TurnoModel.create({
+          empresaId,
+          clienteId: cliente._id.toString(),
+          fechaInicio,
+          fechaFin,
+          duracion: 30,
+          estado: 'pendiente',
+          datos: {},
+          notas: 'Reservado vía WhatsApp',
+          creadoPor: 'whatsapp_bot'
+        });
+        
+        console.log('✅ Turno creado:', nuevoTurno._id);
+        
+        const fechaFormateada = fechaInicio.toLocaleDateString('es-AR');
+        const horaFormateada = `${hora.toString().padStart(2, '0')}:${minuto.toString().padStart(2, '0')}`;
+        
+        await enviarMensajeWhatsAppTexto(
+          telefono,
+          `✅ Turno reservado exitosamente\n\n📅 Fecha: ${fechaFormateada}\n🕐 Hora: ${horaFormateada}\n\nEscribí "menu" para volver al menú principal.`,
+          context.phoneNumberId
+        );
+        
+        return {
+          success: true,
+          end: true
+        };
+      } catch (error) {
+        console.error('❌ Error creando turno:', error);
+        await enviarMensajeWhatsAppTexto(
+          telefono,
+          '❌ Hubo un error al crear el turno. Por favor, intentá de nuevo más tarde.',
+          context.phoneNumberId
+        );
+        return {
+          success: true,
+          end: true
+        };
+      }
     }
     
     // Estados de cancelación
