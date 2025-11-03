@@ -4,6 +4,7 @@ import { enviarMensajeWhatsAppTexto, enviarMensajeConBotones } from '../services
 import { ConfiguracionBotModel } from '../modules/calendar/models/ConfiguracionBot.js';
 import { TurnoModel } from '../modules/calendar/models/Turno.js';
 import { ClienteModel } from '../models/Cliente.js';
+import { AgenteModel } from '../modules/calendar/models/Agente.js';
 
 export const menuPrincipalFlow: Flow = {
   name: 'menu_principal',
@@ -95,6 +96,93 @@ export const menuPrincipalFlow: Flow = {
     }
     
     // Estados de reserva
+    if (state === 'reserva_esperando_origen') {
+      const origen = mensaje.trim();
+      
+      if (origen.length < 2) {
+        await enviarMensajeWhatsAppTexto(
+          telefono,
+          '❌ Por favor, ingresá un origen válido.',
+          context.phoneNumberId
+        );
+        return {
+          success: true,
+          nextState: 'reserva_esperando_origen',
+          data
+        };
+      }
+      
+      await enviarMensajeWhatsAppTexto(
+        telefono,
+        '📍 ¿A dónde vas? (Destino del viaje)',
+        context.phoneNumberId
+      );
+      
+      return {
+        success: true,
+        nextState: 'reserva_esperando_destino',
+        data: { ...data, origen }
+      };
+    }
+    
+    if (state === 'reserva_esperando_destino') {
+      const destino = mensaje.trim();
+      
+      if (destino.length < 2) {
+        await enviarMensajeWhatsAppTexto(
+          telefono,
+          '❌ Por favor, ingresá un destino válido.',
+          context.phoneNumberId
+        );
+        return {
+          success: true,
+          nextState: 'reserva_esperando_destino',
+          data
+        };
+      }
+      
+      await enviarMensajeWhatsAppTexto(
+        telefono,
+        '👥 ¿Cuántos pasajeros son? (Ingresá un número)',
+        context.phoneNumberId
+      );
+      
+      return {
+        success: true,
+        nextState: 'reserva_esperando_pasajeros',
+        data: { ...data, destino }
+      };
+    }
+    
+    if (state === 'reserva_esperando_pasajeros') {
+      const pasajeros = parseInt(mensaje.trim());
+      
+      if (isNaN(pasajeros) || pasajeros < 1 || pasajeros > 50) {
+        await enviarMensajeWhatsAppTexto(
+          telefono,
+          '❌ Por favor, ingresá un número válido de pasajeros (entre 1 y 50).',
+          context.phoneNumberId
+        );
+        return {
+          success: true,
+          nextState: 'reserva_esperando_pasajeros',
+          data
+        };
+      }
+      
+      await enviarMensajeWhatsAppTexto(
+        telefono,
+        '📅 ¿Para qué día querés reservar? (formato DD/MM/AAAA o "hoy", "mañana")',
+        context.phoneNumberId
+      );
+      
+      return {
+        success: true,
+        nextState: 'reserva_esperando_fecha',
+        data: { ...data, pasajeros }
+      };
+    }
+    
     if (state === 'reserva_esperando_fecha') {
       const fechaTexto = mensaje.trim().toLowerCase();
       let fecha: Date;
@@ -209,6 +297,24 @@ export const menuPrincipalFlow: Flow = {
           };
         }
         
+        // Buscar un agente activo para asignar el turno
+        const agente = await AgenteModel.findOne({
+          empresaId,
+          activo: true
+        });
+        
+        if (!agente) {
+          await enviarMensajeWhatsAppTexto(
+            telefono,
+            '❌ No hay agentes disponibles en este momento. Por favor, intentá más tarde.',
+            context.phoneNumberId
+          );
+          return {
+            success: true,
+            end: true
+          };
+        }
+        
         const fechaInicio = new Date(data.fecha);
         fechaInicio.setHours(hora, minuto, 0, 0);
         
@@ -217,12 +323,18 @@ export const menuPrincipalFlow: Flow = {
         
         const nuevoTurno = await TurnoModel.create({
           empresaId,
+          agenteId: agente._id,
           clienteId: cliente._id.toString(),
           fechaInicio,
           fechaFin,
           duracion: 30,
           estado: 'pendiente',
-          datos: {},
+          tipoReserva: 'viaje',
+          datos: {
+            origen: data.origen,
+            destino: data.destino,
+            pasajeros: data.pasajeros
+          },
           notas: 'Reservado vía WhatsApp',
           creadoPor: 'whatsapp_bot'
         });
@@ -234,7 +346,7 @@ export const menuPrincipalFlow: Flow = {
         
         await enviarMensajeWhatsAppTexto(
           telefono,
-          `✅ Turno reservado exitosamente\n\n📅 Fecha: ${fechaFormateada}\n🕐 Hora: ${horaFormateada}\n\nEscribí "menu" para volver al menú principal.`,
+          `✅ Viaje reservado exitosamente\n\n📍 Origen: ${data.origen}\n📍 Destino: ${data.destino}\n👥 Pasajeros: ${data.pasajeros}\n📅 Fecha: ${fechaFormateada}\n🕐 Hora: ${horaFormateada}\n\nEscribí "menu" para volver al menú principal.`,
           context.phoneNumberId
         );
         
@@ -311,13 +423,13 @@ export const menuPrincipalFlow: Flow = {
 async function iniciarReserva(context: FlowContext): Promise<FlowResult> {
   await enviarMensajeWhatsAppTexto(
     context.telefono,
-    '📅 ¿Para qué día querés reservar? (formato DD/MM/AAAA o "hoy", "mañana")',
+    '📍 ¿Desde dónde salís? (Origen del viaje)',
     context.phoneNumberId
   );
   
   return {
     success: true,
-    nextState: 'reserva_esperando_fecha',
+    nextState: 'reserva_esperando_origen',
     data: {}
   };
 }
