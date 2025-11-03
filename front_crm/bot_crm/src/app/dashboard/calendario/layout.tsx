@@ -131,7 +131,7 @@ export default function CalendarioLayout({
 
   return (
     <DashboardLayout title="Calendario">
-      <div className={styles.layout}>
+      <div className={styles.layout} data-version="2.0">
         {/* Header con Tabs */}
         <div className={styles.header}>
           <div className={styles.headerTop}>

@@ -4,9 +4,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
-import DashboardLayout from '@/components/DashboardLayout/DashboardLayout';
 import ModuleGuard from '@/components/ModuleGuard';
-import Breadcrumb from '@/components/Breadcrumb/Breadcrumb';
 import { useAgentes } from '@/hooks/useAgentes';
 import ListaAgentes from '@/components/calendar/ListaAgentes';
 import ModalAgente from '@/components/calendar/ModalAgente';
@@ -21,11 +19,7 @@ export default function AgentesPage() {
   const [agenteEditar, setAgenteEditar] = useState<any>(null);
 
   if (authLoading) {
-    return (
-      <DashboardLayout title="Agentes">
-        <div className={styles.loading}>Cargando...</div>
-      </DashboardLayout>
-    );
+    return <div className={styles.loading}>Cargando...</div>;
   }
 
   if (!isAuthenticated) {
@@ -92,62 +86,52 @@ export default function AgentesPage() {
   };
 
   return (
-    <DashboardLayout title="Calendario">
-      <ModuleGuard moduleId="calendar_booking">
-        <div className={styles.container}>
-          <Breadcrumb 
-            items={[
-              { label: 'Dashboard', href: '/dashboard' },
-              { label: 'Calendario', href: '/dashboard/calendario', icon: '📅' },
-              { label: 'Agentes', icon: '👨‍⚕️' }
-            ]}
-          />
-          
-          <div className={styles.header}>
-            <div>
-              <h1>👨‍⚕️ Gestión de Agentes</h1>
-              <p>Administra los profesionales que atienden turnos</p>
-            </div>
-            <button 
-              className={styles.btnNuevo}
-              onClick={() => setModalFormulario(true)}
-            >
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <path d="M12 5v14M5 12h14"/>
-              </svg>
-              Nuevo Agente
-            </button>
+    <ModuleGuard moduleId="calendar_booking">
+      <div className={styles.container}>
+        <div className={styles.header}>
+          <div>
+            <h1>👨‍⚕️ Gestión de Agentes</h1>
+            <p>Administra los profesionales que atienden turnos</p>
           </div>
-
-          {error && (
-            <div className={styles.error}>
-              Error al cargar agentes: {error}
-            </div>
-          )}
-
-          {loading ? (
-            <div className={styles.loading}>
-              <div className={styles.spinner}></div>
-              <p>Cargando agentes...</p>
-            </div>
-          ) : (
-            <ListaAgentes 
-              agentes={agentes}
-              onEditar={handleEditar}
-              onDesactivar={handleDesactivar}
-              onEliminar={handleEliminarPermanente}
-            />
-          )}
-
-          {/* Modal Agente */}
-          <ModalAgente
-            isOpen={modalFormulario}
-            onClose={handleCancelar}
-            onSubmit={agenteEditar ? handleActualizar : handleCrear}
-            agenteInicial={agenteEditar}
-          />
+          <button 
+            className={styles.btnNuevo}
+            onClick={() => setModalFormulario(true)}
+          >
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M12 5v14M5 12h14"/>
+            </svg>
+            Nuevo Agente
+          </button>
         </div>
-      </ModuleGuard>
-    </DashboardLayout>
+
+        {error && (
+          <div className={styles.error}>
+            Error al cargar agentes: {error}
+          </div>
+        )}
+
+        {loading ? (
+          <div className={styles.loading}>
+            <div className={styles.spinner}></div>
+            <p>Cargando agentes...</p>
+          </div>
+        ) : (
+          <ListaAgentes 
+            agentes={agentes}
+            onEditar={handleEditar}
+            onDesactivar={handleDesactivar}
+            onEliminar={handleEliminarPermanente}
+          />
+        )}
+
+        {/* Modal Agente */}
+        <ModalAgente
+          isOpen={modalFormulario}
+          onClose={handleCancelar}
+          onSubmit={agenteEditar ? handleActualizar : handleCrear}
+          agenteInicial={agenteEditar}
+        />
+      </div>
+    </ModuleGuard>
   );
 }
