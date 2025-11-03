@@ -181,10 +181,7 @@ export default function FlujosActivosPage() {
               <div className={styles.cardFooter}>
                 <button 
                   className={styles.btnConfig}
-                  onClick={() => {
-                    // Aquí iría la navegación a configurar el flujo
-                    alert(`Configurar ${flujo.nombre} - Próximamente`);
-                  }}
+                  onClick={() => router.push(`/dashboard/calendario/flujos-activos/configurar/${flujo.id}`)}
                 >
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                     <circle cx="12" cy="12" r="3"/>
