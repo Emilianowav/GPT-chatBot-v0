@@ -139,8 +139,8 @@ export async function enviarNotificacionConfirmacionViajes(
       hour12: false
     });
 
-    const origen = turno.datos?.origin || 'Origen no especificado';
-    const destino = turno.datos?.destination || 'Destino no especificado';
+    const origen = turno.datos?.origen || 'Origen no especificado';
+    const destino = turno.datos?.destino || 'Destino no especificado';
 
     return {
       _id: turno._id.toString(),

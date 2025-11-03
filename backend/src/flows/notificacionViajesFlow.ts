@@ -218,7 +218,7 @@ export const notificacionViajesFlow: Flow = {
       
       // Actualizar origen
       await TurnoModel.findByIdAndUpdate(viaje._id, {
-        'datos.origin': mensajeTrim
+        'datos.origen': mensajeTrim
       });
       
       await enviarMensajeWhatsAppTexto(
@@ -239,7 +239,7 @@ export const notificacionViajesFlow: Flow = {
       
       // Actualizar destino
       await TurnoModel.findByIdAndUpdate(viaje._id, {
-        'datos.destination': mensajeTrim
+        'datos.destino': mensajeTrim
       });
       
       await enviarMensajeWhatsAppTexto(
