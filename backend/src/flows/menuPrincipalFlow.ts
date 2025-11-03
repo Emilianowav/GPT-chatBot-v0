@@ -280,12 +280,14 @@ export const menuPrincipalFlow: Flow = {
       
       // Crear turno en la BD
       try {
+        console.log('🔍 [Reserva] Buscando cliente:', { telefono, empresaId });
         const cliente = await ClienteModel.findOne({
           telefono,
           empresaId
         });
         
         if (!cliente) {
+          console.error('❌ [Reserva] Cliente no encontrado');
           await enviarMensajeWhatsAppTexto(
             telefono,
             '❌ No se pudo encontrar tu información. Por favor, contactá con soporte.',
@@ -297,13 +299,17 @@ export const menuPrincipalFlow: Flow = {
           };
         }
         
+        console.log('✅ [Reserva] Cliente encontrado:', cliente._id);
+        
         // Buscar un agente activo para asignar el turno
+        console.log('🔍 [Reserva] Buscando agente activo para:', empresaId);
         const agente = await AgenteModel.findOne({
           empresaId,
           activo: true
         });
         
         if (!agente) {
+          console.error('❌ [Reserva] No hay agentes activos');
           await enviarMensajeWhatsAppTexto(
             telefono,
             '❌ No hay agentes disponibles en este momento. Por favor, intentá más tarde.',
@@ -315,11 +321,26 @@ export const menuPrincipalFlow: Flow = {
           };
         }
         
+        console.log('✅ [Reserva] Agente encontrado:', agente._id);
+        
         const fechaInicio = new Date(data.fecha);
         fechaInicio.setHours(hora, minuto, 0, 0);
         
         const fechaFin = new Date(fechaInicio);
         fechaFin.setMinutes(fechaFin.getMinutes() + 30); // Duración por defecto: 30 min
+        
+        console.log('📝 [Reserva] Creando turno con datos:', {
+          empresaId,
+          agenteId: agente._id,
+          clienteId: cliente._id.toString(),
+          fechaInicio,
+          fechaFin,
+          datos: {
+            origen: data.origen,
+            destino: data.destino,
+            pasajeros: data.pasajeros
+          }
+        });
         
         const nuevoTurno = await TurnoModel.create({
           empresaId,
@@ -354,16 +375,20 @@ export const menuPrincipalFlow: Flow = {
           success: true,
           end: true
         };
-      } catch (error) {
-        console.error('❌ Error creando turno:', error);
+      } catch (error: any) {
+        console.error('❌ [Reserva] Error creando turno:', error);
+        console.error('❌ [Reserva] Error stack:', error.stack);
+        console.error('❌ [Reserva] Error message:', error.message);
+        
         await enviarMensajeWhatsAppTexto(
           telefono,
-          '❌ Hubo un error al crear el turno. Por favor, intentá de nuevo más tarde.',
+          '❌ Hubo un error al crear el turno. Por favor, intentá ingresar la hora nuevamente.\n\n¿A qué hora querés el turno? (formato HH:MM, ejemplo: 14:30)',
           context.phoneNumberId
         );
         return {
           success: true,
-          end: true
+          nextState: 'reserva_esperando_hora',
+          data
         };
       }
     }
