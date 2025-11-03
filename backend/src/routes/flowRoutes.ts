@@ -10,13 +10,14 @@ const router = express.Router();
  * GET /api/flows/:empresaId/active
  * Obtener todos los flujos activos de una empresa
  */
-router.get('/:empresaId/active', authenticate, async (req, res) => {
+router.get('/:empresaId/active', authenticate, async (req, res): Promise<void> => {
   try {
     const { empresaId } = req.params;
     
     // Verificar que el usuario tenga acceso a esta empresa
     if (req.user?.empresaId !== empresaId && req.user?.role !== 'superadmin') {
-      return res.status(403).json({ error: 'No autorizado' });
+      res.status(403).json({ error: 'No autorizado' });
+      return;
     }
     
     const estados = await ConversationStateModel.find({
@@ -45,24 +46,27 @@ router.get('/:empresaId/active', authenticate, async (req, res) => {
  * POST /api/flows/:empresaId/pause
  * Pausar un flujo activo
  */
-router.post('/:empresaId/pause', authenticate, async (req, res) => {
+router.post('/:empresaId/pause', authenticate, async (req, res): Promise<void> => {
   try {
     const { empresaId } = req.params;
     const { telefono } = req.body;
     
     // Verificar que el usuario tenga acceso a esta empresa
     if (req.user?.empresaId !== empresaId && req.user?.role !== 'superadmin') {
-      return res.status(403).json({ error: 'No autorizado' });
+      res.status(403).json({ error: 'No autorizado' });
+      return;
     }
     
     if (!telefono) {
-      return res.status(400).json({ error: 'Teléfono requerido' });
+      res.status(400).json({ error: 'Teléfono requerido' });
+      return;
     }
     
     const estado = await ConversationStateModel.findOne({ telefono, empresaId });
     
     if (!estado || !estado.flujo_activo) {
-      return res.status(404).json({ error: 'No hay flujo activo para este usuario' });
+      res.status(404).json({ error: 'No hay flujo activo para este usuario' });
+      return;
     }
     
     estado.pausado = true;
@@ -86,24 +90,27 @@ router.post('/:empresaId/pause', authenticate, async (req, res) => {
  * POST /api/flows/:empresaId/resume
  * Reanudar un flujo pausado
  */
-router.post('/:empresaId/resume', authenticate, async (req, res) => {
+router.post('/:empresaId/resume', authenticate, async (req, res): Promise<void> => {
   try {
     const { empresaId } = req.params;
     const { telefono } = req.body;
     
     // Verificar que el usuario tenga acceso a esta empresa
     if (req.user?.empresaId !== empresaId && req.user?.role !== 'superadmin') {
-      return res.status(403).json({ error: 'No autorizado' });
+      res.status(403).json({ error: 'No autorizado' });
+      return;
     }
     
     if (!telefono) {
-      return res.status(400).json({ error: 'Teléfono requerido' });
+      res.status(400).json({ error: 'Teléfono requerido' });
+      return;
     }
     
     const estado = await ConversationStateModel.findOne({ telefono, empresaId });
     
     if (!estado || !estado.flujo_activo) {
-      return res.status(404).json({ error: 'No hay flujo para este usuario' });
+      res.status(404).json({ error: 'No hay flujo para este usuario' });
+      return;
     }
     
     estado.pausado = false;
@@ -127,18 +134,20 @@ router.post('/:empresaId/resume', authenticate, async (req, res) => {
  * POST /api/flows/:empresaId/cancel
  * Cancelar un flujo activo
  */
-router.post('/:empresaId/cancel', authenticate, async (req, res) => {
+router.post('/:empresaId/cancel', authenticate, async (req, res): Promise<void> => {
   try {
     const { empresaId } = req.params;
     const { telefono } = req.body;
     
     // Verificar que el usuario tenga acceso a esta empresa
     if (req.user?.empresaId !== empresaId && req.user?.role !== 'superadmin') {
-      return res.status(403).json({ error: 'No autorizado' });
+      res.status(403).json({ error: 'No autorizado' });
+      return;
     }
     
     if (!telefono) {
-      return res.status(400).json({ error: 'Teléfono requerido' });
+      res.status(400).json({ error: 'Teléfono requerido' });
+      return;
     }
     
     await flowManager.cancelFlow(telefono, empresaId);
