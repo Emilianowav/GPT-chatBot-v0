@@ -357,7 +357,7 @@ export const menuPrincipalFlow: Flow = {
             pasajeros: data.pasajeros
           },
           notas: 'Reservado vía WhatsApp',
-          creadoPor: 'whatsapp_bot'
+          creadoPor: 'bot'
         });
         
         console.log('✅ Turno creado:', nuevoTurno._id);
