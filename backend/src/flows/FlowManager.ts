@@ -351,6 +351,10 @@ export class FlowManager {
       }
       
       await state.save();
+      console.log(`✅ [DEBUG] Estado guardado después de startFlow:`);
+      console.log(`   flujo_activo: ${state.flujo_activo}`);
+      console.log(`   estado_actual: ${state.estado_actual}`);
+      console.log(`   _id: ${state._id}`);
     }
     
     return result;
