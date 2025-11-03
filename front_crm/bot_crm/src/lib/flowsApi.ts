@@ -15,7 +15,7 @@ export interface FlujoActivo {
  * Obtener todos los flujos activos de una empresa
  */
 export async function obtenerFlujosActivos(empresaId: string): Promise<FlujoActivo[]> {
-  const token = localStorage.getItem('token');
+  const token = localStorage.getItem('auth_token');
   
   const response = await fetch(`${API_URL}/api/flows/${empresaId}/active`, {
     headers: {
@@ -35,7 +35,7 @@ export async function obtenerFlujosActivos(empresaId: string): Promise<FlujoActi
  * Pausar un flujo activo
  */
 export async function pausarFlujo(empresaId: string, telefono: string): Promise<void> {
-  const token = localStorage.getItem('token');
+  const token = localStorage.getItem('auth_token');
   
   const response = await fetch(`${API_URL}/api/flows/${empresaId}/pause`, {
     method: 'POST',
@@ -56,7 +56,7 @@ export async function pausarFlujo(empresaId: string, telefono: string): Promise<
  * Reanudar un flujo pausado
  */
 export async function reanudarFlujo(empresaId: string, telefono: string): Promise<void> {
-  const token = localStorage.getItem('token');
+  const token = localStorage.getItem('auth_token');
   
   const response = await fetch(`${API_URL}/api/flows/${empresaId}/resume`, {
     method: 'POST',
@@ -77,7 +77,7 @@ export async function reanudarFlujo(empresaId: string, telefono: string): Promis
  * Cancelar un flujo activo
  */
 export async function cancelarFlujo(empresaId: string, telefono: string): Promise<void> {
-  const token = localStorage.getItem('token');
+  const token = localStorage.getItem('auth_token');
   
   const response = await fetch(`${API_URL}/api/flows/${empresaId}/cancel`, {
     method: 'POST',
