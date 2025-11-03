@@ -3,11 +3,8 @@
 // 🔧 Página de Gestión de Turnos
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import Link from 'next/link';
 import { useAuth } from '@/contexts/AuthContext';
-import DashboardLayout from '@/components/DashboardLayout/DashboardLayout';
 import ModuleGuard from '@/components/ModuleGuard';
-import Breadcrumb from '@/components/Breadcrumb/Breadcrumb';
 import { useTurnos } from '@/hooks/useTurnos';
 import { useAgentes } from '@/hooks/useAgentes';
 import type { Turno } from '@/lib/calendarApi';
@@ -201,12 +198,10 @@ export default function GestionTurnosPage() {
 
   if (authLoading) {
     return (
-      <DashboardLayout title="Gestión de Turnos">
-        <div className={styles.loading}>
-          <div className={styles.spinner}></div>
-          <p>Cargando...</p>
-        </div>
-      </DashboardLayout>
+      <div className={styles.loading}>
+        <div className={styles.spinner}></div>
+        <p>Cargando...</p>
+      </div>
     );
   }
 
@@ -215,34 +210,13 @@ export default function GestionTurnosPage() {
   }
 
   return (
-    <DashboardLayout title="Gestión de Turnos">
-      <ModuleGuard moduleId="calendar_booking">
-        <div className={styles.container}>
-          <Breadcrumb 
-            items={[
-              { label: 'Dashboard', href: '/dashboard' },
-              { label: 'Calendario', href: '/dashboard/calendario', icon: '📅' },
-              { label: 'Gestión de Turnos', icon: '🔧' }
-            ]}
-          />
-
-          {/* Header */}
-          <div className={styles.header}>
-            <div className={styles.headerLeft}>
-              <h1>🔧 Gestión de Turnos</h1>
-              <p>Administra y reconfigura los turnos guardados</p>
-            </div>
-            <div className={styles.headerRight}>
-              <Link href="/dashboard/calendario">
-                <button className={styles.btnSecondary}>
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <path d="M19 12H5M12 19l-7-7 7-7"/>
-                  </svg>
-                  Volver al Calendario
-                </button>
-              </Link>
-            </div>
-          </div>
+    <ModuleGuard moduleId="calendar_booking">
+      <div className={styles.container}>
+        {/* Header */}
+        <div className={styles.header}>
+          <h1>🔧 Gestión de Turnos</h1>
+          <p>Administra y reconfigura los turnos guardados</p>
+        </div>
 
           {/* Filtros */}
           <div className={styles.filtrosCard}>
@@ -695,6 +669,5 @@ export default function GestionTurnosPage() {
           )}
         </div>
       </ModuleGuard>
-    </DashboardLayout>
   );
 }

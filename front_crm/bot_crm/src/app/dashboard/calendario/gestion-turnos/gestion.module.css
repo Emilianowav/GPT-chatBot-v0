@@ -1,9 +1,11 @@
 /* 🔧 Estilos de Gestión de Turnos */
 
 .container {
-  max-width: 1400px;
-  margin: 0 auto;
   padding: 2rem;
+  max-width: 100%;
+  margin: 0;
+  background: #f8f9fa;
+  min-height: calc(100vh - 200px);
 }
 
 .loading {
