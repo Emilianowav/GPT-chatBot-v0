@@ -49,10 +49,21 @@ export async function enviarNotificacionConfirmacionViajes(
   }
 
   // 2. Buscar cliente por teléfono y empresaId
+  // ⚠️ IMPORTANTE: Normalizar teléfono para buscar
+  // El cliente puede estar guardado con o sin +
+  const telefonoNormalizadoBusqueda = normalizarTelefono(clienteTelefono);
+  
   console.log('🔍 Buscando cliente por teléfono:', clienteTelefono);
+  console.log('   Teléfono normalizado para búsqueda:', telefonoNormalizadoBusqueda);
+  
+  // Buscar con teléfono normalizado O con el original
   const cliente = await ClienteModel.findOne({
-    empresaId: empresaDoc.nombre, // Los clientes usan el nombre de la empresa
-    telefono: clienteTelefono
+    empresaId: empresaDoc.nombre,
+    $or: [
+      { telefono: clienteTelefono },
+      { telefono: telefonoNormalizadoBusqueda },
+      { telefono: `+${telefonoNormalizadoBusqueda}` }
+    ]
   });
 
   if (!cliente) {
@@ -159,11 +170,13 @@ export async function enviarNotificacionConfirmacionViajes(
 
   // ⚠️ CRÍTICO: Normalizar teléfono (sin +, espacios, guiones)
   // Debe coincidir con el formato usado en whatsappController
-  const telefonoNormalizado = normalizarTelefono(clienteTelefono);
+  // IMPORTANTE: Usar el teléfono del cliente en la BD (que puede tener el formato correcto)
+  const telefonoParaFlujo = normalizarTelefono(cliente.telefono);
   
-  console.log('📞 Teléfono normalizado:', {
-    original: clienteTelefono,
-    normalizado: telefonoNormalizado
+  console.log('📞 Teléfonos:', {
+    clienteTelefonoOriginal: clienteTelefono,
+    clienteTelefonoBD: cliente.telefono,
+    telefonoNormalizadoParaFlujo: telefonoParaFlujo
   });
 
   // Enviar mensaje
@@ -176,16 +189,16 @@ export async function enviarNotificacionConfirmacionViajes(
   // Iniciar flujo de notificaciones
   // IMPORTANTE: 
   // 1. Usar el NOMBRE de la empresa, no el ObjectId
-  // 2. Usar teléfono NORMALIZADO (sin +)
+  // 2. Usar teléfono NORMALIZADO (sin +) del cliente en la BD
   console.log('🔄 Iniciando flujo con:', {
-    telefono: telefonoNormalizado,
+    telefono: telefonoParaFlujo,
     empresaId: empresaDoc.nombre,
     cantidadViajes: viajes.length
   });
   
   try {
     await iniciarFlujoNotificacionViajes(
-      telefonoNormalizado,  // ✅ Sin + para coincidir con webhook
+      telefonoParaFlujo,    // ✅ Teléfono del cliente en BD (normalizado)
       empresaDoc.nombre,    // ✅ Usar nombre, no _id
       viajes
     );

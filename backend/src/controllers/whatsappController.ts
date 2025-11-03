@@ -15,9 +15,13 @@ import type { EmpresaConfig } from '../types/Types.js';
 
 export const recibirMensaje = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
+    console.log('\n🔔 [WEBHOOK] Mensaje recibido en /api/whatsapp/webhook');
+    console.log('🔔 [WEBHOOK] Body:', JSON.stringify(req.body, null, 2));
+    
     const entrada = req.body;
     const messages = entrada?.entry?.[0]?.changes?.[0]?.value?.messages;
     if (!messages || !Array.isArray(messages)) {
+      console.log('⚠️ [WEBHOOK] No hay mensajes en el payload, ignorando');
       res.sendStatus(200);
       return;
     }
@@ -64,7 +68,7 @@ export const recibirMensaje = async (req: Request, res: Response, next: NextFunc
       await buscarOCrearClienteDesdeWhatsApp({
         telefono: telefonoCliente,
         profileName: profileName ?? undefined,
-        empresaId: (empresa as any)._id?.toString() || empresa.nombre,
+        empresaId: empresa.nombre,  // ✅ SIEMPRE usar nombre
         chatbotUserId: usuario.id
       });
     } catch (errorCliente) {
@@ -85,7 +89,7 @@ export const recibirMensaje = async (req: Request, res: Response, next: NextFunc
       await enviarMensajeWhatsAppTexto(telefonoCliente, '✅ Historial de conversación limpiado. Podés empezar de nuevo cuando quieras.', phoneNumberId);
       
       // También limpiar estado de flujos
-      await flowManager.cancelFlow(telefonoCliente, (empresa as any)._id?.toString() || empresa.nombre);
+      await flowManager.cancelFlow(telefonoCliente, empresa.nombre);  // ✅ SIEMPRE usar nombre
       
       res.sendStatus(200);
       return;
@@ -96,7 +100,7 @@ export const recibirMensaje = async (req: Request, res: Response, next: NextFunc
     
     const flowContext: FlowContext = {
       telefono: telefonoCliente,
-      empresaId: (empresa as any)._id?.toString() || empresa.nombre,
+      empresaId: empresa.nombre,  // ✅ SIEMPRE usar nombre, NUNCA _id
       mensaje,
       respuestaInteractiva,
       phoneNumberId,
@@ -104,7 +108,23 @@ export const recibirMensaje = async (req: Request, res: Response, next: NextFunc
     };
     
     try {
+      console.log('🔍 [DEBUG] Llamando a flowManager.handleMessage con:', {
+        telefono: flowContext.telefono,
+        empresaId: flowContext.empresaId,
+        mensaje: flowContext.mensaje
+      });
+      
       const { handled, result } = await flowManager.handleMessage(flowContext);
+      
+      console.log('🔍 [DEBUG] Resultado de flowManager.handleMessage:', {
+        handled,
+        result: {
+          success: result?.success,
+          error: result?.error,
+          end: result?.end,
+          nextState: result?.nextState
+        }
+      });
       
       if (handled && result?.success) {
         console.log('✅ Mensaje procesado por sistema de flujos');
@@ -158,7 +178,11 @@ export const recibirMensaje = async (req: Request, res: Response, next: NextFunc
       }
       
       // Si ningún flujo manejó el mensaje, algo salió mal
-      console.warn('⚠️ Ningún flujo manejó el mensaje, esto no debería ocurrir');
+      console.error('❌ [DEBUG] Ningún flujo manejó el mensaje');
+      console.error('❌ [DEBUG] handled:', handled);
+      console.error('❌ [DEBUG] result:', result);
+      console.error('❌ [DEBUG] FlowContext usado:', flowContext);
+      
       await enviarMensajeWhatsAppTexto(
         telefonoCliente,
         'Disculpá, hubo un problema al procesar tu mensaje. Por favor, intentá de nuevo.',

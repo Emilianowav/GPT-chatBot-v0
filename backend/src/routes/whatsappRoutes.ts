@@ -20,6 +20,17 @@ router.get("/webhook", (req, res) => {
 });
 
 
-router.post("/webhook", deduplicateWebhook,recibirMensaje,);
+router.post("/webhook", deduplicateWebhook, recibirMensaje);
+
+// Endpoint de prueba para verificar que el servidor está funcionando
+router.post("/webhook-test", (req, res) => {
+  console.log('\n🧪 [TEST] Webhook de prueba recibido');
+  console.log('🧪 [TEST] Body:', JSON.stringify(req.body, null, 2));
+  res.status(200).json({ 
+    success: true, 
+    message: 'Webhook test recibido correctamente',
+    timestamp: new Date().toISOString()
+  });
+});
 
 export default router;

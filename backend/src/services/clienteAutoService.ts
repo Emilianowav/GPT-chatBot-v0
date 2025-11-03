@@ -1,5 +1,6 @@
 // 🤖 Servicio de Creación Automática de Clientes desde WhatsApp
 import { ClienteModel, type ICliente } from '../models/Cliente.js';
+import { normalizarTelefono } from '../utils/telefonoUtils.js';
 
 interface DatosWhatsApp {
   telefono: string;
@@ -18,10 +19,13 @@ export async function buscarOCrearClienteDesdeWhatsApp(
 ): Promise<ICliente> {
   const { telefono, profileName, empresaId, chatbotUserId } = datos;
 
-  // 1. Buscar cliente existente por teléfono
+  // ⚠️ CRÍTICO: Normalizar teléfono (sin +, espacios, guiones)
+  const telefonoNormalizado = normalizarTelefono(telefono);
+
+  // 1. Buscar cliente existente por teléfono (normalizado)
   let cliente = await ClienteModel.findOne({
     empresaId,
-    telefono
+    telefono: telefonoNormalizado
   });
 
   if (cliente) {
@@ -43,7 +47,8 @@ export async function buscarOCrearClienteDesdeWhatsApp(
 
   // 2. Cliente no existe, crear uno nuevo
   console.log('🆕 Creando nuevo cliente desde WhatsApp:', {
-    telefono,
+    telefonoOriginal: telefono,
+    telefonoNormalizado,
     profileName,
     empresaId
   });
@@ -63,12 +68,12 @@ export async function buscarOCrearClienteDesdeWhatsApp(
     }
   }
 
-  // Crear cliente
+  // Crear cliente con teléfono normalizado
   cliente = new ClienteModel({
     empresaId,
     nombre,
     apellido: apellido || 'Sin Apellido',
-    telefono,
+    telefono: telefonoNormalizado,  // ✅ Guardar normalizado
     profileName,
     origen: 'chatbot',
     chatbotUserId,

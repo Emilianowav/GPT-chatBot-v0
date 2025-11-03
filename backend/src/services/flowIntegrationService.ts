@@ -47,6 +47,16 @@ export async function iniciarFlujoNotificacionViajes(
     console.log(`   Viajes: ${viajes.length}`);
     console.log(`   Datos de viajes:`, JSON.stringify(viajes, null, 2));
     
+    // ⚠️ IMPORTANTE: Cancelar cualquier flujo anterior antes de iniciar uno nuevo
+    // Esto evita que se encolen flujos duplicados
+    console.log('🧹 Cancelando flujos anteriores (si existen)...');
+    try {
+      await flowManager.cancelFlow(telefono, empresaId);
+      console.log('✅ Flujos anteriores cancelados');
+    } catch (cancelError) {
+      console.log('ℹ️ No había flujos anteriores para cancelar');
+    }
+    
     console.log('📞 Llamando a flowManager.startFlow...');
     const result = await flowManager.startFlow(
       telefono,

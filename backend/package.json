@@ -14,7 +14,10 @@
     "crear-admins": "node --loader ts-node/esm src/scripts/crearAdminInicial.ts",
     "seed:empresa-modulo": "tsx src/scripts/seedEmpresaConModulo.ts",
     "migrate:usuarios": "node --loader ts-node/esm src/scripts/migrateEmpresasUsuarios.ts",
-    "limpiar:estados": "tsx src/scripts/limpiarConversationStates.ts"
+    "limpiar:estados": "tsx src/scripts/limpiarConversationStates.ts",
+    "normalizar:telefonos": "tsx src/scripts/normalizarTelefonos.ts",
+    "limpiar:completo": "tsx src/scripts/limpiarEstadosCompleto.ts",
+    "verificar:bd": "tsx src/scripts/verificarBD.ts"
   },
   "keywords": [],
   "author": "",

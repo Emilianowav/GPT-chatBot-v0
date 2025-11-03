@@ -19,9 +19,12 @@ export class FlowManager {
    * Obtener o crear estado de conversación
    */
   private async getOrCreateState(telefono: string, empresaId: string) {
+    console.log(`🔍 [getOrCreateState] Buscando estado:`, { telefono, empresaId });
+    
     let state = await ConversationStateModel.findOne({ telefono, empresaId });
     
     if (!state) {
+      console.log(`🆕 [getOrCreateState] Estado no encontrado, creando nuevo`);
       state = await ConversationStateModel.create({
         telefono,
         empresaId,
@@ -31,6 +34,12 @@ export class FlowManager {
         flujos_pendientes: [],
         prioridad: 'normal',
         ultima_interaccion: new Date()
+      });
+    } else {
+      console.log(`✅ [getOrCreateState] Estado encontrado:`, {
+        _id: state._id,
+        flujo_activo: state.flujo_activo,
+        estado_actual: state.estado_actual
       });
     }
     
@@ -63,11 +72,26 @@ export class FlowManager {
       
       const flow = this.flows[state.flujo_activo];
       const estadoAnterior = state.estado_actual || '';
+      
+      console.log(`🔍 [DEBUG] Llamando a flow.onInput con:`, {
+        flujo: state.flujo_activo,
+        estadoAnterior,
+        mensaje: context.mensaje,
+        data: state.data
+      });
+      
       const result = await flow.onInput(
         context,
         estadoAnterior,
         state.data || {}
       );
+      
+      console.log(`🔍 [DEBUG] Resultado de flow.onInput:`, {
+        success: result.success,
+        error: result.error,
+        end: result.end,
+        nextState: result.nextState
+      });
       
       // Actualizar estado
       if (result.success) {
@@ -118,9 +142,11 @@ export class FlowManager {
         state.ultima_interaccion = new Date();
         await state.save();
         
+        console.log(`✅ [DEBUG] Estado guardado, retornando handled=true`);
         return { handled: true, result };
       } else {
-        console.error(`❌ Error en flujo ${state.flujo_activo}:`, result.error);
+        console.error(`❌ [DEBUG] Error en flujo ${state.flujo_activo}:`, result.error);
+        console.error(`❌ [DEBUG] result.success = false, retornando handled=false`);
         
         // Log de error
         await FlowLogger.logError(
@@ -143,12 +169,14 @@ export class FlowManager {
     }
     
     // 3️⃣ Detectar si algún flujo debe activarse
+    console.log(`🔍 [DEBUG] No hay flujo activo, verificando si alguno debe activarse...`);
     const flowsOrdenados = this.getFlowsByPriority();
     
     for (const flow of flowsOrdenados) {
       console.log(`🔍 Verificando flujo: ${flow.name}`);
       
       const shouldActivate = await flow.shouldActivate(context);
+      console.log(`   shouldActivate: ${shouldActivate}`);
       
       if (shouldActivate) {
         console.log(`🎯 Activando flujo: ${flow.name}`);
@@ -198,7 +226,8 @@ export class FlowManager {
     }
     
     // 4️⃣ Ningún flujo manejó el mensaje
-    console.log(`⚠️ Ningún flujo manejó el mensaje`);
+    console.error(`❌ [DEBUG] Ningún flujo manejó el mensaje`);
+    console.error(`❌ [DEBUG] Retornando handled=false desde FlowManager`);
     return { handled: false };
   }
   
