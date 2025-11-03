@@ -1,0 +1,224 @@
+/* 📅 Estilos del Layout de Calendario */
+
+.layout {
+  min-height: 100vh;
+  background: #f8f9fa;
+}
+
+.header {
+  background: white;
+  border-bottom: 1px solid #e5e7eb;
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  margin: -2rem -2rem 0 -2rem;
+  padding: 0;
+}
+
+.headerTop {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1.5rem 2rem;
+  gap: 2rem;
+}
+
+.headerLeft h1 {
+  margin: 0 0 0.25rem 0;
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: #1a1a1a;
+}
+
+.headerLeft p {
+  margin: 0;
+  font-size: 0.875rem;
+  color: #6b7280;
+}
+
+.headerRight {
+  display: flex;
+  gap: 0.75rem;
+  align-items: center;
+}
+
+/* Dropdown de Configuración */
+.configDropdown {
+  position: relative;
+}
+
+.btnConfig {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.625rem 1rem;
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #374151;
+  transition: all 0.2s;
+}
+
+.btnConfig:hover {
+  background: #f9fafb;
+  border-color: #d1d5db;
+}
+
+.configMenu {
+  position: absolute;
+  top: calc(100% + 0.5rem);
+  right: 0;
+  min-width: 220px;
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  overflow: hidden;
+  animation: slideDown 0.2s ease-out;
+  z-index: 1000;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.configMenuItem {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem 1rem;
+  color: #374151;
+  text-decoration: none;
+  font-size: 0.875rem;
+  transition: all 0.15s;
+  border-bottom: 1px solid #f3f4f6;
+}
+
+.configMenuItem:last-child {
+  border-bottom: none;
+}
+
+.configMenuItem:hover {
+  background: #f9fafb;
+  color: #3b82f6;
+}
+
+.configMenuItem svg {
+  flex-shrink: 0;
+}
+
+/* Tabs de Navegación */
+.tabs {
+  display: flex;
+  gap: 0.5rem;
+  padding: 0 2rem;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.tabs::-webkit-scrollbar {
+  display: none;
+}
+
+.tab {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.875rem 1.25rem;
+  color: #6b7280;
+  text-decoration: none;
+  font-size: 0.875rem;
+  font-weight: 500;
+  border-bottom: 2px solid transparent;
+  transition: all 0.2s;
+  white-space: nowrap;
+  position: relative;
+}
+
+.tab:hover {
+  color: #3b82f6;
+  background: #f9fafb;
+}
+
+.tabActive {
+  color: #3b82f6;
+  border-bottom-color: #3b82f6;
+}
+
+.tabActive::after {
+  content: '';
+  position: absolute;
+  bottom: -2px;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: #3b82f6;
+}
+
+/* Contenido */
+.content {
+  padding: 0;
+  max-width: 100%;
+  margin: 0;
+}
+
+/* Responsive */
+@media (max-width: 1024px) {
+  .headerTop {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1rem;
+  }
+
+  .headerRight {
+    width: 100%;
+    justify-content: flex-end;
+  }
+
+  .tabs {
+    padding: 0 1rem;
+  }
+
+  .content {
+    padding: 1rem;
+  }
+}
+
+@media (max-width: 640px) {
+  .headerTop {
+    padding: 1rem;
+  }
+
+  .headerLeft h1 {
+    font-size: 1.5rem;
+  }
+
+  .tab {
+    padding: 0.75rem 1rem;
+    font-size: 0.8125rem;
+  }
+
+  .tab span {
+    display: none;
+  }
+
+  .tab {
+    justify-content: center;
+    min-width: 48px;
+  }
+
+  .configMenu {
+    right: auto;
+    left: 0;
+  }
+}
