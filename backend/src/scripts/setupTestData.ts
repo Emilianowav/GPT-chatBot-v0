@@ -120,7 +120,6 @@ async function setupTestData() {
     console.log('\n📊 ========== RESUMEN ==========');
     console.log(`Empresa: ${empresa.nombre}`);
     console.log(`  - phoneNumberId: ${empresa.phoneNumberId}`);
-    console.log(`  - Activa: ${empresa.activo}`);
     console.log(`\nAgente: ${agente.nombre} ${agente.apellido}`);
     console.log(`  - Email: ${agente.email}`);
     console.log(`  - Activo: ${agente.activo}`);

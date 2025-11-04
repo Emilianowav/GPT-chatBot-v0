@@ -31,7 +31,10 @@
     "verificar:migracion": "tsx src/scripts/verificarMigracion.ts",
     "limpiar:colecciones-antiguas": "tsx src/scripts/limpiarColeccionesAntiguas.ts",
     "setup:test": "tsx src/scripts/setupTestData.ts",
-    "test:manual": "tsx src/scripts/testingManual.ts"
+    "test:manual": "tsx src/scripts/testingManual.ts",
+    "debug:notificaciones": "tsx src/scripts/debugNotificaciones.ts",
+    "verificar:clienteid": "tsx src/scripts/verificarClienteId.ts",
+    "migrar:clienteid-turnos": "tsx src/scripts/migrarClienteIdTurnos.ts"
   },
   "keywords": [],
   "author": "",
