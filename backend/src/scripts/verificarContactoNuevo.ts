@@ -65,8 +65,8 @@ async function verificarContactoNuevo() {
     console.log('');
 
     console.log('📅 Fechas:');
-    console.log('   Creado:', contacto.createdAt);
-    console.log('   Actualizado:', contacto.updatedAt);
+    console.log('   Creado:', (contacto as any).createdAt || contacto.creadoEn);
+    console.log('   Actualizado:', (contacto as any).updatedAt || contacto.actualizadoEn);
     console.log('');
 
     console.log('📝 Notas:');
