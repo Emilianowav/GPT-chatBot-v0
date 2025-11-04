@@ -139,7 +139,7 @@ export default function GestionTurnosPage() {
       const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';
       
       console.log('🔧 Actualizando turno:', turnoSeleccionado._id);
-      console.log('📡 URL:', `${apiUrl}/api/calendar/turnos/${turnoSeleccionado._id}`);
+      console.log('📡 URL:', `${apiUrl}/api/modules/calendar/turnos/${turnoSeleccionado._id}`);
       
       // Construir fechaInicio y fechaFin
       const fechaInicio = new Date(`${formEdicion.fecha}T${formEdicion.horaInicio}:00`);
@@ -159,7 +159,7 @@ export default function GestionTurnosPage() {
       
       console.log('📤 Body:', body);
       
-      const response = await fetch(`${apiUrl}/api/calendar/turnos/${turnoSeleccionado._id}`, {
+      const response = await fetch(`${apiUrl}/api/modules/calendar/turnos/${turnoSeleccionado._id}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
