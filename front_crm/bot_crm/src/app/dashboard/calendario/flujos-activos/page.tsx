@@ -24,6 +24,8 @@ export default function AdministradorFlujosPage() {
   const [modalPrueba, setModalPrueba] = useState<{ flujo: string; telefono: string } | null>(null);
   const [modalConfigOpcion, setModalConfigOpcion] = useState<any>(null);
   const [modalConfigFlujo, setModalConfigFlujo] = useState<any>(null);
+  const [configEditada, setConfigEditada] = useState<any>(null);
+  const [guardandoConfig, setGuardandoConfig] = useState(false);
 
   // Redirección
   useEffect(() => {
@@ -163,6 +165,91 @@ export default function AdministradorFlujosPage() {
         texto: `✅ Mensaje de prueba enviado a ${telefono}`
       });
       setModalPrueba(null);
+    } catch (err: any) {
+      setMensaje({
+        tipo: 'error',
+        texto: err.message || 'Error al enviar prueba'
+      });
+    } finally {
+      setEnviandoPrueba(null);
+      setTimeout(() => setMensaje(null), 5000);
+    }
+  };
+
+  const handleGuardarConfigFlujo = async () => {
+    if (!configEditada) return;
+    
+    setGuardandoConfig(true);
+    try {
+      const token = localStorage.getItem('auth_token');
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';
+      
+      // Actualizar notificación en el backend
+      const response = await fetch(`${apiUrl}/api/modules/calendar/configuracion/${empresaId}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          notificaciones: configEditada.notificaciones
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error('Error al guardar configuración');
+      }
+
+      setMensaje({
+        tipo: 'success',
+        texto: '✅ Configuración guardada correctamente'
+      });
+      setModalConfigFlujo(null);
+      setConfigEditada(null);
+      
+      // Recargar configuración
+      window.location.reload();
+    } catch (err: any) {
+      setMensaje({
+        tipo: 'error',
+        texto: err.message || 'Error al guardar configuración'
+      });
+    } finally {
+      setGuardandoConfig(false);
+      setTimeout(() => setMensaje(null), 5000);
+    }
+  };
+
+  const handleEnviarPruebaNotificacion = async (telefono: string) => {
+    if (!modalConfigFlujo) return;
+    
+    setEnviandoPrueba(modalConfigFlujo.id);
+    try {
+      const token = localStorage.getItem('auth_token');
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';
+      
+      const response = await fetch(`${apiUrl}/api/modules/calendar/notificaciones/test`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          empresaId,
+          tipo: modalConfigFlujo.id === 'confirmacion_turnos' ? 'confirmacion' : 'estado',
+          telefono,
+          mensaje: configEditada?.mensaje || modalConfigFlujo.config.mensaje
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error('Error al enviar mensaje de prueba');
+      }
+
+      setMensaje({
+        tipo: 'success',
+        texto: `✅ Mensaje de prueba enviado a ${telefono}`
+      });
     } catch (err: any) {
       setMensaje({
         tipo: 'error',
@@ -336,11 +423,29 @@ export default function AdministradorFlujosPage() {
 
                     <div className={styles.flujoAcciones}>
                       <button
-                        onClick={() => setModalConfigFlujo(flujo)}
+                        onClick={() => {
+                          setModalConfigFlujo(flujo);
+                          setConfigEditada({
+                            id: flujo.id,
+                            activo: flujo.activo,
+                            mensaje: flujo.config.mensaje,
+                            anticipacion: flujo.config.anticipacion,
+                            solicitarConfirmacion: flujo.config.solicitarConfirmacion,
+                            estados: flujo.config.estados
+                          });
+                        }}
                         className={styles.btnEditar}
                       >
                         <Settings size={16} />
                         Configurar
+                      </button>
+                      <button
+                        onClick={() => setModalPrueba({ flujo: flujo.id, telefono: '' })}
+                        className={styles.btnPrueba}
+                        disabled={!flujo.activo}
+                      >
+                        <Send size={16} />
+                        Probar
                       </button>
                     </div>
                   </div>
@@ -518,12 +623,12 @@ export default function AdministradorFlujosPage() {
                     <label className={styles.switch}>
                       <input
                         type="checkbox"
-                        checked={modalConfigFlujo.activo}
-                        onChange={() => {/* TODO: toggle */}}
+                        checked={configEditada?.activo ?? modalConfigFlujo.activo}
+                        onChange={(e) => setConfigEditada({ ...configEditada, activo: e.target.checked })}
                       />
                       <span className={styles.slider}></span>
                     </label>
-                    <span>{modalConfigFlujo.activo ? '🟢 Activo' : '🔴 Inactivo'}</span>
+                    <span>{(configEditada?.activo ?? modalConfigFlujo.activo) ? '🟢 Activo' : '🔴 Inactivo'}</span>
                   </div>
                   <small>Cuando está inactivo, este flujo no se ejecutará automáticamente</small>
                 </div>
@@ -532,12 +637,16 @@ export default function AdministradorFlujosPage() {
                   <>
                     <div className={styles.field}>
                       <label>Tiempo de Anticipación</label>
-                      <select className={styles.select}>
+                      <select 
+                        className={styles.select}
+                        value={configEditada?.anticipacion ?? modalConfigFlujo.config.anticipacion}
+                        onChange={(e) => setConfigEditada({ ...configEditada, anticipacion: parseInt(e.target.value) })}
+                      >
                         <option value="1">1 hora antes</option>
                         <option value="3">3 horas antes</option>
                         <option value="6">6 horas antes</option>
                         <option value="12">12 horas antes</option>
-                        <option value="24" selected>24 horas antes</option>
+                        <option value="24">24 horas antes</option>
                         <option value="48">48 horas antes</option>
                       </select>
                       <small>Cuánto tiempo antes del turno se enviará el recordatorio</small>
@@ -548,14 +657,19 @@ export default function AdministradorFlujosPage() {
                       <textarea
                         className={styles.textarea}
                         rows={5}
-                        defaultValue="¡Hola! 👋 Te recordamos que tenés un turno agendado para mañana.\n\n📅 Fecha: {fecha}\n🕐 Hora: {hora}\n📍 Destino: {destino}\n\n¿Confirmás tu asistencia? Respondé SÍ o NO"
+                        value={configEditada?.mensaje ?? modalConfigFlujo.config.mensaje}
+                        onChange={(e) => setConfigEditada({ ...configEditada, mensaje: e.target.value })}
                       />
                       <small>Variables disponibles: {'{fecha}'}, {'{hora}'}, {'{origen}'}, {'{destino}'}</small>
                     </div>
 
                     <div className={styles.field}>
                       <label className={styles.checkboxLabel}>
-                        <input type="checkbox" defaultChecked />
+                        <input 
+                          type="checkbox" 
+                          checked={configEditada?.solicitarConfirmacion ?? modalConfigFlujo.config.solicitarConfirmacion}
+                          onChange={(e) => setConfigEditada({ ...configEditada, solicitarConfirmacion: e.target.checked })}
+                        />
                         <span>Solicitar confirmación del cliente</span>
                       </label>
                       <small>Si está activo, el bot esperará una respuesta del cliente</small>
@@ -593,7 +707,8 @@ export default function AdministradorFlujosPage() {
                       <textarea
                         className={styles.textarea}
                         rows={4}
-                        defaultValue="📢 Tu viaje ha cambiado de estado\n\n🚗 Estado: {estado}\n📍 Destino: {destino}\n🕐 Hora: {hora}"
+                        value={configEditada?.mensaje ?? modalConfigFlujo.config.mensaje}
+                        onChange={(e) => setConfigEditada({ ...configEditada, mensaje: e.target.value })}
                       />
                       <small>Variables: {'{estado}'}, {'{fecha}'}, {'{hora}'}, {'{origen}'}, {'{destino}'}</small>
                     </div>
@@ -607,21 +722,21 @@ export default function AdministradorFlujosPage() {
 
               <div className={styles.modalActions}>
                 <button
-                  onClick={() => setModalConfigFlujo(null)}
+                  onClick={() => {
+                    setModalConfigFlujo(null);
+                    setConfigEditada(null);
+                  }}
                   className={styles.btnCancelar}
+                  disabled={guardandoConfig}
                 >
                   Cancelar
                 </button>
                 <button
-                  onClick={() => {
-                    // TODO: Guardar configuración
-                    setModalConfigFlujo(null);
-                    setMensaje({ tipo: 'success', texto: '✅ Configuración guardada' });
-                    setTimeout(() => setMensaje(null), 3000);
-                  }}
+                  onClick={handleGuardarConfigFlujo}
                   className={styles.btnEnviar}
+                  disabled={guardandoConfig}
                 >
-                  💾 Guardar Cambios
+                  {guardandoConfig ? '⏳ Guardando...' : '💾 Guardar Cambios'}
                 </button>
               </div>
             </div>

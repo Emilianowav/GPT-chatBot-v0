@@ -747,6 +747,247 @@ input:checked + .slider:before {
   }
 }
 
+/* Modal Grande */
+.modalContentLarge {
+  background: var(--momento-black, #1A1A1A);
+  border: 2px solid rgba(255, 107, 74, 0.3);
+  border-radius: 16px;
+  padding: 0;
+  max-width: 700px;
+  width: 100%;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+}
+
+.modalHeader {
+  padding: 2rem;
+  background: linear-gradient(135deg, rgba(255, 107, 74, 0.1) 0%, rgba(255, 138, 110, 0.05) 100%);
+  border-bottom: 2px solid rgba(255, 107, 74, 0.3);
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+}
+
+.modalIcono {
+  font-size: 3rem;
+  width: 70px;
+  height: 70px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #FF6B4A 0%, #FF8A6E 100%);
+  border-radius: 16px;
+  flex-shrink: 0;
+}
+
+.modalHeader h3 {
+  margin: 0 0 0.25rem 0;
+  color: var(--momento-white, #FFFFFF);
+  font-size: 1.5rem;
+}
+
+.modalHeader p {
+  margin: 0;
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 0.95rem;
+}
+
+.modalBody {
+  padding: 2rem;
+}
+
+.select {
+  width: 100%;
+  padding: 0.75rem;
+  background: var(--momento-black-light, #2A2A2A);
+  border: 2px solid rgba(255, 107, 74, 0.3);
+  border-radius: 8px;
+  color: white;
+  font-size: 1rem;
+  cursor: pointer;
+}
+
+.select:focus {
+  outline: none;
+  border-color: var(--momento-orange, #FF6B4A);
+  box-shadow: 0 0 0 4px rgba(255, 107, 74, 0.1);
+}
+
+.textarea {
+  width: 100%;
+  padding: 0.75rem;
+  background: var(--momento-black-light, #2A2A2A);
+  border: 2px solid rgba(255, 107, 74, 0.3);
+  border-radius: 8px;
+  color: white;
+  font-size: 0.95rem;
+  font-family: inherit;
+  resize: vertical;
+  min-height: 100px;
+}
+
+.textarea:focus {
+  outline: none;
+  border-color: var(--momento-orange, #FF6B4A);
+  box-shadow: 0 0 0 4px rgba(255, 107, 74, 0.1);
+}
+
+.checkboxLabel {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  color: white;
+  cursor: pointer;
+  padding: 0.5rem 0;
+}
+
+.checkboxLabel input[type="checkbox"] {
+  width: 20px;
+  height: 20px;
+  cursor: pointer;
+  accent-color: var(--momento-orange, #FF6B4A);
+}
+
+.checkboxGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.toggleField {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.infoCard {
+  background: var(--momento-black-light, #2A2A2A);
+  border: 2px solid rgba(255, 107, 74, 0.2);
+  border-radius: 12px;
+  padding: 1.25rem;
+}
+
+.infoCard p {
+  margin: 0.5rem 0;
+  color: rgba(255, 255, 255, 0.9);
+  font-size: 0.9rem;
+}
+
+.infoCard strong {
+  color: var(--momento-orange, #FF6B4A);
+}
+
+.pasosList {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.pasoItem {
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
+  padding: 1rem;
+  background: var(--momento-black-light, #2A2A2A);
+  border: 2px solid rgba(255, 107, 74, 0.2);
+  border-radius: 12px;
+  transition: all 0.2s;
+}
+
+.pasoItem:hover {
+  border-color: var(--momento-orange, #FF6B4A);
+}
+
+.pasoInactivo {
+  opacity: 0.5;
+}
+
+.pasoNumero {
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #FF6B4A 0%, #FF8A6E 100%);
+  border-radius: 8px;
+  font-weight: 700;
+  color: white;
+  flex-shrink: 0;
+}
+
+.pasoInfo {
+  flex: 1;
+}
+
+.pasoInfo strong {
+  display: block;
+  color: var(--momento-white, #FFFFFF);
+  margin-bottom: 0.25rem;
+  font-size: 0.95rem;
+}
+
+.pasoInfo p {
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 0.85rem;
+  margin: 0;
+}
+
+.pasoCampo {
+  display: inline-block;
+  margin-top: 0.5rem;
+  padding: 0.25rem 0.75rem;
+  background: rgba(255, 107, 74, 0.1);
+  border: 1px solid rgba(255, 107, 74, 0.3);
+  border-radius: 6px;
+  font-size: 0.75rem;
+  color: var(--momento-orange, #FF6B4A);
+}
+
+.pasoEstado {
+  font-size: 1.5rem;
+  flex-shrink: 0;
+}
+
+.infoAlert {
+  padding: 1rem;
+  background: rgba(255, 107, 74, 0.1);
+  border: 2px solid rgba(255, 107, 74, 0.3);
+  border-radius: 12px;
+  color: rgba(255, 255, 255, 0.9);
+  font-size: 0.9rem;
+  margin-top: 1.5rem;
+}
+
+.infoAlert strong {
+  color: var(--momento-orange, #FF6B4A);
+}
+
+.btnConfigOpcion {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.5rem;
+  background: transparent;
+  border: 2px solid rgba(255, 107, 74, 0.3);
+  border-radius: 8px;
+  color: rgba(255, 255, 255, 0.8);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btnConfigOpcion:hover {
+  background: rgba(255, 107, 74, 0.1);
+  border-color: var(--momento-orange, #FF6B4A);
+  color: var(--momento-orange, #FF6B4A);
+}
+
+.opcionAcciones {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
 /* ==== MENÚ PRINCIPAL ==== */
 .menuSection {
   padding: 2rem 3rem;

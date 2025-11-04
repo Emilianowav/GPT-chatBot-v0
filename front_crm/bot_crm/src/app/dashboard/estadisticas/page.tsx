@@ -82,8 +82,15 @@ export default function EstadisticasPage() {
           <div className={styles.summaryGrid}>
             <div className={styles.summaryCard}>
               <div className={styles.cardHeader}>
-                <h3>👥 Usuarios</h3>
-                <span className={styles.cardIcon}>📊</span>
+                <h3>Total Usuarios</h3>
+                <div className={styles.cardIcon}>
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+                    <circle cx="9" cy="7" r="4"/>
+                    <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
+                    <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+                  </svg>
+                </div>
               </div>
               <div className={styles.cardBody}>
                 <p className={styles.mainStat}>{stats.estadisticas.totalUsuarios}</p>
@@ -101,8 +108,12 @@ export default function EstadisticasPage() {
 
             <div className={styles.summaryCard}>
               <div className={styles.cardHeader}>
-                <h3>💬 Interacciones</h3>
-                <span className={styles.cardIcon}>📈</span>
+                <h3>Interacciones</h3>
+                <div className={styles.cardIcon}>
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+                  </svg>
+                </div>
               </div>
               <div className={styles.cardBody}>
                 <p className={styles.mainStat}>{stats.estadisticas.totalInteracciones}</p>
@@ -114,8 +125,14 @@ export default function EstadisticasPage() {
 
             <div className={styles.summaryCard}>
               <div className={styles.cardHeader}>
-                <h3>🪙 Tokens</h3>
-                <span className={styles.cardIcon}>💰</span>
+                <h3>Tokens Consumidos</h3>
+                <div className={styles.cardIcon}>
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <circle cx="12" cy="12" r="10"/>
+                    <path d="M16 8h-6a2 2 0 1 0 0 4h4a2 2 0 1 1 0 4H8"/>
+                    <path d="M12 18V6"/>
+                  </svg>
+                </div>
               </div>
               <div className={styles.cardBody}>
                 <p className={styles.mainStat}>{parseInt(stats.estadisticas.totalTokens).toLocaleString()}</p>
@@ -127,14 +144,17 @@ export default function EstadisticasPage() {
 
             <div className={styles.summaryCard}>
               <div className={styles.cardHeader}>
-                <h3>📨 Mensajes</h3>
-                <span className={styles.cardIcon}>✉️</span>
+                <h3>Usuarios Activos</h3>
+                <div className={styles.cardIcon}>
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <path d="M22 12h-4l-3 9L9 3l-3 9H2"/>
+                  </svg>
+                </div>
               </div>
               <div className={styles.cardBody}>
-                <p className={styles.mainStat}>{stats.estadisticas.totalMensajesEnviados + stats.estadisticas.totalMensajesRecibidos}</p>
+                <p className={styles.mainStat}>{stats.estadisticas.usuariosActivos}</p>
                 <p className={styles.subStat}>
-                  ↗️ {stats.estadisticas.totalMensajesEnviados} enviados | 
-                  ↙️ {stats.estadisticas.totalMensajesRecibidos} recibidos
+                  Últimos 7 días
                 </p>
               </div>
             </div>
@@ -143,7 +163,14 @@ export default function EstadisticasPage() {
           {/* Gráfico de Interacciones */}
           {stats.interaccionesPorDia && stats.interaccionesPorDia.length > 0 && (
             <div className={styles.chartSection}>
-              <h2>📊 Tendencia de Interacciones</h2>
+              <h2>
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{display: 'inline', marginRight: '8px', verticalAlign: 'middle'}}>
+                  <line x1="18" y1="20" x2="18" y2="10"/>
+                  <line x1="12" y1="20" x2="12" y2="4"/>
+                  <line x1="6" y1="20" x2="6" y2="14"/>
+                </svg>
+                Tendencia de Interacciones
+              </h2>
               <div className={styles.chartContainer}>
                 {stats.interaccionesPorDia.map((dia: any, index: number) => {
                   const maxValue = Math.max(...stats.interaccionesPorDia.map((d: any) => d.cantidad));
@@ -173,7 +200,15 @@ export default function EstadisticasPage() {
 
           {/* Top Usuarios */}
           <div className={styles.topSection}>
-            <h2>🏆 Top 10 Usuarios Más Activos</h2>
+            <h2>
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{display: 'inline', marginRight: '8px', verticalAlign: 'middle'}}>
+                <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+                <circle cx="9" cy="7" r="4"/>
+                <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
+                <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+              </svg>
+              Top 10 Usuarios Más Activos
+            </h2>
             <div className={styles.topList}>
               {stats.usuariosRecientes
                 .sort((a: any, b: any) => b.interacciones - a.interacciones)
