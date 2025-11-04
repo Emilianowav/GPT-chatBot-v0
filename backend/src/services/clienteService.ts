@@ -1,5 +1,6 @@
-// 👤 Servicio de Clientes
-import { ClienteModel, ICliente } from '../models/Cliente.js';
+// 👤 Servicio de Clientes (MIGRADO A ContactoEmpresa)
+import { ContactoEmpresaModel, IContactoEmpresa } from '../models/ContactoEmpresa.js';
+import { normalizarTelefono } from '../utils/telefonoUtils.js';
 
 export interface CrearClienteData {
   empresaId: string;
@@ -21,11 +22,14 @@ export interface CrearClienteData {
 /**
  * Crear un nuevo cliente
  */
-export async function crearCliente(data: CrearClienteData): Promise<ICliente> {
+export async function crearCliente(data: CrearClienteData): Promise<IContactoEmpresa> {
+  // Normalizar teléfono
+  const telefonoNormalizado = normalizarTelefono(data.telefono);
+  
   // Verificar que no exista un cliente con el mismo teléfono en la empresa
-  const clienteExistente = await ClienteModel.findOne({
+  const clienteExistente = await ContactoEmpresaModel.findOne({
     empresaId: data.empresaId,
-    telefono: data.telefono
+    telefono: telefonoNormalizado
   });
 
   if (clienteExistente) {
@@ -34,7 +38,7 @@ export async function crearCliente(data: CrearClienteData): Promise<ICliente> {
 
   // Si tiene email, verificar que no exista
   if (data.email) {
-    const clienteConEmail = await ClienteModel.findOne({
+    const clienteConEmail = await ContactoEmpresaModel.findOne({
       empresaId: data.empresaId,
       email: data.email
     });
@@ -44,10 +48,50 @@ export async function crearCliente(data: CrearClienteData): Promise<ICliente> {
     }
   }
 
-  const cliente = new ClienteModel({
-    ...data,
+  const cliente = new ContactoEmpresaModel({
+    empresaId: data.empresaId,
+    telefono: telefonoNormalizado,
+    nombre: data.nombre,
+    apellido: data.apellido,
+    email: data.email,
+    direccion: data.direccion,
+    ciudad: data.ciudad,
+    provincia: data.provincia,
+    codigoPostal: data.codigoPostal,
+    fechaNacimiento: data.fechaNacimiento,
+    dni: data.dni,
+    notas: data.notas,
     origen: data.origen || 'manual',
-    activo: true
+    activo: true,
+    preferencias: {
+      aceptaWhatsApp: true,
+      aceptaSMS: false,
+      aceptaEmail: true,
+      recordatorioTurnos: true,
+      diasAnticipacionRecordatorio: 1,
+      horaRecordatorio: '10:00',
+      notificacionesPromocion: false,
+      notificacionesDisponibilidad: false
+    },
+    conversaciones: {
+      historial: [],
+      ultimaConversacion: new Date(),
+      saludado: false,
+      despedido: false,
+      mensaje_ids: [],
+      ultimo_status: '',
+      contactoInformado: false
+    },
+    metricas: {
+      interacciones: 0,
+      mensajesEnviados: 0,
+      mensajesRecibidos: 0,
+      mediaRecibidos: 0,
+      tokensConsumidos: 0,
+      turnosRealizados: 0,
+      turnosCancelados: 0,
+      ultimaInteraccion: new Date()
+    }
   });
 
   await cliente.save();
@@ -60,11 +104,11 @@ export async function crearCliente(data: CrearClienteData): Promise<ICliente> {
 export async function obtenerClientes(
   empresaId: string,
   soloActivos: boolean = false
-): Promise<ICliente[]> {
+): Promise<IContactoEmpresa[]> {
   const query: any = { empresaId };
   if (soloActivos) query.activo = true;
 
-  return await ClienteModel.find(query).sort({ apellido: 1, nombre: 1 });
+  return await ContactoEmpresaModel.find(query).sort({ apellido: 1, nombre: 1 });
 }
 
 /**
@@ -73,8 +117,8 @@ export async function obtenerClientes(
 export async function obtenerClientePorId(
   clienteId: string,
   empresaId: string
-): Promise<ICliente | null> {
-  return await ClienteModel.findOne({ _id: clienteId, empresaId });
+): Promise<IContactoEmpresa | null> {
+  return await ContactoEmpresaModel.findOne({ _id: clienteId, empresaId });
 }
 
 /**
@@ -83,8 +127,8 @@ export async function obtenerClientePorId(
 export async function obtenerClientePorTelefono(
   telefono: string,
   empresaId: string
-): Promise<ICliente | null> {
-  return await ClienteModel.findOne({ telefono, empresaId });
+): Promise<IContactoEmpresa | null> {
+  return await ContactoEmpresaModel.findOne({ telefono, empresaId });
 }
 
 /**
@@ -93,8 +137,8 @@ export async function obtenerClientePorTelefono(
 export async function obtenerClientePorChatbotUserId(
   chatbotUserId: string,
   empresaId: string
-): Promise<ICliente | null> {
-  return await ClienteModel.findOne({ chatbotUserId, empresaId });
+): Promise<IContactoEmpresa | null> {
+  return await ContactoEmpresaModel.findOne({ chatbotUserId, empresaId });
 }
 
 /**
@@ -104,13 +148,13 @@ export async function actualizarCliente(
   clienteId: string,
   empresaId: string,
   datos: Partial<CrearClienteData>
-): Promise<ICliente> {
-  const cliente = await ClienteModel.findOne({ _id: clienteId, empresaId });
+): Promise<IContactoEmpresa> {
+  const cliente = await ContactoEmpresaModel.findOne({ _id: clienteId, empresaId });
   if (!cliente) throw new Error('Cliente no encontrado');
 
   // Si se está actualizando el teléfono, verificar que no exista otro cliente con ese teléfono
   if (datos.telefono && datos.telefono !== cliente.telefono) {
-    const clienteConTelefono = await ClienteModel.findOne({
+    const clienteConTelefono = await ContactoEmpresaModel.findOne({
       empresaId,
       telefono: datos.telefono,
       _id: { $ne: clienteId }
@@ -123,7 +167,7 @@ export async function actualizarCliente(
 
   // Si se está actualizando el email, verificar que no exista otro cliente con ese email
   if (datos.email && datos.email !== cliente.email) {
-    const clienteConEmail = await ClienteModel.findOne({
+    const clienteConEmail = await ContactoEmpresaModel.findOne({
       empresaId,
       email: datos.email,
       _id: { $ne: clienteId }
@@ -147,11 +191,11 @@ export async function eliminarCliente(
   clienteId: string,
   empresaId: string
 ): Promise<void> {
-  const cliente = await ClienteModel.findOne({ _id: clienteId, empresaId });
+  const cliente = await ContactoEmpresaModel.findOne({ _id: clienteId, empresaId });
   if (!cliente) throw new Error('Cliente no encontrado');
 
   // Eliminación física del registro
-  await ClienteModel.deleteOne({ _id: clienteId, empresaId });
+  await ContactoEmpresaModel.deleteOne({ _id: clienteId, empresaId });
 }
 
 /**
@@ -160,10 +204,10 @@ export async function eliminarCliente(
 export async function buscarClientes(
   empresaId: string,
   termino: string
-): Promise<ICliente[]> {
+): Promise<IContactoEmpresa[]> {
   const regex = new RegExp(termino, 'i');
   
-  return await ClienteModel.find({
+  return await ContactoEmpresaModel.find({
     empresaId,
     activo: true,
     $or: [

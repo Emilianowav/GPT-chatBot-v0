@@ -636,18 +636,6 @@
   transform: translateY(-1px);
 }
 
-.field input::placeholder,
-.field textarea::placeholder {
-  color: #a0aec0;
-  transition: all 0.2s ease;
-}
-
-.field input:focus::placeholder,
-.field textarea:focus::placeholder {
-  color: #cbd5e0;
-  transform: translateX(4px);
-}
-
 .field textarea {
   resize: vertical;
   min-height: 80px;

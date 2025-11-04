@@ -121,10 +121,6 @@
   transition: all 0.3s ease;
 }
 
-.searchInput::placeholder {
-  color: var(--text-tertiary);
-}
-
 .searchInput:focus {
   background: var(--card-bg);
   border-color: var(--accent-color);

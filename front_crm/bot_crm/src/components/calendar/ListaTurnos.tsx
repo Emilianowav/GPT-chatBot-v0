@@ -3,15 +3,17 @@
 
 import { useState } from 'react';
 import type { Turno } from '@/lib/calendarApi';
+import type { ConfiguracionModulo } from '@/lib/configuracionApi';
 import styles from './ListaTurnos.module.css';
 
 interface ListaTurnosProps {
   turnos: Turno[];
+  configuracion?: ConfiguracionModulo | null;
   onCancelar?: (turnoId: string, motivo: string) => Promise<void>;
   onActualizarEstado?: (turnoId: string, estado: string) => Promise<void>;
 }
 
-export default function ListaTurnos({ turnos, onCancelar, onActualizarEstado }: ListaTurnosProps) {
+export default function ListaTurnos({ turnos, configuracion, onCancelar, onActualizarEstado }: ListaTurnosProps) {
   const [turnoSeleccionado, setTurnoSeleccionado] = useState<string | null>(null);
   const [mostrarModalCancelar, setMostrarModalCancelar] = useState(false);
   const [motivoCancelacion, setMotivoCancelacion] = useState('');
@@ -152,20 +154,35 @@ export default function ListaTurnos({ turnos, onCancelar, onActualizarEstado }: 
                     </span>
                   </div>
 
-                  {turno.servicio && (
-                    <div className={styles.infoItem}>
-                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
-                        <polyline points="14 2 14 8 20 8"/>
-                        <line x1="16" y1="13" x2="8" y2="13"/>
-                        <line x1="16" y1="17" x2="8" y2="17"/>
-                        <polyline points="10 9 9 9 8 9"/>
-                      </svg>
-                      <span>
-                        <strong>Servicio:</strong> {turno.servicio}
-                      </span>
-                    </div>
-                  )}
+                  {/* Campos personalizados configurados */}
+                  {configuracion?.camposPersonalizados
+                    ?.filter(campo => campo.mostrarEnLista)
+                    .sort((a, b) => a.orden - b.orden)
+                    .map(campo => {
+                      const valor = turno.datos?.[campo.clave];
+                      if (!valor) return null;
+                      
+                      return (
+                        <div key={campo.clave} className={styles.infoItem}>
+                          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                            <polyline points="14 2 14 8 20 8"/>
+                            <line x1="16" y1="13" x2="8" y2="13"/>
+                            <line x1="16" y1="17" x2="8" y2="17"/>
+                          </svg>
+                          <span>
+                            <strong>{campo.etiqueta}:</strong> {
+                              typeof valor === 'boolean' 
+                                ? (valor ? 'Sí' : 'No')
+                                : Array.isArray(valor)
+                                  ? valor.join(', ')
+                                  : valor
+                            }
+                          </span>
+                        </div>
+                      );
+                    })
+                  }
 
                   {turno.notas && (
                     <div className={styles.turnoNotas}>

@@ -33,10 +33,6 @@
   box-shadow: 0 0 0 3px rgba(255, 107, 74, 0.1);
 }
 
-.input::placeholder {
-  color: rgba(255, 255, 255, 0.95);
-}
-
 .clearButton {
   position: absolute;
   right: 1rem;

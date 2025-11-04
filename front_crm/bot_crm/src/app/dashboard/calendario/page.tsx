@@ -7,6 +7,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import ModuleGuard from '@/components/ModuleGuard';
 import { useTurnos, useEstadisticas } from '@/hooks/useTurnos';
 import { useAgentes } from '@/hooks/useAgentes';
+import { useConfiguracion } from '@/hooks/useConfiguracion';
 import ListaTurnos from '@/components/calendar/ListaTurnos';
 import CalendarioMensual from '@/components/calendar/CalendarioMensual';
 import ModalTurno from '@/components/calendar/ModalTurno';
@@ -16,15 +17,17 @@ export default function CalendarioPage() {
   const { isAuthenticated, empresa, loading: authLoading } = useAuth();
   const router = useRouter();
   
+  const empresaId = typeof window !== 'undefined' ? localStorage.getItem('empresa_id') || '' : '';
+  
   const { turnos, loading: loadingTurnos, cargarTurnos, cargarTurnosDelDia, crearTurno, cancelarTurno, actualizarEstado } = useTurnos();
   const { estadisticas } = useEstadisticas();
   const { agentes } = useAgentes(true);
+  const { configuracion } = useConfiguracion(empresaId);
   
   const [modalNuevoTurno, setModalNuevoTurno] = useState(false);
   const [vistaCalendario, setVistaCalendario] = useState(true); // true = calendario, false = lista
   const [mesActual, setMesActual] = useState(new Date());
   const [fechaSeleccionada, setFechaSeleccionada] = useState<Date | null>(null);
-  const empresaId = typeof window !== 'undefined' ? localStorage.getItem('empresa_id') || '' : '';
 
   useEffect(() => {
     if (!authLoading && !isAuthenticated) {
@@ -298,6 +301,7 @@ export default function CalendarioPage() {
                 ) : (
                   <ListaTurnos 
                     turnos={turnosFiltrados}
+                    configuracion={configuracion}
                     onCancelar={handleCancelarTurno}
                     onActualizarEstado={handleActualizarEstado}
                   />

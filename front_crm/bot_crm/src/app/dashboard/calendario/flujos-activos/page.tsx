@@ -1,128 +1,153 @@
-// 🔄 Página de Gestión de Flujos del Chatbot
+// 🤖 Administrador de Flujos - Gestión completa de flujos del chatbot
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
-import ModuleGuard from '@/components/ModuleGuard';
+import { useConfiguracionBot } from '@/hooks/useConfiguracionBot';
+import ConfiguracionBot from '@/components/calendar/ConfiguracionBot';
+import { Power, Settings, Send, Eye, EyeOff, Plus, Edit2, Trash2 } from 'lucide-react';
 import styles from './flujos.module.css';
 
-interface Flujo {
-  id: string;
-  nombre: string;
-  descripcion: string;
-  tipo: 'menu' | 'notificacion' | 'confirmacion';
-  activo: boolean;
-  prioridad: 'urgente' | 'normal' | 'baja';
-  icono: string;
-}
-
-export default function FlujosActivosPage() {
+export default function AdministradorFlujosPage() {
   const { isAuthenticated, loading: authLoading } = useAuth();
   const router = useRouter();
+  const empresaId = typeof window !== 'undefined' ? localStorage.getItem('empresa_id') || '' : '';
   
-  const [flujos, setFlujos] = useState<Flujo[]>([
-    {
-      id: 'menu_principal',
-      nombre: 'Menú Principal',
-      descripcion: 'Flujo principal con opciones de Reserva, Consulta y Cancelación de turnos',
-      tipo: 'menu',
-      activo: true,
-      prioridad: 'normal',
-      icono: '📋'
-    },
+  const { configuracion, loading, toggleBot } = useConfiguracionBot(empresaId);
+  
+  const [vistaActiva, setVistaActiva] = useState<'lista' | 'configuracion'>('lista');
+  const [mensaje, setMensaje] = useState<{ tipo: 'success' | 'error'; texto: string } | null>(null);
+  const [enviandoPrueba, setEnviandoPrueba] = useState<string | null>(null);
+  const [modalPrueba, setModalPrueba] = useState<{ flujo: string; telefono: string } | null>(null);
+
+  // Redirección
+  useEffect(() => {
+    if (!authLoading && !isAuthenticated) {
+      router.push('/login');
+    }
+  }, [isAuthenticated, authLoading, router]);
+
+  if (authLoading || loading) {
+    return (
+      <div className={styles.loading}>
+        <div className={styles.spinner}></div>
+        <p>Cargando administrador de flujos...</p>
+      </div>
+    );
+  }
+
+  if (!isAuthenticated) {
+    return null;
+  }
+
+  // Flujo principal del menú
+  const menuPrincipal = {
+    id: 'menu_principal',
+    nombre: 'Menú Principal',
+    descripcion: 'Primer mensaje que reciben los clientes al escribir al chatbot',
+    tipo: 'menu',
+    activo: configuracion?.activo || false,
+    icono: '📋',
+    opciones: [
+      {
+        id: 'opcion_1',
+        numero: '1️⃣',
+        nombre: 'Reservar Turno',
+        descripcion: 'Permite agendar nuevos turnos',
+        activo: true,
+        icono: '📅'
+      },
+      {
+        id: 'opcion_2',
+        numero: '2️⃣',
+        nombre: 'Consultar Turnos',
+        descripcion: 'Ver turnos agendados',
+        activo: true,
+        icono: '🔍'
+      },
+      {
+        id: 'opcion_3',
+        numero: '3️⃣',
+        nombre: 'Cancelar Turno',
+        descripcion: 'Cancelar turnos existentes',
+        activo: true,
+        icono: '❌'
+      }
+    ]
+  };
+
+  // Otros flujos automáticos
+  const flujosAutomaticos = [
     {
       id: 'confirmacion_turnos',
       nombre: 'Confirmación de Turnos',
-      descripcion: 'Envía recordatorios y solicita confirmación de turnos agendados',
-      tipo: 'confirmacion',
-      activo: true,
-      prioridad: 'urgente',
-      icono: '✅'
+      descripcion: 'Envía recordatorios automáticos 24h antes del turno',
+      tipo: 'automatico',
+      activo: false,
+      icono: '⏰',
+      trigger: '24h antes'
     },
     {
       id: 'notificacion_viajes',
       nombre: 'Notificaciones de Viajes',
-      descripcion: 'Notifica a los clientes sobre el estado de sus viajes programados',
-      tipo: 'notificacion',
-      activo: true,
-      prioridad: 'urgente',
-      icono: '🚗'
+      descripcion: 'Notifica cambios de estado en los viajes',
+      tipo: 'automatico',
+      activo: false,
+      icono: '🚗',
+      trigger: 'Cambio de estado'
     }
-  ]);
+  ];
 
-  const [mensaje, setMensaje] = useState<{ tipo: 'success' | 'error'; texto: string } | null>(null);
-  const [enviandoPrueba, setEnviandoPrueba] = useState<string | null>(null);
-
-  // Redirección con useEffect para evitar setState durante render
-  if (authLoading) {
-    return <div className={styles.loading}>Cargando...</div>;
-  }
-
-  if (!isAuthenticated) {
-    return <div className={styles.loading}>Redirigiendo...</div>;
-  }
-
-  const handleToggleFlujo = (flujoId: string) => {
-    setFlujos(flujos.map(f => 
-      f.id === flujoId ? { ...f, activo: !f.activo } : f
-    ));
-    
-    const flujo = flujos.find(f => f.id === flujoId);
-    setMensaje({
-      tipo: 'success',
-      texto: `${flujo?.activo ? '🔴 Desactivado' : '🟢 Activado'}: ${flujo?.nombre}`
-    });
-    
-    setTimeout(() => setMensaje(null), 3000);
+  const handleToggleBotGeneral = async () => {
+    try {
+      await toggleBot(!configuracion?.activo);
+      setMensaje({
+        tipo: 'success',
+        texto: configuracion?.activo ? '🔴 Chatbot desactivado' : '🟢 Chatbot activado'
+      });
+      setTimeout(() => setMensaje(null), 3000);
+    } catch (err: any) {
+      setMensaje({
+        tipo: 'error',
+        texto: err.message
+      });
+    }
   };
 
-  const handleGuardar = () => {
-    // Aquí iría la lógica para guardar en el backend
-    setMensaje({
-      tipo: 'success',
-      texto: '✅ Configuración de flujos guardada exitosamente'
-    });
-    
-    setTimeout(() => setMensaje(null), 3000);
-  };
-
-  const handleEnviarPrueba = async (flujoId: string) => {
+  const handleEnviarPrueba = async (flujoId: string, telefono: string) => {
     setEnviandoPrueba(flujoId);
     
     try {
       const token = localStorage.getItem('auth_token');
       const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';
-      const response = await fetch(`${apiUrl}/api/modules/calendar/configuracion/notificaciones/enviar-prueba`, {
+      
+      const response = await fetch(`${apiUrl}/api/bot/test-flujo`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`
         },
         body: JSON.stringify({
-          empresaId: 'San Jose',
-          flujoId: flujoId
+          empresaId,
+          flujoId,
+          telefono
         })
       });
 
-      const data = await response.json();
-
-      if (data.success) {
-        setMensaje({
-          tipo: 'success',
-          texto: `✅ Prueba enviada exitosamente a ${data.telefono || 'cliente de prueba'}`
-        });
-      } else {
-        setMensaje({
-          tipo: 'error',
-          texto: `❌ Error: ${data.message || 'No se pudo enviar la prueba'}`
-        });
+      if (!response.ok) {
+        throw new Error('Error al enviar mensaje de prueba');
       }
-    } catch (error) {
-      console.error('Error al enviar prueba:', error);
+
+      setMensaje({
+        tipo: 'success',
+        texto: `✅ Mensaje de prueba enviado a ${telefono}`
+      });
+      setModalPrueba(null);
+    } catch (err: any) {
       setMensaje({
         tipo: 'error',
-        texto: '❌ Error al enviar la prueba. Verifica la conexión.'
+        texto: err.message || 'Error al enviar prueba'
       });
     } finally {
       setEnviandoPrueba(null);
@@ -130,31 +155,32 @@ export default function FlujosActivosPage() {
     }
   };
 
-  const getPrioridadColor = (prioridad: string) => {
-    const colores: Record<string, string> = {
-      urgente: '#ef4444',
-      normal: '#3b82f6',
-      baja: '#94a3b8'
-    };
-    return colores[prioridad] || '#94a3b8';
-  };
-
-  const getTipoLabel = (tipo: string) => {
-    const labels: Record<string, string> = {
-      menu: 'Menú',
-      notificacion: 'Notificación',
-      confirmacion: 'Confirmación'
-    };
-    return labels[tipo] || tipo;
-  };
-
   return (
-    <ModuleGuard moduleId="calendar_booking">
-      <div className={styles.container}>
+    <div className={styles.container}>
+        {/* Header */}
         <div className={styles.header}>
-          <div>
-            <h1>🔄 Gestión de Flujos del Chatbot</h1>
-            <p>Activa o desactiva los flujos conversacionales del asistente virtual</p>
+          <div className={styles.headerContent}>
+            <h1>🤖 Administrador de Flujos</h1>
+            <p>Gestiona, configura y prueba los flujos del chatbot</p>
+          </div>
+          
+          <div className={styles.headerActions}>
+            {/* Toggle general del bot */}
+            <div className={styles.botStatus}>
+              <span className={styles.statusLabel}>
+                Estado del Bot: 
+                <strong className={configuracion?.activo ? styles.statusActive : styles.statusInactive}>
+                  {configuracion?.activo ? ' 🟢 Activo' : ' 🔴 Inactivo'}
+                </strong>
+              </span>
+              <button
+                onClick={handleToggleBotGeneral}
+                className={`${styles.btnToggle} ${configuracion?.activo ? styles.active : ''}`}
+              >
+                <Power size={18} />
+                {configuracion?.activo ? 'Desactivar' : 'Activar'}
+              </button>
+            </div>
           </div>
         </div>
 
@@ -164,113 +190,196 @@ export default function FlujosActivosPage() {
           </div>
         )}
 
-        <div className={styles.flujosGrid}>
-          {flujos.map((flujo) => (
-            <div 
-              key={flujo.id} 
-              className={`${styles.flujoCard} ${!flujo.activo ? styles.inactivo : ''}`}
-            >
-              <div className={styles.cardHeader}>
-                <div className={styles.flujoInfo}>
-                  <span className={styles.icono}>{flujo.icono}</span>
-                  <div>
-                    <h3>{flujo.nombre}</h3>
-                    <div className={styles.badges}>
-                      <span 
-                        className={styles.badgePrioridad}
-                        style={{ background: getPrioridadColor(flujo.prioridad) }}
-                      >
-                        {flujo.prioridad}
-                      </span>
-                      <span className={styles.badgeTipo}>
-                        {getTipoLabel(flujo.tipo)}
-                      </span>
-                    </div>
+        {/* Tabs de navegación */}
+        <div className={styles.tabs}>
+          <button
+            className={vistaActiva === 'lista' ? styles.tabActive : styles.tab}
+            onClick={() => setVistaActiva('lista')}
+          >
+            <Eye size={18} />
+            Ver Flujos
+          </button>
+          <button
+            className={vistaActiva === 'configuracion' ? styles.tabActive : styles.tab}
+            onClick={() => setVistaActiva('configuracion')}
+          >
+            <Settings size={18} />
+            Configuración General
+          </button>
+        </div>
+
+        {/* Vista: Lista de Flujos */}
+        {vistaActiva === 'lista' && (
+          <div className={styles.content}>
+            
+            {/* MENÚ PRINCIPAL */}
+            <div className={styles.menuSection}>
+              <div className={styles.menuCard}>
+                <div className={styles.menuHeader}>
+                  <div className={styles.menuIcono}>{menuPrincipal.icono}</div>
+                  <div className={styles.menuInfo}>
+                    <h2>{menuPrincipal.nombre}</h2>
+                    <p>{menuPrincipal.descripcion}</p>
+                  </div>
+                  <div className={styles.menuToggle}>
+                    <label className={styles.switch}>
+                      <input
+                        type="checkbox"
+                        checked={menuPrincipal.activo}
+                        onChange={handleToggleBotGeneral}
+                      />
+                      <span className={styles.slider}></span>
+                    </label>
                   </div>
                 </div>
-                <label className={styles.switch}>
-                  <input
-                    type="checkbox"
-                    checked={flujo.activo}
-                    onChange={() => handleToggleFlujo(flujo.id)}
-                  />
-                  <span className={styles.slider}></span>
-                </label>
-              </div>
 
-              <div className={styles.cardBody}>
-                <p className={styles.descripcion}>{flujo.descripcion}</p>
-                
-                <div className={styles.estadoInfo}>
-                  {flujo.activo ? (
-                    <div className={styles.estadoActivo}>
-                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                        <polyline points="20 6 9 17 4 12"/>
-                      </svg>
-                      <span>Flujo activo y funcionando</span>
-                    </div>
-                  ) : (
-                    <div className={styles.estadoInactivo}>
-                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                        <circle cx="12" cy="12" r="10"/>
-                        <line x1="15" y1="9" x2="9" y2="15"/>
-                        <line x1="9" y1="9" x2="15" y2="15"/>
-                      </svg>
-                      <span>Flujo desactivado</span>
-                    </div>
-                  )}
+                <div className={styles.menuOpciones}>
+                  <h3>Opciones del Menú</h3>
+                  <div className={styles.opcionesGrid}>
+                    {menuPrincipal.opciones.map((opcion) => (
+                      <div key={opcion.id} className={styles.opcionCard}>
+                        <div className={styles.opcionNumero}>{opcion.numero}</div>
+                        <div className={styles.opcionIcono}>{opcion.icono}</div>
+                        <div className={styles.opcionInfo}>
+                          <h4>{opcion.nombre}</h4>
+                          <p>{opcion.descripcion}</p>
+                        </div>
+                        <div className={styles.opcionToggle}>
+                          <label className={styles.switchSmall}>
+                            <input
+                              type="checkbox"
+                              checked={opcion.activo}
+                              onChange={() => {/* TODO: toggle opción */}}
+                            />
+                            <span className={styles.sliderSmall}></span>
+                          </label>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                <div className={styles.menuAcciones}>
+                  <button
+                    onClick={() => setVistaActiva('configuracion')}
+                    className={styles.btnEditar}
+                  >
+                    <Settings size={18} />
+                    Configurar Mensajes
+                  </button>
+                  <button
+                    onClick={() => setModalPrueba({ flujo: 'menu_principal', telefono: '' })}
+                    className={styles.btnPrueba}
+                    disabled={!menuPrincipal.activo}
+                  >
+                    <Send size={18} />
+                    Probar Menú
+                  </button>
                 </div>
               </div>
+            </div>
 
-              <div className={styles.cardFooter}>
-                <button 
-                  className={styles.btnPrueba}
-                  onClick={() => handleEnviarPrueba(flujo.id)}
-                  disabled={enviandoPrueba === flujo.id}
+            {/* FLUJOS AUTOMÁTICOS */}
+            <div className={styles.flujosSection}>
+              <h2 className={styles.sectionTitle}>⚡ Flujos Automáticos</h2>
+              <div className={styles.flujosGrid}>
+                {flujosAutomaticos.map((flujo) => (
+                  <div key={flujo.id} className={`${styles.flujoCard} ${!flujo.activo ? styles.flujoInactivo : ''}`}>
+                    <div className={styles.flujoHeader}>
+                      <div className={styles.flujoIcono}>{flujo.icono}</div>
+                      <div className={styles.flujoInfo}>
+                        <h3>{flujo.nombre}</h3>
+                        <p>{flujo.descripcion}</p>
+                      </div>
+                      <div className={styles.flujoToggle}>
+                        <label className={styles.switch}>
+                          <input
+                            type="checkbox"
+                            checked={flujo.activo}
+                            onChange={() => {/* TODO: toggle flujo */}}
+                          />
+                          <span className={styles.slider}></span>
+                        </label>
+                      </div>
+                    </div>
+
+                    <div className={styles.flujoTrigger}>
+                      <span className={styles.triggerLabel}>Se activa:</span>
+                      <span className={styles.triggerValue}>{flujo.trigger}</span>
+                    </div>
+
+                    <div className={styles.flujoAcciones}>
+                      <button
+                        onClick={() => setVistaActiva('configuracion')}
+                        className={styles.btnEditar}
+                      >
+                        <Settings size={16} />
+                        Configurar
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Información adicional */}
+            <div className={styles.infoBox}>
+              <h3>💡 Guía Rápida</h3>
+              <ul>
+                <li><strong>Menú Principal:</strong> Es el primer mensaje que reciben tus clientes. Actívalo/desactívalo con el switch principal.</li>
+                <li><strong>Opciones del Menú:</strong> Cada opción puede activarse/desactivarse individualmente. Los clientes solo verán las opciones activas.</li>
+                <li><strong>Flujos Automáticos:</strong> Se ejecutan automáticamente según eventos (ej: 24h antes del turno).</li>
+                <li><strong>Probar Menú:</strong> Envía el mensaje del menú a tu WhatsApp para verificar cómo se ve.</li>
+              </ul>
+            </div>
+          </div>
+        )}
+
+        {/* Vista: Configuración General */}
+        {vistaActiva === 'configuracion' && (
+          <div className={styles.content}>
+            <ConfiguracionBot empresaId={empresaId} />
+          </div>
+        )}
+
+        {/* Modal de Prueba */}
+        {modalPrueba && (
+          <div className={styles.modal} onClick={() => setModalPrueba(null)}>
+            <div className={styles.modalContent} onClick={e => e.stopPropagation()}>
+              <h3>📱 Enviar Mensaje de Prueba</h3>
+              <p>Ingresa el número de teléfono para probar el <strong>Menú Principal</strong></p>
+              
+              <div className={styles.field}>
+                <label>Número de WhatsApp (con código de país)</label>
+                <input
+                  type="tel"
+                  value={modalPrueba.telefono}
+                  onChange={(e) => setModalPrueba({ ...modalPrueba, telefono: e.target.value })}
+                  placeholder="+54 9 11 1234-5678"
+                  autoFocus
+                />
+                <small>Ejemplo: +5491112345678</small>
+              </div>
+
+              <div className={styles.modalActions}>
+                <button
+                  onClick={() => setModalPrueba(null)}
+                  className={styles.btnCancelar}
+                  disabled={enviandoPrueba !== null}
                 >
-                  {enviandoPrueba === flujo.id ? (
-                    <>
-                      <svg className={styles.spinner} width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                        <path d="M21 12a9 9 0 1 1-6.219-8.56"/>
-                      </svg>
-                      Enviando...
-                    </>
-                  ) : (
-                    <>
-                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                        <line x1="22" y1="2" x2="11" y2="13"/>
-                        <polygon points="22 2 15 22 11 13 2 9 22 2"/>
-                      </svg>
-                      Enviar Prueba
-                    </>
-                  )}
+                  Cancelar
                 </button>
-                <button 
-                  className={styles.btnConfig}
-                  onClick={() => router.push(`/dashboard/calendario/flujos-activos/configurar/${flujo.id}`)}
+                <button
+                  onClick={() => handleEnviarPrueba(modalPrueba.flujo, modalPrueba.telefono)}
+                  className={styles.btnEnviar}
+                  disabled={!modalPrueba.telefono || enviandoPrueba !== null}
                 >
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <circle cx="12" cy="12" r="3"/>
-                    <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/>
-                  </svg>
-                  Configurar
+                  {enviandoPrueba ? 'Enviando...' : '📤 Enviar Prueba'}
                 </button>
               </div>
             </div>
-          ))}
-        </div>
-
-        <div className={styles.actions}>
-          <button className={styles.btnGuardar} onClick={handleGuardar}>
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/>
-              <polyline points="17 21 17 13 7 13 7 21"/>
-              <polyline points="7 3 7 8 15 8"/>
-            </svg>
-            Guardar Cambios
-          </button>
-        </div>
-      </div>
-    </ModuleGuard>
+          </div>
+        )}
+    </div>
   );
 }

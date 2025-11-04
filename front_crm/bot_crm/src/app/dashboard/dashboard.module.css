@@ -97,8 +97,8 @@
 
 /* Sections */
 .section {
-  background: linear-gradient(135deg, var(--momento-orange, #FF6B4A) 0%, var(--momento-orange-light, #FF8A6E) 100%);
-  border: none;
+  background: var(--momento-black, #1A1A1A);
+  border: 2px solid var(--momento-orange, #FF6B4A);
   border-radius: 16px;
   padding: 24px;
   margin-bottom: 24px;

@@ -317,8 +317,20 @@ export const menuPrincipalFlow: Flow = {
         
         console.log('✅ [Reserva] Agente encontrado:', agente._id);
         
-        const fechaInicio = new Date(data.fecha);
-        fechaInicio.setHours(hora, minuto, 0, 0);
+        // Crear fecha en zona horaria local (el servidor debe estar en Argentina)
+        const fechaStr = data.fecha; // formato: DD/MM/YYYY
+        const [dia, mes, anio] = fechaStr.split('/');
+        
+        // Crear fecha directamente con los valores locales
+        const fechaInicio = new Date(
+          parseInt(anio),
+          parseInt(mes) - 1,
+          parseInt(dia),
+          hora,
+          minuto,
+          0,
+          0
+        );
         
         const fechaFin = new Date(fechaInicio);
         fechaFin.setMinutes(fechaFin.getMinutes() + 30); // Duración por defecto: 30 min

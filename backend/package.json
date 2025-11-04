@@ -40,7 +40,10 @@
     "test:crear-turno": "tsx src/scripts/testCrearTurno.ts",
     "test:contacto-completo": "tsx src/scripts/testContactoCompleto.ts",
     "limpiar:numero": "tsx src/scripts/limpiarNumeroCompleto.ts",
-    "limpiar:turnos-prueba": "tsx src/scripts/limpiarTurnosPrueba.ts"
+    "limpiar:turnos-prueba": "tsx src/scripts/limpiarTurnosPrueba.ts",
+    "verificar:colecciones": "tsx src/scripts/verificarColecciones.ts",
+    "buscar:contacto": "tsx src/scripts/buscarContactoEspecifico.ts",
+    "corregir:zona-horaria": "tsx src/scripts/corregirZonaHorariaTurnos.ts"
   },
   "keywords": [],
   "author": "",
