@@ -55,13 +55,13 @@
 
 .header h1 {
   font-size: 32px;
-  color: white;
+  color: #1a1a1a;
   margin-bottom: 8px;
   font-weight: 700;
 }
 
 .header p {
-  color: rgba(255, 255, 255, 0.9);
+  color: #666666;
   font-size: 14px;
 }
 
@@ -80,7 +80,7 @@
 .formGroup label {
   font-size: 14px;
   font-weight: 600;
-  color: white;
+  color: #333333;
 }
 
 .formGroup input {
@@ -145,7 +145,7 @@
 
 .footer p {
   font-size: 13px;
-  color: rgba(255, 255, 255, 0.95);
+  color: #666666;
 }
 
 /* Tablets grandes y pantallas medianas */
