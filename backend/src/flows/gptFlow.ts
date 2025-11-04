@@ -119,6 +119,8 @@ export const gptFlow: Flow = {
       
     } catch (error) {
       console.error('❌ [GPT] Error procesando mensaje:', error);
+      console.error('❌ [GPT] Stack trace:', (error as Error).stack);
+      console.error('❌ [GPT] Error details:', JSON.stringify(error, null, 2));
       
       await enviarMensajeWhatsAppTexto(
         telefono,
@@ -126,8 +128,9 @@ export const gptFlow: Flow = {
         phoneNumberId
       );
       
+      // Retornar success: true para que el controller no envíe otro mensaje
       return {
-        success: false,
+        success: true,
         error: String(error),
         end: true
       };

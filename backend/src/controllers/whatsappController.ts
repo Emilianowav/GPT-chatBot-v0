@@ -9,6 +9,7 @@ import { wss } from '../app.js';
 import { buscarOCrearContacto, limpiarHistorial, incrementarMetricas } from '../services/contactoService.js';
 import { flowManager } from '../flows/index.js';
 import type { FlowContext } from '../flows/types.js';
+import { EmpresaModel } from '../models/Empresa.js';
 
 import type { EmpresaConfig } from '../types/Types.js';
 
@@ -95,8 +96,100 @@ export const recibirMensaje = async (req: Request, res: Response, next: NextFunc
       return;
     }
 
-    // 🔄 NUEVO SISTEMA DE FLUJOS DINÁMICOS
-    console.log('\n🔄 ========== PROCESANDO CON SISTEMA DE FLUJOS ==========');
+    // 🔄 DECISIÓN: ¿Bot de pasos o GPT conversacional?
+    console.log('\n🔄 ========== DECIDIENDO TIPO DE BOT ==========');
+    
+    // Verificar si la empresa tiene bot de pasos activo
+    const { ConfiguracionBotModel } = await import('../modules/calendar/models/ConfiguracionBot.js');
+    const configBot = await ConfiguracionBotModel.findOne({ empresaId: empresa.nombre });
+    const usarBotDePasos = configBot?.activo === true;
+    
+    console.log(`🤖 Tipo de bot para ${empresa.nombre}: ${usarBotDePasos ? 'BOT DE PASOS' : 'GPT CONVERSACIONAL'}`);
+    
+    if (!usarBotDePasos) {
+      // 🧠 USAR GPT CONVERSACIONAL DIRECTAMENTE
+      console.log('🧠 Procesando con GPT conversacional...');
+      
+      try {
+        const { obtenerRespuestaChat } = await import('../services/openaiService.js');
+        const { actualizarHistorialConversacion, incrementarMetricas } = await import('../services/contactoService.js');
+        
+        // Construir historial para GPT
+        const historialGPT: any[] = [
+          {
+            role: 'system',
+            content: empresa.prompt || 'Eres un asistente virtual amable y servicial.'
+          }
+        ];
+        
+        // Agregar historial reciente (últimos 20 mensajes)
+        const historialReciente = contacto.conversaciones.historial.slice(-20);
+        for (let i = 0; i < historialReciente.length; i++) {
+          historialGPT.push({
+            role: i % 2 === 0 ? 'user' : 'assistant',
+            content: historialReciente[i]
+          });
+        }
+        
+        // Agregar mensaje actual
+        historialGPT.push({
+          role: 'user',
+          content: mensaje
+        });
+        
+        // Obtener respuesta de GPT
+        const modelo = empresa.modelo || 'gpt-3.5-turbo';
+        const respuesta = await obtenerRespuestaChat({
+          modelo,
+          historial: historialGPT
+        });
+        
+        console.log(`✅ [GPT] Respuesta generada (${respuesta.tokens} tokens, $${respuesta.costo})`);
+        
+        // Guardar en historial
+        await actualizarHistorialConversacion(contacto._id.toString(), mensaje);
+        await actualizarHistorialConversacion(contacto._id.toString(), respuesta.texto);
+        
+        // Actualizar métricas
+        await incrementarMetricas(contacto._id.toString(), {
+          mensajesRecibidos: 1,
+          mensajesEnviados: 1,
+          tokensConsumidos: respuesta.tokens,
+          interacciones: 1
+        });
+        
+        // Enviar respuesta
+        await enviarMensajeWhatsAppTexto(telefonoCliente, respuesta.texto, phoneNumberId);
+        
+        // Actualizar métricas de la empresa
+        try {
+          const empresaDoc = await EmpresaModel.findOne({ nombre: empresa.nombre });
+          if (empresaDoc && empresaDoc.uso) {
+            empresaDoc.uso.mensajesEsteMes = (empresaDoc.uso.mensajesEsteMes || 0) + 1;
+            empresaDoc.uso.ultimaActualizacion = new Date();
+            await empresaDoc.save();
+          }
+        } catch (errorEmpresa) {
+          console.error('⚠️ Error actualizando métricas de empresa (no crítico):', errorEmpresa);
+        }
+        
+        res.sendStatus(200);
+        return;
+        
+      } catch (errorGPT) {
+        console.error('❌ [GPT] Error procesando con GPT:', errorGPT);
+        await enviarMensajeWhatsAppTexto(
+          telefonoCliente,
+          'Disculpá, tuve un problema al procesar tu mensaje. Por favor, intentá de nuevo.',
+          phoneNumberId
+        );
+        res.sendStatus(200);
+        return;
+      }
+    }
+    
+    // 🤖 USAR BOT DE PASOS (Sistema de flujos)
+    console.log('\n🔄 ========== PROCESANDO CON BOT DE PASOS ==========');
     
     const flowContext: FlowContext = {
       telefono: telefonoCliente,

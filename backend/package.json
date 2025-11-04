@@ -45,7 +45,8 @@
     "buscar:contacto": "tsx src/scripts/buscarContactoEspecifico.ts",
     "corregir:zona-horaria": "tsx src/scripts/corregirZonaHorariaTurnos.ts",
     "corregir:bot-empresas": "tsx scripts/corregirBotEmpresas.ts",
-    "limpiar:parana-lodge": "tsx scripts/limpiarModuloParanaLodge.ts"
+    "limpiar:parana-lodge": "tsx scripts/limpiarModuloParanaLodge.ts",
+    "verificar:parana-lodge": "tsx scripts/verificarParanaLodge.ts"
   },
   "keywords": [],
   "author": "",
