@@ -203,6 +203,35 @@ export const recibirMensaje = async (req: Request, res: Response, next: NextFunc
     // 🤖 USAR BOT DE PASOS (Sistema de flujos)
     console.log('\n🔄 ========== PROCESANDO CON BOT DE PASOS ==========');
     
+    // 🔔 PRIMERO: Verificar si es una respuesta a confirmación de turnos
+    console.log('🔔 Verificando si es respuesta a confirmación de turnos...');
+    const { procesarRespuestaConfirmacion } = await import('../modules/calendar/services/confirmacionTurnosService.js');
+    const resultadoConfirmacion = await procesarRespuestaConfirmacion(telefonoCliente, mensaje, empresa.nombre);
+    
+    if (resultadoConfirmacion.procesado) {
+      console.log('✅ Mensaje procesado por servicio de confirmación');
+      
+      if (resultadoConfirmacion.respuesta) {
+        await enviarMensajeWhatsAppTexto(telefonoCliente, resultadoConfirmacion.respuesta, phoneNumberId);
+      }
+      
+      // Actualizar métricas
+      try {
+        await incrementarMetricas(contacto._id.toString(), {
+          mensajesRecibidos: 1,
+          mensajesEnviados: 1,
+          interacciones: 1
+        });
+      } catch (errorMetricas) {
+        console.error('⚠️ Error actualizando métricas (no crítico):', errorMetricas);
+      }
+      
+      res.sendStatus(200);
+      return;
+    }
+    
+    console.log('➡️ No es respuesta de confirmación, continuando con flujos normales...');
+    
     const flowContext: FlowContext = {
       telefono: telefonoCliente,
       empresaId: empresa.nombre,  // ✅ SIEMPRE usar nombre, NUNCA _id
