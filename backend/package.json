@@ -43,7 +43,8 @@
     "limpiar:turnos-prueba": "tsx src/scripts/limpiarTurnosPrueba.ts",
     "verificar:colecciones": "tsx src/scripts/verificarColecciones.ts",
     "buscar:contacto": "tsx src/scripts/buscarContactoEspecifico.ts",
-    "corregir:zona-horaria": "tsx src/scripts/corregirZonaHorariaTurnos.ts"
+    "corregir:zona-horaria": "tsx src/scripts/corregirZonaHorariaTurnos.ts",
+    "corregir:bot-empresas": "tsx scripts/corregirBotEmpresas.ts"
   },
   "keywords": [],
   "author": "",

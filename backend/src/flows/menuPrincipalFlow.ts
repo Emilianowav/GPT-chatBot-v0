@@ -12,8 +12,16 @@ export const menuPrincipalFlow: Flow = {
   version: '1.0.0',
   
   async shouldActivate(context: FlowContext): Promise<boolean> {
-    const { mensaje } = context;
+    const { mensaje, empresaId } = context;
     const mensajeLower = mensaje.toLowerCase().trim();
+    
+    // 🔒 VERIFICAR SI EL BOT DE PASOS ESTÁ ACTIVO PARA ESTA EMPRESA
+    const configBot = await ConfiguracionBotModel.findOne({ empresaId });
+    
+    if (!configBot || !configBot.activo) {
+      console.log(`⏭️ [MenuPrincipal] Bot de pasos desactivado para ${empresaId}, no activar`);
+      return false;
+    }
     
     // Detectar intención de interactuar con el bot
     const keywords = [
@@ -26,6 +34,8 @@ export const menuPrincipalFlow: Flow = {
     // SOLO activar si es un saludo o palabra clave
     // NO activar con números solos (pueden ser respuestas a otros flujos)
     const esIntencion = keywords.some(kw => mensajeLower.includes(kw));
+    
+    console.log(`🔍 [MenuPrincipal] shouldActivate para ${empresaId}: ${esIntencion} (bot activo: ${configBot.activo})`);
     
     return esIntencion;
   },
