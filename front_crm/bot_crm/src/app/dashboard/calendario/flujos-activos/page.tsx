@@ -5,6 +5,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import { useConfiguracionBot } from '@/hooks/useConfiguracionBot';
+import { useConfiguracion } from '@/hooks/useConfiguracion';
 import ConfiguracionBot from '@/components/calendar/ConfiguracionBot';
 import { Power, Settings, Send, Eye, EyeOff, Plus, Edit2, Trash2 } from 'lucide-react';
 import styles from './flujos.module.css';
@@ -15,6 +16,7 @@ export default function AdministradorFlujosPage() {
   const empresaId = typeof window !== 'undefined' ? localStorage.getItem('empresa_id') || '' : '';
   
   const { configuracion, loading, toggleBot } = useConfiguracionBot(empresaId);
+  const { configuracion: configModulo, loading: loadingModulo } = useConfiguracion(empresaId);
   
   const [vistaActiva, setVistaActiva] = useState<'lista' | 'configuracion'>('lista');
   const [mensaje, setMensaje] = useState<{ tipo: 'success' | 'error'; texto: string } | null>(null);
@@ -30,7 +32,7 @@ export default function AdministradorFlujosPage() {
     }
   }, [isAuthenticated, authLoading, router]);
 
-  if (authLoading || loading) {
+  if (authLoading || loading || loadingModulo) {
     return (
       <div className={styles.loading}>
         <div className={styles.spinner}></div>
@@ -84,19 +86,21 @@ export default function AdministradorFlujosPage() {
   };
 
   // Flujos automáticos - Cargar desde configuración
+  const notificacionConfirmacion = configModulo?.notificaciones?.find(n => n.tipo === 'confirmacion');
+  
   const flujosAutomaticos = [
     {
       id: 'confirmacion_turnos',
       nombre: 'Confirmación de Turnos',
       descripcion: 'Envía recordatorios automáticos antes del turno',
       tipo: 'automatico',
-      activo: configuracion?.horariosAtencion?.activo ?? false,
+      activo: notificacionConfirmacion?.activa ?? false,
       icono: '⏰',
-      trigger: '24h antes',
+      trigger: notificacionConfirmacion?.momento || '24h antes',
       config: {
         anticipacion: 24,
-        mensaje: '¡Hola! 👋 Te recordamos que tenés un turno agendado para mañana.\n\n📅 Fecha: {fecha}\n🕐 Hora: {hora}\n📍 Destino: {destino}\n\n¿Confirmás tu asistencia? Respondé SÍ o NO',
-        solicitarConfirmacion: true
+        mensaje: notificacionConfirmacion?.plantillaMensaje || '¡Hola! 👋 Te recordamos que tenés un turno agendado para mañana.\n\n📅 Fecha: {fecha}\n🕐 Hora: {hora}\n📍 Destino: {destino}\n\n¿Confirmás tu asistencia? Respondé SÍ o NO',
+        solicitarConfirmacion: notificacionConfirmacion?.requiereConfirmacion ?? true
       }
     },
     {
