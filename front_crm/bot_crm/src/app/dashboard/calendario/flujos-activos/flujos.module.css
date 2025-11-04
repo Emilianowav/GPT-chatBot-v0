@@ -1,10 +1,10 @@
-/* 🔄 Estilos para Gestión de Flujos del Chatbot */
+/* 🔄 Gestión de Flujos - Diseño Ultra Moderno y Empresarial */
 
 .container {
-  padding: 2rem;
+  padding: 0;
   max-width: 100%;
   margin: 0;
-  background: #f8f9fa;
+  background: linear-gradient(135deg, #f5f7fa 0%, #e8ecf1 100%);
   min-height: calc(100vh - 200px);
 }
 
@@ -13,34 +13,44 @@
   justify-content: center;
   align-items: center;
   min-height: 400px;
-  color: #666;
-  font-size: 1.1rem;
+  color: #64748b;
+  font-size: 0.875rem;
 }
 
 .header {
-  margin-bottom: 2rem;
+  padding: 2.5rem 3rem;
+  background: white;
+  border-bottom: 1px solid #e8ecf1;
+  margin-bottom: 0;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
 }
 
 .header h1 {
-  font-size: 2rem;
-  color: #2c3e50;
-  margin-bottom: 0.5rem;
+  font-size: 1.75rem;
+  color: #1a202c;
+  margin: 0;
+  font-weight: 700;
+  letter-spacing: -0.5px;
 }
 
 .header p {
-  color: #7f8c8d;
-  font-size: 1.1rem;
+  color: #718096;
+  font-size: 0.95rem;
+  margin: 0.25rem 0 0 0;
+  font-weight: 400;
 }
 
 .mensaje {
-  padding: 1rem 1.5rem;
-  border-radius: 12px;
-  margin-bottom: 2rem;
+  padding: 0.875rem 3rem;
+  border-radius: 0;
+  margin: 0;
   font-weight: 500;
+  font-size: 0.875rem;
   display: flex;
   align-items: center;
   gap: 0.5rem;
   animation: slideIn 0.3s ease-out;
+  border-bottom: 1px solid;
 }
 
 @keyframes slideIn {
@@ -55,156 +65,179 @@
 }
 
 .mensaje.success {
-  background: linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%);
-  color: #155724;
-  border: 2px solid #b1dfbb;
+  background: #ecfdf5;
+  color: #065f46;
+  border-color: #d1fae5;
 }
 
 .mensaje.error {
-  background: linear-gradient(135deg, #f8d7da 0%, #f5c6cb 100%);
-  color: #721c24;
-  border: 2px solid #f1b0b7;
+  background: #fef2f2;
+  color: #991b1b;
+  border-color: #fecaca;
 }
 
 .flujosGrid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
-  gap: 1.5rem;
-  margin-bottom: 2rem;
+  grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
+  gap: 1px;
+  margin: 0;
+  background: #e8ecf1;
 }
 
 .flujoCard {
   background: white;
-  border-radius: 16px;
+  border-radius: 0;
   padding: 0;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  border: 2px solid transparent;
+  box-shadow: none;
+  transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+  border: none;
   overflow: hidden;
 }
 
 .flujoCard:hover {
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
-  border-color: #667eea;
-  transform: translateY(-4px);
+  background: #f8fafc;
+  box-shadow: none;
+  transform: none;
 }
 
 .flujoCard.inactivo {
-  opacity: 0.6;
-  background: #f8f9fa;
+  opacity: 0.5;
+  background: #f8fafc;
 }
 
 .flujoCard.inactivo:hover {
-  opacity: 0.8;
+  opacity: 0.7;
 }
 
 .cardHeader {
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
-  padding: 1.5rem;
-  background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
-  border-bottom: 2px solid #e5e7eb;
+  border-bottom: 1px solid #f1f5f9;
 }
 
-.flujoInfo {
+.cardTitle {
   display: flex;
-  gap: 1rem;
   align-items: flex-start;
+  gap: 0.875rem;
   flex: 1;
 }
 
 .icono {
-  font-size: 2.5rem;
+  font-size: 1.5rem;
   line-height: 1;
+  opacity: 0.8;
 }
 
-.flujoInfo h3 {
-  font-size: 1.3rem;
-  color: #2c3e50;
-  margin: 0 0 0.5rem 0;
+.cardTitle h3 {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 700;
+  color: #1a202c;
+  letter-spacing: -0.3px;
 }
 
 .badges {
   display: flex;
   gap: 0.5rem;
   flex-wrap: wrap;
+  margin-bottom: 1.5rem;
 }
 
-.badgePrioridad,
-.badgeTipo {
-  padding: 0.25rem 0.75rem;
-  border-radius: 12px;
-  font-size: 0.75rem;
-  font-weight: 600;
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.25rem 0.625rem;
+  border-radius: 9999px;
+  font-size: 0.6875rem;
+  font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.5px;
+  border: 1px solid;
 }
 
 .badgePrioridad {
   color: white;
 }
 
-.badgeTipo {
-  background: #e5e7eb;
-  color: #64748b;
+.badge.urgente {
+  background: #fef2f2;
+  color: #991b1b;
+  border-color: #fecaca;
 }
 
-/* Toggle Switch */
-.switch {
+.badge.normal {
+  background: #eff6ff;
+  color: #1e40af;
+  border-color: #bfdbfe;
+}
+
+.badge.baja {
+  background: #f8fafc;
+  color: #475569;
+  border-color: #e2e8f0;
+}
+
+.badge.menu {
+  background: #eff6ff;
+  color: #1d4ed8;
+  border-color: #bfdbfe;
+}
+
+.badge.notificacion {
+  background: #fef3c7;
+  color: #92400e;
+  border-color: #fde68a;
+}
+
+.badge.confirmacion {
+  background: #ecfdf5;
+  color: #065f46;
+  border-color: #d1fae5;
+}
+
+.toggleSwitch {
   position: relative;
-  display: inline-block;
-  width: 60px;
-  height: 30px;
-  flex-shrink: 0;
-}
-
-.switch input {
-  opacity: 0;
-  width: 0;
-  height: 0;
-}
-
-.slider {
-  position: absolute;
+  width: 44px;
+  height: 24px;
+  background: #e2e8f0;
+  border-radius: 12px;
   cursor: pointer;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background-color: #ccc;
-  transition: 0.4s;
-  border-radius: 30px;
+  transition: all 0.2s ease;
+  border: none;
 }
 
-.slider:before {
+.toggleSwitch.active {
+  background: #2563eb;
+}
+
+.toggleSlider {
   position: absolute;
-  content: "";
-  height: 22px;
-  width: 22px;
-  left: 4px;
-  bottom: 4px;
-  background-color: white;
-  transition: 0.4s;
+  top: 2px;
+  left: 2px;
+  width: 20px;
+  height: 20px;
+  background: white;
   border-radius: 50%;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 }
 
-input:checked + .slider {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-}
-
-input:checked + .slider:before {
-  transform: translateX(30px);
+.toggleSwitch.active .toggleSlider {
+  transform: translateX(20px);
 }
 
 .cardBody {
-  padding: 1.5rem;
+  padding: 1.5rem 2rem;
 }
 
 .descripcion {
   color: #64748b;
+  font-size: 0.875rem;
   line-height: 1.6;
-  margin-bottom: 1rem;
+  margin-bottom: 1.5rem;
+  font-weight: 400;
 }
 
 .estadoInfo {
@@ -250,10 +283,6 @@ input:checked + .slider:before {
   border: 2px solid #e5e7eb;
   border-radius: 8px;
   font-weight: 600;
-  cursor: pointer;
-  transition: all 0.2s;
-  width: 100%;
-  justify-content: center;
 }
 
 .btnConfig:hover {
