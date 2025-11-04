@@ -516,7 +516,7 @@ async function consultarTurnos(context: FlowContext): Promise<FlowResult> {
     }
     
     // Construir mensaje con turnos
-    let mensaje = '📅 Tus próximos turnos:\n\n';
+    let mensaje = '📅 Tus próximos viajes:\n\n';
     turnos.forEach((turno, index) => {
       const fecha = new Date(turno.fechaInicio).toLocaleDateString('es-AR');
       const hora = new Date(turno.fechaInicio).toLocaleTimeString('es-AR', {
@@ -524,9 +524,15 @@ async function consultarTurnos(context: FlowContext): Promise<FlowResult> {
         minute: '2-digit',
         hour12: false
       });
-      mensaje += `${index + 1}. ${fecha} a las ${hora}\n`;
+      
+      const origen = turno.datos?.origen || 'No especificado';
+      const destino = turno.datos?.destino || 'No especificado';
+      const estado = turno.estado === 'confirmado' ? '✅' : '⏳';
+      
+      mensaje += `${index + 1}. ${estado} ${fecha} - ${hora}\n`;
+      mensaje += `   📍 ${origen} → ${destino}\n\n`;
     });
-    mensaje += '\nEscribí "menu" para volver al menú principal.';
+    mensaje += 'Escribí "menu" para volver al menú principal.';
     
     await enviarMensajeWhatsAppTexto(telefono, mensaje, context.phoneNumberId);
     

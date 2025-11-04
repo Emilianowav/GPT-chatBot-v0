@@ -253,8 +253,8 @@ async function obtenerTurnosParaNotificacion(empresaId: string, notif: any) {
   if (notif.filtros?.estados && notif.filtros.estados.length > 0) {
     query.estado = { $in: notif.filtros.estados };
   } else {
-    // Default: solo turnos activos
-    query.estado = { $in: ['no_confirmado', 'pendiente', 'confirmado'] };
+    // Default: solo turnos pendientes y no confirmados (NO incluir confirmados)
+    query.estado = { $in: ['no_confirmado', 'pendiente'] };
   }
 
   // ✅ FILTRO 2: Solo turnos sin notificación previa

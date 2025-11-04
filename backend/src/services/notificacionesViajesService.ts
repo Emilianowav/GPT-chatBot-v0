@@ -101,6 +101,7 @@ export async function enviarNotificacionConfirmacionViajes(
   console.log('   Hasta:', fechaFin.toISOString());
 
   // 4. Buscar turnos del contacto
+  // ⚠️ IMPORTANTE: Solo buscar turnos PENDIENTES (no confirmados)
   console.log('🔍 Buscando turnos del contacto...');
   const turnos = await TurnoModel.find({
     empresaId: empresaDoc.nombre,
@@ -109,7 +110,7 @@ export async function enviarNotificacionConfirmacionViajes(
       $gte: fechaInicio,
       $lte: fechaFin
     },
-    estado: { $in: ['pendiente', 'confirmado'] }
+    estado: 'pendiente' // Solo turnos pendientes, NO confirmados
   })
     .sort({ fechaInicio: 1 })
     .limit(10);
