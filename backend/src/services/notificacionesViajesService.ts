@@ -73,6 +73,18 @@ export async function enviarNotificacionConfirmacionViajes(
   
   console.log('✅ Cliente encontrado:', cliente.nombre, cliente.apellido);
   console.log('   Cliente ID:', cliente._id.toString());
+  console.log('   Teléfono en BD:', cliente.telefono);
+  
+  // ⚠️ CRÍTICO: Si el teléfono del cliente NO está normalizado, actualizarlo
+  if (cliente.telefono !== telefonoNormalizadoBusqueda) {
+    console.log('⚠️ Teléfono del cliente NO está normalizado, actualizando...');
+    console.log(`   Antes: "${cliente.telefono}"`);
+    console.log(`   Después: "${telefonoNormalizadoBusqueda}"`);
+    
+    cliente.telefono = telefonoNormalizadoBusqueda;
+    await cliente.save();
+    console.log('✅ Teléfono del cliente actualizado correctamente');
+  }
 
   // 3. Definir rango de fechas
   let fechaInicio: Date;
@@ -180,6 +192,8 @@ export async function enviarNotificacionConfirmacionViajes(
   });
 
   // Enviar mensaje
+  // ⚠️ IMPORTANTE: Usar el teléfono del parámetro (viene de la solicitud HTTP)
+  // NO usar cliente.telefono porque puede estar desactualizado o en formato incorrecto
   await enviarMensajeWhatsAppTexto(
     clienteTelefono,  // Meta API acepta con o sin +
     mensaje,
