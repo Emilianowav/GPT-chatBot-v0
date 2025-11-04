@@ -109,6 +109,11 @@ export const recibirMensaje = async (req: Request, res: Response, next: NextFunc
     if (!usarBotDePasos) {
       // 🧠 USAR GPT CONVERSACIONAL DIRECTAMENTE
       console.log('🧠 Procesando con GPT conversacional...');
+      console.log('📊 Datos del contacto:', {
+        id: contacto._id,
+        nombre: contacto.nombre,
+        historialLength: contacto.conversaciones?.historial?.length || 0
+      });
       
       try {
         const { obtenerRespuestaChat } = await import('../services/openaiService.js');
@@ -178,6 +183,10 @@ export const recibirMensaje = async (req: Request, res: Response, next: NextFunc
         
       } catch (errorGPT) {
         console.error('❌ [GPT] Error procesando con GPT:', errorGPT);
+        console.error('❌ [GPT] Stack trace:', (errorGPT as Error).stack);
+        console.error('❌ [GPT] Error type:', (errorGPT as Error).name);
+        console.error('❌ [GPT] Error message:', (errorGPT as Error).message);
+        
         await enviarMensajeWhatsAppTexto(
           telefonoCliente,
           'Disculpá, tuve un problema al procesar tu mensaje. Por favor, intentá de nuevo.',
