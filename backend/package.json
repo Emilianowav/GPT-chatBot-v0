@@ -38,7 +38,9 @@
     "reenviar:notificaciones": "tsx src/scripts/reenviarNotificaciones.ts",
     "verificar:contacto-nuevo": "tsx src/scripts/verificarContactoNuevo.ts",
     "test:crear-turno": "tsx src/scripts/testCrearTurno.ts",
-    "test:contacto-completo": "tsx src/scripts/testContactoCompleto.ts"
+    "test:contacto-completo": "tsx src/scripts/testContactoCompleto.ts",
+    "limpiar:numero": "tsx src/scripts/limpiarNumeroCompleto.ts",
+    "limpiar:turnos-prueba": "tsx src/scripts/limpiarTurnosPrueba.ts"
   },
   "keywords": [],
   "author": "",

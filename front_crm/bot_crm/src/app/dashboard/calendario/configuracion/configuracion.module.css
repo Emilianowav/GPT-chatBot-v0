@@ -11,7 +11,7 @@
   justify-content: center;
   align-items: center;
   min-height: 400px;
-  color: #666;
+  color: rgba(255, 255, 255, 0.95);
   font-size: 1.1rem;
 }
 
@@ -22,14 +22,14 @@
 
 .header h1 {
   margin: 0 0 0.5rem 0;
-  color: #2c3e50;
+  color: var(--momento-white, #FFFFFF);
   font-size: 1.75rem;
   font-weight: 700;
 }
 
 .header p {
   margin: 0;
-  color: #7f8c8d;
+  color: rgba(255, 255, 255, 0.95);
   font-size: 1rem;
   line-height: 1.5;
 }
@@ -71,16 +71,16 @@
 
 /* Plantillas */
 .plantillas {
-  background: white;
-  border-radius: 12px;
+  background: var(--momento-black, #1A1A1A);
+  border-radius: 16px;
   padding: 1.5rem;
   margin-bottom: 2rem;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+  box-shadow: 0 4px 12px rgba(255, 107, 74, 0.2);
 }
 
 .plantillas h3 {
   margin-bottom: 1rem;
-  color: #2c3e50;
+  color: var(--momento-white, #FFFFFF);
   font-size: 1.2rem;
 }
 
@@ -96,9 +96,9 @@
   align-items: center;
   gap: 0.5rem;
   padding: 1.5rem;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, var(--momento-orange, #FF6B4A) 0%, var(--momento-orange-light, #FF8A6E) 100%);
   border: none;
-  border-radius: 12px;
+  border-radius: 16px;
   color: white;
   cursor: pointer;
   transition: transform 0.2s, box-shadow 0.2s;
@@ -106,7 +106,7 @@
 
 .plantillaCard:hover {
   transform: translateY(-4px);
-  box-shadow: 0 8px 16px rgba(102, 126, 234, 0.3);
+  box-shadow: 0 8px 16px rgba(255, 107, 74, 0.4);
 }
 
 .plantillaIcon {
@@ -120,10 +120,10 @@
 
 /* Formulario */
 .form {
-  background: white;
-  border-radius: 12px;
+  background: var(--momento-black, #1A1A1A);
+  border-radius: 16px;
   padding: 2rem;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+  box-shadow: 0 4px 12px rgba(255, 107, 74, 0.2);
 }
 
 .seccion {
@@ -136,13 +136,13 @@
 }
 
 .seccion h2 {
-  color: #2c3e50;
+  color: var(--momento-white, #FFFFFF);
   margin-bottom: 1.5rem;
   font-size: 1.5rem;
 }
 
 .seccion h3 {
-  color: #34495e;
+  color: var(--momento-white, #FFFFFF);
   margin: 2rem 0 1rem 0;
   font-size: 1.2rem;
 }
@@ -156,7 +156,7 @@
 
 .field label {
   font-weight: 600;
-  color: #2c3e50;
+  color: var(--momento-white, #FFFFFF);
   font-size: 0.9rem;
 }
 
@@ -164,7 +164,7 @@
 .field select,
 .field textarea {
   padding: 0.75rem;
-  border: 2px solid #e0e0e0;
+  border: 2px solid rgba(255, 107, 74, 0.3);
   border-radius: 8px;
   font-size: 1rem;
   transition: border-color 0.2s;
@@ -175,7 +175,8 @@
 .field select:focus,
 .field textarea:focus {
   outline: none;
-  border-color: #667eea;
+  border-color: var(--momento-orange, #FF6B4A);
+  box-shadow: 0 0 0 3px rgba(255, 107, 74, 0.1);
 }
 
 .grid2 {
@@ -195,14 +196,14 @@
 }
 
 .checkbox:hover {
-  background: #f8f9fa;
+  background: var(--momento-black-light, #2A2A2A);
 }
 
 .checkbox input[type="checkbox"] {
   width: 20px;
   height: 20px;
   cursor: pointer;
-  accent-color: #667eea;
+  accent-color: var(--momento-orange, #FF6B4A);
 }
 
 /* Botones */
@@ -217,7 +218,7 @@
 
 .btnPrimary {
   padding: 1rem 2rem;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, var(--momento-orange, #FF6B4A) 0%, var(--momento-orange-light, #FF8A6E) 100%);
   color: white;
   border: none;
   border-radius: 8px;
@@ -232,7 +233,7 @@
 
 .btnPrimary:hover:not(:disabled) {
   transform: translateY(-2px);
-  box-shadow: 0 8px 16px rgba(102, 126, 234, 0.3);
+  box-shadow: 0 8px 16px rgba(255, 107, 74, 0.4);
 }
 
 .btnPrimary:disabled {

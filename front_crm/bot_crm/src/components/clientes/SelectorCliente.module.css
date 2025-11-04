@@ -14,7 +14,7 @@
 .searchIcon {
   position: absolute;
   left: 1rem;
-  color: #999;
+  color: rgba(255, 255, 255, 0.95);
   pointer-events: none;
 }
 
@@ -29,12 +29,12 @@
 
 .input:focus {
   outline: none;
-  border-color: #667eea;
-  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+  border-color: #FF6B4A;
+  box-shadow: 0 0 0 3px rgba(255, 107, 74, 0.1);
 }
 
 .input::placeholder {
-  color: #999;
+  color: rgba(255, 255, 255, 0.95);
 }
 
 .clearButton {
@@ -44,7 +44,7 @@
   border: none;
   padding: 0.25rem;
   cursor: pointer;
-  color: #999;
+  color: rgba(255, 255, 255, 0.95);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -54,7 +54,7 @@
 
 .clearButton:hover {
   background: #f0f0f0;
-  color: #666;
+  color: rgba(255, 255, 255, 0.9);
 }
 
 .loadingSpinner {
@@ -66,7 +66,7 @@
   width: 20px;
   height: 20px;
   border: 2px solid #f3f3f3;
-  border-top: 2px solid #667eea;
+  border-top: 2px solid #FF6B4A;
   border-radius: 50%;
   animation: spin 0.8s linear infinite;
 }
@@ -94,7 +94,7 @@
 .noResultados {
   padding: 3rem 2rem;
   text-align: center;
-  color: #999;
+  color: rgba(255, 255, 255, 0.95);
 }
 
 .noResultados svg {
@@ -104,13 +104,13 @@
 
 .noResultados p {
   font-size: 1rem;
-  color: #666;
+  color: rgba(255, 255, 255, 0.9);
   margin-bottom: 0.5rem;
 }
 
 .noResultados small {
   font-size: 0.85rem;
-  color: #999;
+  color: rgba(255, 255, 255, 0.95);
 }
 
 .resultado {
@@ -139,7 +139,7 @@
   width: 40px;
   height: 40px;
   border-radius: 50%;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #FF6B4A 0%, #FF8A6E 100%);
   color: white;
   display: flex;
   align-items: center;
@@ -156,13 +156,13 @@
 
 .resultadoNombre {
   font-weight: 600;
-  color: #333;
+  color: white;
   margin-bottom: 0.25rem;
 }
 
 .resultadoDetalles {
   font-size: 0.85rem;
-  color: #666;
+  color: rgba(255, 255, 255, 0.9);
   display: flex;
   align-items: center;
   gap: 0.5rem;

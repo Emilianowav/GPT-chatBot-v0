@@ -1,33 +1,36 @@
-/* Variables de Tema */
+/* 🎨 Importar tema de Momento */
+@import '../styles/momento-theme.css';
+
+/* Variables de Tema - Momento IA */
 :root[data-theme="light"] {
-  --background: #f5f7fa;
-  --foreground: #111b21;
-  --card-bg: #ffffff;
-  --border-color: #e9edef;
-  --hover-bg: #f5f6f6;
-  --active-bg: #f0f2f5;
-  --text-primary: #111b21;
-  --text-secondary: #667781;
-  --text-tertiary: #8696a0;
-  --accent-color: #00a884;
-  --accent-hover: #008c6f;
-  --message-sent: #d9fdd3;
-  --message-received: #ffffff;
-  --shadow: rgba(0, 0, 0, 0.1);
-  --shadow-hover: rgba(0, 0, 0, 0.15);
+  --background: var(--momento-black);
+  --foreground: var(--momento-white);
+  --card-bg: var(--momento-black-light);
+  --border-color: var(--momento-orange);
+  --hover-bg: var(--bg-orange-soft);
+  --active-bg: var(--bg-orange-medium);
+  --text-primary: var(--momento-white);
+  --text-secondary: var(--text-on-dark-secondary);
+  --text-tertiary: var(--text-on-dark-disabled);
+  --accent-color: var(--momento-orange);
+  --accent-hover: var(--momento-orange-hover);
+  --message-sent: var(--bg-orange-soft);
+  --message-received: var(--momento-black-light);
+  --shadow: rgba(255, 107, 74, 0.2);
+  --shadow-hover: rgba(255, 107, 74, 0.4);
 }
 
 :root[data-theme="dark"] {
-  --background: #111b21;
-  --foreground: #e9edef;
-  --card-bg: #202c33;
-  --border-color: #2a3942;
-  --hover-bg: #2a3942;
-  --active-bg: #2a3942;
-  --text-primary: #e9edef;
-  --text-secondary: #8696a0;
-  --text-tertiary: #667781;
-  --accent-color: #00a884;
+  --background: var(--momento-black);
+  --foreground: var(--momento-white);
+  --card-bg: var(--momento-black-light);
+  --border-color: #3A3A3A;
+  --hover-bg: var(--bg-orange-soft);
+  --active-bg: var(--bg-orange-medium);
+  --text-primary: var(--momento-white);
+  --text-secondary: var(--text-on-dark-secondary);
+  --text-tertiary: var(--text-on-dark-disabled);
+  --accent-color: var(--momento-orange);
   --accent-hover: #06cf9c;
   --message-sent: #005c4b;
   --message-received: #202c33;
@@ -38,6 +41,7 @@
 html,
 body {
   overflow-x: hidden;
+  background: var(--momento-black, #1A1A1A) !important;
 }
 
 body {

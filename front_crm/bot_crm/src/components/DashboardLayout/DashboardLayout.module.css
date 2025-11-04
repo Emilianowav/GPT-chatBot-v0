@@ -3,7 +3,7 @@
 .container {
   display: flex;
   min-height: 100vh;
-  background-color: #f5f7fa;
+  background-color: var(--momento-black, #1A1A1A);
 }
 
 .main {
@@ -12,12 +12,14 @@
   display: flex;
   flex-direction: column;
   transition: margin-left 0.3s ease;
+  background-color: var(--momento-black, #1A1A1A);
 }
 
 /* Header */
 .header {
-  background: white;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  background: var(--momento-black-light, #2A2A2A);
+  border-bottom: 2px solid var(--momento-orange, #FF6B4A);
+  box-shadow: 0 4px 12px rgba(255, 107, 74, 0.2);
   padding: 16px 24px;
   display: flex;
   align-items: center;
@@ -36,7 +38,7 @@
   border-radius: 8px;
   cursor: pointer;
   font-size: 20px;
-  color: #333;
+  color: white;
   transition: all 0.3s ease;
 }
 
@@ -53,7 +55,7 @@
 
 .title {
   font-size: 24px;
-  color: #333;
+  color: var(--momento-white, #FFFFFF);
   margin: 0;
   font-weight: 700;
 }
@@ -66,7 +68,7 @@
 
 .empresaBadge {
   padding: 8px 16px;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #FF6B4A 0%, #FF8A6E 100%);
   color: white;
   border-radius: 20px;
   font-size: 14px;

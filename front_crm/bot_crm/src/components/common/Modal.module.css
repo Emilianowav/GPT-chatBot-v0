@@ -81,7 +81,7 @@
 .title {
   margin: 0;
   font-size: 1.5rem;
-  color: #2c3e50;
+  color: white;
   font-weight: 600;
 }
 
@@ -96,13 +96,13 @@
   justify-content: center;
   cursor: pointer;
   transition: all 0.2s;
-  color: #666;
+  color: rgba(255, 255, 255, 0.9);
   flex-shrink: 0;
 }
 
 .closeButton:hover {
   background: #e0e0e0;
-  color: #333;
+  color: white;
 }
 
 /* Content */

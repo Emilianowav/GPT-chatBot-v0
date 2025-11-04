@@ -26,7 +26,7 @@
 
 /* Modal */
 .modal {
-  background: white;
+  background: var(--momento-black, #1A1A1A);
   border-radius: 16px;
   width: 100%;
   max-width: 800px;
@@ -125,7 +125,7 @@
 }
 
 .progressStep.active .progressCircle {
-  background: #3b82f6;
+  background: #FF6B4A;
   color: white;
 }
 
@@ -206,8 +206,8 @@
 .field select:focus,
 .field textarea:focus {
   outline: none;
-  border-color: #3b82f6;
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+  border-color: #FF6B4A;
+  box-shadow: 0 0 0 3px rgba(255, 107, 74, 0.1);
 }
 
 .field textarea {
@@ -271,7 +271,7 @@
 
 .btnHorarioRapido {
   padding: 0.5rem 0.75rem;
-  background: white;
+  background: var(--momento-black, #1A1A1A);
   border: 1px solid #d1d5db;
   border-radius: 6px;
   font-size: 0.75rem;
@@ -282,8 +282,8 @@
 
 .btnHorarioRapido:hover {
   background: #f3f4f6;
-  border-color: #3b82f6;
-  color: #3b82f6;
+  border-color: #FF6B4A;
+  color: #FF6B4A;
 }
 
 /* Días */
@@ -298,7 +298,7 @@
   border-radius: 12px;
   padding: 1rem;
   transition: all 0.2s;
-  background: white;
+  background: var(--momento-black, #1A1A1A);
 }
 
 .diaCard:hover {
@@ -306,7 +306,7 @@
 }
 
 .diaActivo {
-  border-color: #3b82f6;
+  border-color: #FF6B4A;
   background: #eff6ff;
 }
 
@@ -326,7 +326,7 @@
   width: 20px;
   height: 20px;
   cursor: pointer;
-  accent-color: #3b82f6;
+  accent-color: #FF6B4A;
 }
 
 .diaNombre {
@@ -390,7 +390,7 @@
   width: 48px;
   height: 24px;
   cursor: pointer;
-  accent-color: #3b82f6;
+  accent-color: #FF6B4A;
 }
 
 .switchLabel span {
@@ -424,7 +424,7 @@
 }
 
 .btnSecondary {
-  background: white;
+  background: var(--momento-black, #1A1A1A);
   color: #374151;
   border: 1px solid #d1d5db;
 }
@@ -435,15 +435,15 @@
 }
 
 .btnPrimary {
-  background: #3b82f6;
+  background: #FF6B4A;
   color: white;
   min-width: 140px;
   justify-content: center;
 }
 
 .btnPrimary:hover:not(:disabled) {
-  background: #2563eb;
-  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+  background: #E55A3A;
+  box-shadow: 0 4px 12px rgba(255, 107, 74, 0.3);
 }
 
 .btnSecondary:disabled,

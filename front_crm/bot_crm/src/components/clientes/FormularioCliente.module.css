@@ -14,7 +14,7 @@
   align-items: center;
   padding: 1.5rem 2rem;
   border-bottom: 2px solid #f0f0f0;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #FF6B4A 0%, #FF8A6E 100%);
   color: white;
   border-radius: 12px 12px 0 0;
 }
@@ -67,14 +67,14 @@
   align-items: center;
   gap: 0.5rem;
   font-size: 1.1rem;
-  color: #667eea;
+  color: #FF6B4A;
   margin-bottom: 1rem;
   padding-bottom: 0.5rem;
   border-bottom: 2px solid #f0f0f0;
 }
 
 .sectionTitle svg {
-  color: #667eea;
+  color: #FF6B4A;
 }
 
 /* Campos */
@@ -93,7 +93,7 @@
 
 .field label {
   font-weight: 600;
-  color: #333;
+  color: white;
   font-size: 0.9rem;
 }
 
@@ -110,13 +110,13 @@
 .field input:focus,
 .field textarea:focus {
   outline: none;
-  border-color: #667eea;
-  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+  border-color: #FF6B4A;
+  box-shadow: 0 0 0 3px rgba(255, 107, 74, 0.1);
 }
 
 .field input::placeholder,
 .field textarea::placeholder {
-  color: #999;
+  color: rgba(255, 255, 255, 0.95);
 }
 
 .field textarea {
@@ -147,7 +147,7 @@
 
 .btnCancel {
   background: #e0e0e0;
-  color: #666;
+  color: rgba(255, 255, 255, 0.9);
 }
 
 .btnCancel:hover:not(:disabled) {
@@ -155,13 +155,13 @@
 }
 
 .btnSubmit {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #FF6B4A 0%, #FF8A6E 100%);
   color: white;
 }
 
 .btnSubmit:hover:not(:disabled) {
   transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+  box-shadow: 0 4px 12px rgba(255, 107, 74, 0.3);
 }
 
 .btnCancel:disabled,

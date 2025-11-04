@@ -17,8 +17,9 @@
   top: 0;
   bottom: 0;
   width: 280px;
-  background: white;
-  box-shadow: 2px 0 8px rgba(0, 0, 0, 0.1);
+  background: var(--momento-black, #1A1A1A);
+  border-right: 2px solid var(--momento-orange, #FF6B4A);
+  box-shadow: 4px 0 12px rgba(255, 107, 74, 0.2);
   display: flex;
   flex-direction: column;
   z-index: 999;
@@ -28,7 +29,7 @@
 /* Header del Sidebar */
 .sidebarHeader {
   padding: 20px;
-  border-bottom: 1px solid #e0e0e0;
+  border-bottom: 2px solid rgba(255, 107, 74, 0.3);
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -47,7 +48,7 @@
 .logoText {
   font-size: 20px;
   font-weight: 700;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #FF6B4A 0%, #FF8A6E 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -62,7 +63,7 @@
   border-radius: 6px;
   cursor: pointer;
   font-size: 18px;
-  color: #666;
+  color: rgba(255, 255, 255, 0.9);
   transition: all 0.3s ease;
 }
 
@@ -76,14 +77,14 @@
   display: flex;
   align-items: center;
   gap: 12px;
-  border-bottom: 1px solid #e0e0e0;
+  border-bottom: 2px solid rgba(255, 107, 74, 0.3);
 }
 
 .empresaAvatar {
   width: 48px;
   height: 48px;
   border-radius: 50%;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #FF6B4A 0%, #FF8A6E 100%);
   color: white;
   display: flex;
   align-items: center;
@@ -100,13 +101,13 @@
   margin: 0;
   font-size: 15px;
   font-weight: 600;
-  color: #333;
+  color: var(--momento-white, #FFFFFF);
 }
 
 .empresaRole {
   margin: 4px 0 0 0;
   font-size: 13px;
-  color: #999;
+  color: rgba(255, 255, 255, 0.9);
 }
 
 /* Navegación */
@@ -129,14 +130,16 @@
   transition: all 0.3s ease;
   margin-bottom: 4px;
   text-align: left;
+  color: rgba(255, 255, 255, 0.8);
 }
 
 .navItem:hover {
-  background-color: #f5f7fa;
+  background-color: rgba(255, 107, 74, 0.1);
+  color: var(--momento-white, #FFFFFF);
 }
 
 .navItem.active {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #FF6B4A 0%, #FF8A6E 100%);
   color: white;
 }
 
@@ -147,6 +150,7 @@
 .navLabel {
   font-size: 15px;
   font-weight: 500;
+  color: inherit;
 }
 
 .navItem.active .navLabel {
@@ -156,7 +160,7 @@
 /* Footer del Sidebar */
 .sidebarFooter {
   padding: 20px;
-  border-top: 1px solid #e0e0e0;
+  border-top: 2px solid rgba(255, 107, 74, 0.3);
 }
 
 .logoutButton {
@@ -165,9 +169,9 @@
   align-items: center;
   gap: 12px;
   padding: 12px 16px;
-  border: none;
-  background: #fee;
-  color: #c33;
+  border: 2px solid rgba(231, 76, 60, 0.5);
+  background: rgba(231, 76, 60, 0.1);
+  color: #e74c3c;
   border-radius: 8px;
   cursor: pointer;
   transition: all 0.3s ease;
@@ -176,7 +180,8 @@
 }
 
 .logoutButton:hover {
-  background: #fdd;
+  background: rgba(231, 76, 60, 0.2);
+  border-color: #e74c3c;
   transform: translateY(-2px);
 }
 

@@ -2,7 +2,7 @@
 
 /* Mejorar contraste de tips */
 .fieldTip {
-  color: #555;
+  color: rgba(255, 255, 255, 0.8);
   font-size: 0.85rem;
   display: block;
   margin-top: 0.25rem;
@@ -20,12 +20,12 @@
 
 .header h1 {
   font-size: 2rem;
-  color: #2c3e50;
+  color: var(--momento-white, #FFFFFF);
   margin-bottom: 0.5rem;
 }
 
 .header p {
-  color: #7f8c8d;
+  color: rgba(255, 255, 255, 0.95);
   font-size: 1.1rem;
 }
 
@@ -42,7 +42,7 @@
   width: 40px;
   height: 40px;
   border: 4px solid #f3f3f3;
-  border-top: 4px solid #667eea;
+  border-top: 4px solid #FF6B4A;
   border-radius: 50%;
   animation: spin 1s linear infinite;
 }
@@ -73,16 +73,16 @@
 
 /* Plantillas */
 .plantillas {
-  background: white;
+  background: var(--momento-black, #1A1A1A);
   border-radius: 12px;
   padding: 1.5rem;
   margin-bottom: 2rem;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  box-shadow: 0 4px 12px rgba(255, 107, 74, 0.2);
 }
 
 .plantillas h3 {
   margin-bottom: 1rem;
-  color: #2c3e50;
+  color: var(--momento-white, #FFFFFF);
 }
 
 .plantillasGrid {
@@ -97,7 +97,7 @@
   align-items: center;
   gap: 0.5rem;
   padding: 1.5rem;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #FF6B4A 0%, #FF8A6E 100%);
   border: none;
   border-radius: 12px;
   color: white;
@@ -107,7 +107,7 @@
 
 .plantillaCard:hover {
   transform: translateY(-4px);
-  box-shadow: 0 8px 16px rgba(102, 126, 234, 0.3);
+  box-shadow: 0 8px 16px rgba(255, 107, 74, 0.3);
 }
 
 .plantillaIcon {
@@ -124,7 +124,7 @@
   display: flex;
   gap: 0.5rem;
   margin-bottom: 2rem;
-  border-bottom: 2px solid #e0e0e0;
+  border-bottom: 2px solid rgba(255, 107, 74, 0.3);
 }
 
 .tab,
@@ -135,25 +135,25 @@
   border-bottom: 3px solid transparent;
   cursor: pointer;
   font-weight: 600;
-  color: #7f8c8d;
+  color: rgba(255, 255, 255, 0.95);
   transition: all 0.2s;
 }
 
 .tabActive {
-  color: #667eea;
-  border-bottom-color: #667eea;
+  color: #FF6B4A;
+  border-bottom-color: #FF6B4A;
 }
 
 .tab:hover {
-  color: #667eea;
+  color: #FF6B4A;
 }
 
 /* Formulario */
 .form {
-  background: white;
+  background: var(--momento-black, #1A1A1A);
   border-radius: 12px;
   padding: 2rem;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  box-shadow: 0 4px 12px rgba(255, 107, 74, 0.2);
 }
 
 .seccion {
@@ -166,13 +166,13 @@
 }
 
 .seccion h2 {
-  color: #2c3e50;
+  color: var(--momento-white, #FFFFFF);
   margin-bottom: 1.5rem;
   font-size: 1.5rem;
 }
 
 .seccion h3 {
-  color: #34495e;
+  color: var(--momento-white, #FFFFFF);
   margin: 2rem 0 1rem 0;
   font-size: 1.2rem;
 }
@@ -185,7 +185,7 @@
 }
 
 .descripcion {
-  color: #7f8c8d;
+  color: rgba(255, 255, 255, 0.95);
   margin-bottom: 1.5rem;
   line-height: 1.6;
 }
@@ -199,7 +199,7 @@
 
 .field label {
   font-weight: 600;
-  color: #2c3e50;
+  color: var(--momento-white, #FFFFFF);
   font-size: 0.9rem;
 }
 
@@ -207,7 +207,7 @@
 .field select,
 .field textarea {
   padding: 0.75rem;
-  border: 2px solid #e0e0e0;
+  border: 2px solid rgba(255, 107, 74, 0.3);
   border-radius: 8px;
   font-size: 1rem;
   transition: border-color 0.2s;
@@ -217,7 +217,7 @@
 .field select:focus,
 .field textarea:focus {
   outline: none;
-  border-color: #667eea;
+  border-color: #FF6B4A;
 }
 
 .field textarea {
@@ -255,7 +255,7 @@
 }
 
 .checkbox:hover {
-  background: #f8f9fa;
+  background: var(--momento-black-light, #2A2A2A);
 }
 
 .checkbox input[type="checkbox"] {
@@ -265,7 +265,7 @@
 }
 
 .checkbox span {
-  color: #2c3e50;
+  color: var(--momento-white, #FFFFFF);
   font-size: 0.95rem;
 }
 
@@ -283,9 +283,9 @@
   gap: 0.5rem;
   padding: 1rem;
   background: transparent;
-  border: 2px dashed #667eea;
+  border: 2px dashed #FF6B4A;
   border-radius: 12px;
-  color: #667eea;
+  color: #FF6B4A;
   font-size: 1rem;
   font-weight: 600;
   cursor: pointer;
@@ -294,9 +294,9 @@
 }
 
 .btnAgregarCampo:hover {
-  background: rgba(102, 126, 234, 0.05);
-  border-color: #764ba2;
-  color: #764ba2;
+  background: rgba(255, 107, 74, 0.05);
+  border-color: #FF8A6E;
+  color: #FF8A6E;
   transform: translateY(-2px);
 }
 
@@ -306,8 +306,8 @@
 }
 
 .campoCard {
-  background: #f8f9fa;
-  border: 2px solid #e0e0e0;
+  background: var(--momento-black-light, #2A2A2A);
+  border: 2px solid rgba(255, 107, 74, 0.3);
   border-radius: 12px;
   padding: 1.5rem;
 }
@@ -324,7 +324,7 @@
   font-size: 1.1rem;
   font-weight: 600;
   padding: 0.5rem;
-  border: 2px solid #e0e0e0;
+  border: 2px solid rgba(255, 107, 74, 0.3);
   border-radius: 6px;
 }
 
@@ -349,8 +349,8 @@
   width: 32px;
   height: 32px;
   background: transparent;
-  border: 2px solid #667eea;
-  color: #667eea;
+  border: 2px solid #FF6B4A;
+  color: #FF6B4A;
   border-radius: 6px;
   font-size: 0.875rem;
   cursor: pointer;
@@ -362,7 +362,7 @@
 }
 
 .btnToggle:hover {
-  background: #667eea;
+  background: #FF6B4A;
   color: white;
 }
 
@@ -374,7 +374,7 @@
   height: 28px;
   background: transparent;
   border: none;
-  color: #999;
+  color: rgba(255, 255, 255, 0.85);
   font-size: 1.25rem;
   cursor: pointer;
   border-radius: 4px;
@@ -387,7 +387,7 @@
 
 .btnCerrarInfo:hover {
   background: rgba(0, 0, 0, 0.05);
-  color: #333;
+  color: var(--momento-white, #FFFFFF);
 }
 
 /* Notificaciones */
@@ -398,8 +398,8 @@
 }
 
 .notifCard {
-  background: #f8f9fa;
-  border: 2px solid #e0e0e0;
+  background: var(--momento-black-light, #2A2A2A);
+  border: 2px solid rgba(255, 107, 74, 0.3);
   border-radius: 12px;
   padding: 1.5rem;
 }
@@ -412,14 +412,14 @@
 }
 
 .notifHeader h4 {
-  color: #2c3e50;
+  color: var(--momento-white, #FFFFFF);
   margin: 0;
 }
 
 /* Botones */
 .btnAgregar {
   padding: 0.75rem 1.5rem;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #FF6B4A 0%, #FF8A6E 100%);
   color: white;
   border: none;
   border-radius: 8px;
@@ -430,7 +430,7 @@
 
 .btnAgregar:hover {
   transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+  box-shadow: 0 4px 12px rgba(255, 107, 74, 0.3);
 }
 
 .actions {
@@ -444,7 +444,7 @@
 
 .btnGuardar {
   padding: 1rem 2rem;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #FF6B4A 0%, #FF8A6E 100%);
   color: white;
   border: none;
   border-radius: 8px;
@@ -456,7 +456,7 @@
 
 .btnGuardar:hover:not(:disabled) {
   transform: translateY(-2px);
-  box-shadow: 0 8px 16px rgba(102, 126, 234, 0.3);
+  box-shadow: 0 8px 16px rgba(255, 107, 74, 0.3);
 }
 
 .btnGuardar:disabled {
@@ -467,7 +467,7 @@
 .empty {
   text-align: center;
   padding: 3rem;
-  color: #7f8c8d;
+  color: rgba(255, 255, 255, 0.95);
 }
 
 .empty p {
@@ -485,7 +485,7 @@
 .variablesHelp strong {
   display: block;
   margin-bottom: 0.5rem;
-  color: #667eea;
+  color: #FF6B4A;
   font-size: 0.85rem;
 }
 
@@ -498,12 +498,12 @@
 .varTag {
   display: inline-block;
   padding: 0.25rem 0.75rem;
-  background: white;
-  border: 1px solid #667eea;
+  background: var(--momento-black, #1A1A1A);
+  border: 1px solid #FF6B4A;
   border-radius: 20px;
   font-size: 0.8rem;
   font-family: 'Courier New', monospace;
-  color: #667eea;
+  color: #FF6B4A;
   font-weight: 600;
 }
 
@@ -515,8 +515,8 @@
 }
 
 .recurrenciaConfig {
-  background: #f8f9fa;
-  border: 2px solid #e0e0e0;
+  background: var(--momento-black-light, #2A2A2A);
+  border: 2px solid rgba(255, 107, 74, 0.3);
   border-radius: 8px;
   padding: 1.5rem;
   margin-top: 1rem;
@@ -533,8 +533,8 @@
   align-items: center;
   gap: 0.5rem;
   padding: 0.5rem 1rem;
-  background: white;
-  border: 2px solid #e0e0e0;
+  background: var(--momento-black, #1A1A1A);
+  border: 2px solid rgba(255, 107, 74, 0.3);
   border-radius: 8px;
   cursor: pointer;
   transition: all 0.2s;
@@ -542,16 +542,16 @@
 
 .diaSemana input[type="checkbox"]:checked + span {
   font-weight: 600;
-  color: #667eea;
+  color: #FF6B4A;
 }
 
 .diaSemana:has(input[type="checkbox"]:checked) {
   background: #f0f4ff;
-  border-color: #667eea;
+  border-color: #FF6B4A;
 }
 
 .diaSemana:hover {
-  border-color: #667eea;
+  border-color: #FF6B4A;
   transform: translateY(-2px);
 }
 
@@ -559,7 +559,7 @@
   margin-top: 1rem;
   padding: 1rem;
   background: linear-gradient(135deg, #f0f4ff 0%, #e8f5e9 100%);
-  border-left: 4px solid #667eea;
+  border-left: 4px solid #FF6B4A;
   border-radius: 8px;
   font-size: 0.95rem;
   color: black;
@@ -569,7 +569,7 @@
 /* Info Box Mejorado */
 .infoBox {
   background: linear-gradient(135deg, #f0f4ff 0%, #e8f5e9 100%);
-  border-left: 4px solid #667eea;
+  border-left: 4px solid #FF6B4A;
   padding: 1.5rem;
   padding-right: 3rem;
   border-radius: 8px;
@@ -579,13 +579,13 @@
 
 .infoBox h4 {
   margin: 0 0 0.75rem 0;
-  color: #667eea;
+  color: #FF6B4A;
   font-size: 1rem;
 }
 
 .infoBox p {
   margin: 0.5rem 0;
-  color: #555;
+  color: rgba(255, 255, 255, 0.8);
   line-height: 1.6;
 }
 
@@ -596,14 +596,14 @@
 
 .infoBox li {
   margin: 0.5rem 0;
-  color: #555;
+  color: rgba(255, 255, 255, 0.8);
 }
 
 /* Sección de filtros avanzados */
 .filtrosSection {
   margin-top: 1.5rem;
   padding: 1.5rem;
-  background: #f8f9fa;
+  background: var(--momento-black-light, #2A2A2A);
   border: 2px dashed #dee2e6;
   border-radius: 10px;
 }
@@ -634,7 +634,7 @@
 .pruebaSection {
   margin-top: 1.5rem;
   padding: 1.25rem;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #FF6B4A 0%, #FF8A6E 100%);
   border-radius: 10px;
   text-align: center;
 }
@@ -648,8 +648,8 @@
 }
 
 .btnEnviarPrueba {
-  background: white;
-  color: #667eea;
+  background: var(--momento-black, #1A1A1A);
+  color: #FF6B4A;
   border: none;
   padding: 0.875rem 1.75rem;
   border-radius: 8px;
@@ -719,7 +719,7 @@
 .multiSelect {
   max-height: 200px;
   overflow-y: auto;
-  border: 1px solid #e0e0e0;
+  border: 2px solid rgba(255, 107, 74, 0.3);
   border-radius: 8px;
   padding: 0.5rem;
   background: #f9f9f9;
@@ -745,13 +745,13 @@
 
 .checkboxItem span {
   font-size: 0.9rem;
-  color: #333;
+  color: var(--momento-white, #FFFFFF);
 }
 
 /* Botón de prueba */
 .btnPrueba {
   padding: 0.75rem 1.5rem;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #FF6B4A 0%, #FF8A6E 100%);
   color: white;
   border: none;
   border-radius: 8px;
@@ -763,7 +763,7 @@
 
 .btnPrueba:hover:not(:disabled) {
   transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+  box-shadow: 0 4px 12px rgba(255, 107, 74, 0.4);
 }
 
 .btnPrueba:disabled {
@@ -777,7 +777,7 @@
 
 /* Tarjeta de notificación mejorada */
 .notifCard {
-  background: white;
+  background: var(--momento-black, #1A1A1A);
   border: 2px solid #e8ecf4;
   border-radius: 16px;
   padding: 0;
@@ -787,14 +787,14 @@
 }
 
 .notifCard:hover {
-  border-color: #667eea;
-  box-shadow: 0 4px 16px rgba(102, 126, 234, 0.15);
+  border-color: #FF6B4A;
+  box-shadow: 0 4px 16px rgba(255, 107, 74, 0.15);
 }
 
 /* Notificación inactiva */
 .notifInactiva {
   opacity: 0.6;
-  background: #f8f9fa;
+  background: var(--momento-black-light, #2A2A2A);
 }
 
 .notifInactiva .notifHeader {
@@ -807,7 +807,7 @@
   justify-content: space-between;
   align-items: center;
   padding: 1.25rem 1.5rem;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #FF6B4A 0%, #FF8A6E 100%);
   color: white;
   cursor: pointer;
   transition: all 0.3s ease;
@@ -934,7 +934,7 @@
   width: 20px;
   left: 2px;
   bottom: 2px;
-  background-color: white;
+  background-color: var(--momento-black, #1A1A1A);
   border-radius: 50%;
   transition: all 0.3s ease;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);

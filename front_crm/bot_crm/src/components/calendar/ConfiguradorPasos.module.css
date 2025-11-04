@@ -10,12 +10,12 @@
 
 .header h3 {
   font-size: 1.5rem;
-  color: #2c3e50;
+  color: var(--momento-white, #FFFFFF);
   margin-bottom: 0.5rem;
 }
 
 .descripcion {
-  color: #7f8c8d;
+  color: rgba(255, 255, 255, 0.95);
   font-size: 0.95rem;
 }
 
@@ -30,7 +30,7 @@
 .empty {
   text-align: center;
   padding: 3rem 1rem;
-  background: #f8f9fa;
+  background: var(--momento-black-light, #2A2A2A);
   border-radius: 8px;
   border: 2px dashed #dee2e6;
 }
@@ -42,7 +42,7 @@
 
 /* Paso individual */
 .paso {
-  background: white;
+  background: var(--momento-black, #1A1A1A);
   border: 2px solid #e9ecef;
   border-radius: 8px;
   padding: 1rem;
@@ -56,7 +56,7 @@
 
 .paso.inactivo {
   opacity: 0.6;
-  background: #f8f9fa;
+  background: var(--momento-black-light, #2A2A2A);
 }
 
 .pasoHeader {
@@ -98,7 +98,7 @@
 .etiqueta {
   font-weight: 600;
   font-size: 1.1rem;
-  color: #2c3e50;
+  color: var(--momento-white, #FFFFFF);
 }
 
 .tipo {
@@ -154,7 +154,7 @@
 }
 
 .btnIcono:hover {
-  background: #f8f9fa;
+  background: var(--momento-black-light, #2A2A2A);
   border-color: #adb5bd;
   color: #495057;
 }
@@ -174,7 +174,7 @@
 .btnAgregar {
   width: 100%;
   padding: 1rem;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #FF6B4A 0%, #FF8A6E 100%);
   color: white;
   border: none;
   border-radius: 8px;
@@ -190,7 +190,7 @@
 
 .btnAgregar:hover {
   transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+  box-shadow: 0 4px 12px rgba(255, 107, 74, 0.4);
 }
 
 /* Modal */
@@ -209,7 +209,7 @@
 }
 
 .modal {
-  background: white;
+  background: var(--momento-black, #1A1A1A);
   border-radius: 12px;
   width: 100%;
   max-width: 700px;
@@ -230,7 +230,7 @@
 .modalHeader h3 {
   margin: 0;
   font-size: 1.5rem;
-  color: #2c3e50;
+  color: var(--momento-white, #FFFFFF);
 }
 
 .btnCerrar {
@@ -250,7 +250,7 @@
 }
 
 .btnCerrar:hover {
-  background: #f8f9fa;
+  background: var(--momento-black-light, #2A2A2A);
   color: #495057;
 }
 
@@ -275,7 +275,7 @@
 
 .seccion h4 {
   font-size: 1.1rem;
-  color: #2c3e50;
+  color: var(--momento-white, #FFFFFF);
   margin-bottom: 1rem;
   padding-bottom: 0.5rem;
   border-bottom: 2px solid #e9ecef;
@@ -356,7 +356,7 @@
 
 /* Opciones del menú */
 .opcion {
-  background: #f8f9fa;
+  background: var(--momento-black-light, #2A2A2A);
   border: 1px solid #dee2e6;
   border-radius: 8px;
   padding: 1rem;
@@ -392,7 +392,7 @@
 .btnAgregarOpcion {
   width: 100%;
   padding: 0.75rem;
-  background: white;
+  background: var(--momento-black, #1A1A1A);
   border: 2px dashed #dee2e6;
   border-radius: 6px;
   color: #6c757d;
@@ -407,13 +407,13 @@
 .btnAgregarOpcion:hover {
   border-color: #3498db;
   color: #3498db;
-  background: #f8f9fa;
+  background: var(--momento-black-light, #2A2A2A);
 }
 
 /* Botones del footer */
 .btnCancelar {
   padding: 0.75rem 1.5rem;
-  background: white;
+  background: var(--momento-black, #1A1A1A);
   border: 1px solid #dee2e6;
   border-radius: 6px;
   color: #495057;
@@ -424,13 +424,13 @@
 }
 
 .btnCancelar:hover {
-  background: #f8f9fa;
+  background: var(--momento-black-light, #2A2A2A);
   border-color: #adb5bd;
 }
 
 .btnGuardar {
   padding: 0.75rem 1.5rem;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #FF6B4A 0%, #FF8A6E 100%);
   border: none;
   border-radius: 6px;
   color: white;
@@ -442,7 +442,7 @@
 
 .btnGuardar:hover {
   transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+  box-shadow: 0 4px 12px rgba(255, 107, 74, 0.4);
 }
 
 /* Responsive */

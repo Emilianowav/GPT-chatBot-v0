@@ -13,7 +13,7 @@
   align-items: center;
   justify-content: center;
   padding: 3rem;
-  color: #95a5a6;
+  color: rgba(255, 255, 255, 0.95);
   grid-column: 1 / -1;
 }
 
@@ -22,7 +22,7 @@
 }
 
 .agenteCard {
-  background: white;
+  background: var(--momento-black, #1A1A1A);
   border-radius: 12px;
   overflow: hidden;
   border: 1px solid #e8ecf1;
@@ -49,7 +49,7 @@
   width: 56px;
   height: 56px;
   border-radius: 50%;
-  background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+  background: linear-gradient(135deg, #E55A3A 0%, #1d4ed8 100%);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -58,7 +58,7 @@
   flex-shrink: 0;
   border: 3px solid #eff6ff;
   color: white;
-  box-shadow: 0 2px 8px rgba(37, 99, 235, 0.2);
+  box-shadow: 0 2px 8px rgba(229, 90, 58, 0.2);
 }
 
 .agenteInfo {
@@ -159,15 +159,15 @@
 }
 
 .contactoItem svg {
-  color: #2563eb;
+  color: #E55A3A;
   flex-shrink: 0;
 }
 
 .descripcion {
   padding: 1rem;
-  background: #f8f9fa;
+  background: var(--momento-black-light, #2A2A2A);
   border-radius: 8px;
-  color: #555;
+  color: rgba(255, 255, 255, 0.8);
   line-height: 1.6;
   margin-bottom: 1rem;
   font-size: 0.9rem;
@@ -195,7 +195,7 @@
 }
 
 .detalle svg {
-  color: #2563eb;
+  color: #E55A3A;
   flex-shrink: 0;
 }
 
@@ -214,7 +214,7 @@
 }
 
 .disponibilidadHeader svg {
-  color: #2563eb;
+  color: #E55A3A;
 }
 
 .disponibilidadHeader strong {
@@ -285,7 +285,7 @@
 
 .horarioResumen svg {
   flex-shrink: 0;
-  color: #2563eb;
+  color: #E55A3A;
 }
 
 .sinDisponibilidad {
@@ -328,17 +328,17 @@
   transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
   font-size: 0.8125rem;
   letter-spacing: 0.3px;
-  background: white;
+  background: var(--momento-black, #1A1A1A);
 }
 
 .btnEditar {
-  color: #2563eb;
+  color: #E55A3A;
   border-color: #dbeafe;
 }
 
 .btnEditar:hover {
   background: #eff6ff;
-  border-color: #2563eb;
+  border-color: #E55A3A;
   transform: translateY(-1px);
 }
 

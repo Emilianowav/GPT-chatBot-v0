@@ -1,24 +1,24 @@
 /* 📅 Estilos del Calendario Mensual */
 
 .container {
-  background: white;
+  background: var(--momento-black, #1A1A1A);
   border-radius: 12px;
   padding: 1.5rem;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 4px 12px rgba(255, 107, 74, 0.2);
 }
 
 /* Filtros de Agentes */
 .filtros {
   margin-bottom: 2rem;
   padding-bottom: 1.5rem;
-  border-bottom: 1px solid #e0e0e0;
+  border-bottom: 2px solid rgba(255, 107, 74, 0.3);
 }
 
 .filtros h3 {
   font-size: 1rem;
   font-weight: 600;
   margin-bottom: 1rem;
-  color: #333;
+  color: var(--momento-white, #FFFFFF);
 }
 
 .agentesChips {
@@ -30,22 +30,22 @@
 .chip {
   padding: 0.5rem 1rem;
   border-radius: 20px;
-  border: 2px solid #e0e0e0;
-  background: white;
-  color: #666;
+  border: 2px solid rgba(255, 107, 74, 0.3);
+  background: var(--momento-black, #1A1A1A);
+  color: rgba(255, 255, 255, 0.95);
   font-size: 0.875rem;
   cursor: pointer;
   transition: all 0.2s;
 }
 
 .chip:hover {
-  border-color: #667eea;
-  color: #667eea;
+  border-color: #FF6B4A;
+  color: #FF6B4A;
 }
 
 .chipActive {
-  background: #667eea;
-  border-color: #667eea;
+  background: #FF6B4A;
+  border-color: #FF6B4A;
   color: white;
 }
 
@@ -60,13 +60,13 @@
 .mesAnio {
   font-size: 1.5rem;
   font-weight: 700;
-  color: #333;
+  color: var(--momento-white, #FFFFFF);
   text-transform: capitalize;
 }
 
 .navButton {
-  background: white;
-  border: 2px solid #e0e0e0;
+  background: var(--momento-black, #1A1A1A);
+  border: 2px solid rgba(255, 107, 74, 0.3);
   border-radius: 8px;
   width: 40px;
   height: 40px;
@@ -78,16 +78,16 @@
 }
 
 .navButton:hover {
-  border-color: #667eea;
-  background: #f7f9ff;
+  border-color: #FF6B4A;
+  background: rgba(255, 107, 74, 0.1);
 }
 
 .navButton svg {
-  color: #666;
+  color: rgba(255, 255, 255, 0.95);
 }
 
 .navButton:hover svg {
-  color: #667eea;
+  color: #FF6B4A;
 }
 
 /* Días de la semana */
@@ -102,7 +102,7 @@
   text-align: center;
   font-weight: 600;
   font-size: 0.875rem;
-  color: #999;
+  color: rgba(255, 255, 255, 0.85);
   padding: 0.5rem;
 }
 
@@ -116,10 +116,10 @@
 .dia {
   position: relative;
   aspect-ratio: 1;
-  border: 2px solid #f0f0f0;
-  border-radius: 8px;
+  border: 2px solid rgba(255, 107, 74, 0.3);
+  border-radius: 12px;
   padding: 0.5rem;
-  background: white;
+  background: var(--momento-black-light, #2A2A2A);
   cursor: pointer;
   transition: all 0.2s;
   z-index: 1;
@@ -130,8 +130,8 @@
 }
 
 .dia:hover {
-  border-color: #667eea;
-  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.15);
+  border-color: #FF6B4A;
+  box-shadow: 0 4px 12px rgba(255, 107, 74, 0.15);
   transform: translateY(-2px);
 }
 
@@ -146,24 +146,27 @@
 }
 
 .diaHoy {
-  border-color: #667eea;
-  background: #f7f9ff;
+  border-color: #FF6B4A;
+  background: linear-gradient(135deg, var(--momento-orange, #FF6B4A) 0%, var(--momento-orange-light, #FF8A6E) 100%);
+  box-shadow: 0 4px 12px rgba(255, 107, 74, 0.4);
 }
 
 .diaConTurnos {
-  background: #fafbff;
+  background: rgba(255, 107, 74, 0.2);
+  border-color: var(--momento-orange, #FF6B4A);
 }
 
 .diaNumero {
   font-weight: 600;
   font-size: 0.875rem;
-  color: #333;
+  color: var(--momento-white, #FFFFFF);
   margin-bottom: 0.25rem;
 }
 
 .diaHoy .diaNumero {
-  color: #667eea;
+  color: white;
   font-weight: 700;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
 }
 
 /* Indicador de turnos */
@@ -182,7 +185,7 @@
 
 .masTurnos {
   font-size: 0.7rem;
-  color: #999;
+  color: rgba(255, 255, 255, 0.85);
   margin-left: 2px;
 }
 
@@ -193,7 +196,7 @@
   left: 50%;
   transform: translateX(-50%);
   margin-top: 0;
-  background: white;
+  background: var(--momento-black, #1A1A1A);
   border-radius: 12px;
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
   padding: 1rem;
@@ -249,7 +252,7 @@
   align-items: flex-start;
   margin-bottom: 1rem;
   padding-bottom: 0.75rem;
-  border-bottom: 1px solid #e0e0e0;
+  border-bottom: 2px solid rgba(255, 107, 74, 0.3);
 }
 
 .popupHeader > div {
@@ -260,19 +263,19 @@
 
 .popupHeader strong {
   font-size: 1rem;
-  color: #333;
+  color: var(--momento-white, #FFFFFF);
 }
 
 .cantidadTurnos {
   font-size: 0.875rem;
-  color: #999;
+  color: rgba(255, 255, 255, 0.85);
 }
 
 .btnCerrar {
   background: transparent;
   border: none;
   font-size: 1.25rem;
-  color: #999;
+  color: rgba(255, 255, 255, 0.85);
   cursor: pointer;
   padding: 0.25rem 0.5rem;
   border-radius: 4px;
@@ -281,8 +284,8 @@
 }
 
 .btnCerrar:hover {
-  background: #f0f0f0;
-  color: #333;
+  background: rgba(255, 107, 74, 0.05);
+  color: var(--momento-white, #FFFFFF);
 }
 
 /* Filtros dentro del popup */
@@ -292,13 +295,13 @@
   gap: 0.5rem;
   margin-bottom: 0.75rem;
   padding-bottom: 0.75rem;
-  border-bottom: 1px solid #f0f0f0;
+  border-bottom: 1px solid rgba(255, 107, 74, 0.2);
 }
 
 .popupFiltrosLabel {
   font-size: 0.8rem;
   font-weight: 600;
-  color: #666;
+  color: rgba(255, 255, 255, 0.95);
   white-space: nowrap;
 }
 
@@ -312,8 +315,8 @@
   padding: 0.25rem 0.75rem;
   border-radius: 12px;
   border: 1.5px solid #e0e0e0;
-  background: white;
-  color: #666;
+  background: var(--momento-black, #1A1A1A);
+  color: rgba(255, 255, 255, 0.95);
   font-size: 0.75rem;
   cursor: pointer;
   transition: all 0.2s;
@@ -321,14 +324,14 @@
 }
 
 .popupChip:hover {
-  border-color: #667eea;
-  color: #667eea;
+  border-color: #FF6B4A;
+  color: #FF6B4A;
   background: #f7f9ff;
 }
 
 .popupChipActive {
-  background: #667eea;
-  border-color: #667eea;
+  background: #FF6B4A;
+  border-color: #FF6B4A;
   color: white;
 }
 
@@ -352,7 +355,7 @@
   gap: 0.75rem;
   padding: 0.75rem;
   border-radius: 8px;
-  background: #f8f9fa;
+  background: var(--momento-black-light, #2A2A2A);
   cursor: pointer;
   transition: all 0.2s;
 }
@@ -364,7 +367,7 @@
 .turnoHora {
   font-weight: 700;
   font-size: 0.875rem;
-  color: #667eea;
+  color: #FF6B4A;
   min-width: 50px;
 }
 
@@ -378,12 +381,12 @@
 .turnoAgente {
   font-weight: 600;
   font-size: 0.875rem;
-  color: #333;
+  color: var(--momento-white, #FFFFFF);
 }
 
 .turnoCliente {
   font-size: 0.8rem;
-  color: #666;
+  color: rgba(255, 255, 255, 0.95);
 }
 
 .turnoDocumento,
@@ -391,7 +394,7 @@
 .turnoDuracion,
 .turnoNotas {
   font-size: 0.75rem;
-  color: #888;
+  color: rgba(255, 255, 255, 0.8);
   margin-top: 0.125rem;
 }
 

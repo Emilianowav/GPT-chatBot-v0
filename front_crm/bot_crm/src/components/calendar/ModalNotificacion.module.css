@@ -25,7 +25,7 @@
 }
 
 .modal {
-  background: white;
+  background: var(--momento-black, #1A1A1A);
   border-radius: 16px;
   width: 90%;
   max-width: 900px;
@@ -123,9 +123,9 @@
 }
 
 .paso.pasoActivo .pasoNumero {
-  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+  background: linear-gradient(135deg, #FF6B4A 0%, #E55A3A 100%);
   color: white;
-  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4);
+  box-shadow: 0 4px 12px rgba(255, 107, 74, 0.4);
 }
 
 .paso span {
@@ -175,22 +175,22 @@
   padding: 20px;
   cursor: pointer;
   transition: all 0.3s;
-  background: white;
+  background: var(--momento-black, #1A1A1A);
   display: flex;
   flex-direction: column;
   gap: 12px;
 }
 
 .cardPlantilla:hover {
-  border-color: #3b82f6;
-  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.15);
+  border-color: #FF6B4A;
+  box-shadow: 0 4px 12px rgba(255, 107, 74, 0.15);
   transform: translateY(-2px);
 }
 
 .cardPlantilla.seleccionada {
-  border-color: #3b82f6;
+  border-color: #FF6B4A;
   background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
-  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.2);
+  box-shadow: 0 4px 12px rgba(255, 107, 74, 0.2);
 }
 
 .iconoPlantilla {
@@ -232,7 +232,7 @@
 }
 
 .cardPlantilla.seleccionada .badge {
-  background: #3b82f6;
+  background: #FF6B4A;
   color: white;
 }
 
@@ -276,8 +276,8 @@
 .field select:focus,
 .field textarea:focus {
   outline: none;
-  border-color: #3b82f6;
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+  border-color: #FF6B4A;
+  box-shadow: 0 0 0 3px rgba(255, 107, 74, 0.1);
 }
 
 .field textarea {
@@ -376,13 +376,13 @@
 }
 
 .btnPrimario {
-  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+  background: linear-gradient(135deg, #FF6B4A 0%, #E55A3A 100%);
   color: white;
-  box-shadow: 0 2px 8px rgba(59, 130, 246, 0.3);
+  box-shadow: 0 2px 8px rgba(255, 107, 74, 0.3);
 }
 
 .btnPrimario:hover {
-  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4);
+  box-shadow: 0 4px 12px rgba(255, 107, 74, 0.4);
   transform: translateY(-1px);
 }
 
@@ -391,7 +391,7 @@
 }
 
 .btnSecundario {
-  background: white;
+  background: var(--momento-black, #1A1A1A);
   color: #374151;
   border: 1.5px solid #d1d5db;
 }

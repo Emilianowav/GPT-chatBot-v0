@@ -4,7 +4,7 @@
   padding: 2rem;
   max-width: 100%;
   margin: 0;
-  background: #f8f9fa;
+  background: var(--momento-black-light, #2A2A2A);
   min-height: calc(100vh - 200px);
 }
 
@@ -13,7 +13,7 @@
   justify-content: center;
   align-items: center;
   min-height: 400px;
-  color: #666;
+  color: rgba(255, 255, 255, 0.95);
   font-size: 1.1rem;
 }
 
@@ -26,8 +26,8 @@
   align-items: center;
   gap: 0.5rem;
   padding: 0.75rem 1.25rem;
-  background: white;
-  color: #667eea;
+  background: var(--momento-black, #1A1A1A);
+  color: #FF6B4A;
   border: 2px solid #e5e7eb;
   border-radius: 8px;
   font-weight: 600;
@@ -36,11 +36,11 @@
 }
 
 .btnVolver:hover {
-  background: #667eea;
+  background: #FF6B4A;
   color: white;
-  border-color: #667eea;
+  border-color: #FF6B4A;
   transform: translateX(-4px);
-  box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
+  box-shadow: 0 2px 8px rgba(255, 107, 74, 0.3);
 }
 
 .titleSection {
@@ -49,9 +49,9 @@
   gap: 1.5rem;
   margin-bottom: 2rem;
   padding: 2rem;
-  background: white;
+  background: var(--momento-black, #1A1A1A);
   border-radius: 16px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 4px 12px rgba(255, 107, 74, 0.2);
 }
 
 .icono {
@@ -61,21 +61,21 @@
 
 .titleSection h1 {
   font-size: 2rem;
-  color: #2c3e50;
+  color: var(--momento-white, #FFFFFF);
   margin: 0 0 0.5rem 0;
 }
 
 .titleSection p {
-  color: #7f8c8d;
+  color: rgba(255, 255, 255, 0.95);
   font-size: 1.1rem;
   margin: 0;
 }
 
 .content {
-  background: white;
+  background: var(--momento-black, #1A1A1A);
   border-radius: 16px;
   padding: 2rem;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 4px 12px rgba(255, 107, 74, 0.2);
 }
 
 @media (max-width: 768px) {

@@ -24,7 +24,7 @@
 }
 
 .modal {
-  background: white;
+  background: var(--momento-black, #1A1A1A);
   border-radius: 16px;
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
   max-width: 600px;
@@ -51,19 +51,19 @@
   justify-content: space-between;
   align-items: flex-start;
   padding: 2rem;
-  border-bottom: 1px solid #e0e0e0;
+  border-bottom: 2px solid rgba(255, 107, 74, 0.3);
 }
 
 .titulo {
   font-size: 1.5rem;
   font-weight: 700;
-  color: #2c3e50;
+  color: var(--momento-white, #FFFFFF);
   margin: 0;
 }
 
 .subtitulo {
   font-size: 0.875rem;
-  color: #7f8c8d;
+  color: rgba(255, 255, 255, 0.95);
   margin: 0.25rem 0 0 0;
   text-transform: capitalize;
 }
@@ -72,7 +72,7 @@
   background: transparent;
   border: none;
   font-size: 1.5rem;
-  color: #999;
+  color: rgba(255, 255, 255, 0.85);
   cursor: pointer;
   padding: 0.25rem 0.5rem;
   border-radius: 4px;
@@ -81,14 +81,14 @@
 }
 
 .btnCerrar:hover {
-  background: #f0f0f0;
-  color: #333;
+  background: rgba(255, 107, 74, 0.05);
+  color: var(--momento-white, #FFFFFF);
 }
 
 /* Estado */
 .estadoContainer {
   padding: 1.5rem 2rem;
-  border-bottom: 1px solid #f0f0f0;
+  border-bottom: 1px solid rgba(255, 107, 74, 0.2);
 }
 
 .estadoBadge {
@@ -105,7 +105,7 @@
 /* Secciones */
 .seccion {
   padding: 1.5rem 2rem;
-  border-bottom: 1px solid #f0f0f0;
+  border-bottom: 1px solid rgba(255, 107, 74, 0.2);
 }
 
 .seccion:last-child {
@@ -115,7 +115,7 @@
 .seccionTitulo {
   font-size: 1rem;
   font-weight: 600;
-  color: #2c3e50;
+  color: var(--momento-white, #FFFFFF);
   margin: 0 0 1rem 0;
   display: flex;
   align-items: center;
@@ -134,7 +134,7 @@
   justify-content: space-between;
   align-items: center;
   padding: 0.75rem;
-  background: #f8f9fa;
+  background: var(--momento-black-light, #2A2A2A);
   border-radius: 8px;
 }
 
@@ -150,25 +150,25 @@
   justify-content: space-between;
   align-items: center;
   padding: 0.75rem;
-  background: #f8f9fa;
+  background: var(--momento-black-light, #2A2A2A);
   border-radius: 8px;
 }
 
 .label {
   font-weight: 600;
-  color: #7f8c8d;
+  color: rgba(255, 255, 255, 0.95);
   font-size: 0.875rem;
 }
 
 .valor {
   font-weight: 500;
-  color: #2c3e50;
+  color: var(--momento-white, #FFFFFF);
   font-size: 0.875rem;
   text-align: right;
 }
 
 .link {
-  color: #667eea;
+  color: #FF6B4A;
   text-decoration: none;
   transition: color 0.2s;
 }
@@ -196,7 +196,7 @@
   display: flex;
   flex-wrap: wrap;
   gap: 0.75rem;
-  background: #f8f9fa;
+  background: var(--momento-black-light, #2A2A2A);
   border-radius: 0 0 16px 16px;
 }
 
@@ -209,9 +209,9 @@
   font-size: 0.875rem;
   cursor: pointer;
   transition: all 0.2s;
-  border: 2px solid #e0e0e0;
-  background: white;
-  color: #666;
+  border: 2px solid rgba(255, 107, 74, 0.3);
+  background: var(--momento-black, #1A1A1A);
+  color: rgba(255, 255, 255, 0.95);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -220,7 +220,7 @@
 
 .btnAccion:hover {
   transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 4px 12px rgba(255, 107, 74, 0.2);
 }
 
 .btnConfirmar {
@@ -257,7 +257,7 @@
 }
 
 .btnCancelar {
-  background: white;
+  background: var(--momento-black, #1A1A1A);
   border-color: #f44336;
   color: #f44336;
 }

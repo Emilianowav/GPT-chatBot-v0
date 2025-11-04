@@ -5,7 +5,7 @@
   max-width: 100%;
   margin: 0;
   position: relative;
-  background: #f8f9fa;
+  background: var(--momento-black, #1A1A1A);
   min-height: calc(100vh - 200px);
 }
 
@@ -49,13 +49,13 @@
 }
 
 .btnPrimary {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #FF6B4A 0%, #FF8A6E 100%);
   color: white;
 }
 
 .btnPrimary:hover:not(:disabled) {
   transform: translateY(-2px);
-  box-shadow: 0 8px 16px rgba(102, 126, 234, 0.3);
+  box-shadow: 0 8px 16px rgba(255, 107, 74, 0.3);
 }
 
 .btnPrimary:disabled {
@@ -64,13 +64,13 @@
 }
 
 .btnSecondary {
-  background: white;
-  color: #667eea;
-  border: 2px solid #667eea;
+  background: var(--momento-black, #1A1A1A);
+  color: #FF6B4A;
+  border: 2px solid #FF6B4A;
 }
 
 .btnSecondary:hover:not(:disabled) {
-  background: #f8f9ff;
+  background: var(--momento-black-light, #2A2A2A);
 }
 
 .btnSecondary:disabled {
@@ -80,12 +80,12 @@
 
 .btnText {
   background: transparent;
-  color: #667eea;
+  color: #FF6B4A;
   padding: 0.5rem 1rem;
 }
 
 .btnText:hover:not(:disabled) {
-  background: #f8f9ff;
+  background: var(--momento-black-light, #2A2A2A);
 }
 
 .btnText:disabled {
@@ -103,21 +103,21 @@
   font-weight: 500;
   cursor: pointer;
   transition: all 0.2s;
-  border: 2px solid #e0e0e0;
-  background: white;
-  color: #666;
+  border: 2px solid rgba(255, 107, 74, 0.3);
+  background: var(--momento-black, #1A1A1A);
+  color: rgba(255, 255, 255, 0.95);
   font-size: 0.875rem;
 }
 
 .btnToggle:hover {
-  border-color: #667eea;
-  color: #667eea;
-  background: #f8f9ff;
+  border-color: #FF6B4A;
+  color: #FF6B4A;
+  background: var(--momento-black-light, #2A2A2A);
 }
 
 .btnToggleActive {
-  background: #667eea;
-  border-color: #667eea;
+  background: #FF6B4A;
+  border-color: #FF6B4A;
   color: white;
 }
 
@@ -135,13 +135,16 @@
 }
 
 .statCard {
-  background: white;
-  border-radius: 12px;
-  padding: 1.5rem;
+  background: linear-gradient(135deg, var(--momento-orange, #FF6B4A) 0%, var(--momento-orange-light, #FF8A6E) 100%);
+  border: none;
+  border-radius: 16px;
+  padding: 24px;
   display: flex;
-  gap: 1rem;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-  transition: transform 0.2s, box-shadow 0.2s;
+  align-items: center;
+  gap: 16px;
+  box-shadow: 0 4px 12px rgba(255, 107, 74, 0.3);
+  transition: all 0.3s ease;
+  color: white;
 }
 
 .statCard:hover {
@@ -152,7 +155,7 @@
 .statIcon {
   width: 56px;
   height: 56px;
-  border-radius: 12px;
+  border-radius: 16px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -161,7 +164,7 @@
 
 .statContent h3 {
   font-size: 0.875rem;
-  color: #7f8c8d;
+  color: rgba(255, 255, 255, 0.95);
   margin-bottom: 0.5rem;
   font-weight: 500;
 }
@@ -169,13 +172,13 @@
 .statNumber {
   font-size: 2rem;
   font-weight: bold;
-  color: #2c3e50;
+  color: var(--momento-white, #FFFFFF);
   margin-bottom: 0.25rem;
 }
 
 .statChange {
   font-size: 0.8rem;
-  color: #95a5a6;
+  color: rgba(255, 255, 255, 0.95);
 }
 
 /* Main Content */
@@ -185,10 +188,10 @@
 
 .calendarSection,
 .turnosSection {
-  background: white;
-  border-radius: 12px;
+  background: var(--momento-black, #1A1A1A);
+  border-radius: 16px;
   padding: 1.5rem;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  box-shadow: 0 4px 12px rgba(255, 107, 74, 0.2);
 }
 
 .sectionHeader {
@@ -200,13 +203,13 @@
 
 .sectionHeader h2 {
   font-size: 1.25rem;
-  color: #2c3e50;
+  color: var(--momento-white, #FFFFFF);
 }
 
 /* View Toggle */
 .viewToggle {
   display: flex;
-  background: #f8f9fa;
+  background: var(--momento-black-light, #2A2A2A);
   border-radius: 8px;
   padding: 0.25rem;
 }
@@ -215,7 +218,7 @@
   padding: 0.5rem 1rem;
   border: none;
   background: transparent;
-  color: #7f8c8d;
+  color: rgba(255, 255, 255, 0.95);
   border-radius: 6px;
   cursor: pointer;
   transition: all 0.2s;
@@ -223,13 +226,13 @@
 }
 
 .viewBtn.active {
-  background: white;
-  color: #667eea;
+  background: var(--momento-black, #1A1A1A);
+  color: #FF6B4A;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 .viewBtn:hover:not(.active) {
-  color: #2c3e50;
+  color: var(--momento-white, #FFFFFF);
 }
 
 /* Calendar Placeholder */
@@ -252,12 +255,12 @@
 
 .emptyState h3 {
   font-size: 1.5rem;
-  color: #2c3e50;
+  color: var(--momento-white, #FFFFFF);
   margin-bottom: 0.75rem;
 }
 
 .emptyState p {
-  color: #7f8c8d;
+  color: rgba(255, 255, 255, 0.95);
   line-height: 1.6;
   margin-bottom: 2rem;
 }
@@ -287,14 +290,14 @@
 }
 
 .emptyTurnos p {
-  color: #95a5a6;
+  color: rgba(255, 255, 255, 0.95);
   font-size: 0.95rem;
 }
 
 /* Info Banner */
 .infoBanner {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  border-radius: 12px;
+  background: linear-gradient(135deg, #FF6B4A 0%, #FF8A6E 100%);
+  border-radius: 16px;
   padding: 2rem;
   display: flex;
   align-items: center;
@@ -324,8 +327,8 @@
 
 .bannerBtn {
   padding: 0.75rem 1.5rem;
-  background: white;
-  color: #667eea;
+  background: var(--momento-black, #1A1A1A);
+  color: #FF6B4A;
   border: none;
   border-radius: 8px;
   font-weight: 600;
@@ -400,9 +403,9 @@
   width: 56px;
   height: 56px;
   border-radius: 50%;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #FF6B4A 0%, #FF8A6E 100%);
   border: none;
-  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+  box-shadow: 0 4px 12px rgba(255, 107, 74, 0.4);
   cursor: pointer;
   display: flex;
   align-items: center;
@@ -413,7 +416,7 @@
 
 .fab:hover:not(:disabled) {
   transform: scale(1.1);
-  box-shadow: 0 6px 20px rgba(102, 126, 234, 0.6);
+  box-shadow: 0 6px 20px rgba(255, 107, 74, 0.6);
 }
 
 .fab:active:not(:disabled) {

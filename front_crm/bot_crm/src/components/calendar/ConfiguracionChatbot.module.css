@@ -8,7 +8,7 @@
 .loading {
   text-align: center;
   padding: 3rem;
-  color: #666;
+  color: rgba(255, 255, 255, 0.95);
 }
 
 /* Header */
@@ -18,18 +18,18 @@
   align-items: center;
   margin-bottom: 2rem;
   padding-bottom: 1rem;
-  border-bottom: 2px solid #e0e0e0;
+  border-bottom: 2px solid rgba(255, 107, 74, 0.3);
 }
 
 .header h2 {
   margin: 0 0 0.5rem 0;
-  color: #2c3e50;
+  color: var(--momento-white, #FFFFFF);
   font-size: 1.8rem;
 }
 
 .header p {
   margin: 0;
-  color: #666;
+  color: rgba(255, 255, 255, 0.95);
   font-size: 0.95rem;
 }
 
@@ -55,16 +55,16 @@
 
 /* Secciones */
 .section {
-  background: white;
+  background: var(--momento-black, #1A1A1A);
   border-radius: 12px;
   padding: 2rem;
   margin-bottom: 2rem;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  box-shadow: 0 4px 12px rgba(255, 107, 74, 0.2);
 }
 
 .section h3 {
   margin: 0 0 1.5rem 0;
-  color: #2c3e50;
+  color: var(--momento-white, #FFFFFF);
   font-size: 1.3rem;
 }
 
@@ -88,7 +88,7 @@
   display: block;
   margin-bottom: 0.5rem;
   font-weight: 600;
-  color: #2c3e50;
+  color: var(--momento-white, #FFFFFF);
   font-size: 0.9rem;
 }
 
@@ -99,7 +99,7 @@
 .field textarea {
   width: 100%;
   padding: 0.75rem;
-  border: 2px solid #e0e0e0;
+  border: 2px solid rgba(255, 107, 74, 0.3);
   border-radius: 8px;
   font-size: 1rem;
   font-family: inherit;
@@ -110,13 +110,13 @@
 .field select:focus,
 .field textarea:focus {
   outline: none;
-  border-color: #667eea;
+  border-color: #FF6B4A;
 }
 
 .field small {
   display: block;
   margin-top: 0.5rem;
-  color: #666;
+  color: rgba(255, 255, 255, 0.95);
   font-size: 0.85rem;
 }
 
@@ -144,25 +144,25 @@
   align-items: center;
   gap: 0.75rem;
   padding: 1.5rem;
-  background: white;
-  border: 2px solid #e0e0e0;
+  background: var(--momento-black, #1A1A1A);
+  border: 2px solid rgba(255, 107, 74, 0.3);
   border-radius: 12px;
   cursor: pointer;
   transition: all 0.2s;
   font-size: 1rem;
   font-weight: 600;
-  color: #555;
+  color: rgba(255, 255, 255, 0.8);
 }
 
 .flujoBtn:hover {
-  border-color: #667eea;
+  border-color: #FF6B4A;
   transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.2);
+  box-shadow: 0 4px 12px rgba(255, 107, 74, 0.2);
 }
 
 .flujoBtn.active {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  border-color: #667eea;
+  background: linear-gradient(135deg, #FF6B4A 0%, #FF8A6E 100%);
+  border-color: #FF6B4A;
   color: white;
 }
 
@@ -179,16 +179,16 @@
 }
 
 .pasoCard {
-  background: #f8f9fa;
-  border: 2px solid #e0e0e0;
+  background: var(--momento-black-light, #2A2A2A);
+  border: 2px solid rgba(255, 107, 74, 0.3);
   border-radius: 12px;
   overflow: hidden;
   transition: all 0.2s;
 }
 
 .pasoCard:hover {
-  border-color: #667eea;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  border-color: #FF6B4A;
+  box-shadow: 0 4px 12px rgba(255, 107, 74, 0.2);
 }
 
 .pasoHeader {
@@ -196,7 +196,7 @@
   justify-content: space-between;
   align-items: center;
   padding: 1rem 1.5rem;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #FF6B4A 0%, #FF8A6E 100%);
   color: white;
 }
 
@@ -254,7 +254,7 @@
 
 .pasoBody {
   padding: 1.5rem;
-  background: white;
+  background: var(--momento-black, #1A1A1A);
 }
 
 /* Checkboxes */
@@ -277,18 +277,18 @@
   width: 20px;
   height: 20px;
   cursor: pointer;
-  accent-color: #667eea;
+  accent-color: #FF6B4A;
 }
 
 .checkbox span {
   font-size: 0.95rem;
-  color: #2c3e50;
+  color: var(--momento-white, #FFFFFF);
 }
 
 /* Info Box */
 .infoBox {
   background: #f0f4ff;
-  border-left: 4px solid #667eea;
+  border-left: 4px solid #FF6B4A;
   padding: 1rem 1.5rem;
   border-radius: 8px;
   margin-bottom: 1.5rem;
@@ -296,12 +296,12 @@
 
 .infoBox p {
   margin: 0;
-  color: #555;
+  color: rgba(255, 255, 255, 0.8);
   line-height: 1.6;
 }
 
 .infoBox strong {
-  color: #667eea;
+  color: #FF6B4A;
 }
 
 /* Ticket Preview */
@@ -322,7 +322,7 @@
 
 /* Conversación Ejemplo */
 .conversacionEjemplo {
-  background: #f8f9fa;
+  background: var(--momento-black-light, #2A2A2A);
   padding: 1.5rem;
   border-radius: 8px;
   max-height: 500px;
@@ -330,15 +330,15 @@
 }
 
 .mensajeBot {
-  background: white;
+  background: var(--momento-black, #1A1A1A);
   padding: 1rem;
   border-radius: 12px;
   margin-bottom: 1rem;
-  border-left: 4px solid #667eea;
+  border-left: 4px solid #FF6B4A;
 }
 
 .mensajeBot strong {
-  color: #667eea;
+  color: #FF6B4A;
   display: block;
   margin-bottom: 0.5rem;
 }
@@ -361,7 +361,7 @@
 .opciones {
   margin-top: 0.75rem;
   padding-left: 1rem;
-  color: #555;
+  color: rgba(255, 255, 255, 0.8);
 }
 
 .opciones div {
@@ -395,7 +395,7 @@
 
 .btnGuardar {
   padding: 1rem 2rem;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #FF6B4A 0%, #FF8A6E 100%);
   color: white;
   border: none;
   border-radius: 8px;
@@ -407,7 +407,7 @@
 
 .btnGuardar:hover:not(:disabled) {
   transform: translateY(-2px);
-  box-shadow: 0 8px 20px rgba(102, 126, 234, 0.4);
+  box-shadow: 0 8px 20px rgba(255, 107, 74, 0.4);
 }
 
 .btnGuardar:disabled {
@@ -419,8 +419,8 @@
 .empty {
   text-align: center;
   padding: 3rem;
-  color: #95a5a6;
-  background: #f8f9fa;
+  color: rgba(255, 255, 255, 0.95);
+  background: var(--momento-black-light, #2A2A2A);
   border-radius: 8px;
   border: 2px dashed #e0e0e0;
 }
@@ -453,7 +453,7 @@
 }
 
 .terminacionSection textarea {
-  background: white;
+  background: var(--momento-black, #1A1A1A);
   border: 2px solid #ffd700;
 }
 
@@ -478,13 +478,13 @@
 
 .condicionalesHeader h5 {
   margin: 0;
-  color: #667eea;
+  color: #FF6B4A;
   font-size: 1rem;
 }
 
 .btnAgregarPequeño {
   padding: 0.5rem 1rem;
-  background: #667eea;
+  background: #FF6B4A;
   color: white;
   border: none;
   border-radius: 6px;
@@ -506,16 +506,16 @@
 }
 
 .condicionalCard {
-  background: #f8f9fa;
-  border: 2px solid #e0e0e0;
+  background: var(--momento-black-light, #2A2A2A);
+  border: 2px solid rgba(255, 107, 74, 0.3);
   border-radius: 8px;
   padding: 1rem;
   transition: all 0.2s;
 }
 
 .condicionalCard:hover {
-  border-color: #667eea;
-  box-shadow: 0 2px 8px rgba(102, 126, 234, 0.1);
+  border-color: #FF6B4A;
+  box-shadow: 0 2px 8px rgba(255, 107, 74, 0.1);
 }
 
 .condicionalHeader {
@@ -524,12 +524,12 @@
   align-items: center;
   margin-bottom: 1rem;
   padding-bottom: 0.75rem;
-  border-bottom: 1px solid #e0e0e0;
+  border-bottom: 2px solid rgba(255, 107, 74, 0.3);
 }
 
 .condicionalHeader span {
   font-weight: 600;
-  color: #667eea;
+  color: #FF6B4A;
   font-size: 0.9rem;
 }
 
@@ -555,8 +555,8 @@
 .emptyCondicionales {
   text-align: center;
   padding: 1.5rem;
-  color: #95a5a6;
-  background: #f8f9fa;
+  color: rgba(255, 255, 255, 0.95);
+  background: var(--momento-black-light, #2A2A2A);
   border-radius: 6px;
   border: 1px dashed #e0e0e0;
   font-size: 0.9rem;
@@ -599,7 +599,7 @@
 
 /* Estilos para flujos de consultar y cancelar */
 .flujoConsultaCard {
-  background: #f8f9fa;
+  background: var(--momento-black-light, #2A2A2A);
   border: 1px solid #dee2e6;
   border-radius: 8px;
   padding: 1.5rem;
@@ -624,15 +624,15 @@
 
 .textarea:focus {
   outline: none;
-  border-color: #667eea;
-  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+  border-color: #FF6B4A;
+  box-shadow: 0 0 0 3px rgba(255, 107, 74, 0.1);
 }
 
 /* Sección de prueba */
 .pruebaSection {
   margin-top: 2rem;
   padding: 1.5rem;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #FF6B4A 0%, #FF8A6E 100%);
   border-radius: 12px;
   text-align: center;
 }
@@ -645,8 +645,8 @@
 }
 
 .btnPrueba {
-  background: white;
-  color: #667eea;
+  background: var(--momento-black, #1A1A1A);
+  color: #FF6B4A;
   border: none;
   padding: 1rem 2rem;
   border-radius: 8px;

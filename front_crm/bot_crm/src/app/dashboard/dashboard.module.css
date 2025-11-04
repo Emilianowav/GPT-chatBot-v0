@@ -12,7 +12,7 @@
   align-items: center;
   gap: 8px;
   padding: 12px 24px;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #FF6B4A 0%, #FF8A6E 100%);
   color: white;
   border: none;
   border-radius: 8px;
@@ -20,12 +20,12 @@
   font-weight: 600;
   cursor: pointer;
   transition: all 0.3s ease;
-  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+  box-shadow: 0 4px 12px rgba(255, 107, 74, 0.3);
 }
 
 .btnUsuarios:hover {
   transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+  box-shadow: 0 6px 20px rgba(255, 107, 74, 0.4);
 }
 
 .btnUsuarios svg {
@@ -41,19 +41,22 @@
 }
 
 .statCard {
-  background: white;
-  border-radius: 12px;
+  background: linear-gradient(135deg, var(--momento-orange, #FF6B4A) 0%, var(--momento-orange-light, #FF8A6E) 100%);
+  border: none;
+  border-radius: 16px;
   padding: 24px;
   display: flex;
   align-items: center;
   gap: 16px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  box-shadow: 0 4px 12px rgba(255, 107, 74, 0.3);
   transition: all 0.3s ease;
+  color: white;
 }
 
 .statCard:hover {
   transform: translateY(-4px);
-  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12);
+  box-shadow: 0 8px 24px rgba(255, 107, 74, 0.4);
+  border-color: var(--momento-orange-light, #FF8A6E);
 }
 
 .statIcon {
@@ -63,21 +66,25 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: rgba(255, 255, 255, 0.2);
+  border: 2px solid rgba(255, 255, 255, 0.3);
   border-radius: 12px;
+  color: white;
 }
 
 .statContent h3 {
   font-size: 14px;
-  color: #666;
+  color: rgba(255, 255, 255, 0.95);
   margin-bottom: 8px;
   font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
 }
 
 .statNumber {
   font-size: 32px;
   font-weight: 700;
-  color: #333;
+  color: var(--momento-white, #FFFFFF);
   margin: 0;
 }
 
@@ -90,16 +97,18 @@
 
 /* Sections */
 .section {
-  background: white;
-  border-radius: 12px;
+  background: linear-gradient(135deg, var(--momento-orange, #FF6B4A) 0%, var(--momento-orange-light, #FF8A6E) 100%);
+  border: none;
+  border-radius: 16px;
   padding: 24px;
   margin-bottom: 24px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  box-shadow: 0 4px 12px rgba(255, 107, 74, 0.3);
+  color: white;
 }
 
 .section h2 {
   font-size: 20px;
-  color: #333;
+  color: var(--momento-white, #FFFFFF);
   margin-bottom: 20px;
   font-weight: 600;
 }
@@ -115,36 +124,40 @@
 }
 
 .table thead {
-  background-color: #f5f5f5;
+  background-color: rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
 }
 
 .table th {
   padding: 12px 16px;
   text-align: left;
   font-size: 14px;
-  font-weight: 600;
-  color: #666;
-  border-bottom: 2px solid #e0e0e0;
+  font-weight: 700;
+  color: white;
+  border-bottom: 2px solid rgba(255, 255, 255, 0.2);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
 }
 
 .table td {
   padding: 12px 16px;
   font-size: 14px;
-  color: #333;
-  border-bottom: 1px solid #f0f0f0;
+  color: white;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.15);
 }
 
 .table tbody tr:hover {
-  background-color: #f9f9f9;
+  background-color: rgba(255, 255, 255, 0.1);
 }
 
 /* Empresa Info */
 .empresaInfo {
-  background: white;
-  border-radius: 12px;
+  background: var(--momento-black, #1A1A1A);
+  border: 2px solid var(--momento-orange, #FF6B4A);
+  border-radius: 16px;
   padding: 24px;
   margin-bottom: 24px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  box-shadow: 0 4px 12px rgba(255, 107, 74, 0.2);
 }
 
 .empresaHeader {
@@ -156,13 +169,13 @@
 
 .empresaHeader h2 {
   font-size: 24px;
-  color: #333;
+  color: var(--momento-white, #FFFFFF);
   margin: 0;
 }
 
 .categoriaBadge {
   padding: 6px 16px;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #FF6B4A 0%, #FF8A6E 100%);
   color: white;
   border-radius: 20px;
   font-size: 14px;
@@ -178,13 +191,13 @@
 .empresaDetails p {
   margin: 0;
   font-size: 15px;
-  color: #666;
+  color: rgba(255, 255, 255, 0.95);
 }
 
 /* Stats Subtext */
 .statSubtext {
   font-size: 12px;
-  color: #999;
+  color: rgba(255, 255, 255, 0.85);
   margin-top: 4px;
   display: block;
 }
@@ -211,7 +224,7 @@
 
 .bar {
   width: 32px;
-  background: linear-gradient(180deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(180deg, #FF6B4A 0%, #FF8A6E 100%);
   border-radius: 4px 4px 0 0;
   position: relative;
   transition: all 0.3s ease;
@@ -234,7 +247,7 @@
 
 .barLabel {
   font-size: 11px;
-  color: #666;
+  color: rgba(255, 255, 255, 0.9);
   text-align: center;
   white-space: nowrap;
 }
@@ -253,7 +266,7 @@
   width: 48px;
   height: 48px;
   border: 4px solid #f3f3f3;
-  border-top: 4px solid #667eea;
+  border-top: 4px solid #FF6B4A;
   border-radius: 50%;
   animation: spin 1s linear infinite;
 }
@@ -265,7 +278,7 @@
 
 .loading p {
   font-size: 16px;
-  color: #666;
+  color: rgba(255, 255, 255, 0.9);
 }
 
 /* Error */

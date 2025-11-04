@@ -4,7 +4,7 @@
   padding: 2rem;
   max-width: 100%;
   margin: 0;
-  background: #f8f9fa;
+  background: var(--momento-black-light, #2A2A2A);
   min-height: calc(100vh - 200px);
 }
 
@@ -13,7 +13,7 @@
   justify-content: center;
   align-items: center;
   min-height: 400px;
-  color: #666;
+  color: rgba(255, 255, 255, 0.95);
   font-size: 1.1rem;
 }
 
@@ -28,12 +28,12 @@
 
 .header h1 {
   font-size: 2rem;
-  color: #2c3e50;
+  color: var(--momento-white, #FFFFFF);
   margin-bottom: 0.5rem;
 }
 
 .header p {
-  color: #7f8c8d;
+  color: rgba(255, 255, 255, 0.95);
   font-size: 1.1rem;
 }
 
@@ -84,21 +84,21 @@
 }
 
 .horarioCard {
-  background: white;
+  background: var(--momento-black, #1A1A1A);
   border-radius: 16px;
   padding: 1.5rem;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 4px 12px rgba(255, 107, 74, 0.2);
   transition: all 0.3s;
   border: 2px solid transparent;
 }
 
 .horarioCard:hover {
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-  border-color: #667eea;
+  border-color: #FF6B4A;
 }
 
 .horarioCard.inactivo {
-  background: #f8f9fa;
+  background: var(--momento-black-light, #2A2A2A);
   opacity: 0.7;
 }
 
@@ -114,7 +114,7 @@
 
 .diaInfo h3 {
   font-size: 1.3rem;
-  color: #2c3e50;
+  color: var(--momento-white, #FFFFFF);
   margin: 0;
 }
 
@@ -151,13 +151,13 @@
   width: 22px;
   left: 4px;
   bottom: 4px;
-  background-color: white;
+  background-color: var(--momento-black, #1A1A1A);
   transition: 0.4s;
   border-radius: 50%;
 }
 
 input:checked + .slider {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #FF6B4A 0%, #FF8A6E 100%);
 }
 
 input:checked + .slider:before {
@@ -178,7 +178,7 @@ input:checked + .slider:before {
 
 .horarioRow label {
   font-weight: 600;
-  color: #2c3e50;
+  color: var(--momento-white, #FFFFFF);
   font-size: 0.9rem;
 }
 
@@ -191,7 +191,7 @@ input:checked + .slider:before {
 .timeInputs input[type="time"] {
   flex: 1;
   padding: 0.75rem;
-  border: 2px solid #e0e0e0;
+  border: 2px solid rgba(255, 107, 74, 0.3);
   border-radius: 8px;
   font-size: 1rem;
   transition: all 0.2s;
@@ -199,12 +199,12 @@ input:checked + .slider:before {
 
 .timeInputs input[type="time"]:focus {
   outline: none;
-  border-color: #667eea;
-  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+  border-color: #FF6B4A;
+  box-shadow: 0 0 0 3px rgba(255, 107, 74, 0.1);
 }
 
 .timeInputs span {
-  color: #7f8c8d;
+  color: rgba(255, 255, 255, 0.95);
   font-size: 0.9rem;
 }
 
@@ -214,7 +214,7 @@ input:checked + .slider:before {
   align-items: center;
   justify-content: center;
   padding: 2rem;
-  color: #95a5a6;
+  color: rgba(255, 255, 255, 0.95);
   gap: 0.5rem;
 }
 
@@ -238,7 +238,7 @@ input:checked + .slider:before {
   align-items: center;
   gap: 0.5rem;
   padding: 1rem 2rem;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #FF6B4A 0%, #FF8A6E 100%);
   color: white;
   border: none;
   border-radius: 8px;
@@ -246,12 +246,12 @@ input:checked + .slider:before {
   font-size: 1.1rem;
   cursor: pointer;
   transition: all 0.3s;
-  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+  box-shadow: 0 4px 12px rgba(255, 107, 74, 0.3);
 }
 
 .btnGuardar:hover {
   transform: translateY(-2px);
-  box-shadow: 0 6px 16px rgba(102, 126, 234, 0.4);
+  box-shadow: 0 6px 16px rgba(255, 107, 74, 0.4);
 }
 
 .btnGuardar:active {
