@@ -121,12 +121,15 @@ async function enviarNotificacion(empresaId: string, notif: any) {
     }
 
     // Obtener turnos según el momento
+    console.log(`🔍 Buscando turnos para notificación: ${notif.tipo} - ${notif.momento}`);
     const turnos = await obtenerTurnosParaNotificacion(empresaId, notif);
 
     if (turnos.length === 0) {
-      console.log(`ℹ️ No hay turnos para enviar notificación`);
+      console.log(`ℹ️ No hay turnos para enviar notificación (${notif.tipo})`);
       return;
     }
+    
+    console.log(`✅ Encontrados ${turnos.length} turno(s) para notificar`);
 
     // Agrupar turnos por cliente
     const turnosPorCliente = new Map<string, any[]>();
@@ -202,6 +205,10 @@ async function obtenerTurnosParaNotificacion(empresaId: string, notif: any) {
     const horasMs = notif.horasAntesTurno * 60 * 60 * 1000;
     fechaInicio = new Date(ahora.getTime() + horasMs - 5 * 60 * 1000); // -5 min
     fechaFin = new Date(ahora.getTime() + horasMs + 5 * 60 * 1000);    // +5 min
+    
+    console.log(`   📅 Rango de búsqueda (${notif.horasAntesTurno}h antes):`);
+    console.log(`      Desde: ${fechaInicio.toLocaleString('es-AR', { timeZone: 'America/Argentina/Buenos_Aires' })}`);
+    console.log(`      Hasta: ${fechaFin.toLocaleString('es-AR', { timeZone: 'America/Argentina/Buenos_Aires' })}`);
     
   } else if (notif.momento === 'dia_antes_turno' && notif.diasAntes && notif.horaEnvioDiaAntes) {
     // ✅ NUEVO: X días antes a una hora específica
@@ -282,11 +289,15 @@ async function obtenerTurnosParaNotificacion(empresaId: string, notif: any) {
   // Aplicar límite si está configurado
   const limite = notif.filtros?.limite || 1000;
 
+  console.log(`   🔎 Query MongoDB:`, JSON.stringify(query, null, 2));
+
   let turnos = await TurnoModel.find(query)
     .populate('agenteId')
     .populate('clienteId')
     .sort({ fechaInicio: 1 })
     .limit(limite);
+  
+  console.log(`   📊 Turnos encontrados: ${turnos.length}`);
 
   // ✅ FILTRO 5: Hora mínima y máxima (post-query)
   if (notif.filtros?.horaMinima || notif.filtros?.horaMaxima) {

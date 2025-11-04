@@ -52,7 +52,8 @@
     "test:conversaciones": "tsx scripts/testConversacionesEndpoint.ts",
     "verificar:flujo-confirmacion": "tsx scripts/verificarFlujoConfirmacion.ts",
     "enviar:notificacion-prueba": "tsx scripts/enviarNotificacionPrueba.ts",
-    "diagnosticar:notificaciones": "tsx scripts/diagnosticarNotificaciones.ts"
+    "diagnosticar:notificaciones": "tsx scripts/diagnosticarNotificaciones.ts",
+    "diagnosticar:notif-especifica": "tsx src/scripts/diagnosticarNotificacionEspecifica.ts"
   },
   "keywords": [],
   "author": "",
