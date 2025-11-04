@@ -16,16 +16,25 @@ interface DatosContactoWhatsApp {
 export async function buscarOCrearContacto(
   datos: DatosContactoWhatsApp
 ): Promise<IContactoEmpresa> {
+  console.log('🔍 [buscarOCrearContacto] Iniciando con datos:', datos);
+  
   const { telefono, profileName, empresaId, empresaTelefono } = datos;
 
   // Normalizar teléfono (sin +, espacios, guiones)
   const telefonoNormalizado = normalizarTelefono(telefono);
+  console.log('📞 [buscarOCrearContacto] Teléfono normalizado:', {
+    original: telefono,
+    normalizado: telefonoNormalizado
+  });
 
   // Buscar contacto existente
+  console.log('🔍 [buscarOCrearContacto] Buscando contacto existente...');
   let contacto = await ContactoEmpresaModel.findOne({
     empresaId,
     telefono: telefonoNormalizado
   });
+  
+  console.log('🔍 [buscarOCrearContacto] Resultado búsqueda:', contacto ? 'ENCONTRADO' : 'NO ENCONTRADO');
 
   if (contacto) {
     console.log('✅ Contacto existente encontrado:', {
@@ -49,7 +58,7 @@ export async function buscarOCrearContacto(
   }
 
   // Contacto no existe, crear uno nuevo
-  console.log('🆕 Creando nuevo contacto desde WhatsApp:', {
+  console.log('🆕 [buscarOCrearContacto] Creando nuevo contacto desde WhatsApp:', {
     telefonoOriginal: telefono,
     telefonoNormalizado,
     profileName,
@@ -57,6 +66,7 @@ export async function buscarOCrearContacto(
   });
 
   // Extraer nombre y apellido del profileName
+  console.log('📝 [buscarOCrearContacto] Extrayendo nombre y apellido...');
   let nombre = 'Cliente';
   let apellido = 'WhatsApp';
 
@@ -72,6 +82,7 @@ export async function buscarOCrearContacto(
   }
 
   // Crear contacto
+  console.log('💾 [buscarOCrearContacto] Creando documento de contacto...');
   contacto = new ContactoEmpresaModel({
     empresaId,
     telefono: telefonoNormalizado,
@@ -118,7 +129,14 @@ export async function buscarOCrearContacto(
     }
   });
 
-  await contacto.save();
+  console.log('💾 [buscarOCrearContacto] Guardando contacto en BD...');
+  try {
+    await contacto.save();
+    console.log('✅ [buscarOCrearContacto] Contacto guardado exitosamente');
+  } catch (errorGuardado) {
+    console.error('❌ [buscarOCrearContacto] Error al guardar:', errorGuardado);
+    throw errorGuardado;
+  }
 
   console.log('✅ Contacto creado exitosamente:', {
     id: contacto._id,

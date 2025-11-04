@@ -51,18 +51,35 @@ export const recibirMensaje = async (req: Request, res: Response, next: NextFunc
     console.log('🏢 Empresa encontrada:', { nombre: empresa.nombre, telefono: empresa.telefono });
 
     // 🆕 SISTEMA UNIFICADO: Buscar o crear contacto (reemplaza usuario + cliente)
-    const contacto = await buscarOCrearContacto({
+    console.log('🔍 [DEBUG] Llamando a buscarOCrearContacto con:', {
       telefono: telefonoCliente,
       profileName: profileName ?? undefined,
       empresaId: empresa.nombre,
       empresaTelefono: telefonoEmpresa
     });
     
+    let contacto;
+    try {
+      contacto = await buscarOCrearContacto({
+        telefono: telefonoCliente,
+        profileName: profileName ?? undefined,
+        empresaId: empresa.nombre,
+        empresaTelefono: telefonoEmpresa
+      });
+      
+      console.log('✅ [DEBUG] buscarOCrearContacto exitoso');
+    } catch (errorContacto) {
+      console.error('❌ [DEBUG] Error en buscarOCrearContacto:', errorContacto);
+      console.error('❌ [DEBUG] Stack:', (errorContacto as Error).stack);
+      throw errorContacto;
+    }
+    
     console.log('👤 Contacto obtenido/creado:', { 
       id: contacto._id, 
       nombre: contacto.nombre,
       apellido: contacto.apellido,
       empresaId: contacto.empresaId,
+      telefono: contacto.telefono,
       interacciones: contacto.metricas.interacciones 
     });
 
