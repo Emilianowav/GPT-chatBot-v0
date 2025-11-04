@@ -1,7 +1,7 @@
 'use client';
 
 // 📅 Página principal del módulo de Calendario/Turnos
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import ModuleGuard from '@/components/ModuleGuard';
@@ -23,6 +23,7 @@ export default function CalendarioPage() {
   const [modalNuevoTurno, setModalNuevoTurno] = useState(false);
   const [vistaCalendario, setVistaCalendario] = useState(true); // true = calendario, false = lista
   const [mesActual, setMesActual] = useState(new Date());
+  const [fechaSeleccionada, setFechaSeleccionada] = useState<Date | null>(null);
   const empresaId = typeof window !== 'undefined' ? localStorage.getItem('empresa_id') || '' : '';
 
   useEffect(() => {
@@ -92,6 +93,25 @@ export default function CalendarioPage() {
     await actualizarEstado(turnoId, estado);
     recargarTurnosMes();
   };
+
+  // Handler para cuando se hace click en un día del calendario
+  const handleClickDia = useCallback((fecha: Date) => {
+    console.log('📅 Click en día:', fecha.toLocaleDateString('es-AR'));
+    setFechaSeleccionada(fecha);
+    setVistaCalendario(false); // Cambiar a vista lista
+  }, []);
+
+  // Filtrar turnos por fecha seleccionada
+  const turnosFiltrados = useMemo(() => {
+    if (!fechaSeleccionada) return turnos;
+    
+    return turnos.filter(turno => {
+      const fechaTurno = new Date(turno.fechaInicio);
+      return fechaTurno.getDate() === fechaSeleccionada.getDate() &&
+             fechaTurno.getMonth() === fechaSeleccionada.getMonth() &&
+             fechaTurno.getFullYear() === fechaSeleccionada.getFullYear();
+    });
+  }, [turnos, fechaSeleccionada]);
 
   if (authLoading) {
     return (
@@ -201,11 +221,21 @@ export default function CalendarioPage() {
               {/* Turnos / Calendario */}
               <div className={styles.turnosSection}>
                 <div className={styles.sectionHeader}>
-                  <h2>{vistaCalendario ? 'Calendario Mensual' : 'Turnos del Día'}</h2>
+                  <h2>
+                    {vistaCalendario 
+                      ? 'Calendario Mensual' 
+                      : fechaSeleccionada 
+                        ? `Turnos del ${fechaSeleccionada.toLocaleDateString('es-AR', { day: 'numeric', month: 'long', year: 'numeric' })}`
+                        : 'Turnos del Día'
+                    }
+                  </h2>
                   <div style={{ display: 'flex', gap: '0.5rem' }}>
                     <button 
                       className={`${styles.btnToggle} ${vistaCalendario ? styles.btnToggleActive : ''}`}
-                      onClick={() => setVistaCalendario(true)}
+                      onClick={() => {
+                        setVistaCalendario(true);
+                        setFechaSeleccionada(null);
+                      }}
                       title="Vista Calendario"
                     >
                       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -218,7 +248,10 @@ export default function CalendarioPage() {
                     </button>
                     <button 
                       className={`${styles.btnToggle} ${!vistaCalendario ? styles.btnToggleActive : ''}`}
-                      onClick={() => setVistaCalendario(false)}
+                      onClick={() => {
+                        setVistaCalendario(false);
+                        setFechaSeleccionada(null);
+                      }}
                       title="Vista Lista"
                     >
                       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -256,6 +289,7 @@ export default function CalendarioPage() {
                     agentes={agentes.map(a => ({ id: a._id, nombre: a.nombre, apellido: a.apellido }))}
                     mesInicial={mesActual}
                     onCambiarMes={handleCambiarMes}
+                    onClickDia={handleClickDia}
                     onSeleccionarTurno={(turno) => {
                       console.log('Turno seleccionado:', turno);
                       // Aquí puedes abrir un modal con detalles del turno
@@ -263,7 +297,7 @@ export default function CalendarioPage() {
                   />
                 ) : (
                   <ListaTurnos 
-                    turnos={turnos}
+                    turnos={turnosFiltrados}
                     onCancelar={handleCancelarTurno}
                     onActualizarEstado={handleActualizarEstado}
                   />

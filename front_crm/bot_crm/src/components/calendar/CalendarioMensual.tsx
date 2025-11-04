@@ -11,6 +11,7 @@ interface CalendarioMensualProps {
   agentes: any[];
   onSeleccionarTurno?: (turno: Turno) => void;
   onCambiarMes?: (primerDia: Date, ultimoDia: Date) => void;
+  onClickDia?: (fecha: Date) => void;
   mesInicial?: Date;
 }
 
@@ -19,6 +20,7 @@ export default function CalendarioMensual({
   agentes, 
   onSeleccionarTurno,
   onCambiarMes,
+  onClickDia,
   mesInicial
 }: CalendarioMensualProps) {
   const [mesActual, setMesActual] = useState(mesInicial || new Date());
@@ -192,6 +194,11 @@ export default function CalendarioMensual({
             <div
               key={index}
               className={`${styles.dia} ${esVacio ? styles.diaVacio : ''} ${esDiaHoy ? styles.diaHoy : ''} ${turnosDelDia.length > 0 ? styles.diaConTurnos : ''}`}
+              onClick={() => {
+                if (!esVacio && onClickDia) {
+                  onClickDia(fecha);
+                }
+              }}
               onMouseEnter={() => {
                 if (!esVacio && turnosDelDia.length > 0) {
                   setDiaHover(fecha.getDate());
@@ -199,6 +206,7 @@ export default function CalendarioMensual({
                 }
               }}
               onMouseLeave={() => setDiaHover(null)}
+              style={{ cursor: !esVacio ? 'pointer' : 'default' }}
             >
               {!esVacio && (
                 <>
