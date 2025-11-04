@@ -217,27 +217,31 @@ export async function incrementarMetricas(
     interacciones?: number;
   }
 ): Promise<void> {
-  const update: any = {
+  const updateInc: any = {};
+  const updateSet: any = {
     'metricas.ultimaInteraccion': new Date()
   };
 
   if (metricas.mensajesEnviados) {
-    update['metricas.mensajesEnviados'] = metricas.mensajesEnviados;
+    updateInc['metricas.mensajesEnviados'] = metricas.mensajesEnviados;
   }
   if (metricas.mensajesRecibidos) {
-    update['metricas.mensajesRecibidos'] = metricas.mensajesRecibidos;
+    updateInc['metricas.mensajesRecibidos'] = metricas.mensajesRecibidos;
   }
   if (metricas.mediaRecibidos) {
-    update['metricas.mediaRecibidos'] = metricas.mediaRecibidos;
+    updateInc['metricas.mediaRecibidos'] = metricas.mediaRecibidos;
   }
   if (metricas.tokensConsumidos) {
-    update['metricas.tokensConsumidos'] = metricas.tokensConsumidos;
+    updateInc['metricas.tokensConsumidos'] = metricas.tokensConsumidos;
   }
   if (metricas.interacciones) {
-    update['metricas.interacciones'] = metricas.interacciones;
+    updateInc['metricas.interacciones'] = metricas.interacciones;
   }
 
-  await ContactoEmpresaModel.findByIdAndUpdate(contactoId, { $inc: update });
+  await ContactoEmpresaModel.findByIdAndUpdate(contactoId, { 
+    $inc: updateInc,
+    $set: updateSet
+  });
 }
 
 /**
