@@ -1,6 +1,6 @@
 // 💬 Controlador de Conversaciones
 import type { Request, Response } from 'express';
-import { UsuarioModel } from '../models/Usuario.js';
+import { ContactoEmpresaModel } from '../models/ContactoEmpresa.js';
 
 /**
  * GET /api/conversaciones/:empresaId
@@ -19,39 +19,31 @@ export const getConversaciones = async (req: Request, res: Response): Promise<vo
       return;
     }
 
-    // Obtener usuarios con historial de mensajes
-    const usuarios = await UsuarioModel.find({ 
+    // Obtener contactos con historial de mensajes
+    const contactos = await ContactoEmpresaModel.find({ 
       empresaId,
-      historial: { $exists: true, $ne: [] }
-    }).sort({ ultimaInteraccion: -1 });
+      'conversaciones.historial': { $exists: true, $ne: [] }
+    }).sort({ 'metricas.ultimaInteraccion': -1 });
 
-    const conversaciones = usuarios.map(usuario => {
-      const ultimoMensaje = usuario.historial && usuario.historial.length > 0 
-        ? usuario.historial[usuario.historial.length - 1]
-        : null;
-
-      // Parsear el último mensaje si es string JSON
-      let mensajeParsed = null;
-      if (ultimoMensaje) {
-        try {
-          mensajeParsed = typeof ultimoMensaje === 'string' ? JSON.parse(ultimoMensaje) : ultimoMensaje;
-        } catch (e) {
-          mensajeParsed = { content: ultimoMensaje, role: 'user', timestamp: usuario.ultimaInteraccion };
-        }
-      }
+    const conversaciones = contactos.map(contacto => {
+      const historial = contacto.conversaciones?.historial || [];
+      const ultimoMensaje = historial.length > 0 ? historial[historial.length - 1] : null;
+      
+      // Determinar el rol del último mensaje (par = user, impar = assistant)
+      const ultimoRol = historial.length > 0 && historial.length % 2 === 0 ? 'assistant' : 'user';
 
       return {
-        id: usuario._id,
-        nombre: usuario.nombre || 'Sin nombre',
-        numero: usuario.numero,
-        avatar: usuario.nombre ? usuario.nombre.charAt(0).toUpperCase() : 'U',
-        ultimoMensaje: mensajeParsed ? {
-          texto: mensajeParsed.content || mensajeParsed,
-          rol: mensajeParsed.role || 'user',
-          fecha: mensajeParsed.timestamp || usuario.ultimaInteraccion
+        id: contacto._id,
+        nombre: `${contacto.nombre} ${contacto.apellido}`.trim() || 'Sin nombre',
+        numero: contacto.telefono,
+        avatar: contacto.nombre ? contacto.nombre.charAt(0).toUpperCase() : 'U',
+        ultimoMensaje: ultimoMensaje ? {
+          texto: ultimoMensaje,
+          rol: ultimoRol,
+          fecha: contacto.conversaciones?.ultimaConversacion || contacto.metricas.ultimaInteraccion
         } : null,
-        ultimaInteraccion: usuario.ultimaInteraccion,
-        interacciones: usuario.interacciones || 0,
+        ultimaInteraccion: contacto.metricas.ultimaInteraccion,
+        interacciones: contacto.metricas.interacciones || 0,
         noLeidos: 0 // TODO: implementar contador de no leídos
       };
     });
@@ -86,54 +78,35 @@ export const getHistorialUsuario = async (req: Request, res: Response): Promise<
       return;
     }
 
-    const usuario = await UsuarioModel.findById(usuarioId);
+    const contacto = await ContactoEmpresaModel.findById(usuarioId);
     
-    if (!usuario) {
+    if (!contacto) {
       res.status(404).json({
         success: false,
-        message: 'Usuario no encontrado'
+        message: 'Contacto no encontrado'
       });
       return;
     }
 
-    if (usuario.empresaId !== empresaId) {
+    if (contacto.empresaId !== empresaId) {
       res.status(403).json({
         success: false,
-        message: 'Este usuario no pertenece a tu empresa'
+        message: 'Este contacto no pertenece a tu empresa'
       });
       return;
     }
 
-    // Formatear mensajes
-    const mensajes = (usuario.historial || []).map((msg: any, index: number) => {
-      // Parsear mensaje si es string JSON
-      let mensajeParsed: any = msg;
-      if (typeof msg === 'string') {
-        try {
-          mensajeParsed = JSON.parse(msg);
-        } catch (e) {
-          mensajeParsed = { content: msg, role: 'user', timestamp: new Date().toISOString() };
-        }
-      }
-
-      // Determinar el rol basado en el contenido si no está definido
-      let rol = mensajeParsed.role || 'user';
-      const contenido = mensajeParsed.content || msg;
-      
-      // Si el contenido empieza con "Asistente:", "Bot:", "AI:", es del asistente
-      if (typeof contenido === 'string') {
-        if (/^(Asistente|Bot|AI|Assistant):/i.test(contenido)) {
-          rol = 'assistant';
-        } else if (/^(Cliente|Usuario|User):/i.test(contenido)) {
-          rol = 'user';
-        }
-      }
+    // Formatear mensajes del historial
+    const historial = contacto.conversaciones?.historial || [];
+    const mensajes = historial.map((msg: string, index: number) => {
+      // Determinar el rol: índice par = user, índice impar = assistant
+      const rol = index % 2 === 0 ? 'user' : 'assistant';
 
       return {
-        id: mensajeParsed._id || `${usuario._id}-msg-${index}`,
-        contenido: contenido,
+        id: `${contacto._id}-msg-${index}`,
+        contenido: msg,
         rol: rol, // 'user' o 'assistant'
-        fecha: mensajeParsed.timestamp || usuario.ultimaInteraccion,
+        fecha: contacto.conversaciones?.ultimaConversacion || contacto.metricas.ultimaInteraccion,
         leido: true
       };
     });
@@ -141,12 +114,12 @@ export const getHistorialUsuario = async (req: Request, res: Response): Promise<
     res.status(200).json({
       success: true,
       usuario: {
-        id: usuario._id,
-        nombre: usuario.nombre || 'Sin nombre',
-        numero: usuario.numero,
-        avatar: usuario.nombre ? usuario.nombre.charAt(0).toUpperCase() : 'U',
-        ultimaInteraccion: usuario.ultimaInteraccion,
-        interacciones: usuario.interacciones
+        id: contacto._id,
+        nombre: `${contacto.nombre} ${contacto.apellido}`.trim() || 'Sin nombre',
+        numero: contacto.telefono,
+        avatar: contacto.nombre ? contacto.nombre.charAt(0).toUpperCase() : 'U',
+        ultimaInteraccion: contacto.metricas.ultimaInteraccion,
+        interacciones: contacto.metricas.interacciones
       },
       mensajes
     });
@@ -185,41 +158,34 @@ export const buscarConversaciones = async (req: Request, res: Response): Promise
       return;
     }
 
-    const usuarios = await UsuarioModel.find({
+    const contactos = await ContactoEmpresaModel.find({
       empresaId,
       $or: [
         { nombre: { $regex: q, $options: 'i' } },
-        { numero: { $regex: q, $options: 'i' } }
+        { apellido: { $regex: q, $options: 'i' } },
+        { telefono: { $regex: q, $options: 'i' } }
       ]
-    }).sort({ ultimaInteraccion: -1 }).limit(20);
+    }).sort({ 'metricas.ultimaInteraccion': -1 }).limit(20);
 
-    const conversaciones = usuarios.map(usuario => {
-      const ultimoMensaje = usuario.historial && usuario.historial.length > 0 
-        ? usuario.historial[usuario.historial.length - 1]
-        : null;
-
-      // Parsear el último mensaje si es string JSON
-      let mensajeParsed = null;
-      if (ultimoMensaje) {
-        try {
-          mensajeParsed = typeof ultimoMensaje === 'string' ? JSON.parse(ultimoMensaje) : ultimoMensaje;
-        } catch (e) {
-          mensajeParsed = { content: ultimoMensaje, role: 'user', timestamp: usuario.ultimaInteraccion };
-        }
-      }
+    const conversaciones = contactos.map(contacto => {
+      const historial = contacto.conversaciones?.historial || [];
+      const ultimoMensaje = historial.length > 0 ? historial[historial.length - 1] : null;
+      
+      // Determinar el rol del último mensaje (par = user, impar = assistant)
+      const ultimoRol = historial.length > 0 && historial.length % 2 === 0 ? 'assistant' : 'user';
 
       return {
-        id: usuario._id,
-        nombre: usuario.nombre || 'Sin nombre',
-        numero: usuario.numero,
-        avatar: usuario.nombre ? usuario.nombre.charAt(0).toUpperCase() : 'U',
-        ultimoMensaje: mensajeParsed ? {
-          texto: mensajeParsed.content || mensajeParsed,
-          rol: mensajeParsed.role || 'user',
-          fecha: mensajeParsed.timestamp || usuario.ultimaInteraccion
+        id: contacto._id,
+        nombre: `${contacto.nombre} ${contacto.apellido}`.trim() || 'Sin nombre',
+        numero: contacto.telefono,
+        avatar: contacto.nombre ? contacto.nombre.charAt(0).toUpperCase() : 'U',
+        ultimoMensaje: ultimoMensaje ? {
+          texto: ultimoMensaje,
+          rol: ultimoRol,
+          fecha: contacto.conversaciones?.ultimaConversacion || contacto.metricas.ultimaInteraccion
         } : null,
-        ultimaInteraccion: usuario.ultimaInteraccion,
-        interacciones: usuario.interacciones || 0
+        ultimaInteraccion: contacto.metricas.ultimaInteraccion,
+        interacciones: contacto.metricas.interacciones || 0
       };
     });
 
