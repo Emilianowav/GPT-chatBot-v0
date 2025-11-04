@@ -326,7 +326,7 @@ export const menuPrincipalFlow: Flow = {
         console.log('📝 [Reserva] Creando turno con datos:', {
           empresaId,
           agenteId: agente._id,
-          contactoId: contacto._id.toString(),
+          clienteId: contacto._id.toString(),
           fechaInicio,
           fechaFin,
           datos: {
@@ -339,7 +339,7 @@ export const menuPrincipalFlow: Flow = {
         const nuevoTurno = await TurnoModel.create({
           empresaId,
           agenteId: agente._id,
-          contactoId: contacto._id.toString(),
+          clienteId: contacto._id.toString(),
           fechaInicio,
           fechaFin,
           duracion: 30,
@@ -475,7 +475,7 @@ async function consultarTurnos(context: FlowContext): Promise<FlowResult> {
     
     // Buscar turnos activos
     const turnos = await TurnoModel.find({
-      contactoId: contacto._id.toString(),
+      clienteId: contacto._id.toString(),
       empresaId,
       estado: { $in: ['pendiente', 'confirmado'] },
       fechaInicio: { $gte: new Date() }
@@ -548,7 +548,7 @@ async function iniciarCancelacion(context: FlowContext): Promise<FlowResult> {
     
     // Buscar turnos activos
     const turnos = await TurnoModel.find({
-      contactoId: contacto._id.toString(),
+      clienteId: contacto._id.toString(),
       empresaId,
       estado: { $in: ['pendiente', 'confirmado'] },
       fechaInicio: { $gte: new Date() }

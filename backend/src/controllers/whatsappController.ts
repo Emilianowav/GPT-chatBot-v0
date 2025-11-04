@@ -112,49 +112,65 @@ export const recibirMensaje = async (req: Request, res: Response, next: NextFunc
       if (handled && result?.success) {
         console.log('✅ Mensaje procesado por sistema de flujos');
         
-        // Actualizar métricas del contacto
-        await incrementarMetricas(contacto._id.toString(), {
-          mensajesRecibidos: 1,
-          mensajesEnviados: 1,
-          interacciones: 1
-        });
-        
-        // Verificar métricas
-        await verificarYEnviarResumen(telefonoEmpresa, empresa);
-        
-        // Enviar email si está configurado
-        if (empresa.email) {
-          await enviarConversacionPorEmail({
-            emailDestino: empresa.email,
-            empresa: empresa.nombre,
-            cliente: `${contacto.nombre} ${contacto.apellido}`,
-            numeroUsuario: telefonoCliente,
-            nombreUsuario: contacto.nombre,
-            mensajeCliente: mensaje,
-            respuestaAsistente: 'Procesado por sistema de flujos',
-            historial: contacto.conversaciones.historial,
+        // Actualizar métricas del contacto (no crítico)
+        try {
+          await incrementarMetricas(contacto._id.toString(), {
+            mensajesRecibidos: 1,
+            mensajesEnviados: 1,
+            interacciones: 1
           });
+        } catch (errorMetricas) {
+          console.error('⚠️ Error actualizando métricas (no crítico):', errorMetricas);
         }
         
-        // Notificar a clientes WebSocket
-        wss.clients.forEach((client) => {
-          if (client.readyState === 1 && (client as any).empresaId === empresa.nombre) {
-            client.send(JSON.stringify({
-              type: 'nuevo_mensaje',
-              empresaId: empresa.nombre,
-              contactoId: contacto._id.toString(),
-              data: {
-                contacto: {
-                  id: contacto._id.toString(),
-                  nombre: contacto.nombre,
-                  apellido: contacto.apellido,
-                  telefono: contacto.telefono,
-                  ultimaInteraccion: contacto.metricas.ultimaInteraccion
-                }
-              }
-            }));
+        // Verificar métricas (no crítico)
+        try {
+          await verificarYEnviarResumen(telefonoEmpresa, empresa);
+        } catch (errorResumen) {
+          console.error('⚠️ Error en resumen (no crítico):', errorResumen);
+        }
+        
+        // Enviar email si está configurado (no crítico)
+        if (empresa.email) {
+          try {
+            await enviarConversacionPorEmail({
+              emailDestino: empresa.email,
+              empresa: empresa.nombre,
+              cliente: `${contacto.nombre} ${contacto.apellido}`,
+              numeroUsuario: telefonoCliente,
+              nombreUsuario: contacto.nombre,
+              mensajeCliente: mensaje,
+              respuestaAsistente: 'Procesado por sistema de flujos',
+              historial: contacto.conversaciones.historial,
+            });
+          } catch (errorEmail) {
+            console.error('⚠️ Error enviando email (no crítico):', errorEmail);
           }
-        });
+        }
+        
+        // Notificar a clientes WebSocket (no crítico)
+        try {
+          wss.clients.forEach((client) => {
+            if (client.readyState === 1 && (client as any).empresaId === empresa.nombre) {
+              client.send(JSON.stringify({
+                type: 'nuevo_mensaje',
+                empresaId: empresa.nombre,
+                contactoId: contacto._id.toString(),
+                data: {
+                  contacto: {
+                    id: contacto._id.toString(),
+                    nombre: contacto.nombre,
+                    apellido: contacto.apellido,
+                    telefono: contacto.telefono,
+                    ultimaInteraccion: contacto.metricas.ultimaInteraccion
+                  }
+                }
+              }));
+            }
+          });
+        } catch (errorWS) {
+          console.error('⚠️ Error en WebSocket (no crítico):', errorWS);
+        }
         
         res.sendStatus(200);
         return;
@@ -177,15 +193,23 @@ export const recibirMensaje = async (req: Request, res: Response, next: NextFunc
       
     } catch (errorFlujos) {
       console.error('❌ Error en sistema de flujos:', errorFlujos);
+      console.error('❌ Stack trace:', (errorFlujos as Error).stack);
       
-      // Fallback: responder con mensaje genérico
-      await enviarMensajeWhatsAppTexto(
-        telefonoCliente,
-        'Disculpá, hubo un error al procesar tu mensaje. Por favor, intentá de nuevo más tarde.',
-        phoneNumberId
-      );
+      // Solo enviar mensaje de error si NO se envió respuesta exitosa
+      // (evita mensajes duplicados cuando el error ocurre después del procesamiento)
+      if (!res.headersSent) {
+        await enviarMensajeWhatsAppTexto(
+          telefonoCliente,
+          'Disculpá, hubo un error al procesar tu mensaje. Por favor, intentá de nuevo más tarde.',
+          phoneNumberId
+        );
+      } else {
+        console.log('⚠️ Error ocurrió después de enviar respuesta exitosa, no se envía mensaje de error');
+      }
       
-      res.sendStatus(200);
+      if (!res.headersSent) {
+        res.sendStatus(200);
+      }
       return;
     }
 

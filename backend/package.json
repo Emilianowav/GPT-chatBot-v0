@@ -34,7 +34,10 @@
     "test:manual": "tsx src/scripts/testingManual.ts",
     "debug:notificaciones": "tsx src/scripts/debugNotificaciones.ts",
     "verificar:clienteid": "tsx src/scripts/verificarClienteId.ts",
-    "migrar:clienteid-turnos": "tsx src/scripts/migrarClienteIdTurnos.ts"
+    "migrar:clienteid-turnos": "tsx src/scripts/migrarClienteIdTurnos.ts",
+    "reenviar:notificaciones": "tsx src/scripts/reenviarNotificaciones.ts",
+    "verificar:contacto-nuevo": "tsx src/scripts/verificarContactoNuevo.ts",
+    "test:crear-turno": "tsx src/scripts/testCrearTurno.ts"
   },
   "keywords": [],
   "author": "",
