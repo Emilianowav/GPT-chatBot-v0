@@ -5,6 +5,7 @@ import { ConfiguracionBotModel } from '../modules/calendar/models/ConfiguracionB
 import { TurnoModel } from '../modules/calendar/models/Turno.js';
 import { ClienteModel } from '../models/Cliente.js';
 import { AgenteModel } from '../modules/calendar/models/Agente.js';
+import { buscarOCrearClienteDesdeWhatsApp } from '../services/clienteAutoService.js';
 
 export const menuPrincipalFlow: Flow = {
   name: 'menu_principal',
@@ -280,26 +281,23 @@ export const menuPrincipalFlow: Flow = {
       
       // Crear turno en la BD
       try {
-        console.log('🔍 [Reserva] Buscando cliente:', { telefono, empresaId });
-        const cliente = await ClienteModel.findOne({
+        console.log('🔍 [Reserva] Buscando o creando cliente:', { telefono, empresaId });
+        
+        // ✅ USAR SERVICIO CORRECTO: buscarOCrearClienteDesdeWhatsApp
+        // Esto garantiza que el cliente se cree con nombre, apellido, profileName, etc.
+        const cliente = await buscarOCrearClienteDesdeWhatsApp({
           telefono,
-          empresaId
+          profileName: context.profileName || 'Cliente WhatsApp',
+          empresaId,
+          chatbotUserId: telefono // Usar teléfono como ID único
         });
         
-        if (!cliente) {
-          console.error('❌ [Reserva] Cliente no encontrado');
-          await enviarMensajeWhatsAppTexto(
-            telefono,
-            '❌ No se pudo encontrar tu información. Por favor, contactá con soporte.',
-            context.phoneNumberId
-          );
-          return {
-            success: true,
-            end: true
-          };
-        }
-        
-        console.log('✅ [Reserva] Cliente encontrado:', cliente._id);
+        console.log('✅ [Reserva] Cliente obtenido:', {
+          id: cliente._id,
+          nombre: cliente.nombre,
+          apellido: cliente.apellido,
+          telefono: cliente.telefono
+        });
         
         // Buscar un agente activo para asignar el turno
         console.log('🔍 [Reserva] Buscando agente activo para:', empresaId);
@@ -466,23 +464,19 @@ async function consultarTurnos(context: FlowContext): Promise<FlowResult> {
   const { telefono, empresaId } = context;
   
   try {
-    // Buscar cliente
-    const cliente = await ClienteModel.findOne({
+    // ✅ Buscar o crear cliente usando servicio correcto
+    const cliente = await buscarOCrearClienteDesdeWhatsApp({
       telefono,
-      empresaId
+      profileName: context.profileName || 'Cliente WhatsApp',
+      empresaId,
+      chatbotUserId: telefono
     });
     
-    if (!cliente) {
-      await enviarMensajeWhatsAppTexto(
-        telefono,
-        'No tenés turnos registrados.\n\nEscribí "menu" para volver al menú principal.',
-        context.phoneNumberId
-      );
-      return {
-        success: true,
-        end: true
-      };
-    }
+    console.log('✅ [Consulta] Cliente obtenido:', {
+      id: cliente._id,
+      nombre: cliente.nombre,
+      telefono: cliente.telefono
+    });
     
     // Buscar turnos activos
     const turnos = await TurnoModel.find({
@@ -544,23 +538,19 @@ async function iniciarCancelacion(context: FlowContext): Promise<FlowResult> {
   const { telefono, empresaId } = context;
   
   try {
-    // Buscar cliente
-    const cliente = await ClienteModel.findOne({
+    // ✅ Buscar o crear cliente usando servicio correcto
+    const cliente = await buscarOCrearClienteDesdeWhatsApp({
       telefono,
-      empresaId
+      profileName: context.profileName || 'Cliente WhatsApp',
+      empresaId,
+      chatbotUserId: telefono
     });
     
-    if (!cliente) {
-      await enviarMensajeWhatsAppTexto(
-        telefono,
-        'No tenés turnos para cancelar.\n\nEscribí "menu" para volver al menú principal.',
-        context.phoneNumberId
-      );
-      return {
-        success: true,
-        end: true
-      };
-    }
+    console.log('✅ [Cancelar] Cliente obtenido:', {
+      id: cliente._id,
+      nombre: cliente.nombre,
+      telefono: cliente.telefono
+    });
     
     // Buscar turnos activos
     const turnos = await TurnoModel.find({
