@@ -127,12 +127,13 @@ export const recibirMensaje = async (req: Request, res: Response, next: NextFunc
           }
         ];
         
-        // Agregar historial reciente (últimos 20 mensajes)
-        const historialReciente = contacto.conversaciones.historial.slice(-20);
-        for (let i = 0; i < historialReciente.length; i++) {
+        // Agregar TODO el historial (sin límite)
+        console.log(`📚 [GPT] Cargando historial completo: ${contacto.conversaciones.historial.length} mensajes`);
+        const historialCompleto = contacto.conversaciones.historial;
+        for (let i = 0; i < historialCompleto.length; i++) {
           historialGPT.push({
             role: i % 2 === 0 ? 'user' : 'assistant',
-            content: historialReciente[i]
+            content: historialCompleto[i]
           });
         }
         
@@ -141,6 +142,8 @@ export const recibirMensaje = async (req: Request, res: Response, next: NextFunc
           role: 'user',
           content: mensaje
         });
+        
+        console.log(`📊 [GPT] Total mensajes en contexto: ${historialGPT.length} (1 system + ${historialCompleto.length} historial + 1 actual)`);
         
         // Obtener respuesta de GPT
         const modelo = empresa.modelo || 'gpt-3.5-turbo';
