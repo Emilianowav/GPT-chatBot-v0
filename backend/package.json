@@ -51,7 +51,8 @@
     "ver:historial": "tsx scripts/verHistorialCompleto.ts",
     "test:conversaciones": "tsx scripts/testConversacionesEndpoint.ts",
     "verificar:flujo-confirmacion": "tsx scripts/verificarFlujoConfirmacion.ts",
-    "enviar:notificacion-prueba": "tsx scripts/enviarNotificacionPrueba.ts"
+    "enviar:notificacion-prueba": "tsx scripts/enviarNotificacionPrueba.ts",
+    "diagnosticar:notificaciones": "tsx scripts/diagnosticarNotificaciones.ts"
   },
   "keywords": [],
   "author": "",
