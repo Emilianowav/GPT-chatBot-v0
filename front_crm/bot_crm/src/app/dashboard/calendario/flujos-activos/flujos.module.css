@@ -1,10 +1,10 @@
-/* 🔄 Estilos para Gestión de Flujos del Chatbot */
+/* 🔄 Estilos para Gestión de Flujos del Chatbot - Ultra Moderno */
 
 .container {
-  padding: 2rem;
+  padding: 0;
   max-width: 100%;
   margin: 0;
-  background: #f8f9fa;
+  background: linear-gradient(135deg, #f5f7fa 0%, #e8ecf1 100%);
   min-height: calc(100vh - 200px);
 }
 
@@ -18,29 +18,38 @@
 }
 
 .header {
-  margin-bottom: 2rem;
+  padding: 2.5rem 3rem;
+  background: white;
+  border-bottom: 1px solid #e8ecf1;
+  margin-bottom: 0;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
 }
 
 .header h1 {
-  font-size: 2rem;
-  color: #2c3e50;
-  margin-bottom: 0.5rem;
+  font-size: 1.75rem;
+  color: #1a202c;
+  margin: 0;
+  font-weight: 700;
+  letter-spacing: -0.5px;
 }
 
 .header p {
-  color: #7f8c8d;
-  font-size: 1.1rem;
+  color: #718096;
+  font-size: 0.95rem;
+  margin: 0.25rem 0 0 0;
+  font-weight: 400;
 }
 
 .mensaje {
   padding: 1rem 1.5rem;
-  border-radius: 12px;
-  margin-bottom: 2rem;
+  border-radius: 8px;
+  margin: 1.5rem 3rem;
   font-weight: 500;
   display: flex;
   align-items: center;
   gap: 0.5rem;
   animation: slideIn 0.3s ease-out;
+  font-size: 0.875rem;
 }
 
 @keyframes slideIn {
@@ -55,43 +64,44 @@
 }
 
 .mensaje.success {
-  background: linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%);
-  color: #155724;
-  border: 2px solid #b1dfbb;
+  background: #f0fdf4;
+  color: #15803d;
+  border: 1px solid #86efac;
 }
 
 .mensaje.error {
-  background: linear-gradient(135deg, #f8d7da 0%, #f5c6cb 100%);
-  color: #721c24;
-  border: 2px solid #f1b0b7;
+  background: #fef2f2;
+  color: #b91c1c;
+  border: 1px solid #fca5a5;
 }
 
 .flujosGrid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
   gap: 1.5rem;
-  margin-bottom: 2rem;
+  padding: 2rem 3rem;
+  margin-bottom: 0;
 }
 
 .flujoCard {
   background: white;
-  border-radius: 16px;
+  border-radius: 12px;
   padding: 0;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  border: 2px solid transparent;
+  border: 1px solid #e8ecf1;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+  transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
   overflow: hidden;
 }
 
 .flujoCard:hover {
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
-  border-color: #667eea;
-  transform: translateY(-4px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+  border-color: #cbd5e1;
+  transform: translateY(-2px);
 }
 
 .flujoCard.inactivo {
   opacity: 0.6;
-  background: #f8f9fa;
+  background: #f8fafc;
 }
 
 .flujoCard.inactivo:hover {
@@ -103,8 +113,8 @@
   justify-content: space-between;
   align-items: flex-start;
   padding: 1.5rem;
-  background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
-  border-bottom: 2px solid #e5e7eb;
+  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+  border-bottom: 1px solid #e8ecf1;
 }
 
 .flujoInfo {
@@ -115,14 +125,16 @@
 }
 
 .icono {
-  font-size: 2.5rem;
+  font-size: 2.25rem;
   line-height: 1;
 }
 
 .flujoInfo h3 {
-  font-size: 1.3rem;
-  color: #2c3e50;
+  font-size: 1.125rem;
+  color: #1a202c;
   margin: 0 0 0.5rem 0;
+  font-weight: 700;
+  letter-spacing: -0.3px;
 }
 
 .badges {
@@ -133,21 +145,24 @@
 
 .badgePrioridad,
 .badgeTipo {
-  padding: 0.25rem 0.75rem;
-  border-radius: 12px;
-  font-size: 0.75rem;
-  font-weight: 600;
+  padding: 0.25rem 0.625rem;
+  border-radius: 9999px;
+  font-size: 0.6875rem;
+  font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.5px;
+  border: 1px solid;
 }
 
 .badgePrioridad {
   color: white;
+  border-color: transparent;
 }
 
 .badgeTipo {
-  background: #e5e7eb;
+  background: #f1f5f9;
   color: #64748b;
+  border-color: #e2e8f0;
 }
 
 /* Toggle Switch */
@@ -190,7 +205,7 @@
 }
 
 input:checked + .slider {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: #2563eb;
 }
 
 input:checked + .slider:before {
@@ -205,6 +220,7 @@ input:checked + .slider:before {
   color: #64748b;
   line-height: 1.6;
   margin-bottom: 1rem;
+  font-size: 0.875rem;
 }
 
 .estadoInfo {
@@ -216,83 +232,134 @@ input:checked + .slider:before {
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  padding: 0.75rem 1rem;
-  border-radius: 8px;
-  font-size: 0.9rem;
-  font-weight: 500;
+  padding: 0.625rem 0.875rem;
+  border-radius: 6px;
+  font-size: 0.8125rem;
+  font-weight: 600;
 }
 
 .estadoActivo {
-  background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%);
-  color: #065f46;
-  border: 1px solid #6ee7b7;
+  background: #f0fdf4;
+  color: #15803d;
+  border: 1px solid #86efac;
 }
 
 .estadoInactivo {
-  background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%);
-  color: #991b1b;
+  background: #fef2f2;
+  color: #b91c1c;
   border: 1px solid #fca5a5;
 }
 
 .cardFooter {
   padding: 1rem 1.5rem;
-  background: #f8f9fa;
-  border-top: 1px solid #e5e7eb;
+  background: #f8fafc;
+  border-top: 1px solid #f1f5f9;
+  display: flex;
+  gap: 0.5rem;
+}
+
+.btnPrueba {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.375rem;
+  padding: 0.625rem 0.875rem;
+  background: white;
+  color: #16a34a;
+  border: 1px solid #bbf7d0;
+  border-radius: 6px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+  font-size: 0.8125rem;
+  letter-spacing: 0.3px;
+}
+
+.btnPrueba:hover:not(:disabled) {
+  background: #f0fdf4;
+  border-color: #16a34a;
+  transform: translateY(-1px);
+}
+
+.btnPrueba:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 
 .btnConfig {
+  flex: 1;
   display: flex;
   align-items: center;
-  gap: 0.5rem;
-  padding: 0.5rem 1rem;
+  justify-content: center;
+  gap: 0.375rem;
+  padding: 0.625rem 0.875rem;
   background: white;
-  color: #667eea;
-  border: 2px solid #e5e7eb;
-  border-radius: 8px;
+  color: #2563eb;
+  border: 1px solid #dbeafe;
+  border-radius: 6px;
   font-weight: 600;
   cursor: pointer;
-  transition: all 0.2s;
-  width: 100%;
-  justify-content: center;
+  transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+  font-size: 0.8125rem;
+  letter-spacing: 0.3px;
 }
 
 .btnConfig:hover {
-  background: #667eea;
-  color: white;
-  border-color: #667eea;
+  background: #eff6ff;
+  border-color: #2563eb;
   transform: translateY(-1px);
-  box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
+}
+
+.spinner {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 .actions {
   display: flex;
   justify-content: flex-end;
   gap: 1rem;
+  padding: 2rem 3rem;
+  background: white;
+  border-top: 1px solid #e8ecf1;
 }
 
 .btnGuardar {
-  display: flex;
+  display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 0.5rem;
-  padding: 1rem 2rem;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  padding: 0.625rem 1.5rem;
+  background: #2563eb;
   color: white;
   border: none;
-  border-radius: 8px;
+  border-radius: 6px;
   font-weight: 600;
-  font-size: 1.1rem;
+  font-size: 0.875rem;
   cursor: pointer;
-  transition: all 0.3s;
-  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+  transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 1px 2px rgba(37, 99, 235, 0.1);
+  letter-spacing: 0.3px;
 }
 
 .btnGuardar:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 6px 16px rgba(102, 126, 234, 0.4);
+  background: #1d4ed8;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.2);
 }
 
 .btnGuardar:active {
   transform: translateY(0);
+  box-shadow: 0 1px 2px rgba(37, 99, 235, 0.1);
 }
 
 @media (max-width: 768px) {

@@ -52,14 +52,15 @@ export default function FlujosActivosPage() {
   ]);
 
   const [mensaje, setMensaje] = useState<{ tipo: 'success' | 'error'; texto: string } | null>(null);
+  const [enviandoPrueba, setEnviandoPrueba] = useState<string | null>(null);
 
+  // Redirección con useEffect para evitar setState durante render
   if (authLoading) {
     return <div className={styles.loading}>Cargando...</div>;
   }
 
   if (!isAuthenticated) {
-    router.push('/login');
-    return null;
+    return <div className={styles.loading}>Redirigiendo...</div>;
   }
 
   const handleToggleFlujo = (flujoId: string) => {
@@ -84,6 +85,49 @@ export default function FlujosActivosPage() {
     });
     
     setTimeout(() => setMensaje(null), 3000);
+  };
+
+  const handleEnviarPrueba = async (flujoId: string) => {
+    setEnviandoPrueba(flujoId);
+    
+    try {
+      const token = localStorage.getItem('auth_token');
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+      const response = await fetch(`${apiUrl}/api/modules/calendar/configuracion/notificaciones/enviar-prueba`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          empresaId: 'San Jose',
+          flujoId: flujoId
+        })
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        setMensaje({
+          tipo: 'success',
+          texto: `✅ Prueba enviada exitosamente a ${data.telefono || 'cliente de prueba'}`
+        });
+      } else {
+        setMensaje({
+          tipo: 'error',
+          texto: `❌ Error: ${data.message || 'No se pudo enviar la prueba'}`
+        });
+      }
+    } catch (error) {
+      console.error('Error al enviar prueba:', error);
+      setMensaje({
+        tipo: 'error',
+        texto: '❌ Error al enviar la prueba. Verifica la conexión.'
+      });
+    } finally {
+      setEnviandoPrueba(null);
+      setTimeout(() => setMensaje(null), 5000);
+    }
   };
 
   const getPrioridadColor = (prioridad: string) => {
@@ -179,6 +223,28 @@ export default function FlujosActivosPage() {
               </div>
 
               <div className={styles.cardFooter}>
+                <button 
+                  className={styles.btnPrueba}
+                  onClick={() => handleEnviarPrueba(flujo.id)}
+                  disabled={enviandoPrueba === flujo.id}
+                >
+                  {enviandoPrueba === flujo.id ? (
+                    <>
+                      <svg className={styles.spinner} width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                        <path d="M21 12a9 9 0 1 1-6.219-8.56"/>
+                      </svg>
+                      Enviando...
+                    </>
+                  ) : (
+                    <>
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                        <line x1="22" y1="2" x2="11" y2="13"/>
+                        <polygon points="22 2 15 22 11 13 2 9 22 2"/>
+                      </svg>
+                      Enviar Prueba
+                    </>
+                  )}
+                </button>
                 <button 
                   className={styles.btnConfig}
                   onClick={() => router.push(`/dashboard/calendario/flujos-activos/configurar/${flujo.id}`)}
