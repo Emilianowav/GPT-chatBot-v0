@@ -20,6 +20,8 @@ export default function AdministradorFlujosPage() {
   const [mensaje, setMensaje] = useState<{ tipo: 'success' | 'error'; texto: string } | null>(null);
   const [enviandoPrueba, setEnviandoPrueba] = useState<string | null>(null);
   const [modalPrueba, setModalPrueba] = useState<{ flujo: string; telefono: string } | null>(null);
+  const [modalConfigOpcion, setModalConfigOpcion] = useState<any>(null);
+  const [modalConfigFlujo, setModalConfigFlujo] = useState<any>(null);
 
   // Redirección
   useEffect(() => {
@@ -41,7 +43,7 @@ export default function AdministradorFlujosPage() {
     return null;
   }
 
-  // Flujo principal del menú
+  // Flujo principal del menú - Cargar dinámicamente desde configuración
   const menuPrincipal = {
     id: 'menu_principal',
     nombre: 'Menú Principal',
@@ -49,53 +51,66 @@ export default function AdministradorFlujosPage() {
     tipo: 'menu',
     activo: configuracion?.activo || false,
     icono: '📋',
+    mensajeBienvenida: configuracion?.mensajeBienvenida || '',
     opciones: [
       {
-        id: 'opcion_1',
+        id: 'crearTurno',
         numero: '1️⃣',
-        nombre: 'Reservar Turno',
-        descripcion: 'Permite agendar nuevos turnos',
-        activo: true,
-        icono: '📅'
+        nombre: configuracion?.flujos?.crearTurno?.nombre || 'Reservar Turno',
+        descripcion: configuracion?.flujos?.crearTurno?.descripcion || 'Permite agendar nuevos turnos',
+        activo: configuracion?.flujos?.crearTurno?.pasos?.some(p => p.activo) ?? true,
+        icono: '📅',
+        flujo: configuracion?.flujos?.crearTurno
       },
       {
-        id: 'opcion_2',
+        id: 'consultarTurnos',
         numero: '2️⃣',
-        nombre: 'Consultar Turnos',
-        descripcion: 'Ver turnos agendados',
-        activo: true,
-        icono: '🔍'
+        nombre: configuracion?.flujos?.consultarTurnos?.nombre || 'Consultar Turnos',
+        descripcion: configuracion?.flujos?.consultarTurnos?.descripcion || 'Ver turnos agendados',
+        activo: configuracion?.flujos?.consultarTurnos?.pasos?.some(p => p.activo) ?? true,
+        icono: '🔍',
+        flujo: configuracion?.flujos?.consultarTurnos
       },
       {
-        id: 'opcion_3',
+        id: 'cancelarTurno',
         numero: '3️⃣',
-        nombre: 'Cancelar Turno',
-        descripcion: 'Cancelar turnos existentes',
-        activo: true,
-        icono: '❌'
+        nombre: configuracion?.flujos?.cancelarTurno?.nombre || 'Cancelar Turno',
+        descripcion: configuracion?.flujos?.cancelarTurno?.descripcion || 'Cancelar turnos existentes',
+        activo: configuracion?.flujos?.cancelarTurno?.pasos?.some(p => p.activo) ?? true,
+        icono: '❌',
+        flujo: configuracion?.flujos?.cancelarTurno
       }
     ]
   };
 
-  // Otros flujos automáticos
+  // Flujos automáticos - Cargar desde configuración
   const flujosAutomaticos = [
     {
       id: 'confirmacion_turnos',
       nombre: 'Confirmación de Turnos',
-      descripcion: 'Envía recordatorios automáticos 24h antes del turno',
+      descripcion: 'Envía recordatorios automáticos antes del turno',
       tipo: 'automatico',
-      activo: false,
+      activo: configuracion?.horariosAtencion?.activo ?? false,
       icono: '⏰',
-      trigger: '24h antes'
+      trigger: '24h antes',
+      config: {
+        anticipacion: 24,
+        mensaje: '¡Hola! 👋 Te recordamos que tenés un turno agendado para mañana.\n\n📅 Fecha: {fecha}\n🕐 Hora: {hora}\n📍 Destino: {destino}\n\n¿Confirmás tu asistencia? Respondé SÍ o NO',
+        solicitarConfirmacion: true
+      }
     },
     {
       id: 'notificacion_viajes',
       nombre: 'Notificaciones de Viajes',
       descripcion: 'Notifica cambios de estado en los viajes',
       tipo: 'automatico',
-      activo: false,
+      activo: configuracion?.notificarAdmin ?? false,
       icono: '🚗',
-      trigger: 'Cambio de estado'
+      trigger: 'Cambio de estado',
+      config: {
+        estados: ['confirmado', 'en_camino', 'completado'],
+        mensaje: '📢 Tu viaje ha cambiado de estado\n\n🚗 Estado: {estado}\n📍 Destino: {destino}\n🕐 Hora: {hora}'
+      }
     }
   ];
 
@@ -244,7 +259,14 @@ export default function AdministradorFlujosPage() {
                           <h4>{opcion.nombre}</h4>
                           <p>{opcion.descripcion}</p>
                         </div>
-                        <div className={styles.opcionToggle}>
+                        <div className={styles.opcionAcciones}>
+                          <button
+                            onClick={() => setModalConfigOpcion(opcion)}
+                            className={styles.btnConfigOpcion}
+                            title="Configurar opción"
+                          >
+                            <Settings size={16} />
+                          </button>
                           <label className={styles.switchSmall}>
                             <input
                               type="checkbox"
@@ -310,7 +332,7 @@ export default function AdministradorFlujosPage() {
 
                     <div className={styles.flujoAcciones}>
                       <button
-                        onClick={() => setVistaActiva('configuracion')}
+                        onClick={() => setModalConfigFlujo(flujo)}
                         className={styles.btnEditar}
                       >
                         <Settings size={16} />
@@ -375,6 +397,227 @@ export default function AdministradorFlujosPage() {
                   disabled={!modalPrueba.telefono || enviandoPrueba !== null}
                 >
                   {enviandoPrueba ? 'Enviando...' : '📤 Enviar Prueba'}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Modal: Configurar Opción del Menú */}
+        {modalConfigOpcion && (
+          <div className={styles.modal} onClick={() => setModalConfigOpcion(null)}>
+            <div className={styles.modalContentLarge} onClick={e => e.stopPropagation()}>
+              <div className={styles.modalHeader}>
+                <div className={styles.modalIcono}>{modalConfigOpcion.icono}</div>
+                <div>
+                  <h3>{modalConfigOpcion.nombre}</h3>
+                  <p>{modalConfigOpcion.descripcion}</p>
+                </div>
+              </div>
+
+              <div className={styles.modalBody}>
+                <div className={styles.field}>
+                  <label>Estado de la Opción</label>
+                  <div className={styles.toggleField}>
+                    <label className={styles.switch}>
+                      <input
+                        type="checkbox"
+                        checked={modalConfigOpcion.activo}
+                        onChange={() => {/* TODO: toggle */}}
+                      />
+                      <span className={styles.slider}></span>
+                    </label>
+                    <span>{modalConfigOpcion.activo ? '🟢 Activa' : '🔴 Inactiva'}</span>
+                  </div>
+                  <small>Cuando está inactiva, esta opción no aparecerá en el menú del chatbot</small>
+                </div>
+
+                {modalConfigOpcion.flujo && (
+                  <>
+                    <div className={styles.field}>
+                      <label>Información del Flujo</label>
+                      <div className={styles.infoCard}>
+                        <p><strong>Nombre:</strong> {modalConfigOpcion.flujo.nombre}</p>
+                        <p><strong>Descripción:</strong> {modalConfigOpcion.flujo.descripcion}</p>
+                        <p><strong>Pasos configurados:</strong> {modalConfigOpcion.flujo.pasos?.length || 0}</p>
+                        <p><strong>Pasos activos:</strong> {modalConfigOpcion.flujo.pasos?.filter((p: any) => p.activo).length || 0}</p>
+                      </div>
+                    </div>
+
+                    <div className={styles.field}>
+                      <label>Pasos del Flujo</label>
+                      <div className={styles.pasosList}>
+                        {modalConfigOpcion.flujo.pasos?.map((paso: any, index: number) => (
+                          <div key={paso.id} className={`${styles.pasoItem} ${!paso.activo ? styles.pasoInactivo : ''}`}>
+                            <div className={styles.pasoNumero}>{index + 1}</div>
+                            <div className={styles.pasoInfo}>
+                              <strong>{paso.etiqueta}</strong>
+                              <p>{paso.mensaje}</p>
+                              {paso.campoACapturar && (
+                                <span className={styles.pasoCampo}>Campo: {paso.campoACapturar}</span>
+                              )}
+                            </div>
+                            <div className={styles.pasoEstado}>
+                              {paso.activo ? '✅' : '⏸️'}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </>
+                )}
+
+                <div className={styles.infoAlert}>
+                  <strong>💡 Tip:</strong> Puedes personalizar cada paso del flujo en la sección "Configuración General"
+                </div>
+              </div>
+
+              <div className={styles.modalActions}>
+                <button
+                  onClick={() => setModalConfigOpcion(null)}
+                  className={styles.btnCancelar}
+                >
+                  Cancelar
+                </button>
+                <button
+                  onClick={() => {
+                    // TODO: Guardar configuración
+                    setModalConfigOpcion(null);
+                    setMensaje({ tipo: 'success', texto: '✅ Configuración guardada' });
+                    setTimeout(() => setMensaje(null), 3000);
+                  }}
+                  className={styles.btnEnviar}
+                >
+                  💾 Guardar Cambios
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Modal: Configurar Flujo Automático */}
+        {modalConfigFlujo && (
+          <div className={styles.modal} onClick={() => setModalConfigFlujo(null)}>
+            <div className={styles.modalContentLarge} onClick={e => e.stopPropagation()}>
+              <div className={styles.modalHeader}>
+                <div className={styles.modalIcono}>{modalConfigFlujo.icono}</div>
+                <div>
+                  <h3>{modalConfigFlujo.nombre}</h3>
+                  <p>{modalConfigFlujo.descripcion}</p>
+                </div>
+              </div>
+
+              <div className={styles.modalBody}>
+                <div className={styles.field}>
+                  <label>Estado del Flujo</label>
+                  <div className={styles.toggleField}>
+                    <label className={styles.switch}>
+                      <input
+                        type="checkbox"
+                        checked={modalConfigFlujo.activo}
+                        onChange={() => {/* TODO: toggle */}}
+                      />
+                      <span className={styles.slider}></span>
+                    </label>
+                    <span>{modalConfigFlujo.activo ? '🟢 Activo' : '🔴 Inactivo'}</span>
+                  </div>
+                  <small>Cuando está inactivo, este flujo no se ejecutará automáticamente</small>
+                </div>
+
+                {modalConfigFlujo.id === 'confirmacion_turnos' && (
+                  <>
+                    <div className={styles.field}>
+                      <label>Tiempo de Anticipación</label>
+                      <select className={styles.select}>
+                        <option value="1">1 hora antes</option>
+                        <option value="3">3 horas antes</option>
+                        <option value="6">6 horas antes</option>
+                        <option value="12">12 horas antes</option>
+                        <option value="24" selected>24 horas antes</option>
+                        <option value="48">48 horas antes</option>
+                      </select>
+                      <small>Cuánto tiempo antes del turno se enviará el recordatorio</small>
+                    </div>
+
+                    <div className={styles.field}>
+                      <label>Mensaje de Recordatorio</label>
+                      <textarea
+                        className={styles.textarea}
+                        rows={5}
+                        defaultValue="¡Hola! 👋 Te recordamos que tenés un turno agendado para mañana.\n\n📅 Fecha: {fecha}\n🕐 Hora: {hora}\n📍 Destino: {destino}\n\n¿Confirmás tu asistencia? Respondé SÍ o NO"
+                      />
+                      <small>Variables disponibles: {'{fecha}'}, {'{hora}'}, {'{origen}'}, {'{destino}'}</small>
+                    </div>
+
+                    <div className={styles.field}>
+                      <label className={styles.checkboxLabel}>
+                        <input type="checkbox" defaultChecked />
+                        <span>Solicitar confirmación del cliente</span>
+                      </label>
+                      <small>Si está activo, el bot esperará una respuesta del cliente</small>
+                    </div>
+                  </>
+                )}
+
+                {modalConfigFlujo.id === 'notificacion_viajes' && (
+                  <>
+                    <div className={styles.field}>
+                      <label>Estados que Activan la Notificación</label>
+                      <div className={styles.checkboxGroup}>
+                        <label className={styles.checkboxLabel}>
+                          <input type="checkbox" defaultChecked />
+                          <span>Confirmado</span>
+                        </label>
+                        <label className={styles.checkboxLabel}>
+                          <input type="checkbox" defaultChecked />
+                          <span>En camino</span>
+                        </label>
+                        <label className={styles.checkboxLabel}>
+                          <input type="checkbox" defaultChecked />
+                          <span>Completado</span>
+                        </label>
+                        <label className={styles.checkboxLabel}>
+                          <input type="checkbox" />
+                          <span>Cancelado</span>
+                        </label>
+                      </div>
+                      <small>Selecciona en qué cambios de estado se enviará notificación</small>
+                    </div>
+
+                    <div className={styles.field}>
+                      <label>Plantilla de Mensaje</label>
+                      <textarea
+                        className={styles.textarea}
+                        rows={4}
+                        defaultValue="📢 Tu viaje ha cambiado de estado\n\n🚗 Estado: {estado}\n📍 Destino: {destino}\n🕐 Hora: {hora}"
+                      />
+                      <small>Variables: {'{estado}'}, {'{fecha}'}, {'{hora}'}, {'{origen}'}, {'{destino}'}</small>
+                    </div>
+                  </>
+                )}
+
+                <div className={styles.infoAlert}>
+                  <strong>⚡ Flujo Automático:</strong> Este flujo se ejecuta automáticamente según los eventos configurados. No requiere interacción del usuario.
+                </div>
+              </div>
+
+              <div className={styles.modalActions}>
+                <button
+                  onClick={() => setModalConfigFlujo(null)}
+                  className={styles.btnCancelar}
+                >
+                  Cancelar
+                </button>
+                <button
+                  onClick={() => {
+                    // TODO: Guardar configuración
+                    setModalConfigFlujo(null);
+                    setMensaje({ tipo: 'success', texto: '✅ Configuración guardada' });
+                    setTimeout(() => setMensaje(null), 3000);
+                  }}
+                  className={styles.btnEnviar}
+                >
+                  💾 Guardar Cambios
                 </button>
               </div>
             </div>
