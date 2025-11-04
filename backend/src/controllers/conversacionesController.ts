@@ -29,8 +29,21 @@ export const getConversaciones = async (req: Request, res: Response): Promise<vo
       const historial = contacto.conversaciones?.historial || [];
       const ultimoMensaje = historial.length > 0 ? historial[historial.length - 1] : null;
       
-      // Determinar el rol del último mensaje (par = user, impar = assistant)
-      const ultimoRol = historial.length > 0 && historial.length % 2 === 0 ? 'assistant' : 'user';
+      // Parsear último mensaje si es JSON string (formato antiguo)
+      let textoUltimoMensaje = ultimoMensaje;
+      let rolUltimoMensaje = historial.length > 0 && historial.length % 2 === 0 ? 'assistant' : 'user';
+      
+      if (ultimoMensaje && typeof ultimoMensaje === 'string') {
+        try {
+          const parsed = JSON.parse(ultimoMensaje);
+          if (parsed.content) {
+            textoUltimoMensaje = parsed.content;
+            rolUltimoMensaje = parsed.role || rolUltimoMensaje;
+          }
+        } catch (e) {
+          // No es JSON, usar como está
+        }
+      }
 
       return {
         id: contacto._id,
@@ -38,8 +51,8 @@ export const getConversaciones = async (req: Request, res: Response): Promise<vo
         numero: contacto.telefono,
         avatar: contacto.nombre ? contacto.nombre.charAt(0).toUpperCase() : 'U',
         ultimoMensaje: ultimoMensaje ? {
-          texto: ultimoMensaje,
-          rol: ultimoRol,
+          texto: textoUltimoMensaje,
+          rol: rolUltimoMensaje,
           fecha: contacto.conversaciones?.ultimaConversacion || contacto.metricas.ultimaInteraccion
         } : null,
         ultimaInteraccion: contacto.metricas.ultimaInteraccion,
@@ -100,11 +113,25 @@ export const getHistorialUsuario = async (req: Request, res: Response): Promise<
     const historial = contacto.conversaciones?.historial || [];
     const mensajes = historial.map((msg: string, index: number) => {
       // Determinar el rol: índice par = user, índice impar = assistant
-      const rol = index % 2 === 0 ? 'user' : 'assistant';
+      let rol = index % 2 === 0 ? 'user' : 'assistant';
+      let contenido = msg;
+      
+      // Parsear si es JSON string (formato antiguo)
+      if (typeof msg === 'string') {
+        try {
+          const parsed = JSON.parse(msg);
+          if (parsed.content) {
+            contenido = parsed.content;
+            rol = parsed.role || rol;
+          }
+        } catch (e) {
+          // No es JSON, usar como está
+        }
+      }
 
       return {
         id: `${contacto._id}-msg-${index}`,
-        contenido: msg,
+        contenido: contenido,
         rol: rol, // 'user' o 'assistant'
         fecha: contacto.conversaciones?.ultimaConversacion || contacto.metricas.ultimaInteraccion,
         leido: true
@@ -171,8 +198,21 @@ export const buscarConversaciones = async (req: Request, res: Response): Promise
       const historial = contacto.conversaciones?.historial || [];
       const ultimoMensaje = historial.length > 0 ? historial[historial.length - 1] : null;
       
-      // Determinar el rol del último mensaje (par = user, impar = assistant)
-      const ultimoRol = historial.length > 0 && historial.length % 2 === 0 ? 'assistant' : 'user';
+      // Parsear último mensaje si es JSON string (formato antiguo)
+      let textoUltimoMensaje = ultimoMensaje;
+      let rolUltimoMensaje = historial.length > 0 && historial.length % 2 === 0 ? 'assistant' : 'user';
+      
+      if (ultimoMensaje && typeof ultimoMensaje === 'string') {
+        try {
+          const parsed = JSON.parse(ultimoMensaje);
+          if (parsed.content) {
+            textoUltimoMensaje = parsed.content;
+            rolUltimoMensaje = parsed.role || rolUltimoMensaje;
+          }
+        } catch (e) {
+          // No es JSON, usar como está
+        }
+      }
 
       return {
         id: contacto._id,
@@ -180,8 +220,8 @@ export const buscarConversaciones = async (req: Request, res: Response): Promise
         numero: contacto.telefono,
         avatar: contacto.nombre ? contacto.nombre.charAt(0).toUpperCase() : 'U',
         ultimoMensaje: ultimoMensaje ? {
-          texto: ultimoMensaje,
-          rol: ultimoRol,
+          texto: textoUltimoMensaje,
+          rol: rolUltimoMensaje,
           fecha: contacto.conversaciones?.ultimaConversacion || contacto.metricas.ultimaInteraccion
         } : null,
         ultimaInteraccion: contacto.metricas.ultimaInteraccion,
