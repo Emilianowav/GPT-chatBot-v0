@@ -7,6 +7,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useConfiguracionBot } from '@/hooks/useConfiguracionBot';
 import { useConfiguracion } from '@/hooks/useConfiguracion';
 import ConfiguracionBot from '@/components/calendar/ConfiguracionBot';
+import ModalConfiguracionFlujo from '@/components/flujos/ModalConfiguracionFlujo';
 import { Power, Settings, Send, Eye, EyeOff, Plus, Edit2, Trash2 } from 'lucide-react';
 import styles from './flujos.module.css';
 
@@ -98,9 +99,22 @@ export default function AdministradorFlujosPage() {
       tipo: 'automatico',
       activo: notificacionConfirmacion?.activa ?? false,
       icono: '⏰',
-      trigger: notificacionConfirmacion?.momento || '24h antes',
+      trigger: (() => {
+        const momento = notificacionConfirmacion?.momento;
+        const horasAntes = (notificacionConfirmacion as any)?.horasAntesTurno;
+        const diasAntes = notificacionConfirmacion?.diasAntes;
+        
+        if (momento === 'horas_antes_turno' && horasAntes) {
+          return `${horasAntes} horas antes del turno`;
+        } else if (momento === 'dia_antes_turno' && diasAntes) {
+          return `${diasAntes} día${diasAntes > 1 ? 's' : ''} antes`;
+        } else if (momento === 'noche_anterior') {
+          return 'Noche anterior';
+        }
+        return '24 horas antes';
+      })(),
       config: {
-        anticipacion: 24,
+        anticipacion: (notificacionConfirmacion as any)?.horasAntesTurno || 24,
         mensaje: notificacionConfirmacion?.plantillaMensaje || '¡Hola! 👋 Te recordamos que tenés un turno agendado para mañana.\n\n📅 Fecha: {fecha}\n🕐 Hora: {hora}\n📍 Destino: {destino}\n\n¿Confirmás tu asistencia? Respondé SÍ o NO',
         solicitarConfirmacion: notificacionConfirmacion?.requiereConfirmacion ?? true
       }
@@ -172,13 +186,24 @@ export default function AdministradorFlujosPage() {
       });
       setModalPrueba(null);
     } catch (err: any) {
+      // Detectar errores específicos y mostrar mensajes útiles
+      let mensajeError = err.message || 'Error al enviar prueba';
+      
+      if (mensajeError.includes('No hay viajes programados')) {
+        mensajeError = `⚠️ No hay turnos pendientes para este teléfono en los próximos 7 días.\n\n💡 Para probar:\n• Crea un turno pendiente para este cliente\n• O usa el teléfono de un cliente con turnos pendientes`;
+      } else if (mensajeError.includes('Cliente no encontrado')) {
+        mensajeError = `⚠️ Cliente no encontrado en la base de datos.\n\n💡 Verifica que el teléfono esté registrado como cliente.`;
+      } else if (mensajeError.includes('Empresa no encontrada')) {
+        mensajeError = `❌ Error de configuración: Empresa no encontrada.\n\n💡 Contacta al administrador del sistema.`;
+      }
+      
       setMensaje({
         tipo: 'error',
-        texto: err.message || 'Error al enviar prueba'
+        texto: mensajeError
       });
     } finally {
       setEnviandoPrueba(null);
-      setTimeout(() => setMensaje(null), 5000);
+      setTimeout(() => setMensaje(null), 8000); // Más tiempo para leer mensajes largos
     }
   };
 
@@ -600,143 +625,15 @@ export default function AdministradorFlujosPage() {
         )}
 
         {/* Modal: Configurar Flujo Automático */}
-        {modalConfigFlujo && (
-          <div className={styles.modal} onClick={() => setModalConfigFlujo(null)}>
-            <div className={styles.modalContentLarge} onClick={e => e.stopPropagation()}>
-              <div className={styles.modalHeader}>
-                <div className={styles.modalIcono}>{modalConfigFlujo.icono}</div>
-                <div>
-                  <h3>{modalConfigFlujo.nombre}</h3>
-                  <p>{modalConfigFlujo.descripcion}</p>
-                </div>
-              </div>
-
-              <div className={styles.modalBody}>
-                <div className={styles.field}>
-                  <label>Estado del Flujo</label>
-                  <div className={styles.toggleField}>
-                    <label className={styles.switch}>
-                      <input
-                        type="checkbox"
-                        checked={configEditada?.activo ?? modalConfigFlujo.activo}
-                        onChange={(e) => setConfigEditada({ ...configEditada, activo: e.target.checked })}
-                      />
-                      <span className={styles.slider}></span>
-                    </label>
-                    <span>{(configEditada?.activo ?? modalConfigFlujo.activo) ? '🟢 Activo' : '🔴 Inactivo'}</span>
-                  </div>
-                  <small>Cuando está inactivo, este flujo no se ejecutará automáticamente</small>
-                </div>
-
-                {modalConfigFlujo.id === 'confirmacion_turnos' && (
-                  <>
-                    <div className={styles.field}>
-                      <label>Tiempo de Anticipación</label>
-                      <select 
-                        className={styles.select}
-                        value={configEditada?.anticipacion ?? modalConfigFlujo.config.anticipacion}
-                        onChange={(e) => setConfigEditada({ ...configEditada, anticipacion: parseInt(e.target.value) })}
-                      >
-                        <option value="1">1 hora antes</option>
-                        <option value="3">3 horas antes</option>
-                        <option value="6">6 horas antes</option>
-                        <option value="12">12 horas antes</option>
-                        <option value="24">24 horas antes</option>
-                        <option value="48">48 horas antes</option>
-                      </select>
-                      <small>Cuánto tiempo antes del turno se enviará el recordatorio</small>
-                    </div>
-
-                    <div className={styles.field}>
-                      <label>Mensaje de Recordatorio</label>
-                      <textarea
-                        className={styles.textarea}
-                        rows={5}
-                        value={configEditada?.mensaje ?? modalConfigFlujo.config.mensaje}
-                        onChange={(e) => setConfigEditada({ ...configEditada, mensaje: e.target.value })}
-                      />
-                      <small>Variables disponibles: {'{fecha}'}, {'{hora}'}, {'{origen}'}, {'{destino}'}</small>
-                    </div>
-
-                    <div className={styles.field}>
-                      <label className={styles.checkboxLabel}>
-                        <input 
-                          type="checkbox" 
-                          checked={configEditada?.solicitarConfirmacion ?? modalConfigFlujo.config.solicitarConfirmacion}
-                          onChange={(e) => setConfigEditada({ ...configEditada, solicitarConfirmacion: e.target.checked })}
-                        />
-                        <span>Solicitar confirmación del cliente</span>
-                      </label>
-                      <small>Si está activo, el bot esperará una respuesta del cliente</small>
-                    </div>
-                  </>
-                )}
-
-                {modalConfigFlujo.id === 'notificacion_viajes' && (
-                  <>
-                    <div className={styles.field}>
-                      <label>Estados que Activan la Notificación</label>
-                      <div className={styles.checkboxGroup}>
-                        <label className={styles.checkboxLabel}>
-                          <input type="checkbox" defaultChecked />
-                          <span>Confirmado</span>
-                        </label>
-                        <label className={styles.checkboxLabel}>
-                          <input type="checkbox" defaultChecked />
-                          <span>En camino</span>
-                        </label>
-                        <label className={styles.checkboxLabel}>
-                          <input type="checkbox" defaultChecked />
-                          <span>Completado</span>
-                        </label>
-                        <label className={styles.checkboxLabel}>
-                          <input type="checkbox" />
-                          <span>Cancelado</span>
-                        </label>
-                      </div>
-                      <small>Selecciona en qué cambios de estado se enviará notificación</small>
-                    </div>
-
-                    <div className={styles.field}>
-                      <label>Plantilla de Mensaje</label>
-                      <textarea
-                        className={styles.textarea}
-                        rows={4}
-                        value={configEditada?.mensaje ?? modalConfigFlujo.config.mensaje}
-                        onChange={(e) => setConfigEditada({ ...configEditada, mensaje: e.target.value })}
-                      />
-                      <small>Variables: {'{estado}'}, {'{fecha}'}, {'{hora}'}, {'{origen}'}, {'{destino}'}</small>
-                    </div>
-                  </>
-                )}
-
-                <div className={styles.infoAlert}>
-                  <strong>⚡ Flujo Automático:</strong> Este flujo se ejecuta automáticamente según los eventos configurados. No requiere interacción del usuario.
-                </div>
-              </div>
-
-              <div className={styles.modalActions}>
-                <button
-                  onClick={() => {
-                    setModalConfigFlujo(null);
-                    setConfigEditada(null);
-                  }}
-                  className={styles.btnCancelar}
-                  disabled={guardandoConfig}
-                >
-                  Cancelar
-                </button>
-                <button
-                  onClick={handleGuardarConfigFlujo}
-                  className={styles.btnEnviar}
-                  disabled={guardandoConfig}
-                >
-                  {guardandoConfig ? '⏳ Guardando...' : '💾 Guardar Cambios'}
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
+        <ModalConfiguracionFlujo
+          isOpen={!!modalConfigFlujo}
+          onClose={() => {
+            setModalConfigFlujo(null);
+            setConfigEditada(null);
+          }}
+          flujo={modalConfigFlujo}
+          onGuardar={handleGuardarConfigFlujo}
+        />
     </div>
   );
 }

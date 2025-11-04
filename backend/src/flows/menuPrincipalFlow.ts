@@ -344,21 +344,19 @@ export const menuPrincipalFlow: Flow = {
           anio = parseInt(partes[2]);
         }
         
-        // Crear fecha en zona horaria de Argentina (UTC-3)
-        // El usuario ingresa hora local Argentina, debemos convertir a UTC para guardar
-        const fechaLocalStr = `${anio}-${mes.toString().padStart(2, '0')}-${dia.toString().padStart(2, '0')}T${hora.toString().padStart(2, '0')}:${minuto.toString().padStart(2, '0')}:00`;
-        
-        // Crear fecha interpretando como hora Argentina (UTC-3)
-        const fechaInicio = new Date(fechaLocalStr + '-03:00'); // Argentina es UTC-3
+        // Crear fecha usando Date.UTC para evitar problemas de zona horaria
+        // Guardamos la hora "tal cual" la ingresó el usuario, sin conversiones
+        const fechaInicio = new Date(Date.UTC(anio, mes - 1, dia, hora, minuto, 0, 0));
         
         const fechaFin = new Date(fechaInicio);
         fechaFin.setMinutes(fechaFin.getMinutes() + 30); // Duración por defecto: 30 min
         
         console.log('🕐 [Reserva] Fecha creada:', {
           horaIngresada: `${hora}:${minuto}`,
-          fechaLocalStr,
           fechaInicioUTC: fechaInicio.toISOString(),
-          fechaInicioArgentina: fechaInicio.toLocaleString('es-AR', { timeZone: 'America/Argentina/Buenos_Aires' })
+          año: anio,
+          mes: mes,
+          dia: dia
         });
         
         console.log('📝 [Reserva] Creando turno con datos:', {

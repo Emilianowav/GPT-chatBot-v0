@@ -2,9 +2,10 @@
 
 .container {
   padding: 0;
+    padding-top: 3rem;
   max-width: 100%;
   margin: 0;
-  background: linear-gradient(135deg, #f5f7fa 0%, #e8ecf1 100%);
+  background: var(--momento-black, #1A1A1A);
   min-height: calc(100vh - 200px);
 }
 
@@ -18,34 +19,25 @@
 }
 
 .header {
+  padding: 2.5rem 3rem;
+  border-bottom: 2px solid rgba(255, 107, 74, 0.3);
+  margin-bottom: 0;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 2.5rem 3rem;
-  background: var(--momento-black, #1A1A1A);
-  border-bottom: 1px solid #e8ecf1;
-  margin-bottom: 0;
-  gap: 2rem;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
+  flex-wrap: wrap;
+  gap: 1.5rem;
 }
 
-.header > div:first-child {
-  flex: 1;
-  min-width: 250px;
-}
-
-.header h1 {
+.headerContent h1 {
   font-size: 1.75rem;
+  color: var(--momento-white, #FFFFFF);
   margin: 0;
-  color: white;
   font-weight: 700;
   letter-spacing: -0.5px;
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
 }
 
-.header p {
+.headerContent p {
   color: rgba(255, 255, 255, 0.7);
   font-size: 0.95rem;
   margin: 0.25rem 0 0 0;
@@ -115,18 +107,20 @@
 }
 
 .mensaje {
-  padding: 1rem 1.5rem;
-  border-radius: 8px;
+  padding: 1.25rem 1.5rem;
+  border-radius: 12px;
   margin: 1.5rem 3rem;
-  font-weight: 500;
   display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  animation: slideIn 0.3s ease-out;
-  font-size: 0.875rem;
+  align-items: flex-start;
+  gap: 0.75rem;
+  font-weight: 500;
+  animation: slideDown 0.3s ease-out;
+  white-space: pre-line;
+  line-height: 1.6;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
 }
 
-@keyframes slideIn {
+@keyframes slideDown {
   from {
     opacity: 0;
     transform: translateY(-10px);
@@ -138,15 +132,15 @@
 }
 
 .mensaje.success {
-  background: var(--momento-black-light, #2A2A2A);
-  color: #15803d;
-  border: 1px solid #86efac;
+  background: rgba(34, 197, 94, 0.1);
+  color: #86efac;
+  border: 1px solid rgba(134, 239, 172, 0.3);
 }
 
 .mensaje.error {
-  background: var(--momento-black-light, #2A2A2A);
-  color: #b91c1c;
-  border: 1px solid #fca5a5;
+  background: rgba(239, 68, 68, 0.1);
+  color: #fca5a5;
+  border: 1px solid rgba(252, 165, 165, 0.3);
 }
 
 .flujosGrid {
@@ -419,8 +413,7 @@ input:checked + .slider:before {
 
 /* Content */
 .content {
-  padding: 2rem 3rem;
-  background: transparent;
+  padding: 2rem 0;
 }
 
 /* Flujo Header, Info, Stats */
@@ -999,27 +992,21 @@ input:checked + .slider:before {
 
 /* ==== MENÚ PRINCIPAL ==== */
 .menuSection {
-  padding: 0 0 2rem 0;
+  padding: 2rem 3rem;
 }
 
 .menuCard {
-  background: white;
-  border: 1px solid #e2e8f0;
-  border-radius: 12px;
+  background: var(--momento-black-light, #2A2A2A);
+  border: 2px solid rgba(255, 107, 74, 0.4);
+  border-radius: 20px;
   overflow: hidden;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1), 0 1px 2px rgba(0, 0, 0, 0.06);
-  transition: all 0.2s;
-}
-
-.menuCard:hover {
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1), 0 2px 4px rgba(0, 0, 0, 0.06);
-  transform: translateY(-2px);
+  box-shadow: 0 8px 32px rgba(255, 107, 74, 0.3);
 }
 
 .menuHeader {
   padding: 2rem;
-  background: linear-gradient(135deg, rgba(229, 90, 58, 0.05) 0%, rgba(255, 138, 110, 0.02) 100%);
-  border-bottom: 1px solid #e2e8f0;
+  background: linear-gradient(135deg, rgba(255, 107, 74, 0.1) 0%, rgba(255, 138, 110, 0.05) 100%);
+  border-bottom: 2px solid rgba(255, 107, 74, 0.3);
   display: flex;
   align-items: center;
   gap: 1.5rem;
@@ -1044,13 +1031,13 @@ input:checked + .slider:before {
 
 .menuInfo h2 {
   font-size: 1.5rem;
-  color: #1a202c;
+  color: var(--momento-white, #FFFFFF);
   margin: 0 0 0.5rem 0;
   font-weight: 700;
 }
 
 .menuInfo p {
-  color: #718096;
+  color: rgba(255, 255, 255, 0.7);
   font-size: 1rem;
   margin: 0;
   line-height: 1.5;
@@ -1063,11 +1050,11 @@ input:checked + .slider:before {
 /* Opciones del Menú */
 .menuOpciones {
   padding: 2rem;
-  background: #f9fafb;
+  background: var(--momento-black, #1A1A1A);
 }
 
 .menuOpciones h3 {
-  color: #1a202c;
+  color: var(--momento-white, #FFFFFF);
   font-size: 1.1rem;
   margin: 0 0 1.5rem 0;
   font-weight: 600;
@@ -1079,9 +1066,9 @@ input:checked + .slider:before {
 }
 
 .opcionCard {
-  background: white;
-  border: 1px solid #e2e8f0;
-  border-radius: 8px;
+  background: var(--momento-black-light, #2A2A2A);
+  border: 2px solid rgba(255, 107, 74, 0.2);
+  border-radius: 12px;
   padding: 1.25rem;
   display: flex;
   align-items: center;
@@ -1090,8 +1077,7 @@ input:checked + .slider:before {
 }
 
 .opcionCard:hover {
-  border-color: #E55A3A;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  border-color: var(--momento-orange, #FF6B4A);
   transform: translateX(4px);
 }
 
@@ -1125,14 +1111,14 @@ input:checked + .slider:before {
 
 .opcionInfo h4 {
   font-size: 1rem;
-  color: #1a202c;
+  color: var(--momento-white, #FFFFFF);
   margin: 0 0 0.25rem 0;
   font-weight: 600;
 }
 
 .opcionInfo p {
   font-size: 0.875rem;
-  color: #718096;
+  color: rgba(255, 255, 255, 0.6);
   margin: 0;
 }
 
@@ -1189,8 +1175,8 @@ input:checked + .slider:before {
 /* Acciones del menú */
 .menuAcciones {
   padding: 1.5rem 2rem;
-  background: white;
-  border-top: 1px solid #e2e8f0;
+  background: var(--momento-black-light, #2A2A2A);
+  border-top: 2px solid rgba(255, 107, 74, 0.2);
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 1rem;
@@ -1198,11 +1184,11 @@ input:checked + .slider:before {
 
 /* ==== FLUJOS AUTOMÁTICOS ==== */
 .flujosSection {
-  padding: 0 0 2rem 0;
+  padding: 0 3rem 2rem 3rem;
 }
 
 .sectionTitle {
-  color: #1a202c;
+  color: var(--momento-white, #FFFFFF);
   font-size: 1.25rem;
   margin: 0 0 1.5rem 0;
   font-weight: 700;
@@ -1242,14 +1228,14 @@ input:checked + .slider:before {
 
 /* ==== ESTILOS PARA MODALES GRANDES ==== */
 .modalContentLarge {
-  background: white;
-  border: 1px solid #e2e8f0;
-  border-radius: 12px;
+  background: var(--momento-black, #1A1A1A);
+  border: 2px solid rgba(255, 107, 74, 0.3);
+  border-radius: 16px;
   max-width: 700px;
   width: 100%;
   max-height: 90vh;
   overflow-y: auto;
-  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
 }
 
 .modalHeader {
@@ -1276,14 +1262,14 @@ input:checked + .slider:before {
 
 .modalHeader h3 {
   margin: 0 0 0.25rem 0;
-  color: #1a202c;
+  color: var(--momento-white, #FFFFFF);
   font-size: 1.5rem;
   font-weight: 700;
 }
 
 .modalHeader p {
   margin: 0;
-  color: #718096;
+  color: rgba(255, 255, 255, 0.7);
   font-size: 0.95rem;
 }
 
@@ -1296,13 +1282,13 @@ input:checked + .slider:before {
   align-items: center;
   gap: 1rem;
   padding: 1rem;
-  background: #f9fafb;
-  border: 1px solid #e2e8f0;
+  background: var(--momento-black-light, #2A2A2A);
+  border: 2px solid rgba(255, 107, 74, 0.2);
   border-radius: 8px;
 }
 
 .toggleField span {
-  color: #1a202c;
+  color: var(--momento-white, #FFFFFF);
   font-weight: 600;
   font-size: 0.95rem;
 }
@@ -1310,10 +1296,10 @@ input:checked + .slider:before {
 .textarea {
   width: 100%;
   padding: 0.875rem;
-  background: white;
-  border: 1px solid #e2e8f0;
+  background: var(--momento-black-light, #2A2A2A);
+  border: 2px solid rgba(255, 107, 74, 0.3);
   border-radius: 8px;
-  color: #1a202c;
+  color: white;
   font-size: 0.95rem;
   font-family: inherit;
   resize: vertical;
@@ -1322,25 +1308,25 @@ input:checked + .slider:before {
 
 .textarea:focus {
   outline: none;
-  border-color: #E55A3A;
-  box-shadow: 0 0 0 3px rgba(229, 90, 58, 0.1);
+  border-color: var(--momento-orange, #FF6B4A);
+  box-shadow: 0 0 0 4px rgba(255, 107, 74, 0.1);
 }
 
 .select {
   width: 100%;
   padding: 0.875rem;
-  background: white;
-  border: 1px solid #e2e8f0;
+  background: var(--momento-black-light, #2A2A2A);
+  border: 2px solid rgba(255, 107, 74, 0.3);
   border-radius: 8px;
-  color: #1a202c;
+  color: white;
   font-size: 0.95rem;
   cursor: pointer;
 }
 
 .select:focus {
   outline: none;
-  border-color: #E55A3A;
-  box-shadow: 0 0 0 3px rgba(229, 90, 58, 0.1);
+  border-color: var(--momento-orange, #FF6B4A);
+  box-shadow: 0 0 0 4px rgba(255, 107, 74, 0.1);
 }
 
 .checkboxGroup {
@@ -1348,8 +1334,8 @@ input:checked + .slider:before {
   grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
   gap: 0.75rem;
   padding: 1rem;
-  background: #f9fafb;
-  border: 1px solid #e2e8f0;
+  background: var(--momento-black-light, #2A2A2A);
+  border: 2px solid rgba(255, 107, 74, 0.2);
   border-radius: 8px;
 }
 
@@ -1357,7 +1343,7 @@ input:checked + .slider:before {
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  color: #1a202c;
+  color: rgba(255, 255, 255, 0.9);
   cursor: pointer;
   font-size: 0.9rem;
 }
@@ -1366,25 +1352,25 @@ input:checked + .slider:before {
   width: 18px;
   height: 18px;
   cursor: pointer;
-  accent-color: #E55A3A;
+  accent-color: var(--momento-orange, #FF6B4A);
 }
 
 .checkboxLabel:hover {
-  color: #E55A3A;
+  color: white;
 }
 
 .infoAlert {
   padding: 1rem 1.25rem;
-  background: #fef3f2;
-  border: 1px solid #fee4e2;
+  background: rgba(255, 107, 74, 0.1);
+  border: 2px solid rgba(255, 107, 74, 0.3);
   border-radius: 8px;
-  color: #1a202c;
+  color: rgba(255, 255, 255, 0.9);
   font-size: 0.9rem;
   line-height: 1.6;
 }
 
 .infoAlert strong {
-  color: #E55A3A;
+  color: var(--momento-orange, #FF6B4A);
 }
 
 /* Botón de configuración en opciones */
@@ -1401,38 +1387,38 @@ input:checked + .slider:before {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: white;
-  border: 1px solid #e2e8f0;
-  border-radius: 6px;
-  color: #718096;
+  background: transparent;
+  border: 2px solid rgba(255, 107, 74, 0.3);
+  border-radius: 8px;
+  color: rgba(255, 255, 255, 0.7);
   cursor: pointer;
   transition: all 0.2s;
 }
 
 .btnConfigOpcion:hover {
-  background: #f9fafb;
-  border-color: #E55A3A;
-  color: #E55A3A;
+  background: rgba(255, 107, 74, 0.1);
+  border-color: var(--momento-orange, #FF6B4A);
+  color: var(--momento-orange, #FF6B4A);
   transform: scale(1.05);
 }
 
 /* Info Card */
 .infoCard {
   padding: 1.25rem;
-  background: #f9fafb;
-  border: 1px solid #e2e8f0;
+  background: var(--momento-black-light, #2A2A2A);
+  border: 2px solid rgba(255, 107, 74, 0.2);
   border-radius: 8px;
 }
 
 .infoCard p {
   margin: 0.5rem 0;
-  color: #1a202c;
+  color: rgba(255, 255, 255, 0.9);
   font-size: 0.9rem;
   line-height: 1.6;
 }
 
 .infoCard strong {
-  color: #E55A3A;
+  color: var(--momento-orange, #FF6B4A);
   font-weight: 600;
 }
 
@@ -1444,8 +1430,8 @@ input:checked + .slider:before {
   max-height: 400px;
   overflow-y: auto;
   padding: 1rem;
-  background: #f9fafb;
-  border: 1px solid #e2e8f0;
+  background: var(--momento-black-light, #2A2A2A);
+  border: 2px solid rgba(255, 107, 74, 0.2);
   border-radius: 8px;
 }
 
@@ -1454,21 +1440,20 @@ input:checked + .slider:before {
   align-items: flex-start;
   gap: 1rem;
   padding: 1rem;
-  background: white;
-  border: 1px solid #e2e8f0;
+  background: var(--momento-black, #1A1A1A);
+  border: 2px solid rgba(255, 107, 74, 0.3);
   border-radius: 8px;
   transition: all 0.2s;
 }
 
 .pasoItem:hover {
-  border-color: #E55A3A;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  border-color: var(--momento-orange, #FF6B4A);
   transform: translateX(4px);
 }
 
 .pasoItem.pasoInactivo {
   opacity: 0.5;
-  border-color: #e2e8f0;
+  border-color: rgba(255, 255, 255, 0.2);
 }
 
 .pasoNumero {
@@ -1491,13 +1476,13 @@ input:checked + .slider:before {
 
 .pasoInfo strong {
   display: block;
-  color: #1a202c;
+  color: var(--momento-white, #FFFFFF);
   font-size: 0.95rem;
   margin-bottom: 0.25rem;
 }
 
 .pasoInfo p {
-  color: #718096;
+  color: rgba(255, 255, 255, 0.7);
   font-size: 0.85rem;
   margin: 0 0 0.5rem 0;
   line-height: 1.5;
