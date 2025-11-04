@@ -1,7 +1,7 @@
 // 🔔 Servicio de Notificaciones Automáticas
 import { TurnoModel } from '../modules/calendar/models/Turno.js';
 import { ConfiguracionModuloModel } from '../modules/calendar/models/ConfiguracionModulo.js';
-import { ClienteModel } from '../models/Cliente.js';
+import { ContactoEmpresaModel } from '../models/ContactoEmpresa.js';
 import { AgenteModel } from '../modules/calendar/models/Agente.js';
 import { EmpresaModel } from '../models/Empresa.js';
 import { enviarMensajeWhatsAppTexto } from './metaService.js';
@@ -144,20 +144,20 @@ async function enviarNotificacion(empresaId: string, notif: any) {
     // Enviar a cada cliente
     for (const [clienteId, turnosCliente] of turnosPorCliente.entries()) {
       try {
-        // Obtener datos del cliente
-        const cliente = await ClienteModel.findById(clienteId);
-        if (!cliente || !cliente.telefono) {
-          console.warn(`⚠️ Cliente ${clienteId} sin teléfono`);
+        // Obtener datos del contacto
+        const contacto = await ContactoEmpresaModel.findById(clienteId);
+        if (!contacto || !contacto.telefono) {
+          console.warn(`⚠️ Contacto ${clienteId} sin teléfono`);
           continue;
         }
 
         // Generar mensaje
-        const mensaje = await generarMensaje(notif, turnosCliente, cliente);
+        const mensaje = await generarMensaje(notif, turnosCliente, contacto);
 
         // Enviar mensaje
-        await enviarMensajeWhatsAppTexto(cliente.telefono, mensaje, phoneNumberId);
+        await enviarMensajeWhatsAppTexto(contacto.telefono, mensaje, phoneNumberId);
         
-        console.log(`✅ Enviado a ${cliente.nombre} ${cliente.apellido} (${cliente.telefono})`);
+        console.log(`✅ Enviado a ${contacto.nombre} ${contacto.apellido} (${contacto.telefono})`);
 
         // Marcar notificación como enviada en el turno
         for (const turno of turnosCliente) {

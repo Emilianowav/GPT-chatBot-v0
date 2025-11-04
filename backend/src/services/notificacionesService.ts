@@ -2,7 +2,7 @@
 // import cron from 'node-cron'; // TODO: Instalar node-cron
 import { TurnoModel, EstadoTurno } from '../modules/calendar/models/Turno.js';
 import { ConfiguracionModuloModel } from '../modules/calendar/models/ConfiguracionModulo.js';
-import { ClienteModel } from '../models/Cliente.js';
+import { ContactoEmpresaModel } from '../models/ContactoEmpresa.js';
 import { AgenteModel } from '../modules/calendar/models/Agente.js';
 import { enviarMensajeWhatsAppTexto } from '../services/metaService.js';
 import { EmpresaModel } from '../models/Empresa.js';
@@ -146,19 +146,19 @@ export async function procesarNotificacionesPendientes() {
           let nombreDestinatario: string;
           
           if (esParaCliente) {
-            // Obtener datos del cliente
-            const cliente = await ClienteModel.findOne({ 
+            // Obtener datos del contacto
+            const contacto = await ContactoEmpresaModel.findOne({ 
               _id: turno.clienteId,
               empresaId: turno.empresaId
             });
             
-            if (!cliente) {
-              console.log(`⚠️ Cliente no encontrado: ${turno.clienteId}`);
+            if (!contacto) {
+              console.log(`⚠️ Contacto no encontrado: ${turno.clienteId}`);
               continue;
             }
             
-            telefono = cliente.telefono;
-            nombreDestinatario = `${cliente.nombre} ${cliente.apellido}`;
+            telefono = contacto.telefono;
+            nombreDestinatario = `${contacto.nombre} ${contacto.apellido}`;
           } else {
             // Obtener datos del agente
             if (!turno.agenteId) {
@@ -179,8 +179,8 @@ export async function procesarNotificacionesPendientes() {
           // Preparar variables para la plantilla
           const { fecha, hora } = formatearFechaHora(new Date(turno.fechaInicio));
           
-          // Obtener cliente para variables
-          const cliente = await ClienteModel.findOne({ 
+          // Obtener contacto para variables
+          const contacto = await ContactoEmpresaModel.findOne({ 
             _id: turno.clienteId,
             empresaId: turno.empresaId
           });
@@ -191,8 +191,8 @@ export async function procesarNotificacionesPendientes() {
             hora,
             duracion: `${turno.duracion} minutos`,
             turno: configuracion.nomenclatura.turno.toLowerCase(),
-            cliente: cliente ? `${cliente.nombre} ${cliente.apellido}` : '',
-            telefono: cliente?.telefono || '',
+            cliente: contacto ? `${contacto.nombre} ${contacto.apellido}` : '',
+            telefono: contacto?.telefono || '',
             
             // Agente (si existe)
             agente: (turno.agenteId as any)?.nombre 
@@ -368,23 +368,23 @@ export async function notificarDisponibilidad(
   try {
     console.log('📢 Notificando disponibilidad de turnos...');
     
-    // Buscar clientes que acepten notificaciones de disponibilidad
-    const clientes = await ClienteModel.find({
+    // Buscar contactos que acepten notificaciones de disponibilidad
+    const contactos = await ContactoEmpresaModel.find({
       empresaId,
       activo: true,
       'preferencias.notificacionesDisponibilidad': true,
       'preferencias.aceptaWhatsApp': true
     });
     
-    console.log(`📋 Encontrados ${clientes.length} clientes interesados`);
+    console.log(`📋 Encontrados ${contactos.length} contactos interesados`);
     
     let enviados = 0;
     let errores = 0;
     
-    for (const cliente of clientes) {
+    for (const contacto of contactos) {
       try {
         const enviada = await enviarNotificacion(
-          cliente.telefono,
+          contacto.telefono,
           mensaje,
           empresaId
         );
@@ -399,7 +399,7 @@ export async function notificarDisponibilidad(
         await new Promise(resolve => setTimeout(resolve, 1000));
         
       } catch (error) {
-        console.error(`❌ Error enviando a ${cliente.telefono}:`, error);
+        console.error(`❌ Error enviando a ${contacto.telefono}:`, error);
         errores++;
       }
     }

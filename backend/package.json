@@ -23,7 +23,15 @@
     "limpiar:confirmacion": "tsx src/scripts/limpiarEstadosConfirmacion.ts",
     "verificar:notificaciones": "tsx src/scripts/verificarConfiguracionNotificaciones.ts",
     "limpiar:test": "tsx src/scripts/limpiarClientesYTurnos.ts",
-    "verificar:telefonos": "tsx src/scripts/verificarTelefonos.ts"
+    "verificar:telefonos": "tsx src/scripts/verificarTelefonos.ts",
+    "migrar:contactos": "tsx src/scripts/migrarContactos.ts",
+    "migrar:configuraciones": "tsx src/scripts/migrarConfiguraciones.ts",
+    "migrar:usuarios-sistema": "tsx src/scripts/migrarUsuariosSistema.ts",
+    "migrar:referencias-turnos": "tsx src/scripts/actualizarReferenciasTurnos.ts",
+    "verificar:migracion": "tsx src/scripts/verificarMigracion.ts",
+    "limpiar:colecciones-antiguas": "tsx src/scripts/limpiarColeccionesAntiguas.ts",
+    "setup:test": "tsx src/scripts/setupTestData.ts",
+    "test:manual": "tsx src/scripts/testingManual.ts"
   },
   "keywords": [],
   "author": "",

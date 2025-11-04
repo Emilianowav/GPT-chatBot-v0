@@ -2,7 +2,7 @@
 import { TurnoModel, EstadoTurno } from '../modules/calendar/models/Turno.js';
 import { ConfiguracionModuloModel } from '../modules/calendar/models/ConfiguracionModulo.js';
 import { AgenteModel } from '../modules/calendar/models/Agente.js';
-import { ClienteModel } from '../models/Cliente.js';
+import { ContactoEmpresaModel } from '../models/ContactoEmpresa.js';
 import { enviarMensajeWhatsAppTexto } from '../services/metaService.js';
 import { EmpresaModel } from '../models/Empresa.js';
 
@@ -370,8 +370,8 @@ async function enviarNotificacionDiariaAgente(
       
       mensaje += `${i + 1}. 🕐 ${hora}`;
       
-      // Obtener datos del cliente
-      const cliente = await ClienteModel.findOne({
+      // Obtener datos del contacto
+      const contacto = await ContactoEmpresaModel.findOne({
         _id: turno.clienteId,
         empresaId
       });
@@ -379,12 +379,12 @@ async function enviarNotificacionDiariaAgente(
       // Agregar detalles según configuración
       const detalles: string[] = [];
       
-      if (config.incluirDetalles.nombreCliente && cliente) {
-        detalles.push(`${cliente.nombre} ${cliente.apellido}`);
+      if (config.incluirDetalles.nombreCliente && contacto) {
+        detalles.push(`${contacto.nombre} ${contacto.apellido}`);
       }
       
-      if (config.incluirDetalles.telefonoCliente && cliente) {
-        detalles.push(`📞 ${cliente.telefono}`);
+      if (config.incluirDetalles.telefonoCliente && contacto) {
+        detalles.push(`📞 ${contacto.telefono}`);
       }
       
       if (config.incluirDetalles.origen && turno.datos.origen) {

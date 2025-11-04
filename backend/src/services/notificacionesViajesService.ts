@@ -1,6 +1,6 @@
 // 🚗 Servicio de Notificaciones de Viajes - SIMPLIFICADO
 import { TurnoModel } from '../modules/calendar/models/Turno.js';
-import { ClienteModel } from '../models/Cliente.js';
+import { ContactoEmpresaModel } from '../models/ContactoEmpresa.js';
 import { EmpresaModel } from '../models/Empresa.js';
 import { enviarMensajeWhatsAppTexto } from './metaService.js';
 import { buscarEmpresaPorTelefono } from '../utils/empresaUtilsMongo.js';
@@ -56,35 +56,22 @@ export async function enviarNotificacionConfirmacionViajes(
   console.log('🔍 Buscando cliente por teléfono:', clienteTelefono);
   console.log('   Teléfono normalizado para búsqueda:', telefonoNormalizadoBusqueda);
   
-  // Buscar con teléfono normalizado O con el original
-  const cliente = await ClienteModel.findOne({
+  // Buscar contacto con teléfono normalizado
+  const contacto = await ContactoEmpresaModel.findOne({
     empresaId: empresaDoc.nombre,
-    $or: [
-      { telefono: clienteTelefono },
-      { telefono: telefonoNormalizadoBusqueda },
-      { telefono: `+${telefonoNormalizadoBusqueda}` }
-    ]
+    telefono: telefonoNormalizadoBusqueda
   });
 
-  if (!cliente) {
-    console.error('❌ Cliente no encontrado');
-    throw new Error(`Cliente no encontrado con teléfono ${clienteTelefono}`);
+  if (!contacto) {
+    console.error('❌ Contacto no encontrado');
+    throw new Error(`Contacto no encontrado con teléfono ${clienteTelefono}`);
   }
   
-  console.log('✅ Cliente encontrado:', cliente.nombre, cliente.apellido);
-  console.log('   Cliente ID:', cliente._id.toString());
-  console.log('   Teléfono en BD:', cliente.telefono);
+  console.log('✅ Contacto encontrado:', contacto.nombre, contacto.apellido);
+  console.log('   Contacto ID:', contacto._id.toString());
+  console.log('   Teléfono en BD:', contacto.telefono);
   
-  // ⚠️ CRÍTICO: Si el teléfono del cliente NO está normalizado, actualizarlo
-  if (cliente.telefono !== telefonoNormalizadoBusqueda) {
-    console.log('⚠️ Teléfono del cliente NO está normalizado, actualizando...');
-    console.log(`   Antes: "${cliente.telefono}"`);
-    console.log(`   Después: "${telefonoNormalizadoBusqueda}"`);
-    
-    cliente.telefono = telefonoNormalizadoBusqueda;
-    await cliente.save();
-    console.log('✅ Teléfono del cliente actualizado correctamente');
-  }
+  // ✅ El teléfono ya está normalizado en contactos_empresa
 
   // 3. Definir rango de fechas
   let fechaInicio: Date;
@@ -113,20 +100,17 @@ export async function enviarNotificacionConfirmacionViajes(
   console.log('   Desde:', fechaInicio.toISOString());
   console.log('   Hasta:', fechaFin.toISOString());
 
-  // 4. Buscar turnos del cliente
-  const query = {
-    empresaId: empresaDoc.nombre, // Los turnos usan el nombre de la empresa
-    clienteId: cliente._id.toString(), // Usar el _id del cliente
+  // 4. Buscar turnos del contacto
+  console.log('🔍 Buscando turnos del contacto...');
+  const turnos = await TurnoModel.find({
+    empresaId: empresaDoc.nombre,
+    clienteId: contacto._id.toString(),
     fechaInicio: {
       $gte: fechaInicio,
       $lte: fechaFin
     },
     estado: { $in: ['pendiente', 'confirmado'] }
-  };
-  
-  console.log('🔍 Query de búsqueda de turnos:', JSON.stringify(query, null, 2));
-  
-  const turnos = await TurnoModel.find(query)
+  })
     .sort({ fechaInicio: 1 })
     .limit(10);
 
@@ -187,7 +171,7 @@ export async function enviarNotificacionConfirmacionViajes(
   
   console.log('📞 Teléfonos:', {
     clienteTelefonoOriginal: clienteTelefono,
-    clienteTelefonoBD: cliente.telefono,
+    contactoTelefonoBD: contacto.telefono,
     telefonoNormalizadoParaFlujo: telefonoParaFlujo
   });
 

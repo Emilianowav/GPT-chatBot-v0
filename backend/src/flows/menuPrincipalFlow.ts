@@ -3,9 +3,8 @@ import type { Flow, FlowContext, FlowResult } from './types.js';
 import { enviarMensajeWhatsAppTexto, enviarMensajeConBotones } from '../services/metaService.js';
 import { ConfiguracionBotModel } from '../modules/calendar/models/ConfiguracionBot.js';
 import { TurnoModel } from '../modules/calendar/models/Turno.js';
-import { ClienteModel } from '../models/Cliente.js';
 import { AgenteModel } from '../modules/calendar/models/Agente.js';
-import { buscarOCrearClienteDesdeWhatsApp } from '../services/clienteAutoService.js';
+import { buscarOCrearContacto, incrementarTurnos } from '../services/contactoService.js';
 
 export const menuPrincipalFlow: Flow = {
   name: 'menu_principal',
@@ -281,22 +280,19 @@ export const menuPrincipalFlow: Flow = {
       
       // Crear turno en la BD
       try {
-        console.log('🔍 [Reserva] Buscando o creando cliente:', { telefono, empresaId });
+        console.log('🔍 [Reserva] Buscando o creando contacto:', { telefono, empresaId });
         
-        // ✅ USAR SERVICIO CORRECTO: buscarOCrearClienteDesdeWhatsApp
-        // Esto garantiza que el cliente se cree con nombre, apellido, profileName, etc.
-        const cliente = await buscarOCrearClienteDesdeWhatsApp({
+        // ✅ SISTEMA UNIFICADO: buscarOCrearContacto
+        const contacto = await buscarOCrearContacto({
           telefono,
           profileName: context.profileName || 'Cliente WhatsApp',
-          empresaId,
-          chatbotUserId: telefono // Usar teléfono como ID único
+          empresaId
         });
         
-        console.log('✅ [Reserva] Cliente obtenido:', {
-          id: cliente._id,
-          nombre: cliente.nombre,
-          apellido: cliente.apellido,
-          telefono: cliente.telefono
+        console.log('✅ [Reserva] Contacto encontrado/creado:', {
+          id: contacto._id,
+          nombre: contacto.nombre,
+          apellido: contacto.apellido
         });
         
         // Buscar un agente activo para asignar el turno
@@ -330,7 +326,7 @@ export const menuPrincipalFlow: Flow = {
         console.log('📝 [Reserva] Creando turno con datos:', {
           empresaId,
           agenteId: agente._id,
-          clienteId: cliente._id.toString(),
+          contactoId: contacto._id.toString(),
           fechaInicio,
           fechaFin,
           datos: {
@@ -343,7 +339,7 @@ export const menuPrincipalFlow: Flow = {
         const nuevoTurno = await TurnoModel.create({
           empresaId,
           agenteId: agente._id,
-          clienteId: cliente._id.toString(),
+          contactoId: contacto._id.toString(),
           fechaInicio,
           fechaFin,
           duracion: 30,
@@ -464,23 +460,22 @@ async function consultarTurnos(context: FlowContext): Promise<FlowResult> {
   const { telefono, empresaId } = context;
   
   try {
-    // ✅ Buscar o crear cliente usando servicio correcto
-    const cliente = await buscarOCrearClienteDesdeWhatsApp({
+    // ✅ Buscar o crear contacto usando servicio unificado
+    const contacto = await buscarOCrearContacto({
       telefono,
       profileName: context.profileName || 'Cliente WhatsApp',
-      empresaId,
-      chatbotUserId: telefono
+      empresaId
     });
     
-    console.log('✅ [Consulta] Cliente obtenido:', {
-      id: cliente._id,
-      nombre: cliente.nombre,
-      telefono: cliente.telefono
+    console.log('✅ [Consulta] Contacto obtenido:', {
+      id: contacto._id,
+      nombre: contacto.nombre,
+      telefono: contacto.telefono
     });
     
     // Buscar turnos activos
     const turnos = await TurnoModel.find({
-      clienteId: cliente._id.toString(),
+      contactoId: contacto._id.toString(),
       empresaId,
       estado: { $in: ['pendiente', 'confirmado'] },
       fechaInicio: { $gte: new Date() }
@@ -538,23 +533,22 @@ async function iniciarCancelacion(context: FlowContext): Promise<FlowResult> {
   const { telefono, empresaId } = context;
   
   try {
-    // ✅ Buscar o crear cliente usando servicio correcto
-    const cliente = await buscarOCrearClienteDesdeWhatsApp({
+    // ✅ Buscar o crear contacto usando servicio unificado
+    const contacto = await buscarOCrearContacto({
       telefono,
       profileName: context.profileName || 'Cliente WhatsApp',
-      empresaId,
-      chatbotUserId: telefono
+      empresaId
     });
     
-    console.log('✅ [Cancelar] Cliente obtenido:', {
-      id: cliente._id,
-      nombre: cliente.nombre,
-      telefono: cliente.telefono
+    console.log('✅ [Cancelar] Contacto obtenido:', {
+      id: contacto._id,
+      nombre: contacto.nombre,
+      telefono: contacto.telefono
     });
     
     // Buscar turnos activos
     const turnos = await TurnoModel.find({
-      clienteId: cliente._id.toString(),
+      contactoId: contacto._id.toString(),
       empresaId,
       estado: { $in: ['pendiente', 'confirmado'] },
       fechaInicio: { $gte: new Date() }

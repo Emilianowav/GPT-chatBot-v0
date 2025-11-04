@@ -2,7 +2,7 @@
 import type { Flow, FlowContext, FlowResult } from './types.js';
 import { enviarMensajeWhatsAppTexto, enviarMensajeConBotones } from '../services/metaService.js';
 import { TurnoModel } from '../modules/calendar/models/Turno.js';
-import { ClienteModel } from '../models/Cliente.js';
+import { ContactoEmpresaModel } from '../models/ContactoEmpresa.js';
 
 export const confirmacionTurnosFlow: Flow = {
   name: 'confirmacion_turnos',

@@ -2,12 +2,11 @@ import type { Request, Response, NextFunction } from 'express';
 
 import { extraerDatosDePayloadWhatsApp } from '../utils/whatsappUtils.js';
 import { buscarEmpresaPorTelefono } from '../utils/empresaUtilsMongo.js';
-import { obtenerUsuario, actualizarUsuario } from '../utils/usuarioStoreMongo.js';
 import { verificarYEnviarResumen } from '../services/metricService.js';
 import { enviarMensajeWhatsAppTexto } from '../services/metaService.js';
 import { enviarConversacionPorEmail } from '../utils/conversacionReporter.js';
 import { wss } from '../app.js';
-import { buscarOCrearClienteDesdeWhatsApp } from '../services/clienteAutoService.js';
+import { buscarOCrearContacto, limpiarHistorial, incrementarMetricas } from '../services/contactoService.js';
 import { flowManager } from '../flows/index.js';
 import type { FlowContext } from '../flows/types.js';
 
@@ -51,45 +50,29 @@ export const recibirMensaje = async (req: Request, res: Response, next: NextFunc
 
     console.log('🏢 Empresa encontrada:', { nombre: empresa.nombre, telefono: empresa.telefono });
 
-    const usuario = await obtenerUsuario(telefonoCliente, empresa.nombre, profileName ?? undefined, telefonoEmpresa);
-    
-    console.log('👤 Usuario obtenido/creado:', { 
-      id: usuario.id, 
-      nombre: usuario.nombre, 
-      empresaId: usuario.empresaId,
-      interacciones: usuario.interacciones 
+    // 🆕 SISTEMA UNIFICADO: Buscar o crear contacto (reemplaza usuario + cliente)
+    const contacto = await buscarOCrearContacto({
+      telefono: telefonoCliente,
+      profileName: profileName ?? undefined,
+      empresaId: empresa.nombre,
+      empresaTelefono: telefonoEmpresa
     });
-
-    if (!usuario.nombre && profileName) usuario.nombre = profileName;
-    if (!usuario.empresaTelefono) usuario.empresaTelefono = telefonoEmpresa;
-
-    // 🆕 Crear o actualizar cliente en la base de datos
-    try {
-      await buscarOCrearClienteDesdeWhatsApp({
-        telefono: telefonoCliente,
-        profileName: profileName ?? undefined,
-        empresaId: empresa.nombre,  // ✅ SIEMPRE usar nombre
-        chatbotUserId: usuario.id
-      });
-    } catch (errorCliente) {
-      console.error('⚠️ Error al crear/actualizar cliente:', errorCliente);
-    }
+    
+    console.log('👤 Contacto obtenido/creado:', { 
+      id: contacto._id, 
+      nombre: contacto.nombre,
+      apellido: contacto.apellido,
+      empresaId: contacto.empresaId,
+      interacciones: contacto.metricas.interacciones 
+    });
 
     // 🧹 Comando especial: limpiar historial
     if (/^limpiar$/i.test(mensaje.trim())) {
-      usuario.historial = [];
-      usuario.saludado = false;
-      usuario.despedido = false;
-      usuario.num_mensajes_recibidos = 0;
-      usuario.num_mensajes_enviados = 0;
-      usuario.interacciones = 0;
-      usuario.tokens_consumidos = 0;
-      usuario.ultimo_status = 'reset';
-      await actualizarUsuario(usuario);
+      await limpiarHistorial(contacto._id.toString());
       await enviarMensajeWhatsAppTexto(telefonoCliente, '✅ Historial de conversación limpiado. Podés empezar de nuevo cuando quieras.', phoneNumberId);
       
       // También limpiar estado de flujos
-      await flowManager.cancelFlow(telefonoCliente, empresa.nombre);  // ✅ SIEMPRE usar nombre
+      await flowManager.cancelFlow(telefonoCliente, empresa.nombre);
       
       res.sendStatus(200);
       return;
@@ -129,13 +112,12 @@ export const recibirMensaje = async (req: Request, res: Response, next: NextFunc
       if (handled && result?.success) {
         console.log('✅ Mensaje procesado por sistema de flujos');
         
-        // Actualizar métricas del usuario
-        usuario.num_mensajes_recibidos += 1;
-        usuario.num_mensajes_enviados += 1;
-        usuario.interacciones += 1;
-        usuario.ultimaInteraccion = new Date().toISOString();
-        usuario.ultimo_status = 'flow_handled';
-        await actualizarUsuario(usuario);
+        // Actualizar métricas del contacto
+        await incrementarMetricas(contacto._id.toString(), {
+          mensajesRecibidos: 1,
+          mensajesEnviados: 1,
+          interacciones: 1
+        });
         
         // Verificar métricas
         await verificarYEnviarResumen(telefonoEmpresa, empresa);
@@ -145,12 +127,12 @@ export const recibirMensaje = async (req: Request, res: Response, next: NextFunc
           await enviarConversacionPorEmail({
             emailDestino: empresa.email,
             empresa: empresa.nombre,
-            cliente: usuario.nombre ?? telefonoCliente,
+            cliente: `${contacto.nombre} ${contacto.apellido}`,
             numeroUsuario: telefonoCliente,
-            nombreUsuario: usuario.nombre,
+            nombreUsuario: contacto.nombre,
             mensajeCliente: mensaje,
             respuestaAsistente: 'Procesado por sistema de flujos',
-            historial: usuario.historial,
+            historial: contacto.conversaciones.historial,
           });
         }
         
@@ -160,13 +142,14 @@ export const recibirMensaje = async (req: Request, res: Response, next: NextFunc
             client.send(JSON.stringify({
               type: 'nuevo_mensaje',
               empresaId: empresa.nombre,
-              usuarioId: usuario.id,
+              contactoId: contacto._id.toString(),
               data: {
-                usuario: {
-                  id: usuario.id,
-                  nombre: usuario.nombre,
-                  numero: usuario.numero,
-                  ultimaInteraccion: usuario.ultimaInteraccion
+                contacto: {
+                  id: contacto._id.toString(),
+                  nombre: contacto.nombre,
+                  apellido: contacto.apellido,
+                  telefono: contacto.telefono,
+                  ultimaInteraccion: contacto.metricas.ultimaInteraccion
                 }
               }
             }));

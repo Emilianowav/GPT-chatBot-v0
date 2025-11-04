@@ -3,7 +3,8 @@ import { ConfiguracionBotModel } from '../models/ConfiguracionBot.js';
 import { ConversacionBotModel, IConversacionBot } from '../models/ConversacionBot.js';
 import { ConfiguracionModuloModel } from '../models/ConfiguracionModulo.js';
 import { TurnoModel, EstadoTurno } from '../models/Turno.js';
-import { ClienteModel } from '../../../models/Cliente.js';
+import { ContactoEmpresaModel } from '../../../models/ContactoEmpresa.js';
+import { buscarOCrearContacto } from '../../../services/contactoService.js';
 import { AgenteModel } from '../models/Agente.js';
 import * as turnoService from './turnoService.js';
 import { normalizarTelefono } from '../../../utils/telefonoUtils.js';
@@ -428,26 +429,14 @@ async function crearTurnoFinal(
     console.log('  Teléfono normalizado:', telefonoNormalizado);
     console.log('  Empresa:', empresaId);
     
-    // Buscar o crear cliente con teléfono normalizado
-    let cliente = await ClienteModel.findOne({
+    // Buscar o crear contacto con teléfono normalizado
+    const contacto = await buscarOCrearContacto({
       telefono: telefonoNormalizado,
+      profileName: conversacion.clienteNombre || 'Cliente WhatsApp',
       empresaId
     });
     
-    if (!cliente) {
-      console.log('📝 Cliente no encontrado, creando nuevo...');
-      // Crear cliente temporal con teléfono normalizado
-      cliente = await ClienteModel.create({
-        empresaId,
-        nombre: 'Cliente',
-        apellido: 'WhatsApp',
-        telefono: telefonoNormalizado,  // ✅ Guardar normalizado
-        origen: 'chatbot'
-      });
-      console.log('✅ Cliente creado:', cliente._id);
-    } else {
-      console.log('✅ Cliente encontrado:', cliente._id);
-    }
+    console.log('✅ Contacto obtenido:', contacto._id);
     
     // Construir fecha completa
     const fecha = new Date(datos.get('fecha'));
@@ -468,7 +457,7 @@ async function crearTurnoFinal(
     const turno = await turnoService.crearTurno({
       empresaId,
       agenteId: datos.get('agenteId'),
-      clienteId: cliente._id.toString(),
+      clienteId: contacto._id.toString(),
       fechaInicio: fecha,
       duracion: 30, // Por defecto
       datos: datosDinamicos,
@@ -499,15 +488,15 @@ async function crearTurnoFinal(
  */
 async function consultarTurnos(telefono: string, empresaId: string): Promise<string> {
   try {
-    const cliente = await ClienteModel.findOne({ telefono, empresaId });
+    const contacto = await ContactoEmpresaModel.findOne({ telefono, empresaId });
     
-    if (!cliente) {
+    if (!contacto) {
       return '❌ No encontré turnos asociados a este número.';
     }
     
     const turnos = await TurnoModel.find({
       empresaId,
-      clienteId: cliente._id,
+      clienteId: contacto._id,
       fechaInicio: { $gte: new Date() },
       estado: { $in: ['pendiente', 'confirmado'] }
     }).sort({ fechaInicio: 1 }).limit(5);
@@ -536,15 +525,15 @@ async function consultarTurnos(telefono: string, empresaId: string): Promise<str
  * Iniciar cancelación de turno
  */
 async function iniciarCancelacion(telefono: string, empresaId: string): Promise<string> {
-  const cliente = await ClienteModel.findOne({ telefono, empresaId });
+  const contacto = await ContactoEmpresaModel.findOne({ telefono, empresaId });
   
-  if (!cliente) {
+  if (!contacto) {
     return '❌ No encontré turnos asociados a este número.';
   }
   
   const turnos = await TurnoModel.find({
     empresaId,
-    clienteId: cliente._id,
+    clienteId: contacto._id,
     fechaInicio: { $gte: new Date() },
     estado: { $in: ['pendiente', 'confirmado'] }
   }).sort({ fechaInicio: 1 });
@@ -579,18 +568,18 @@ async function procesarCancelacion(
     return '❌ Por favor escribe el número del turno a cancelar.';
   }
   
-  const cliente = await ClienteModel.findOne({
+  const contacto = await ContactoEmpresaModel.findOne({
     telefono: conversacion.clienteTelefono,
     empresaId
   });
   
-  if (!cliente) {
+  if (!contacto) {
     return '❌ Error al buscar tus turnos.';
   }
   
   const turnos = await TurnoModel.find({
     empresaId,
-    clienteId: cliente._id,
+    clienteId: contacto._id,
     fechaInicio: { $gte: new Date() },
     estado: { $in: ['pendiente', 'confirmado'] }
   }).sort({ fechaInicio: 1 });

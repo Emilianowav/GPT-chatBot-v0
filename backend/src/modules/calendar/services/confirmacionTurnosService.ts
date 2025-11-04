@@ -1,6 +1,6 @@
 // 🔔 Servicio de Confirmación Interactiva de Turnos (Dinámico y Configurable)
 import { TurnoModel, EstadoTurno } from '../models/Turno.js';
-import { ClienteModel } from '../../../models/Cliente.js';
+import { ContactoEmpresaModel } from '../../../models/ContactoEmpresa.js';
 import { AgenteModel } from '../models/Agente.js';
 import { enviarMensajeWhatsAppTexto } from '../../../services/metaService.js';
 import { EmpresaModel } from '../../../models/Empresa.js';
@@ -86,13 +86,13 @@ export async function procesarRespuestaConfirmacion(
   }
   
   // Si no hay sesión, buscar turnos pendientes de confirmación
-  const cliente = await ClienteModel.findOne({ telefono, empresaId });
-  if (!cliente) {
+  const contacto = await ContactoEmpresaModel.findOne({ telefono, empresaId });
+  if (!contacto) {
     return { procesado: false };
   }
 
   const turnosPendientes = await TurnoModel.find({
-    clienteId: cliente._id.toString(),
+    clienteId: contacto._id.toString(),
     empresaId,
     estado: { $in: [EstadoTurno.PENDIENTE, EstadoTurno.NO_CONFIRMADO] },
     fechaInicio: { $gte: new Date() }
@@ -115,7 +115,7 @@ export async function procesarRespuestaConfirmacion(
   if (!isNaN(numeroSeleccionado) && numeroSeleccionado >= 1 && numeroSeleccionado <= turnosPendientes.length) {
     // Crear sesión para editar este turno
     const sesion: SesionConfirmacion = {
-      clienteId: cliente._id.toString(),
+      clienteId: contacto._id.toString(),
       telefono,
       empresaId,
       turnos: turnosPendientes,
@@ -515,9 +515,9 @@ export async function enviarNotificacionConfirmacion(
 ): Promise<boolean> {
   
   try {
-    const cliente = await ClienteModel.findById(clienteId);
-    if (!cliente || !cliente.telefono) {
-      console.error('Cliente sin teléfono');
+    const contacto = await ContactoEmpresaModel.findById(clienteId);
+    if (!contacto || !contacto.telefono) {
+      console.error('Contacto sin teléfono');
       return false;
     }
 
@@ -560,13 +560,13 @@ export async function enviarNotificacionConfirmacion(
     if (turnos.length > 1) {
       const sesion: SesionConfirmacion = {
         clienteId: clienteId,
-        telefono: cliente.telefono,
+        telefono: contacto.telefono,
         empresaId,
         turnos: turnos,
         paso: 'inicial',
         timestamp: new Date()
       };
-      sesionesActivas.set(cliente.telefono, sesion);
+      sesionesActivas.set(contacto.telefono, sesion);
     }
 
     // Obtener configuración de empresa para phoneNumberId
@@ -594,7 +594,7 @@ export async function enviarNotificacionConfirmacion(
       return false;
     }
 
-    const enviado = await enviarMensajeWhatsAppTexto(cliente.telefono, mensaje, empresa.phoneNumberId);
+    const enviado = await enviarMensajeWhatsAppTexto(contacto.telefono, mensaje, empresa.phoneNumberId);
     
     // Marcar notificaciones como enviadas
     for (const turno of turnos) {

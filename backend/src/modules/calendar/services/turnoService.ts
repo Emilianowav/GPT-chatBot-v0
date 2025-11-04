@@ -3,7 +3,7 @@ import { TurnoModel, ITurno, EstadoTurno } from '../models/Turno.js';
 import { AgenteModel, ModoAtencion } from '../models/Agente.js';
 import { ConfiguracionCalendarioModel } from '../models/ConfiguracionCalendario.js';
 import { ConfiguracionModuloModel } from '../models/ConfiguracionModulo.js';
-import { ClienteModel } from '../../../models/Cliente.js';
+import { ContactoEmpresaModel } from '../../../models/ContactoEmpresa.js';
 import { verificarDisponibilidad } from './disponibilidadService.js';
 
 export interface CrearTurnoData {
@@ -275,20 +275,20 @@ export async function obtenerTurnos(filtros: {
     turnos.map(async (turno) => {
       const turnoObj = turno.toObject();
       try {
-        const cliente = await ClienteModel.findOne({ 
+        const contacto = await ContactoEmpresaModel.findOne({ 
           _id: turno.clienteId,
           empresaId: filtros.empresaId
         }).select('nombre apellido telefono email dni');
         
         return {
           ...turnoObj,
-          clienteInfo: cliente ? {
-            _id: cliente._id,
-            nombre: cliente.nombre,
-            apellido: cliente.apellido,
-            telefono: cliente.telefono,
-            email: cliente.email,
-            documento: cliente.dni
+          clienteInfo: contacto ? {
+            _id: contacto._id,
+            nombre: contacto.nombre,
+            apellido: contacto.apellido,
+            telefono: contacto.telefono,
+            email: contacto.email,
+            documento: contacto.dni
           } : null
         };
       } catch (error) {
