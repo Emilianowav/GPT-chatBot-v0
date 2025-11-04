@@ -47,44 +47,56 @@ async function enviarNotificacion(
   empresaId: string
 ): Promise<boolean> {
   try {
-    console.log('📤 Enviando notificación:');
-    console.log('  Teléfono:', telefono);
-    console.log('  Empresa:', empresaId);
-    console.log('  Mensaje:', mensaje);
+    console.log('\n📤 ========== ENVIANDO NOTIFICACIÓN ==========');
+    console.log('  📞 Teléfono:', telefono);
+    console.log('  🏢 Empresa ID:', empresaId);
+    console.log('  📝 Mensaje:', mensaje.substring(0, 100) + '...');
     
     // Obtener configuración de la empresa para el phoneNumberId
     // empresaId puede ser el nombre de la empresa o el ObjectId
     let empresa;
     
+    console.log('🔍 Buscando empresa por nombre...');
     // Intentar primero por nombre (más común en este sistema)
     empresa = await EmpresaModel.findOne({ nombre: empresaId });
     
     // Si no se encuentra y el ID parece ser un ObjectId válido, intentar por _id
     if (!empresa && empresaId.match(/^[0-9a-fA-F]{24}$/)) {
+      console.log('🔍 Buscando empresa por _id...');
       empresa = await EmpresaModel.findOne({ _id: empresaId });
     }
     
     if (!empresa) {
       console.error('❌ Empresa no encontrada:', empresaId);
+      console.error('   Verifica que la empresa exista en MongoDB');
       return false;
     }
+    
+    console.log('✅ Empresa encontrada:', empresa.nombre);
     
     // Obtener phoneNumberId de la empresa
     const phoneNumberId = (empresa as any).phoneNumberId;
     
     if (!phoneNumberId) {
-      console.error('❌ phoneNumberId no configurado para empresa:', empresaId);
+      console.error('❌ phoneNumberId NO configurado para empresa:', empresaId);
+      console.error('   La empresa debe tener el campo phoneNumberId en MongoDB');
+      console.error('   Ejemplo: phoneNumberId: "768730689655171"');
       return false;
     }
     
+    console.log('✅ phoneNumberId encontrado:', phoneNumberId);
+    
     // Enviar mensaje vía WhatsApp API
+    console.log('📨 Llamando a enviarMensajeWhatsAppTexto...');
     await enviarMensajeWhatsAppTexto(telefono, mensaje, phoneNumberId);
     
     console.log('✅ Notificación enviada exitosamente');
+    console.log('============================================\n');
     return true;
     
   } catch (error) {
     console.error('❌ Error al enviar notificación:', error);
+    console.error('   Stack:', (error as Error).stack);
     return false;
   }
 }

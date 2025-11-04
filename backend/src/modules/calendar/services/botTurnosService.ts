@@ -6,6 +6,7 @@ import { TurnoModel, EstadoTurno } from '../models/Turno.js';
 import { ClienteModel } from '../../../models/Cliente.js';
 import { AgenteModel } from '../models/Agente.js';
 import * as turnoService from './turnoService.js';
+import { normalizarTelefono } from '../../../utils/telefonoUtils.js';
 
 /**
  * Procesar mensaje del cliente
@@ -419,21 +420,33 @@ async function crearTurnoFinal(
   try {
     const datos = conversacion.datosCapturados;
     
-    // Buscar o crear cliente
+    // ⚠️ CRÍTICO: Normalizar teléfono (sin +, espacios, guiones)
+    const telefonoNormalizado = normalizarTelefono(conversacion.clienteTelefono);
+    
+    console.log('🔍 Buscando/creando cliente:');
+    console.log('  Teléfono original:', conversacion.clienteTelefono);
+    console.log('  Teléfono normalizado:', telefonoNormalizado);
+    console.log('  Empresa:', empresaId);
+    
+    // Buscar o crear cliente con teléfono normalizado
     let cliente = await ClienteModel.findOne({
-      telefono: conversacion.clienteTelefono,
+      telefono: telefonoNormalizado,
       empresaId
     });
     
     if (!cliente) {
-      // Crear cliente temporal
+      console.log('📝 Cliente no encontrado, creando nuevo...');
+      // Crear cliente temporal con teléfono normalizado
       cliente = await ClienteModel.create({
         empresaId,
         nombre: 'Cliente',
         apellido: 'WhatsApp',
-        telefono: conversacion.clienteTelefono,
+        telefono: telefonoNormalizado,  // ✅ Guardar normalizado
         origen: 'chatbot'
       });
+      console.log('✅ Cliente creado:', cliente._id);
+    } else {
+      console.log('✅ Cliente encontrado:', cliente._id);
     }
     
     // Construir fecha completa
