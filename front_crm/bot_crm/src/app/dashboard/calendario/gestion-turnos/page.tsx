@@ -135,32 +135,58 @@ export default function GestionTurnosPage() {
     if (!turnoSeleccionado) return;
     
     try {
-      // Llamar a la API para actualizar el turno
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000'}/api/calendar/turnos/${turnoSeleccionado._id}`, {
+      const token = localStorage.getItem('auth_token');
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';
+      
+      console.log('🔧 Actualizando turno:', turnoSeleccionado._id);
+      console.log('📡 URL:', `${apiUrl}/api/calendar/turnos/${turnoSeleccionado._id}`);
+      
+      // Construir fechaInicio y fechaFin
+      const fechaInicio = new Date(`${formEdicion.fecha}T${formEdicion.horaInicio}:00`);
+      let fechaFin = null;
+      
+      if (formEdicion.horaFin) {
+        fechaFin = new Date(`${formEdicion.fecha}T${formEdicion.horaFin}:00`);
+      }
+      
+      const body = {
+        agenteId: formEdicion.agenteId,
+        fechaInicio: fechaInicio.toISOString(),
+        fechaFin: fechaFin ? fechaFin.toISOString() : null,
+        notas: formEdicion.notas,
+        datos: formEdicion.datos
+      };
+      
+      console.log('📤 Body:', body);
+      
+      const response = await fetch(`${apiUrl}/api/calendar/turnos/${turnoSeleccionado._id}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('auth_token')}`
+          'Authorization': `Bearer ${token}`
         },
-        body: JSON.stringify({
-          agenteId: formEdicion.agenteId,
-          fechaInicio: new Date(`${formEdicion.fecha}T${formEdicion.horaInicio}:00`).toISOString(),
-          fechaFin: formEdicion.horaFin ? new Date(`${formEdicion.fecha}T${formEdicion.horaFin}:00`).toISOString() : undefined,
-          notas: formEdicion.notas,
-          datos: formEdicion.datos
-        })
+        body: JSON.stringify(body)
       });
 
+      console.log('📥 Response status:', response.status);
+      
       if (!response.ok) {
-        throw new Error('Error al actualizar turno');
+        const errorData = await response.json().catch(() => ({}));
+        console.error('❌ Error response:', errorData);
+        throw new Error(errorData.message || 'Error al actualizar turno');
       }
 
+      const data = await response.json();
+      console.log('✅ Turno actualizado:', data);
+      
       setModalEditar(false);
       setTurnoSeleccionado(null);
       cargarTurnosConFiltros();
+      
+      alert('✅ Turno actualizado exitosamente');
     } catch (error) {
-      console.error('Error al guardar edición:', error);
-      alert('Error al guardar los cambios');
+      console.error('❌ Error al guardar edición:', error);
+      alert(`Error al guardar los cambios: ${(error as Error).message}`);
     }
   };
 
@@ -388,7 +414,7 @@ export default function GestionTurnosPage() {
                                 
                                 <select
                                   className={styles.selectEstado}
-                                  value={turno.estado}
+                                  defaultValue={turno.estado}
                                   onChange={(e) => handleCambiarEstado(turno._id, e.target.value)}
                                 >
                                   <option value="pendiente">Pendiente</option>
