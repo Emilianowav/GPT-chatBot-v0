@@ -328,14 +328,27 @@ export const menuPrincipalFlow: Flow = {
         console.log('✅ [Reserva] Agente encontrado:', agente._id);
         
         // Crear fecha en zona horaria local (el servidor debe estar en Argentina)
-        const fechaStr = data.fecha; // formato: DD/MM/YYYY
-        const [dia, mes, anio] = fechaStr.split('/');
+        let dia: number, mes: number, anio: number;
+        
+        if (data.fecha instanceof Date) {
+          // Si ya es un Date (ej: "mañana", "hoy")
+          dia = data.fecha.getDate();
+          mes = data.fecha.getMonth() + 1; // getMonth() retorna 0-11
+          anio = data.fecha.getFullYear();
+        } else {
+          // Si es string en formato DD/MM/YYYY
+          const fechaStr = data.fecha.toString();
+          const partes = fechaStr.split('/');
+          dia = parseInt(partes[0]);
+          mes = parseInt(partes[1]);
+          anio = parseInt(partes[2]);
+        }
         
         // Crear fecha directamente con los valores locales
         const fechaInicio = new Date(
-          parseInt(anio),
-          parseInt(mes) - 1,
-          parseInt(dia),
+          anio,
+          mes - 1,
+          dia,
           hora,
           minuto,
           0,
