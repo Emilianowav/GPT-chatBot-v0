@@ -28,13 +28,13 @@
 .header h1 {
   font-size: 1.75rem;
   margin: 0;
-  color: #1a202c;
+  color: white;
   font-weight: 700;
   letter-spacing: -0.5px;
 }
 
 .header p {
-  color: #718096;
+  color: rgba(255, 255, 255, 0.7);
   font-size: 0.95rem;
   margin: 0.25rem 0 0 0;
   font-weight: 400;
