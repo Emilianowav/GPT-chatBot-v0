@@ -49,7 +49,8 @@
     "verificar:parana-lodge": "tsx scripts/verificarParanaLodge.ts",
     "limpiar:numero-parana": "tsx scripts/limpiarNumeroParanaLodge.ts",
     "ver:historial": "tsx scripts/verHistorialCompleto.ts",
-    "test:conversaciones": "tsx scripts/testConversacionesEndpoint.ts"
+    "test:conversaciones": "tsx scripts/testConversacionesEndpoint.ts",
+    "verificar:flujo-confirmacion": "tsx scripts/verificarFlujoConfirmacion.ts"
   },
   "keywords": [],
   "author": "",
