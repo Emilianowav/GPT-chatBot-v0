@@ -498,6 +498,73 @@ export default function ModalNotificacion({
 
               {formData.requiereConfirmacion && (
                 <>
+                  {/* Mostrar flujo interactivo si es confirmación interactiva */}
+                  {plantillaSeleccionada === 'confirmacion_interactiva' && (
+                    <div className={styles.flujoInteractivo}>
+                      <h4 className={styles.flujoTitulo}>🔄 Flujo Interactivo de Confirmación</h4>
+                      <div className={styles.pasosFlujo}>
+                        <div className={styles.pasoFlujo}>
+                          <div className={styles.pasoNumero}>1</div>
+                          <div className={styles.pasoContenido}>
+                            <strong>Mensaje Inicial</strong>
+                            <p>Se envía el recordatorio con la lista de turnos y opciones</p>
+                            <div className={styles.pasoOpciones}>
+                              <span>1️⃣ Confirmar</span>
+                              <span>2️⃣ Editar</span>
+                            </div>
+                          </div>
+                        </div>
+                        
+                        <div className={styles.pasoFlujo}>
+                          <div className={styles.pasoNumero}>2</div>
+                          <div className={styles.pasoContenido}>
+                            <strong>Si elige "Editar"</strong>
+                            <p>Muestra opciones de edición:</p>
+                            <div className={styles.pasoOpciones}>
+                              <span>1️⃣ Cambiar origen</span>
+                              <span>2️⃣ Cambiar destino</span>
+                              <span>3️⃣ Cambiar hora</span>
+                              <span>4️⃣ Confirmar turno</span>
+                              <span>5️⃣ Cancelar turno</span>
+                            </div>
+                          </div>
+                        </div>
+                        
+                        <div className={styles.pasoFlujo}>
+                          <div className={styles.pasoNumero}>3</div>
+                          <div className={styles.pasoContenido}>
+                            <strong>Edición de Campo</strong>
+                            <p>Cliente ingresa nuevo valor para el campo seleccionado</p>
+                            <div className={styles.pasoEjemplo}>
+                              Ej: "Posadas Centro" → Se actualiza el origen
+                            </div>
+                          </div>
+                        </div>
+                        
+                        <div className={styles.pasoFlujo}>
+                          <div className={styles.pasoNumero}>4</div>
+                          <div className={styles.pasoContenido}>
+                            <strong>Confirmación Final</strong>
+                            <p>Se muestra mensaje de confirmación o cancelación</p>
+                            <div className={styles.pasoEjemplo}>
+                              ✅ "Turno confirmado exitosamente"
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                      
+                      <div className={styles.flujoInfo}>
+                        <strong>💡 Características:</strong>
+                        <ul>
+                          <li>Edición completa de origen, destino y hora</li>
+                          <li>Confirmación o cancelación de turnos</li>
+                          <li>Soporte para múltiples turnos</li>
+                          <li>Sesiones interactivas con timeout</li>
+                        </ul>
+                      </div>
+                    </div>
+                  )}
+                
                   <div className={styles.field}>
                     <label>✅ Mensaje de Confirmación</label>
                     <textarea

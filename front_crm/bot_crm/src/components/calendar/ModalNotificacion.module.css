@@ -291,6 +291,124 @@
   margin-top: 4px;
 }
 
+/* Flujo Interactivo */
+.flujoInteractivo {
+  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+  border: 2px solid #FF6B4A;
+  border-radius: 12px;
+  padding: 1.5rem;
+  margin: 1.5rem 0;
+}
+
+.flujoTitulo {
+  margin: 0 0 1rem 0;
+  color: #FF6B4A;
+  font-size: 1.1rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.pasosFlujo {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.pasoFlujo {
+  display: flex;
+  gap: 1rem;
+  background: white;
+  padding: 1rem;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.pasoNumero {
+  flex-shrink: 0;
+  width: 36px;
+  height: 36px;
+  background: linear-gradient(135deg, #FF6B4A 0%, #FF8A6E 100%);
+  color: white;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 1.1rem;
+}
+
+.pasoContenido {
+  flex: 1;
+}
+
+.pasoContenido strong {
+  display: block;
+  color: #1a1a1a;
+  margin-bottom: 0.25rem;
+  font-size: 0.95rem;
+}
+
+.pasoContenido p {
+  margin: 0.25rem 0;
+  color: #666;
+  font-size: 0.875rem;
+}
+
+.pasoOpciones {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+}
+
+.pasoOpciones span {
+  background: #f3f4f6;
+  padding: 0.25rem 0.75rem;
+  border-radius: 6px;
+  font-size: 0.8125rem;
+  color: #374151;
+  border: 1px solid #e5e7eb;
+}
+
+.pasoEjemplo {
+  background: #fef3c7;
+  border-left: 3px solid #f59e0b;
+  padding: 0.5rem 0.75rem;
+  margin-top: 0.5rem;
+  border-radius: 4px;
+  font-size: 0.875rem;
+  color: #92400e;
+  font-family: monospace;
+}
+
+.flujoInfo {
+  background: white;
+  padding: 1rem;
+  border-radius: 8px;
+  border-left: 4px solid #10b981;
+}
+
+.flujoInfo strong {
+  display: block;
+  color: #10b981;
+  margin-bottom: 0.5rem;
+  font-size: 0.95rem;
+}
+
+.flujoInfo ul {
+  margin: 0;
+  padding-left: 1.5rem;
+  color: #374151;
+}
+
+.flujoInfo li {
+  margin: 0.25rem 0;
+  font-size: 0.875rem;
+}
+
 .fieldCheckbox {
   display: flex;
   align-items: center;
