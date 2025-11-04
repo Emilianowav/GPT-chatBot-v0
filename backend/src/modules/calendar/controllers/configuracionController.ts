@@ -364,21 +364,31 @@ export const enviarNotificacionPrueba = async (req: Request, res: Response): Pro
       return;
     }
 
+    // Validar que se envió el teléfono
+    if (!notificacion.telefono) {
+      res.status(400).json({
+        success: false,
+        message: 'Falta el teléfono del destinatario en notificacion.telefono'
+      });
+      return;
+    }
+
     // Importar servicios necesarios
     const { ClienteModel } = await import('../../../models/Cliente.js');
     const { EmpresaModel } = await import('../../../models/Empresa.js');
     const { enviarNotificacionConfirmacionViajes } = await import('../../../services/notificacionesViajesService.js');
+    const { normalizarTelefono } = await import('../../../utils/telefonoUtils.js');
 
-    // Buscar un cliente de prueba (el primero de la empresa)
-    const clientePrueba = await ClienteModel.findOne({ empresaId }).limit(1);
+    // Normalizar el teléfono recibido
+    const telefonoNormalizado = normalizarTelefono(notificacion.telefono);
     
-    if (!clientePrueba || !clientePrueba.telefono) {
-      res.status(404).json({
-        success: false,
-        message: 'No se encontró un cliente con teléfono para enviar la prueba'
-      });
-      return;
-    }
+    console.log(`📨 Enviando notificación de prueba a ${telefonoNormalizado}`);
+
+    // Buscar cliente por teléfono (opcional, para mostrar nombre)
+    const cliente = await ClienteModel.findOne({ 
+      telefono: telefonoNormalizado,
+      empresaId 
+    });
 
     // Buscar empresa por nombre o ID
     let empresa;
@@ -401,20 +411,29 @@ export const enviarNotificacionPrueba = async (req: Request, res: Response): Pro
       return;
     }
 
-    console.log(`📨 Enviando notificación de prueba a ${clientePrueba.telefono}`);
     console.log(`   Empresa: ${empresa.nombre} (${empresa.telefono})`);
+    if (cliente) {
+      console.log(`   Cliente encontrado: ${cliente.nombre} ${cliente.apellido}`);
+    } else {
+      console.log(`   ⚠️ Cliente no encontrado en BD, enviando igualmente`);
+    }
 
     // Enviar notificación usando el nuevo sistema de flujos (modo prueba)
     await enviarNotificacionConfirmacionViajes(
-      clientePrueba.telefono,
+      telefonoNormalizado,
       empresa.telefono,
       true // modoPrueba: busca turnos en los próximos 7 días
     );
 
+    const nombreDestinatario = cliente 
+      ? `${cliente.nombre} ${cliente.apellido}`.trim() 
+      : telefonoNormalizado;
+
     res.json({
       success: true,
-      message: `Notificación de prueba enviada a ${clientePrueba.nombre || clientePrueba.telefono}`,
-      telefono: clientePrueba.telefono
+      message: `Notificación de prueba enviada a ${nombreDestinatario}`,
+      telefono: telefonoNormalizado,
+      clienteEncontrado: !!cliente
     });
 
   } catch (error: any) {

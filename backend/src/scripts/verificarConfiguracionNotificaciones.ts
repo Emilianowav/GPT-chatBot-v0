@@ -3,6 +3,7 @@ import mongoose from 'mongoose';
 import { EmpresaModel } from '../models/Empresa.js';
 import { ClienteModel } from '../models/Cliente.js';
 import { TurnoModel } from '../modules/calendar/models/Turno.js';
+import { AgenteModel } from '../modules/calendar/models/Agente.js';
 import { ConfiguracionModuloModel } from '../modules/calendar/models/ConfiguracionModulo.js';
 import { normalizarTelefono } from '../utils/telefonoUtils.js';
 import dotenv from 'dotenv';
@@ -60,8 +61,7 @@ async function verificarConfiguracion() {
     console.log('\n📋 ========== TURNOS RECIENTES ==========');
     const turnos = await TurnoModel.find({})
       .sort({ creadoEn: -1 })
-      .limit(5)
-      .populate('agenteId');
+      .limit(5);
     
     console.log(`Total turnos (mostrando últimos 5): ${turnos.length}\n`);
 

@@ -143,7 +143,8 @@ export default function AdministradorFlujosPage() {
       const token = localStorage.getItem('auth_token');
       const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';
       
-      const response = await fetch(`${apiUrl}/api/bot/test-flujo`, {
+      // Usar el endpoint existente de notificaciones
+      const response = await fetch(`${apiUrl}/api/modules/calendar/configuracion/notificaciones/enviar-prueba`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -151,18 +152,23 @@ export default function AdministradorFlujosPage() {
         },
         body: JSON.stringify({
           empresaId,
-          flujoId,
-          telefono
+          notificacion: {
+            tipo: flujoId === 'confirmacion_turnos' ? 'confirmacion' : 'estado',
+            telefono
+          }
         })
       });
 
       if (!response.ok) {
-        throw new Error('Error al enviar mensaje de prueba');
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Error al enviar mensaje de prueba');
       }
 
+      const data = await response.json();
+      
       setMensaje({
         tipo: 'success',
-        texto: `✅ Mensaje de prueba enviado a ${telefono}`
+        texto: `✅ ${data.message || 'Mensaje de prueba enviado'}`
       });
       setModalPrueba(null);
     } catch (err: any) {
@@ -177,27 +183,56 @@ export default function AdministradorFlujosPage() {
   };
 
   const handleGuardarConfigFlujo = async () => {
-    if (!configEditada) return;
+    if (!configEditada || !modalConfigFlujo) return;
     
     setGuardandoConfig(true);
     try {
       const token = localStorage.getItem('auth_token');
       const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';
       
-      // Actualizar notificación en el backend
+      // Primero obtener la configuración actual
+      const getResponse = await fetch(`${apiUrl}/api/modules/calendar/configuracion/${empresaId}`, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      
+      if (!getResponse.ok) {
+        throw new Error('Error al obtener configuración actual');
+      }
+      
+      const { configuracion: configActual } = await getResponse.json();
+      
+      // Actualizar la notificación específica
+      const notificacionesActualizadas = configActual.notificaciones.map((notif: any) => {
+        if (notif.tipo === (modalConfigFlujo.id === 'confirmacion_turnos' ? 'confirmacion' : 'estado')) {
+          return {
+            ...notif,
+            activa: configEditada.activo,
+            plantillaMensaje: configEditada.mensaje,
+            diasAntes: configEditada.anticipacion ? Math.floor(configEditada.anticipacion / 24) : notif.diasAntes,
+            requiereConfirmacion: configEditada.solicitarConfirmacion ?? notif.requiereConfirmacion
+          };
+        }
+        return notif;
+      });
+      
+      // Guardar configuración actualizada
       const response = await fetch(`${apiUrl}/api/modules/calendar/configuracion/${empresaId}`, {
-        method: 'PATCH',
+        method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`
         },
         body: JSON.stringify({
-          notificaciones: configEditada.notificaciones
+          ...configActual,
+          notificaciones: notificacionesActualizadas
         })
       });
 
       if (!response.ok) {
-        throw new Error('Error al guardar configuración');
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Error al guardar configuración');
       }
 
       setMensaje({
@@ -220,46 +255,6 @@ export default function AdministradorFlujosPage() {
     }
   };
 
-  const handleEnviarPruebaNotificacion = async (telefono: string) => {
-    if (!modalConfigFlujo) return;
-    
-    setEnviandoPrueba(modalConfigFlujo.id);
-    try {
-      const token = localStorage.getItem('auth_token');
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';
-      
-      const response = await fetch(`${apiUrl}/api/modules/calendar/notificaciones/test`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify({
-          empresaId,
-          tipo: modalConfigFlujo.id === 'confirmacion_turnos' ? 'confirmacion' : 'estado',
-          telefono,
-          mensaje: configEditada?.mensaje || modalConfigFlujo.config.mensaje
-        })
-      });
-
-      if (!response.ok) {
-        throw new Error('Error al enviar mensaje de prueba');
-      }
-
-      setMensaje({
-        tipo: 'success',
-        texto: `✅ Mensaje de prueba enviado a ${telefono}`
-      });
-    } catch (err: any) {
-      setMensaje({
-        tipo: 'error',
-        texto: err.message || 'Error al enviar prueba'
-      });
-    } finally {
-      setEnviandoPrueba(null);
-      setTimeout(() => setMensaje(null), 5000);
-    }
-  };
 
   return (
     <div className={styles.container}>

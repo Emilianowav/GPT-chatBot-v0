@@ -48,11 +48,14 @@ export const notificacionViajesFlow: Flow = {
     const mensajeTrim = mensaje.trim();
     
     console.log(`📥 [NotificacionViajes] Estado: ${state}, Mensaje: ${mensajeTrim}`);
+    console.log(`📥 [NotificacionViajes] Data:`, JSON.stringify(data, null, 2));
     
     if (state === 'esperando_opcion_inicial') {
       if (mensajeTrim === '1') {
         // Confirmar todos los viajes
         const viajes = data.viajes || [];
+        
+        console.log(`✅ [NotificacionViajes] Confirmando ${viajes.length} viaje(s)`);
         
         // Actualizar todos los turnos a confirmado
         for (const viaje of viajes) {
@@ -62,9 +65,13 @@ export const notificacionViajesFlow: Flow = {
           });
         }
         
+        const mensajeConfirmacion = viajes.length === 1
+          ? `✅ ¡Perfecto! Tu viaje ha sido confirmado.\n\n¡Nos vemos pronto! 🚗`
+          : `✅ ¡Perfecto! Todos tus ${viajes.length} viajes han sido confirmados.\n\n¡Nos vemos pronto! 🚗`;
+        
         await enviarMensajeWhatsAppTexto(
           telefono,
-          '✅ ¡Perfecto! Todos tus viajes han sido confirmados. Te esperamos mañana.',
+          mensajeConfirmacion,
           context.phoneNumberId
         );
         
