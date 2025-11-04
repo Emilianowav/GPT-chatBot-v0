@@ -128,14 +128,27 @@ export async function configurarDisponibilidad(
 
   // Validar formato de horarios
   for (const disp of disponibilidad) {
+    // Validar formato HH:MM
+    if (!disp.horaInicio || !disp.horaFin) {
+      throw new Error('Horario incompleto: debe especificar hora de inicio y fin');
+    }
+
     const [horaIni, minIni] = disp.horaInicio.split(':').map(Number);
     const [horaFin, minFin] = disp.horaFin.split(':').map(Number);
+
+    // Validar que sean números válidos
+    if (isNaN(horaIni) || isNaN(minIni) || isNaN(horaFin) || isNaN(minFin)) {
+      throw new Error(`Formato de hora inválido: ${disp.horaInicio} - ${disp.horaFin}`);
+    }
 
     const inicioMinutos = horaIni * 60 + minIni;
     const finMinutos = horaFin * 60 + minFin;
 
+    console.log(`🕐 Validando horario: ${disp.horaInicio} (${inicioMinutos} min) - ${disp.horaFin} (${finMinutos} min)`);
+
+    // La hora de fin debe ser posterior a la de inicio
     if (finMinutos <= inicioMinutos) {
-      throw new Error('La hora de fin debe ser posterior a la hora de inicio');
+      throw new Error(`La hora de fin (${disp.horaFin}) debe ser posterior a la hora de inicio (${disp.horaInicio}). Recibido: ${inicioMinutos} min -> ${finMinutos} min`);
     }
   }
 
