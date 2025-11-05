@@ -525,11 +525,10 @@ export async function enviarNotificacionConfirmacion(
     
     turnos.forEach((turno, index) => {
       const fechaInicio = new Date(turno.fechaInicio);
-      const hora = fechaInicio.toLocaleTimeString('es-AR', {
-        hour: '2-digit',
-        minute: '2-digit',
-        hour12: false
-      });
+      // Usar UTC para mostrar la hora tal cual está guardada (sin conversión de zona horaria)
+      const horas = String(fechaInicio.getUTCHours()).padStart(2, '0');
+      const minutos = String(fechaInicio.getUTCMinutes()).padStart(2, '0');
+      const hora = `${horas}:${minutos}`;
       
       const origen = turno.datos?.origen || 'No especificado';
       const destino = turno.datos?.destino || 'No especificado';
