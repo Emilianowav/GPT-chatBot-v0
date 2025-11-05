@@ -26,6 +26,7 @@ import {
 } from "./services/metaTokenService.js";
 import { iniciarServicioNotificaciones } from "./services/notificacionesService.js";
 import { procesarNotificacionesProgramadas } from "./services/notificacionesAutomaticasService.js";
+import { enviarNotificacionesDiariasAgentes, esHoraDeEnviarNotificacionesDiarias } from "./services/notificacionesDiariasAgentes.js";
 import { initializeFlows } from "./flows/index.js";
 
 const app = express();
@@ -186,7 +187,19 @@ app.use(errorHandler);
       await procesarNotificacionesProgramadas();
     }, 5000); // Esperar 5 segundos después del inicio
 
-    // 7. Iniciar servidor
+    // 7. Iniciar cron job para notificaciones diarias de agentes (cada minuto)
+    console.log('📅 Iniciando cron job de notificaciones diarias para agentes...');
+    setInterval(async () => {
+      try {
+        // Verificar si es hora de enviar notificaciones diarias
+        // Se ejecuta cada minuto pero solo envía cuando corresponde según configuración
+        await enviarNotificacionesDiariasAgentes();
+      } catch (error) {
+        console.error('❌ Error en cron job de notificaciones diarias:', error);
+      }
+    }, 60 * 1000); // Cada 60 segundos
+
+    // 8. Iniciar servidor
     server.listen(PORT, () => {
       console.log(`🚀 Servidor corriendo en puerto ${PORT}`);
       console.log(`📊 MongoDB: Conectado`);

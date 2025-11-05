@@ -93,24 +93,35 @@ function procesarPlantilla(plantilla: string, variables: Record<string, any>): s
  */
 export async function enviarNotificacionesDiariasAgentes() {
   try {
-    console.log('📅 Procesando notificaciones diarias para agentes...');
+    const ahora = new Date();
+    const horaActual = ahora.getHours();
+    const minutoActual = ahora.getMinutes();
     
     // Obtener todas las configuraciones con notificaciones diarias activas
     const configuraciones = await ConfiguracionModuloModel.find({
       'notificacionDiariaAgentes.activa': true
     });
     
-    console.log(`📋 Encontradas ${configuraciones.length} empresas con notificaciones diarias activas`);
+    if (configuraciones.length === 0) {
+      return; // No hay configuraciones activas, salir silenciosamente
+    }
+    
+    console.log(`📅 Verificando ${configuraciones.length} empresas con notificaciones diarias activas...`);
     
     for (const config of configuraciones) {
       try {
-        await enviarNotificacionesDiariasPorEmpresa(config);
+        const horaEnvio = config.notificacionDiariaAgentes?.horaEnvio || '06:00';
+        const [horaConfig, minutoConfig] = horaEnvio.split(':').map(Number);
+        
+        // Verificar si es la hora de envío (con margen de 1 minuto)
+        if (horaActual === horaConfig && minutoActual === minutoConfig) {
+          console.log(`⏰ Es hora de enviar notificaciones para empresa ${config.empresaId} (${horaEnvio})`);
+          await enviarNotificacionesDiariasPorEmpresa(config);
+        }
       } catch (error) {
         console.error(`❌ Error procesando empresa ${config.empresaId}:`, error);
       }
     }
-    
-    console.log('✅ Procesamiento de notificaciones diarias completado');
     
   } catch (error) {
     console.error('❌ Error en enviarNotificacionesDiariasAgentes:', error);

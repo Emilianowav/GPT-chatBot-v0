@@ -71,7 +71,11 @@
     "verificar:flujo-confirmacion": "tsx scripts/verificarFlujoConfirmacion.ts",
     "enviar:notificacion-prueba": "tsx scripts/enviarNotificacionPrueba.ts",
     "diagnosticar:notificaciones": "tsx scripts/diagnosticarNotificaciones.ts",
-    "diagnosticar:notif-especifica": "tsx src/scripts/diagnosticarNotificacionEspecifica.ts"
+    "diagnosticar:notif-especifica": "tsx src/scripts/diagnosticarNotificacionEspecifica.ts",
+    "config:notif-diaria-agentes": "tsx src/scripts/configurarNotificacionDiariaAgentes.ts",
+    "test:notif-diaria-agentes": "tsx src/scripts/testNotificacionesDiariasAgentes.ts",
+    "test:notif-diaria-agentes-directo": "tsx src/scripts/testNotificacionesDiariasAgentesDirecto.ts",
+    "ver:notif-diaria-agentes": "tsx src/scripts/verNotificacionDiariaAgentes.ts"
   },
   "keywords": [],
   "author": "",
