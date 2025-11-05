@@ -24,6 +24,7 @@ export default function ModalConfiguracionFlujo({
   const [config, setConfig] = useState({
     activo: true,
     anticipacion: 24,
+    horaEnvio: '22:00',
     estados: ['pendiente'],
     mensaje: '',
     mensajeConfirmacion: '✅ ¡Perfecto! Todos tus viajes han sido confirmados.\n\n¡Nos vemos pronto! 🚗',
@@ -36,6 +37,7 @@ export default function ModalConfiguracionFlujo({
       setConfig({
         activo: flujo.activo ?? true,
         anticipacion: flujo.config?.anticipacion ?? 24,
+        horaEnvio: flujo.config?.horaEnvio ?? '22:00',
         estados: flujo.config?.estados ?? ['pendiente'],
         mensaje: flujo.config?.mensaje ?? '',
         mensajeConfirmacion: flujo.config?.mensajeConfirmacion ?? '✅ ¡Perfecto! Todos tus viajes han sido confirmados.\n\n¡Nos vemos pronto! 🚗',
@@ -230,6 +232,20 @@ export default function ModalConfiguracionFlujo({
                   <option value="48">48 horas antes (2 días)</option>
                 </select>
                 <small>Cuánto tiempo antes del turno se enviará el recordatorio</small>
+              </div>
+
+              <div className={styles.field}>
+                <label>
+                  <Clock size={16} />
+                  Hora de Envío *
+                </label>
+                <input
+                  type="time"
+                  value={config.horaEnvio}
+                  onChange={(e) => setConfig({ ...config, horaEnvio: e.target.value })}
+                  required
+                />
+                <small>Hora específica del día en que se enviarán las notificaciones (ej: 22:00)</small>
               </div>
 
               <div className={styles.field}>
