@@ -356,8 +356,7 @@ async function obtenerTurnosParaNotificacion(empresaId: string, notif: any) {
   // Aplicar límite si está configurado
   const limite = notif.filtros?.limite || 1000;
 
-  console.log(`   🔍 Query MongoDB:`, JSON.stringify(query, null, 2));
-  console.log(`   🔍 Query MongoDB (string):`, JSON.stringify(query));
+  console.log(`   🔎 Query MongoDB:`, JSON.stringify(query, null, 2));
 
   let turnos = await TurnoModel.find(query)
     .populate('agenteId')
@@ -366,6 +365,16 @@ async function obtenerTurnosParaNotificacion(empresaId: string, notif: any) {
     .limit(limite);
   
   console.log(`   📊 Turnos encontrados: ${turnos.length}`);
+  
+  if (turnos.length > 0) {
+    turnos.forEach((turno: any, index: number) => {
+      console.log(`      ${index + 1}. Turno ${turno._id}:`);
+      console.log(`         - Fecha: ${turno.fechaInicio.toISOString()}`);
+      console.log(`         - Estado: ${turno.estado}`);
+      console.log(`         - Cliente: ${turno.clienteId?.nombre || 'Sin nombre'}`);
+      console.log(`         - Notificaciones: ${turno.notificaciones?.length || 0}`);
+    });
+  }
 
   // ✅ FILTRO 5: Hora mínima y máxima (post-query)
   if (notif.filtros?.horaMinima || notif.filtros?.horaMaxima) {
