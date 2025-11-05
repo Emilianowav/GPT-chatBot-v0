@@ -8,6 +8,7 @@ import { useConfiguracionBot } from '@/hooks/useConfiguracionBot';
 import { useConfiguracion } from '@/hooks/useConfiguracion';
 import ConfiguracionBot from '@/components/calendar/ConfiguracionBot';
 import ModalConfiguracionFlujo from '@/components/flujos/ModalConfiguracionFlujo';
+import ModalConfiguracionAgentes from '@/components/flujos/ModalConfiguracionAgentes';
 import { Power, Settings, Send, Eye, EyeOff, Plus, Edit2, Trash2 } from 'lucide-react';
 import styles from './flujos.module.css';
 
@@ -90,6 +91,7 @@ export default function AdministradorFlujosPage() {
 
   // Flujos automáticos - Cargar desde configuración
   const notificacionConfirmacion = configModulo?.notificaciones?.find(n => n.tipo === 'confirmacion');
+  const notificacionDiariaAgentes = configModulo?.notificacionDiariaAgentes;
   
   const flujosAutomaticos = [
     {
@@ -134,6 +136,42 @@ export default function AdministradorFlujosPage() {
         mensaje: notificacionConfirmacion?.plantillaMensaje || '¡Hola! 👋 Te recordamos que tenés un turno agendado para mañana.\n\n📅 Fecha: {fecha}\n🕐 Hora: {hora}\n📍 Destino: {destino}\n\n¿Confirmás tu asistencia? Respondé SÍ o NO',
         mensajeConfirmacion: notificacionConfirmacion?.mensajeConfirmacion || '✅ ¡Perfecto! Todos tus viajes han sido confirmados.\n\n¡Nos vemos pronto! 🚗',
         solicitarConfirmacion: notificacionConfirmacion?.requiereConfirmacion ?? true
+      }
+    },
+    {
+      id: 'notificacion_diaria_agentes',
+      nombre: 'Recordatorio Diario para Agentes',
+      descripcion: 'Envía un resumen diario a los agentes con todas sus reservas del día',
+      tipo: 'automatico',
+      activo: notificacionDiariaAgentes?.activa ?? false,
+      icono: '📅',
+      trigger: (() => {
+        const horaEnvio = notificacionDiariaAgentes?.horaEnvio || '06:00';
+        const frecuencia = (notificacionDiariaAgentes as any)?.frecuencia?.tipo || 'diaria';
+        
+        if (frecuencia === 'diaria') {
+          return `Todos los días a las ${horaEnvio}`;
+        } else if (frecuencia === 'semanal') {
+          const dias = (notificacionDiariaAgentes as any)?.frecuencia?.diasSemana || [];
+          const nombresDias = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
+          const diasTexto = dias.map((d: number) => nombresDias[d]).join(', ');
+          return `${diasTexto} a las ${horaEnvio}`;
+        }
+        return `Frecuencia ${frecuencia} a las ${horaEnvio}`;
+      })(),
+      config: {
+        horaEnvio: notificacionDiariaAgentes?.horaEnvio || '06:00',
+        enviarATodos: notificacionDiariaAgentes?.enviarATodos ?? false,
+        mensaje: notificacionDiariaAgentes?.plantillaMensaje || 'Buenos días {agente}! 🌅\nEstos son tus {turnos} de hoy:',
+        frecuencia: (notificacionDiariaAgentes as any)?.frecuencia || { tipo: 'diaria' },
+        incluirDetalles: notificacionDiariaAgentes?.incluirDetalles || {
+          origen: true,
+          destino: true,
+          nombreCliente: true,
+          telefonoCliente: false,
+          horaReserva: true,
+          notasInternas: false
+        }
       }
     },
     {
@@ -234,6 +272,81 @@ export default function AdministradorFlujosPage() {
       const token = localStorage.getItem('auth_token');
       const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';
       
+      // Si es el flujo de notificación diaria de agentes
+      if (modalConfigFlujo.id === 'notificacion_diaria_agentes') {
+        // Primero obtener la configuración actual
+        const getResponse = await fetch(`${apiUrl}/api/modules/calendar/configuracion/${empresaId}`, {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+        
+        if (!getResponse.ok) {
+          throw new Error('Error al obtener configuración actual');
+        }
+        
+        const { configuracion: configActual } = await getResponse.json();
+        
+        // Actualizar notificación diaria de agentes
+        const configActualizada = {
+          ...configActual,
+          notificacionDiariaAgentes: {
+            activa: config.activo,
+            horaEnvio: config.horaEnvio,
+            enviarATodos: config.enviarATodos,
+            plantillaMensaje: config.mensaje,
+            frecuencia: config.frecuencia,
+            rangoHorario: {
+              activo: true,
+              tipo: 'hoy'
+            },
+            filtroHorario: {
+              activo: false,
+              tipo: 'todo_el_dia'
+            },
+            filtroEstado: {
+              activo: true,
+              estados: ['pendiente', 'confirmado']
+            },
+            filtroTipo: {
+              activo: false,
+              tipos: []
+            },
+            incluirDetalles: config.incluirDetalles,
+            agentesEspecificos: []
+          }
+        };
+        
+        console.log('💾 Enviando al backend:', configActualizada);
+        
+        // Guardar configuración actualizada
+        const response = await fetch(`${apiUrl}/api/modules/calendar/configuracion/${empresaId}`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
+          body: JSON.stringify(configActualizada)
+        });
+
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(errorData.message || 'Error al guardar configuración');
+        }
+
+        setMensaje({
+          tipo: 'success',
+          texto: '✅ Configuración de recordatorio diario guardada correctamente'
+        });
+        setModalConfigFlujo(null);
+        setConfigEditada(null);
+        
+        // Recargar configuración
+        window.location.reload();
+        return;
+      }
+      
+      // Para otros flujos (confirmación de turnos)
       // Primero obtener la configuración actual
       const getResponse = await fetch(`${apiUrl}/api/modules/calendar/configuracion/${empresaId}`, {
         headers: {
@@ -655,15 +768,27 @@ export default function AdministradorFlujosPage() {
         )}
 
         {/* Modal: Configurar Flujo Automático */}
-        <ModalConfiguracionFlujo
-          isOpen={!!modalConfigFlujo}
-          onClose={() => {
-            setModalConfigFlujo(null);
-            setConfigEditada(null);
-          }}
-          flujo={modalConfigFlujo}
-          onGuardar={handleGuardarConfigFlujo}
-        />
+        {modalConfigFlujo?.id === 'notificacion_diaria_agentes' ? (
+          <ModalConfiguracionAgentes
+            isOpen={!!modalConfigFlujo}
+            onClose={() => {
+              setModalConfigFlujo(null);
+              setConfigEditada(null);
+            }}
+            flujo={modalConfigFlujo}
+            onGuardar={handleGuardarConfigFlujo}
+          />
+        ) : (
+          <ModalConfiguracionFlujo
+            isOpen={!!modalConfigFlujo}
+            onClose={() => {
+              setModalConfigFlujo(null);
+              setConfigEditada(null);
+            }}
+            flujo={modalConfigFlujo}
+            onGuardar={handleGuardarConfigFlujo}
+          />
+        )}
     </div>
   );
 }
