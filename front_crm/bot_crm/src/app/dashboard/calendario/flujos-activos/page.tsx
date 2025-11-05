@@ -212,7 +212,44 @@ export default function AdministradorFlujosPage() {
       const token = localStorage.getItem('auth_token');
       const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';
       
-      // Usar el endpoint existente de notificaciones
+      // DEBUG: Ver qué flujoId está llegando
+      console.log('🔍 [DEBUG] handleEnviarPrueba llamado con:', { flujoId, telefono });
+      console.log('🔍 [DEBUG] Comparación:', flujoId === 'notificacion_diaria_agentes', flujoId.length, 'notificacion_diaria_agentes'.length);
+      
+      // Si es notificación diaria de agentes, usar endpoint específico
+      if (flujoId === 'notificacion_diaria_agentes') {
+        console.log('✅ [DEBUG] Usando endpoint de agentes');
+        const response = await fetch(`${apiUrl}/api/modules/calendar/notificaciones-diarias-agentes/test`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
+          body: JSON.stringify({
+            empresaId,
+            telefono
+          })
+        });
+
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(errorData.message || 'Error al enviar mensaje de prueba');
+        }
+
+        const data = await response.json();
+        
+        setMensaje({
+          tipo: 'success',
+          texto: `✅ ${data.message || 'Mensaje de prueba enviado al agente'}`
+        });
+        setModalPrueba(null);
+        setEnviandoPrueba(null);
+        setTimeout(() => setMensaje(null), 8000);
+        return;
+      }
+      
+      // Usar el endpoint existente de notificaciones para otros flujos
+      console.log('⚠️ [DEBUG] Usando endpoint de clientes (fallback)');
       const response = await fetch(`${apiUrl}/api/modules/calendar/configuracion/notificaciones/enviar-prueba`, {
         method: 'POST',
         headers: {
