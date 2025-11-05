@@ -200,9 +200,12 @@ export default function CalendarioPage() {
                       .filter(t => new Date(t.fechaInicio) > ahora)
                       .sort((a, b) => new Date(a.fechaInicio).getTime() - new Date(b.fechaInicio).getTime())[0];
                     
-                    return proximoTurno
-                      ? new Date(proximoTurno.fechaInicio).toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' })
-                      : '--:--';
+                    if (!proximoTurno) return '--:--';
+                    
+                    const fechaTurno = new Date(proximoTurno.fechaInicio);
+                    const horas = String(fechaTurno.getUTCHours()).padStart(2, '0');
+                    const minutos = String(fechaTurno.getUTCMinutes()).padStart(2, '0');
+                    return `${horas}:${minutos}`;
                   })()}
                 </p>
                 <span className={styles.statChange}>
@@ -212,7 +215,27 @@ export default function CalendarioPage() {
                       .filter(t => new Date(t.fechaInicio) > ahora)
                       .sort((a, b) => new Date(a.fechaInicio).getTime() - new Date(b.fechaInicio).getTime())[0];
                     
-                    return proximoTurno ? 'Hoy' : 'No hay turnos pendientes';
+                    if (!proximoTurno) return 'No hay turnos pendientes';
+                    
+                    const fechaTurno = new Date(proximoTurno.fechaInicio);
+                    const hoy = new Date();
+                    
+                    // Comparar fechas usando UTC
+                    const diaHoy = hoy.getUTCDate();
+                    const mesHoy = hoy.getUTCMonth();
+                    const anioHoy = hoy.getUTCFullYear();
+                    
+                    const diaTurno = fechaTurno.getUTCDate();
+                    const mesTurno = fechaTurno.getUTCMonth();
+                    const anioTurno = fechaTurno.getUTCFullYear();
+                    
+                    if (diaHoy === diaTurno && mesHoy === mesTurno && anioHoy === anioTurno) {
+                      return 'Hoy';
+                    } else if (diaHoy + 1 === diaTurno && mesHoy === mesTurno && anioHoy === anioTurno) {
+                      return 'Mañana';
+                    } else {
+                      return `${diaTurno}/${mesTurno + 1}/${anioTurno}`;
+                    }
                   })()}
                 </span>
               </div>
