@@ -75,7 +75,8 @@
     "config:notif-diaria-agentes": "tsx src/scripts/configurarNotificacionDiariaAgentes.ts",
     "test:notif-diaria-agentes": "tsx src/scripts/testNotificacionesDiariasAgentes.ts",
     "test:notif-diaria-agentes-directo": "tsx src/scripts/testNotificacionesDiariasAgentesDirecto.ts",
-    "ver:notif-diaria-agentes": "tsx src/scripts/verNotificacionDiariaAgentes.ts"
+    "ver:notif-diaria-agentes": "tsx src/scripts/verNotificacionDiariaAgentes.ts",
+    "config:plantillas-meta": "tsx src/scripts/configurarPlantillasMeta.ts"
   },
   "keywords": [],
   "author": "",

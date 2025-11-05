@@ -24,6 +24,7 @@ export const notificacionViajesFlow: Flow = {
     const { telefono, data } = context;
     
     console.log(`🚗 [NotificacionViajes] Iniciando flujo para ${telefono}`);
+    console.log(`🚗 [NotificacionViajes] Data recibida:`, data);
     
     if (!data?.viajes || data.viajes.length === 0) {
       return {
@@ -38,7 +39,8 @@ export const notificacionViajesFlow: Flow = {
       success: true,
       nextState: 'esperando_opcion_inicial',
       data: {
-        viajes: data.viajes
+        viajes: data.viajes,
+        turnosIds: data.turnosIds || data.viajes.map((v: any) => v._id.toString())
       }
     };
   },
@@ -51,18 +53,28 @@ export const notificacionViajesFlow: Flow = {
     console.log(`📥 [NotificacionViajes] Data:`, JSON.stringify(data, null, 2));
     
     if (state === 'esperando_opcion_inicial') {
-      if (mensajeTrim === '1') {
+      const mensajeLower = mensajeTrim.toLowerCase();
+      
+      // ✅ CONFIRMAR - Detectar "1", "Confirmar", "Si", etc.
+      if (mensajeTrim === '1' || /^(confirmar|si|sí|confirmo|ok|dale)$/i.test(mensajeLower)) {
         // Confirmar todos los viajes
         const viajes = data.viajes || [];
+        const turnosIds = data.turnosIds || [];
         
         console.log(`✅ [NotificacionViajes] Confirmando ${viajes.length} viaje(s)`);
+        console.log(`   IDs:`, turnosIds);
         
         // Actualizar todos los turnos a confirmado
-        for (const viaje of viajes) {
-          await TurnoModel.findByIdAndUpdate(viaje._id, {
-            estado: 'confirmado',
-            confirmadoEn: new Date()
-          });
+        for (const turnoId of turnosIds) {
+          try {
+            await TurnoModel.findByIdAndUpdate(turnoId, {
+              estado: 'confirmado',
+              confirmadoEn: new Date()
+            });
+            console.log(`   ✅ Turno ${turnoId} confirmado`);
+          } catch (error) {
+            console.error(`   ❌ Error confirmando turno ${turnoId}:`, error);
+          }
         }
         
         const mensajeConfirmacion = viajes.length === 1
@@ -81,38 +93,61 @@ export const notificacionViajesFlow: Flow = {
         };
       }
       
-      if (mensajeTrim === '2') {
+      // 🔧 MODIFICAR - Detectar "2", "Modificar", "Editar", etc.
+      if (mensajeTrim === '2' || /^(modificar|editar|cambiar)$/i.test(mensajeLower)) {
         // Editar un viaje específico
         const viajes = data.viajes || [];
+        const turnosIds = data.turnosIds || [];
         
-        let mensaje = '¿Qué viaje querés editar?\n\n';
-        viajes.forEach((viaje: any, index: number) => {
-          // Formatear hora correctamente
-          const fechaInicio = new Date(viaje.fechaInicio);
-          const horas = String(fechaInicio.getUTCHours()).padStart(2, '0');
-          const minutos = String(fechaInicio.getUTCMinutes()).padStart(2, '0');
-          const hora = `${horas}:${minutos}`;
+        console.log(`🔧 [NotificacionViajes] Usuario quiere modificar`);
+        console.log(`   Viajes disponibles: ${viajes.length}`);
+        
+        // Si hay múltiples viajes, preguntar cuál quiere modificar
+        if (viajes.length > 1) {
+          let mensaje = '🔧 ¿Qué viaje querés modificar?\n\n';
+          viajes.forEach((viaje: any, index: number) => {
+            // Formatear hora correctamente
+            const fechaInicio = new Date(viaje.fechaInicio);
+            const horas = String(fechaInicio.getUTCHours()).padStart(2, '0');
+            const minutos = String(fechaInicio.getUTCMinutes()).padStart(2, '0');
+            const hora = `${horas}:${minutos}`;
+            
+            const origen = viaje.datos?.origen || 'No especificado';
+            const destino = viaje.datos?.destino || 'No especificado';
+            
+            mensaje += `${index + 1}. ${origen} → ${destino} (${hora})\n`;
+          });
+          mensaje += '\nRespondé con el número del viaje.';
           
-          const origen = viaje.datos?.origen || 'No especificado';
-          const destino = viaje.datos?.destino || 'No especificado';
+          await enviarMensajeWhatsAppTexto(telefono, mensaje, context.phoneNumberId);
           
-          mensaje += `${index + 1}. ${origen} → ${destino} (${hora})\n`;
-        });
-        mensaje += '\nRespondé con el número del viaje.';
-        
-        await enviarMensajeWhatsAppTexto(telefono, mensaje, context.phoneNumberId);
-        
-        return {
-          success: true,
-          nextState: 'esperando_seleccion_viaje',
-          data
-        };
+          return {
+            success: true,
+            nextState: 'esperando_seleccion_viaje',
+            data
+          };
+        } else {
+          // Solo un viaje, ir directo a modificar
+          const turnoId = turnosIds[0];
+          
+          await enviarMensajeWhatsAppTexto(
+            telefono,
+            '🔧 ¿Qué querés modificar?\n\n1️⃣ Hora\n2️⃣ Origen\n3️⃣ Destino\n4️⃣ Pasajeros\n\nEscribí el número de la opción.',
+            context.phoneNumberId
+          );
+          
+          return {
+            success: true,
+            nextState: 'esperando_campo_modificar',
+            data: { ...data, turnoSeleccionado: turnoId }
+          };
+        }
       }
       
       // Respuesta no válida
       await enviarMensajeWhatsAppTexto(
         telefono,
-        'Por favor, respondé con 1 para confirmar todos o 2 para editar un viaje.',
+        'Por favor, respondé con:\n\n✅ "Confirmar" para confirmar todos\n🔧 "Modificar" para editar un viaje',
         context.phoneNumberId
       );
       

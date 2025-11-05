@@ -89,6 +89,39 @@ export interface NotificacionAutomatica {
     limite?: number;               // Máximo de turnos a enviar
     soloSinNotificar?: boolean;    // Solo turnos que no han recibido notificación
   };
+  
+  // 📋 NUEVO: Plantilla de Meta para primer mensaje
+  usarPlantillaMeta?: boolean;
+  plantillaMeta?: {
+    nombre: string;                // Nombre de la plantilla en Meta: "recordatorios_sanjose"
+    idioma: string;                // Código de idioma: "es"
+    activa: boolean;
+    componentes?: {
+      header?: {
+        tipo: 'text' | 'image' | 'video' | 'document';
+        parametros?: Array<{
+          tipo: string;
+          variable: string;        // Variable del sistema: {cliente}, {fecha}, etc.
+          valor?: string;          // Valor por defecto si la variable no existe
+        }>;
+      };
+      body?: {
+        parametros: Array<{
+          tipo: 'text';
+          variable: string;        // Variable del sistema
+        }>;
+      };
+      buttons?: Array<{
+        tipo: 'url' | 'quick_reply';
+        subTipo?: string;
+        index: number;
+        parametros?: Array<{
+          tipo: 'text';
+          variable: string;
+        }>;
+      }>;
+    };
+  };
 }
 
 // Notificaciones diarias para agentes (resumen de turnos del día)
@@ -146,6 +179,39 @@ export interface NotificacionDiariaAgentes {
   
   // Agentes específicos (si no se envía a todos)
   agentesEspecificos?: string[];
+  
+  // 📋 NUEVO: Plantilla de Meta para primer mensaje
+  usarPlantillaMeta?: boolean;
+  plantillaMeta?: {
+    nombre: string;                // Nombre de la plantilla en Meta: "choferes_sanjose"
+    idioma: string;                // Código de idioma: "es"
+    activa: boolean;
+    componentes?: {
+      header?: {
+        tipo: 'text' | 'image' | 'video' | 'document';
+        parametros?: Array<{
+          tipo: string;
+          variable: string;        // Variable del sistema: {agente}, {fecha}, etc.
+          valor?: string;          // Valor por defecto si la variable no existe
+        }>;
+      };
+      body?: {
+        parametros: Array<{
+          tipo: 'text';
+          variable: string;        // Variable del sistema
+        }>;
+      };
+      buttons?: Array<{
+        tipo: 'url' | 'quick_reply';
+        subTipo?: string;
+        index: number;
+        parametros?: Array<{
+          tipo: 'text';
+          variable: string;
+        }>;
+      }>;
+    };
+  };
 }
 
 export interface Nomenclatura {

@@ -5,6 +5,7 @@ import { AgenteModel } from '../modules/calendar/models/Agente.js';
 import { ContactoEmpresaModel } from '../models/ContactoEmpresa.js';
 import { enviarMensajeWhatsAppTexto } from '../services/metaService.js';
 import { EmpresaModel } from '../models/Empresa.js';
+import { enviarMensajePlantillaMeta, generarComponentesPlantilla } from '../services/metaTemplateService.js';
 
 /**
  * Formatear fecha y hora
@@ -360,26 +361,46 @@ async function enviarNotificacionDiariaAgente(
     return;
   }
   
-  // Construir mensaje
-  let mensaje = procesarPlantilla(config.plantillaMensaje, {
-    agente: `${agente.nombre} ${agente.apellido}`,
-    turnos: nomenclatura.turnos.toLowerCase(),
-    cantidad: turnos.length
-  });
+  // ✅ AUTO-CONFIGURAR PLANTILLA SI NO EXISTE
+  if (!config.usarPlantillaMeta || !config.plantillaMeta) {
+    console.log(`⚙️ Auto-configurando plantilla de Meta para ${agente.nombre}...`);
+    
+    config.usarPlantillaMeta = true;
+    config.plantillaMeta = {
+      nombre: 'chofer_sanjose',
+      idioma: 'es',
+      activa: true,
+      componentes: {
+        body: {
+          parametros: [
+            { tipo: 'text', variable: 'agente' },
+            { tipo: 'text', variable: 'lista_turnos' }
+          ]
+        }
+      }
+    };
+    
+    console.log('✅ Plantilla auto-configurada: choferes_sanjose');
+  }
   
-  mensaje += '\n\n';
+  // Verificar que esté activa
+  if (!config.plantillaMeta?.activa) {
+    console.error(`❌ [NotifAgentes] Plantilla inactiva para ${agente.nombre}`);
+    return;
+  }
+
+  // Construir lista de turnos formateada
+  let listaTurnos = '';
   
   if (turnos.length === 0) {
-    mensaje += `No tienes ${nomenclatura.turnos.toLowerCase()} programados para hoy. 🎉`;
+    listaTurnos = `No tienes ${nomenclatura.turnos.toLowerCase()} programados para hoy. 🎉`;
   } else {
-    mensaje += `📋 *${turnos.length} ${turnos.length === 1 ? nomenclatura.turno : nomenclatura.turnos}:*\n\n`;
-    
     // Agregar detalles de cada turno
     for (let i = 0; i < turnos.length; i++) {
       const turno = turnos[i];
       const { hora } = formatearFechaHora(new Date(turno.fechaInicio));
       
-      mensaje += `${i + 1}. 🕐 ${hora}`;
+      listaTurnos += `${i + 1}. 🕐 ${hora}`;
       
       // Obtener datos del contacto
       const contacto = await ContactoEmpresaModel.findOne({
@@ -411,24 +432,57 @@ async function enviarNotificacionDiariaAgente(
       }
       
       if (detalles.length > 0) {
-        mensaje += '\n   ' + detalles.join('\n   ');
+        listaTurnos += '\n   ' + detalles.join('\n   ');
       }
       
-      mensaje += '\n\n';
+      listaTurnos += '\n\n';
     }
   }
+
+  // Obtener empresa para phoneNumberId
+  const empresa = await EmpresaModel.findOne({ nombre: empresaId });
+  if (!empresa || !empresa.phoneNumberId) {
+    console.error(`❌ No se encontró phoneNumberId para empresa ${empresaId}`);
+    return;
+  }
+
+  console.log('📋 [NotifAgentes] Usando plantilla de Meta (OBLIGATORIO)');
+  console.log('   Plantilla:', config.plantillaMeta.nombre);
   
-  mensaje += `\n¡Que tengas un excelente día! 💪`;
+  const plantilla = config.plantillaMeta;
   
-  // Enviar notificación
-  const enviada = await enviarNotificacion(
-    agente.telefono,
-    mensaje,
-    empresaId
-  );
+  // Preparar variables para la plantilla
+  // ⚠️ IMPORTANTE: Meta no permite saltos de línea, tabs o más de 4 espacios consecutivos
+  const listaTurnosLimpia = listaTurnos
+    .replace(/\n/g, ' ')  // Reemplazar saltos de línea por espacios
+    .replace(/\t/g, ' ')  // Reemplazar tabs por espacios
+    .replace(/ {5,}/g, '    ');  // Reducir más de 4 espacios consecutivos a 4
   
-  if (enviada) {
-    console.log(`✅ Notificación diaria enviada a ${agente.nombre} ${agente.apellido} (${turnos.length} turnos)`);
+  const variables = {
+    agente: `${agente.nombre} ${agente.apellido}`,
+    lista_turnos: listaTurnosLimpia
+  };
+
+  // Generar componentes de la plantilla
+  const componentes = generarComponentesPlantilla(plantilla, variables);
+
+  // Enviar usando plantilla de Meta (SIN FALLBACK)
+  try {
+    const enviado = await enviarMensajePlantillaMeta(
+      agente.telefono,
+      plantilla.nombre,
+      plantilla.idioma,
+      componentes,
+      empresa.phoneNumberId
+    );
+    
+    if (enviado) {
+      console.log(`✅ Notificación diaria enviada a ${agente.nombre} ${agente.apellido} (${turnos.length} turnos)`);
+    }
+  } catch (error) {
+    console.error(`❌ ERROR CRÍTICO enviando plantilla a ${agente.nombre}:`, error);
+    console.error('   Verifica que la plantilla esté aprobada en Meta Business Manager');
+    throw error;
   }
 }
 

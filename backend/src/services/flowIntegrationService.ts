@@ -57,13 +57,19 @@ export async function iniciarFlujoNotificacionViajes(
       console.log('ℹ️ No había flujos anteriores para cancelar');
     }
     
+    // Extraer IDs de los turnos para el flujo
+    const turnosIds = viajes.map(v => v._id.toString());
+    
     console.log('📞 Llamando a flowManager.startFlow...');
+    console.log('   IDs de turnos:', turnosIds);
+    
     const result = await flowManager.startFlow(
       telefono,
       empresaId,
       'notificacion_viajes',
       {
-        viajes
+        viajes,
+        turnosIds // ✅ Pasar IDs para que el flujo pueda confirmar/modificar
       }
     );
     

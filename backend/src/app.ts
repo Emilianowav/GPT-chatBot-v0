@@ -93,8 +93,9 @@ app.use("/api/clientes", clienteRoutes);
 app.use("/api/conversaciones", conversacionesRoutes);
 app.use("/api/openai", openaiRoutes);
 app.use("/api/whatsapp", whatsappRoutes);
-app.use("/api/modules/calendar", calendarRoutes);
+// ⚠️ IMPORTANTE: Rutas específicas ANTES de rutas generales
 app.use("/api/modules/calendar/notificaciones-diarias-agentes", notificacionesDiariasAgentesRoutes);
+app.use("/api/modules/calendar", calendarRoutes);
 app.use("/api/flujos", flujosRoutes);
 app.use("/api/flows", flowRoutes);
 app.use("/api", statusRoutes);

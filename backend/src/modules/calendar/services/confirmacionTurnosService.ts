@@ -7,6 +7,8 @@ import { ContactoEmpresaModel } from '../../../models/ContactoEmpresa.js';
 import { enviarMensajeWhatsAppTexto } from '../../../services/metaService.js';
 import { EmpresaModel } from '../../../models/Empresa.js';
 import { iniciarFlujoNotificacionViajes } from '../../../services/flowIntegrationService.js';
+import { ConfiguracionModuloModel } from '../models/ConfiguracionModulo.js';
+import { enviarMensajePlantillaMeta, generarComponentesPlantilla } from '../../../services/metaTemplateService.js';
 
 /**
  * Enviar notificación de confirmación con opciones
@@ -28,6 +30,34 @@ export async function enviarNotificacionConfirmacion(
       return false;
     }
 
+    // Obtener configuración para verificar si usa plantilla de Meta
+    const config = await ConfiguracionModuloModel.findOne({ empresaId });
+    const notifConfirmacion = config?.notificaciones.find(n => n.tipo === 'confirmacion');
+    
+    // ✅ AUTO-CONFIGURAR PLANTILLA SI NO EXISTE
+    if (config && notifConfirmacion && (!notifConfirmacion.usarPlantillaMeta || !notifConfirmacion.plantillaMeta)) {
+      console.log('⚙️ Auto-configurando plantilla de Meta para confirmación de turnos...');
+      
+      notifConfirmacion.usarPlantillaMeta = true;
+      notifConfirmacion.plantillaMeta = {
+        nombre: 'clientes_sanjose',
+        idioma: 'es',
+        activa: true,
+        componentes: {
+          body: {
+            parametros: [
+              { tipo: 'text', variable: 'nombre_cliente' },
+              { tipo: 'text', variable: 'fecha_hora' }
+            ]
+          }
+        }
+      };
+      
+      (config as any).markModified('notificaciones');
+      await config.save();
+      console.log('✅ Plantilla auto-configurada: clientes_sanjose (2 parámetros: nombre_cliente, fecha_hora)');
+    }
+    
     // Construir mensaje inicial
     let mensaje = `🚗 *Recordatorio de ${turnos.length > 1 ? 'viajes' : 'viaje'} para mañana*\n\n`;
     
@@ -73,8 +103,57 @@ export async function enviarNotificacionConfirmacion(
 
     console.log(`📤 Enviando mensaje a ${contacto.telefono}`);
     
-    // Enviar mensaje
-    const enviado = await enviarMensajeWhatsAppTexto(contacto.telefono, mensaje, phoneNumberId);
+    let enviado = false;
+
+    // ✅ OBLIGATORIO: Solo enviar con plantilla de Meta
+    if (!notifConfirmacion?.usarPlantillaMeta || !notifConfirmacion?.plantillaMeta?.activa) {
+      console.error('❌ [ConfirmacionTurnos] NO SE PUEDE ENVIAR: Plantilla de Meta no configurada o inactiva');
+      console.error('   Las notificaciones DEBEN usar plantillas de Meta para abrir ventana de 24hs');
+      return false;
+    }
+
+    console.log('📋 [ConfirmacionTurnos] Usando plantilla de Meta (OBLIGATORIO)');
+    console.log('   Plantilla:', notifConfirmacion.plantillaMeta.nombre);
+    
+    const plantilla = notifConfirmacion.plantillaMeta;
+    
+    // Preparar variables para la plantilla
+    // {{1}} = nombre_cliente, {{2}} = lista de turnos
+    // ⚠️ IMPORTANTE: Meta no permite saltos de línea, tabs o más de 4 espacios consecutivos
+    const mensajeLimpio = mensaje
+      .replace(/\n/g, ' ')  // Reemplazar saltos de línea por espacios
+      .replace(/\t/g, ' ')  // Reemplazar tabs por espacios
+      .replace(/ {5,}/g, '    ');  // Reducir más de 4 espacios consecutivos a 4
+    
+    const variables = {
+      nombre_cliente: `${contacto.nombre} ${contacto.apellido}`,
+      fecha_hora: mensajeLimpio
+    };
+    
+    console.log('   Variables:', { 
+      nombre_cliente: variables.nombre_cliente, 
+      fecha_hora: variables.fecha_hora.substring(0, 50) + '...' 
+    });
+    
+    // Generar componentes de la plantilla
+    const componentes = generarComponentesPlantilla(plantilla, variables);
+
+    // Enviar usando plantilla de Meta (SIN FALLBACK)
+    try {
+      enviado = await enviarMensajePlantillaMeta(
+        contacto.telefono,
+        plantilla.nombre,
+        plantilla.idioma,
+        componentes,
+        phoneNumberId
+      );
+      console.log('✅ [ConfirmacionTurnos] Plantilla enviada exitosamente');
+      console.log('   El usuario puede responder y nuestra infraestructura maneja el flujo');
+    } catch (error) {
+      console.error('❌ [ConfirmacionTurnos] ERROR CRÍTICO: No se pudo enviar plantilla de Meta:', error);
+      console.error('   Verifica que la plantilla esté aprobada en Meta Business Manager');
+      throw error; // Propagar el error para que falle el proceso
+    }
     
     if (enviado) {
       console.log(`✅ Mensaje enviado correctamente`);

@@ -6,6 +6,7 @@ import { TurnoModel } from '../models/Turno.js';
 import { ContactoEmpresaModel } from '../../../models/ContactoEmpresa.js';
 import { EmpresaModel } from '../../../models/Empresa.js';
 import { enviarMensajeWhatsAppTexto } from '../../../services/metaService.js';
+import { enviarMensajePlantillaMeta, generarComponentesPlantilla } from '../../../services/metaTemplateService.js';
 
 /**
  * Formatear fecha y hora
@@ -74,6 +75,36 @@ export async function enviarNotificacionPruebaAgente(req: Request, res: Response
     
     const notifConfig = config.notificacionDiariaAgentes;
     
+    // ✅ AUTO-CONFIGURAR PLANTILLA SI NO EXISTE
+    if (!notifConfig.usarPlantillaMeta || !notifConfig.plantillaMeta) {
+      console.log('⚙️ Auto-configurando plantilla de Meta para notificación diaria...');
+      
+      notifConfig.usarPlantillaMeta = true;
+      notifConfig.plantillaMeta = {
+        nombre: 'chofer_sanjose',
+        idioma: 'es',
+        activa: true,
+        componentes: {
+          body: {
+            parametros: [
+              { tipo: 'text', variable: 'agente' },
+              { tipo: 'text', variable: 'lista_turnos' }
+            ]
+          }
+        }
+      };
+      
+      (config as any).markModified('notificacionDiariaAgentes');
+      await config.save();
+      console.log('✅ Plantilla auto-configurada: chofer_sanjose');
+      
+      // ⚠️ IMPORTANTE: Recargar la configuración para obtener los cambios
+      const configActualizada = await ConfiguracionModuloModel.findOne({ empresaId });
+      if (configActualizada?.notificacionDiariaAgentes) {
+        Object.assign(notifConfig, configActualizada.notificacionDiariaAgentes);
+      }
+    }
+    
     // Buscar agente por teléfono
     const agente = await AgenteModel.findOne({ 
       empresaId, 
@@ -115,25 +146,17 @@ export async function enviarNotificacionPruebaAgente(req: Request, res: Response
     
     console.log(`📋 Turnos encontrados: ${turnos.length}`);
     
-    // Construir mensaje
-    let mensaje = procesarPlantilla(notifConfig.plantillaMensaje, {
-      agente: `${agente.nombre} ${agente.apellido}`,
-      turnos: config.nomenclatura.turnos.toLowerCase(),
-      cantidad: turnos.length
-    });
-    
-    mensaje += '\n\n';
+    // Construir lista de turnos formateada
+    let listaTurnos = '';
     
     if (turnos.length === 0) {
-      mensaje += `No tienes ${config.nomenclatura.turnos.toLowerCase()} programados para hoy. 🎉`;
+      listaTurnos = `No tienes ${config.nomenclatura.turnos.toLowerCase()} programados para hoy. 🎉`;
     } else {
-      mensaje += `📋 *${turnos.length} ${turnos.length === 1 ? config.nomenclatura.turno : config.nomenclatura.turnos}:*\n\n`;
-      
       for (let i = 0; i < turnos.length; i++) {
         const turno = turnos[i];
         const { hora } = formatearFechaHora(new Date(turno.fechaInicio));
         
-        mensaje += `${i + 1}. 🕐 ${hora}`;
+        listaTurnos += `${i + 1}. 🕐 ${hora}`;
         
         // Obtener contacto
         const contacto = await ContactoEmpresaModel.findOne({
@@ -164,16 +187,14 @@ export async function enviarNotificacionPruebaAgente(req: Request, res: Response
         }
         
         if (detalles.length > 0) {
-          mensaje += '\n   ' + detalles.join('\n   ');
+          listaTurnos += '\n   ' + detalles.join('\n   ');
         }
         
-        mensaje += '\n\n';
+        listaTurnos += '\n\n';
       }
     }
     
-    mensaje += '¡Que tengas un excelente día! 💪';
-    
-    console.log('📝 Mensaje generado:', mensaje.substring(0, 100) + '...');
+    console.log('📝 Lista de turnos generada:', listaTurnos.substring(0, 100) + '...');
     
     // Obtener phoneNumberId de la empresa
     const empresa = await EmpresaModel.findOne({ nombre: empresaId });
@@ -185,8 +206,66 @@ export async function enviarNotificacionPruebaAgente(req: Request, res: Response
       return;
     }
     
-    // Enviar mensaje
-    await enviarMensajeWhatsAppTexto(telefono, mensaje, empresa.phoneNumberId);
+    // ✅ OBLIGATORIO: Solo enviar con plantilla de Meta
+    if (!notifConfig.usarPlantillaMeta || !notifConfig.plantillaMeta?.activa) {
+      console.error('❌ [NotifAgentes] NO SE PUEDE ENVIAR: Plantilla de Meta no configurada o inactiva');
+      console.error('   Las notificaciones DEBEN usar plantillas de Meta para abrir ventana de 24hs');
+      res.status(400).json({
+        success: false,
+        message: 'No se puede enviar: Plantilla de Meta no configurada. Configure la plantilla primero.',
+        detalles: {
+          usarPlantillaMeta: notifConfig.usarPlantillaMeta || false,
+          plantillaActiva: notifConfig.plantillaMeta?.activa || false
+        }
+      });
+      return;
+    }
+
+    console.log('📋 [NotifAgentes] Usando plantilla de Meta (OBLIGATORIO)');
+    console.log('   Plantilla:', notifConfig.plantillaMeta.nombre);
+    
+    const plantilla = notifConfig.plantillaMeta;
+    
+    // Preparar variables para la plantilla
+    // ⚠️ IMPORTANTE: Meta no permite saltos de línea, tabs o más de 4 espacios consecutivos
+    // Limpiar el texto para cumplir con las restricciones de Meta
+    const listaTurnosLimpia = listaTurnos
+      .replace(/\n/g, ' ')  // Reemplazar saltos de línea por espacios
+      .replace(/\t/g, ' ')  // Reemplazar tabs por espacios
+      .replace(/ {5,}/g, '    ');  // Reducir más de 4 espacios consecutivos a 4
+    
+    const variables = {
+      agente: `${agente.nombre} ${agente.apellido}`,
+      lista_turnos: listaTurnosLimpia
+    };
+
+    console.log('   Variables:', { agente: variables.agente, lista_turnos: variables.lista_turnos.substring(0, 50) + '...' });
+
+    // Generar componentes de la plantilla
+    const componentes = generarComponentesPlantilla(plantilla, variables);
+
+    // Enviar usando plantilla de Meta (SIN FALLBACK)
+    let enviado = false;
+    try {
+      enviado = await enviarMensajePlantillaMeta(
+        telefono,
+        plantilla.nombre,
+        plantilla.idioma,
+        componentes,
+        empresa.phoneNumberId
+      );
+      console.log('✅ [NotifAgentes] Plantilla enviada exitosamente');
+    } catch (error) {
+      console.error('❌ [NotifAgentes] ERROR CRÍTICO: No se pudo enviar plantilla de Meta:', error);
+      console.error('   Verifica que la plantilla esté aprobada en Meta Business Manager');
+      res.status(500).json({
+        success: false,
+        message: 'Error al enviar plantilla de Meta. Verifica que esté aprobada en Meta Business Manager.',
+        error: (error as Error).message,
+        plantilla: plantilla.nombre
+      });
+      return;
+    }
     
     console.log(`✅ Notificación de prueba enviada a ${agente.nombre} ${agente.apellido}`);
     
@@ -196,7 +275,8 @@ export async function enviarNotificacionPruebaAgente(req: Request, res: Response
       detalles: {
         agente: `${agente.nombre} ${agente.apellido}`,
         turnosEncontrados: turnos.length,
-        telefono
+        telefono,
+        usaPlantillaMeta: notifConfig.usarPlantillaMeta || false
       }
     });
     
