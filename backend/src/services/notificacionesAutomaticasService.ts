@@ -17,25 +17,35 @@ export async function procesarNotificacionesProgramadas() {
     const horaActual = `${ahora.getHours().toString().padStart(2, '0')}:${ahora.getMinutes().toString().padStart(2, '0')}`;
     const diaActual = ahora.getDay(); // 0 = Domingo, 6 = Sábado
 
-    console.log(`⏰ [${horaActual}] Verificando notificaciones programadas...`);
+    console.log(`⏰ [${horaActual}] Verificando notificaciones programadas... (UTC)`);
 
     // Obtener todas las configuraciones activas
     const configuraciones = await ConfiguracionModuloModel.find({ activo: true });
+    console.log(`   📋 Configuraciones activas encontradas: ${configuraciones.length}`);
 
     for (const config of configuraciones) {
       if (!config.notificaciones || config.notificaciones.length === 0) continue;
 
+      console.log(`   🏢 Procesando empresa: ${config.empresaId}`);
+
       // Procesar cada notificación activa
       for (const notif of config.notificaciones) {
-        if (!notif.activa) continue;
+        console.log(`      🔔 Notificación: ${notif.tipo} - activa: ${notif.activa} - momento: ${notif.momento} - horaEnvio: ${notif.horaEnvioDiaAntes || notif.horaEnvio}`);
+        
+        if (!notif.activa) {
+          console.log(`      ⏭️ Saltando (inactiva)`);
+          continue;
+        }
 
         // ✅ Solo procesar notificaciones automáticas
         if (notif.ejecucion === 'manual') {
+          console.log(`      ⏭️ Saltando (manual)`);
           continue; // Las manuales solo se envían con "Enviar Prueba"
         }
 
         // Verificar si es hora de enviar
         const debeEnviar = verificarSiDebeEnviar(notif, horaActual, diaActual);
+        console.log(`      ⏰ Debe enviar: ${debeEnviar}`);
 
         if (debeEnviar) {
           console.log(`📨 Enviando notificación: ${notif.tipo} - ${notif.momento}`);
@@ -93,7 +103,10 @@ function verificarSiDebeEnviar(
   
   if (notif.momento === 'dia_antes_turno' && notif.horaEnvioDiaAntes) {
     // Para "X días antes a hora específica", verificar hora
-    return notif.horaEnvioDiaAntes === horaActual;
+    console.log(`         🕐 Comparando: horaEnvioDiaAntes="${notif.horaEnvioDiaAntes}" vs horaActual="${horaActual}"`);
+    const coincide = notif.horaEnvioDiaAntes === horaActual;
+    console.log(`         ✅ Coincide: ${coincide}`);
+    return coincide;
   }
   
   if (notif.momento === 'noche_anterior' || notif.momento === 'hora_exacta') {
