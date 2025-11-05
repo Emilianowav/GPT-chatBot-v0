@@ -7,13 +7,12 @@ import { EmpresaModel } from '../models/Empresa.js';
 import { enviarMensajeWhatsAppTexto } from './metaService.js';
 import { enviarNotificacionConfirmacion } from '../modules/calendar/services/confirmacionTurnosService.js';
 
-// Registro de últimas ejecuciones para evitar duplicados
-// Key: empresaId + notificacionId + fecha (YYYY-MM-DD-HH)
-const ultimasEjecuciones = new Map<string, Date>();
-
 /**
  * Procesar notificaciones programadas
  * Se ejecuta cada minuto para verificar si hay notificaciones que enviar
+ * 
+ * ⚠️ IMPORTANTE: La prevención de duplicados se hace a nivel de TURNO en la query de MongoDB,
+ * no a nivel de notificación. Esto permite enviar notificaciones múltiples veces si hay turnos nuevos.
  */
 export async function procesarNotificacionesProgramadas() {
   try {
@@ -53,27 +52,11 @@ export async function procesarNotificacionesProgramadas() {
         console.log(`      ⏰ Debe enviar: ${debeEnviar}`);
 
         if (debeEnviar) {
-          // Verificar si ya se envió en esta hora
-          const claveEjecucion = `${config.empresaId}-${notif.tipo}-${notif.momento}-${ahora.getFullYear()}-${ahora.getMonth()}-${ahora.getDate()}-${ahora.getHours()}`;
-          const ultimaEjecucion = ultimasEjecuciones.get(claveEjecucion);
-          
-          if (ultimaEjecucion && (ahora.getTime() - ultimaEjecucion.getTime()) < 5 * 60 * 1000) {
-            console.log(`      ⏭️ Ya se envió en los últimos 5 minutos (${ultimaEjecucion.toISOString()})`);
-            continue;
-          }
-          
           console.log(`📨 Enviando notificación: ${notif.tipo} - ${notif.momento}`);
+          
+          // La prevención de duplicados se hace a nivel de TURNO (en la query de MongoDB)
+          // No a nivel de notificación, para permitir múltiples envíos si hay turnos nuevos
           await enviarNotificacion(config.empresaId, notif);
-          
-          // Registrar ejecución
-          ultimasEjecuciones.set(claveEjecucion, ahora);
-          
-          // Limpiar ejecuciones antiguas (más de 2 horas)
-          for (const [clave, fecha] of ultimasEjecuciones.entries()) {
-            if (ahora.getTime() - fecha.getTime() > 2 * 60 * 60 * 1000) {
-              ultimasEjecuciones.delete(clave);
-            }
-          }
         }
       }
     }
