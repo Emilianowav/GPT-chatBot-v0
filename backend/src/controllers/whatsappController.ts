@@ -308,7 +308,7 @@ export const recibirMensaje = async (req: Request, res: Response, next: NextFunc
       // Mensaje más útil para el usuario
       await enviarMensajeWhatsAppTexto(
         telefonoCliente,
-        '❌ No entendí tu mensaje. Escribí "menu" para ver las opciones disponibles.',
+        'Escribí "menu" para ver las opciones disponibles.',
         phoneNumberId
       );
       res.sendStatus(200);
