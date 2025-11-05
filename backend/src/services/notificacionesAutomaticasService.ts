@@ -286,9 +286,28 @@ async function obtenerTurnosParaNotificacion(empresaId: string, notif: any) {
   }
 
   // ✅ FILTRO 2: Solo turnos sin notificación previa
-  // EXCEPCIÓN: Para confirmaciones, NO filtrar por notificaciones previas
-  // Queremos TODOS los turnos sin confirmar, aunque ya se haya enviado notificación
-  if (notif.filtros?.soloSinNotificar && notif.tipo !== 'confirmacion') {
+  if (notif.tipo === 'confirmacion') {
+    // Para confirmaciones: filtrar turnos que NO hayan recibido notificación de confirmación HOY
+    // Esto evita enviar la misma notificación múltiples veces
+    const hoyInicio = new Date();
+    hoyInicio.setHours(0, 0, 0, 0);
+    
+    query.$or = [
+      // Turnos sin notificaciones
+      { notificaciones: { $size: 0 } },
+      // Turnos sin notificación de confirmación hoy
+      { 
+        'notificaciones': {
+          $not: {
+            $elemMatch: {
+              tipo: 'confirmacion',
+              enviadaEn: { $gte: hoyInicio }
+            }
+          }
+        }
+      }
+    ];
+  } else if (notif.filtros?.soloSinNotificar) {
     query['notificaciones.enviada'] = { $ne: true };
   }
 
