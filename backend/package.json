@@ -22,6 +22,7 @@
     "corregir:plantillas": "tsx src/scripts/corregirPlantillasConfirmacion.ts",
     "config:notif-24h": "tsx src/scripts/configurarNotificacion24HorasAntes.ts",
     "verificar:config-notif": "tsx src/scripts/verificarConfigNotificaciones.ts",
+    "verificar:turnos-notif": "tsx src/scripts/verificarTurnosParaNotificacion.ts",
     "limpiar:test": "tsx src/scripts/limpiarClientesYTurnos.ts",
     "verificar:telefonos": "tsx src/scripts/verificarTelefonos.ts",
     "migrar:contactos": "tsx src/scripts/migrarContactos.ts",

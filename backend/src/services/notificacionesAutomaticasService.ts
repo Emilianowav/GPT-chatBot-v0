@@ -259,6 +259,9 @@ async function obtenerTurnosParaNotificacion(empresaId: string, notif: any) {
     }
     
     // Buscar turnos de dentro de X días
+    // IMPORTANTE: Los turnos se guardan con Date.UTC() que guarda la hora tal cual
+    // Ejemplo: Usuario dice "6 nov 14:00" → Se guarda como 2025-11-06T14:00:00.000Z
+    // Buscamos desde 00:00 hasta 23:59 del día objetivo
     fechaInicio = new Date(ahora);
     fechaInicio.setDate(fechaInicio.getDate() + notif.diasAntes);
     fechaInicio.setHours(0, 0, 0, 0);
