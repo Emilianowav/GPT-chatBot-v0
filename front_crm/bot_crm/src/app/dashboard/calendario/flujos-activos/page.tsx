@@ -103,19 +103,23 @@ export default function AdministradorFlujosPage() {
         const momento = notificacionConfirmacion?.momento;
         const horasAntes = (notificacionConfirmacion as any)?.horasAntesTurno;
         const diasAntes = notificacionConfirmacion?.diasAntes;
+        const horaEnvio = (notificacionConfirmacion as any)?.horaEnvioDiaAntes;
         
         if (momento === 'horas_antes_turno' && horasAntes) {
           return `${horasAntes} horas antes del turno`;
-        } else if (momento === 'dia_antes_turno' && diasAntes) {
-          return `${diasAntes} día${diasAntes > 1 ? 's' : ''} antes`;
+        } else if (momento === 'dia_antes_turno' && diasAntes && horaEnvio) {
+          return `${diasAntes} día${diasAntes > 1 ? 's' : ''} antes a las ${horaEnvio}`;
         } else if (momento === 'noche_anterior') {
           return 'Noche anterior';
         }
         return '24 horas antes';
       })(),
       config: {
-        anticipacion: (notificacionConfirmacion as any)?.horasAntesTurno || 24,
+        anticipacion: notificacionConfirmacion?.diasAntes || 1,
+        horaEnvio: (notificacionConfirmacion as any)?.horaEnvioDiaAntes || '22:00',
+        estados: (notificacionConfirmacion as any)?.filtros?.estados || ['pendiente', 'no_confirmado'],
         mensaje: notificacionConfirmacion?.plantillaMensaje || '¡Hola! 👋 Te recordamos que tenés un turno agendado para mañana.\n\n📅 Fecha: {fecha}\n🕐 Hora: {hora}\n📍 Destino: {destino}\n\n¿Confirmás tu asistencia? Respondé SÍ o NO',
+        mensajeConfirmacion: notificacionConfirmacion?.mensajeConfirmacion || '✅ ¡Perfecto! Todos tus viajes han sido confirmados.\n\n¡Nos vemos pronto! 🚗',
         solicitarConfirmacion: notificacionConfirmacion?.requiereConfirmacion ?? true
       }
     },
