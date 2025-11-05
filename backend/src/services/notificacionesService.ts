@@ -259,47 +259,75 @@ export async function programarNotificacionesTurno(
     
     const notificacionesProgramadas = [];
     const fechaTurno = new Date(turno.fechaInicio);
+    const ahora = new Date();
+    
+    console.log('🔍 DEBUG - Procesando', configuracion.notificaciones.length, 'notificaciones');
     
     for (const configNotif of configuracion.notificaciones) {
+      console.log('🔍 DEBUG - Notif:', configNotif.tipo, 'activa:', configNotif.activa, 'ejecucion:', configNotif.ejecucion);
+      
       if (!configNotif.activa) continue;
       
+      // Solo programar notificaciones automáticas, no manuales
+      if (configNotif.ejecucion === 'manual') {
+        console.log('🔍 DEBUG - Saltando notificación manual');
+        continue;
+      }
+      
       let fechaEnvio: Date;
+      
+      console.log('🔍 DEBUG - Momento:', configNotif.momento);
       
       switch (configNotif.momento) {
         case 'horas_antes_turno':
           // Enviar X horas antes del turno
           fechaEnvio = new Date(fechaTurno);
-          fechaEnvio.setHours(fechaEnvio.getHours() - (configNotif.horasAntesTurno || 24));
+          fechaEnvio.setUTCHours(fechaEnvio.getUTCHours() - (configNotif.horasAntesTurno || 24));
           break;
           
         case 'dia_antes_turno':
-          // Enviar X días antes a hora específica
+          // Enviar X días antes a hora específica (hora en Argentina = UTC-3)
           fechaEnvio = new Date(fechaTurno);
-          fechaEnvio.setDate(fechaEnvio.getDate() - (configNotif.diasAntes || 1));
+          fechaEnvio.setUTCDate(fechaEnvio.getUTCDate() - (configNotif.diasAntes || 1));
+          
+          // Convertir hora Argentina a UTC
           const [horaAntes, minutoAntes] = (configNotif.horaEnvioDiaAntes || '22:00').split(':');
-          fechaEnvio.setHours(parseInt(horaAntes), parseInt(minutoAntes), 0, 0);
+          const horaArgentina = parseInt(horaAntes);
+          const minutoArgentina = parseInt(minutoAntes);
+          
+          // Argentina = UTC-3, entonces sumar 3 horas para obtener UTC
+          const horaUTC = horaArgentina + 3;
+          
+          fechaEnvio.setUTCHours(horaUTC, minutoArgentina, 0, 0);
+          
+          console.log('🔍 DEBUG - Fecha turno:', fechaTurno.toISOString());
+          console.log('🔍 DEBUG - Fecha actual:', ahora.toISOString());
+          console.log('🔍 DEBUG - Calculada fecha para dia_antes_turno:', fechaEnvio.toISOString());
           break;
           
         case 'noche_anterior':
           // Enviar la noche anterior a la hora configurada
           fechaEnvio = new Date(fechaTurno);
-          fechaEnvio.setDate(fechaEnvio.getDate() - 1);
+          fechaEnvio.setUTCDate(fechaEnvio.getUTCDate() - 1);
           const [hora, minuto] = (configNotif.horaEnvio || '22:00').split(':');
-          fechaEnvio.setHours(parseInt(hora), parseInt(minuto), 0, 0);
+          const horaNocheUTC = parseInt(hora) + 3; // Argentina a UTC
+          fechaEnvio.setUTCHours(horaNocheUTC, parseInt(minuto), 0, 0);
           break;
           
         case 'mismo_dia':
           // Enviar el mismo día a la hora configurada
           fechaEnvio = new Date(fechaTurno);
           const [horaDia, minutoDia] = (configNotif.horaEnvio || '08:00').split(':');
-          fechaEnvio.setHours(parseInt(horaDia), parseInt(minutoDia), 0, 0);
+          const horaDiaUTC = parseInt(horaDia) + 3; // Argentina a UTC
+          fechaEnvio.setUTCHours(horaDiaUTC, parseInt(minutoDia), 0, 0);
           break;
           
         case 'hora_exacta':
           // Enviar a hora exacta del día
           fechaEnvio = new Date(fechaTurno);
           const [horaExacta, minutoExacta] = (configNotif.horaEnvio || '09:00').split(':');
-          fechaEnvio.setHours(parseInt(horaExacta), parseInt(minutoExacta), 0, 0);
+          const horaExactaUTC = parseInt(horaExacta) + 3; // Argentina a UTC
+          fechaEnvio.setUTCHours(horaExactaUTC, parseInt(minutoExacta), 0, 0);
           break;
           
         default:
@@ -307,9 +335,14 @@ export async function programarNotificacionesTurno(
       }
       
       // No programar notificaciones en el pasado
-      if (fechaEnvio < new Date()) {
+      console.log('🔍 DEBUG - Fecha programada es futura?:', fechaEnvio > ahora, '(', fechaEnvio.toISOString(), 'vs', ahora.toISOString(), ')');
+      
+      if (fechaEnvio <= ahora) {
+        console.log('🔍 DEBUG - ❌ Notificación NO agregada (fecha pasada)');
         continue;
       }
+      
+      console.log('🔍 DEBUG - ✅ Notificación agregada');
       
       notificacionesProgramadas.push({
         tipo: configNotif.tipo,
@@ -318,6 +351,8 @@ export async function programarNotificacionesTurno(
         plantilla: configNotif.plantillaMensaje
       });
     }
+    
+    console.log('🔍 DEBUG - Total notificaciones programadas:', notificacionesProgramadas.length);
     
     // Actualizar turno con notificaciones programadas
     turno.notificaciones = notificacionesProgramadas;
