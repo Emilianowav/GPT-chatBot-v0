@@ -247,12 +247,17 @@ async function obtenerTurnosParaNotificacion(empresaId: string, notif: any) {
     
   } else if (notif.momento === 'noche_anterior') {
     // Turnos de mañana (mantener compatibilidad)
+    // Para confirmaciones: buscar TODOS los turnos de mañana
     fechaInicio = new Date(ahora);
     fechaInicio.setDate(fechaInicio.getDate() + 1);
     fechaInicio.setHours(0, 0, 0, 0);
 
     fechaFin = new Date(fechaInicio);
     fechaFin.setHours(23, 59, 59, 999);
+    
+    console.log(`   📅 Buscando turnos de mañana (${notif.tipo}):`);
+    console.log(`      Desde: ${fechaInicio.toISOString()}`);
+    console.log(`      Hasta: ${fechaFin.toISOString()}`);
     
   } else if (notif.momento === 'mismo_dia' || notif.momento === 'hora_exacta') {
     // Turnos de hoy (mantener compatibilidad)
@@ -281,7 +286,9 @@ async function obtenerTurnosParaNotificacion(empresaId: string, notif: any) {
   }
 
   // ✅ FILTRO 2: Solo turnos sin notificación previa
-  if (notif.filtros?.soloSinNotificar) {
+  // EXCEPCIÓN: Para confirmaciones, NO filtrar por notificaciones previas
+  // Queremos TODOS los turnos sin confirmar, aunque ya se haya enviado notificación
+  if (notif.filtros?.soloSinNotificar && notif.tipo !== 'confirmacion') {
     query['notificaciones.enviada'] = { $ne: true };
   }
 
