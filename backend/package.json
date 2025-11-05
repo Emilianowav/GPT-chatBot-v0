@@ -37,6 +37,8 @@
     "verificar:clienteid": "tsx src/scripts/verificarClienteId.ts",
     "migrar:clienteid-turnos": "tsx src/scripts/migrarClienteIdTurnos.ts",
     "reenviar:notificaciones": "tsx src/scripts/reenviarNotificaciones.ts",
+    "corregir:dias-antes": "tsx src/scripts/corregirDiasAntes.ts",
+    "ver:config-notif": "tsx src/scripts/verConfigNotificaciones.ts",
     "verificar:contacto-nuevo": "tsx src/scripts/verificarContactoNuevo.ts",
     "test:crear-turno": "tsx src/scripts/testCrearTurno.ts",
     "test:contacto-completo": "tsx src/scripts/testContactoCompleto.ts",

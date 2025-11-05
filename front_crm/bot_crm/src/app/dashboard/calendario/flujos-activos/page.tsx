@@ -105,6 +105,14 @@ export default function AdministradorFlujosPage() {
         const diasAntes = notificacionConfirmacion?.diasAntes;
         const horaEnvio = (notificacionConfirmacion as any)?.horaEnvioDiaAntes;
         
+        // Debug: Ver qué valores llegan
+        console.log('🔍 Debug notificación:', {
+          momento,
+          horasAntes,
+          diasAntes,
+          horaEnvio
+        });
+        
         if (momento === 'horas_antes_turno' && horasAntes) {
           return `${horasAntes} horas antes del turno`;
         } else if (momento === 'dia_antes_turno' && diasAntes && horaEnvio) {
@@ -112,7 +120,12 @@ export default function AdministradorFlujosPage() {
         } else if (momento === 'noche_anterior') {
           return 'Noche anterior';
         }
-        return '24 horas antes';
+        
+        // Fallback: intentar mostrar lo que tengamos
+        if (diasAntes && horaEnvio) {
+          return `${diasAntes} día${diasAntes > 1 ? 's' : ''} antes a las ${horaEnvio}`;
+        }
+        return 'Configuración pendiente';
       })(),
       config: {
         anticipacion: notificacionConfirmacion?.diasAntes || 1,
