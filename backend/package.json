@@ -40,6 +40,7 @@
     "corregir:dias-antes": "tsx src/scripts/corregirDiasAntes.ts",
     "ver:config-notif": "tsx src/scripts/verConfigNotificaciones.ts",
     "limpiar:notif-duplicadas": "tsx src/scripts/limpiarNotificacionesDuplicadas.ts",
+    "validar:notif": "tsx src/scripts/validarConsistenciaNotificaciones.ts",
     "verificar:contacto-nuevo": "tsx src/scripts/verificarContactoNuevo.ts",
     "test:crear-turno": "tsx src/scripts/testCrearTurno.ts",
     "test:contacto-completo": "tsx src/scripts/testContactoCompleto.ts",
