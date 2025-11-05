@@ -5,6 +5,7 @@ import { ContactoEmpresaModel } from '../models/ContactoEmpresa.js';
 import { AgenteModel } from '../modules/calendar/models/Agente.js';
 import { EmpresaModel } from '../models/Empresa.js';
 import { enviarMensajeWhatsAppTexto } from './metaService.js';
+import { enviarNotificacionConfirmacion } from '../modules/calendar/services/confirmacionTurnosService.js';
 
 /**
  * Procesar notificaciones programadas
@@ -155,8 +156,10 @@ async function enviarNotificacion(empresaId: string, notif: any) {
         }
 
         // Si es notificación de confirmación, usar el servicio especializado
+        console.log(`🔍 Tipo de notificación: "${notif.tipo}"`);
+        
         if (notif.tipo === 'confirmacion') {
-          const { enviarNotificacionConfirmacion } = await import('../modules/calendar/services/confirmacionTurnosService.js');
+          console.log(`📞 Usando servicio especializado de confirmación para ${contacto.telefono}`);
           const enviado = await enviarNotificacionConfirmacion(clienteId, turnosCliente, empresaId);
           
           if (enviado) {
@@ -165,6 +168,7 @@ async function enviarNotificacion(empresaId: string, notif: any) {
             console.error(`❌ Error enviando a ${contacto.nombre} ${contacto.apellido}`);
           }
         } else {
+          console.log(`📝 Usando método genérico para tipo: ${notif.tipo}`);
           // Para otros tipos de notificación, usar el método genérico
           const mensaje = await generarMensaje(notif, turnosCliente, contacto);
 
