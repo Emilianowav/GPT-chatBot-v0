@@ -344,8 +344,9 @@ export const menuPrincipalFlow: Flow = {
           anio = parseInt(partes[2]);
         }
         
-        // Crear fecha usando Date.UTC para evitar problemas de zona horaria
-        // Guardamos la hora "tal cual" la ingresó el usuario, sin conversiones
+        // IMPORTANTE: El usuario ingresa hora de Argentina, guardamos tal cual en UTC
+        // Usamos Date.UTC para crear la fecha directamente en UTC sin conversiones
+        // Ejemplo: Usuario dice "21:45" → Guardamos como 21:45 UTC → Al leer con getUTCHours() muestra 21:45
         const fechaInicio = new Date(Date.UTC(anio, mes - 1, dia, hora, minuto, 0, 0));
         
         const fechaFin = new Date(fechaInicio);
