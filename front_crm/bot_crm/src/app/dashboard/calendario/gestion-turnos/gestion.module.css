@@ -485,8 +485,6 @@
 
 .modalContent {
   background: var(--momento-black-light, #2A2A2A);
-  border: 2px solid var(--momento-orange, #FF6B4A);
-  border-radius: 20px;
   max-width: 600px;
   width: 100%;
   max-height: 90vh;
@@ -532,7 +530,7 @@
   padding: 2rem 2rem 1.5rem 2rem;
   background: linear-gradient(135deg, #FF6B4A 0%, #FF8A6E 100%);
   color: white;
-  border-radius: 20px 20px 0 0;
+  border-radius: 8px 8px 0 0;
 }
 
 .modalHeader h3 {
