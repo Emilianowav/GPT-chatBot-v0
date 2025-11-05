@@ -283,23 +283,26 @@ async function obtenerTurnosParaNotificacion(empresaId: string, notif: any) {
     // ✅ NUEVO: X días antes a una hora específica
     // Ejemplo: 1 día antes a las 22:00
     // Si ahora son las 22:00, buscar turnos de mañana
-    const [hora, minutos] = notif.horaEnvioDiaAntes.split(':').map(Number);
-    const horaActual = `${ahora.getHours().toString().padStart(2, '0')}:${ahora.getMinutes().toString().padStart(2, '0')}`;
-    
-    if (horaActual !== notif.horaEnvioDiaAntes) {
-      return []; // No es la hora configurada
-    }
     
     // Buscar turnos de dentro de X días
     // IMPORTANTE: Los turnos se guardan con Date.UTC() que guarda la hora tal cual
     // Ejemplo: Usuario dice "6 nov 14:00" → Se guarda como 2025-11-06T14:00:00.000Z
-    // Buscamos desde 00:00 hasta 23:59 del día objetivo
-    fechaInicio = new Date(ahora);
-    fechaInicio.setDate(fechaInicio.getDate() + notif.diasAntes);
-    fechaInicio.setHours(0, 0, 0, 0);
+    // Buscamos desde 00:00 hasta 23:59 del día objetivo EN UTC
+    
+    // Calcular fecha objetivo (X días desde ahora)
+    fechaInicio = new Date(Date.UTC(
+      ahora.getUTCFullYear(),
+      ahora.getUTCMonth(),
+      ahora.getUTCDate() + notif.diasAntes,
+      0, 0, 0, 0
+    ));
 
-    fechaFin = new Date(fechaInicio);
-    fechaFin.setHours(23, 59, 59, 999);
+    fechaFin = new Date(Date.UTC(
+      ahora.getUTCFullYear(),
+      ahora.getUTCMonth(),
+      ahora.getUTCDate() + notif.diasAntes,
+      23, 59, 59, 999
+    ));
     
     console.log(`   📅 Buscando turnos de dentro de ${notif.diasAntes} día(s):`);
     console.log(`      Desde: ${fechaInicio.toISOString()}`);
@@ -345,23 +348,23 @@ async function obtenerTurnosParaNotificacion(empresaId: string, notif: any) {
     query.estado = { $in: ['no_confirmado', 'pendiente'] };
   }
 
-  // ✅ FILTRO 2: Solo turnos sin notificación previa
+  // ✅ FILTRO 2: Solo turnos sin notificación previa del mismo tipo
   if (notif.tipo === 'confirmacion') {
-    // Para confirmaciones: filtrar turnos que NO hayan recibido notificación de confirmación HOY
-    // Esto evita enviar la misma notificación múltiples veces
-    const hoyInicio = new Date();
-    hoyInicio.setHours(0, 0, 0, 0);
+    // Para confirmaciones: filtrar turnos que NO hayan recibido notificación de confirmación
+    // en las últimas 12 horas (para evitar duplicados pero permitir reenvíos si es necesario)
+    const hace12Horas = new Date(ahora.getTime() - 12 * 60 * 60 * 1000);
     
     query.$or = [
       // Turnos sin notificaciones
+      { notificaciones: { $exists: false } },
       { notificaciones: { $size: 0 } },
-      // Turnos sin notificación de confirmación hoy
+      // Turnos sin notificación de confirmación reciente
       { 
         'notificaciones': {
           $not: {
             $elemMatch: {
               tipo: 'confirmacion',
-              enviadaEn: { $gte: hoyInicio }
+              enviadaEn: { $gte: hace12Horas }
             }
           }
         }
@@ -392,6 +395,9 @@ async function obtenerTurnosParaNotificacion(empresaId: string, notif: any) {
   const limite = notif.filtros?.limite || 1000;
 
   console.log(`   🔎 Query MongoDB:`, JSON.stringify(query, null, 2));
+  console.log(`   📅 Rango de fechas:`);
+  console.log(`      - fechaInicio >= ${fechaInicio.toISOString()}`);
+  console.log(`      - fechaInicio <= ${fechaFin.toISOString()}`);
 
   let turnos = await TurnoModel.find(query)
     .populate('agenteId')
@@ -400,6 +406,13 @@ async function obtenerTurnosParaNotificacion(empresaId: string, notif: any) {
     .limit(limite);
   
   console.log(`   📊 Turnos encontrados: ${turnos.length}`);
+  
+  // Debug: Mostrar TODOS los turnos de la empresa sin filtros
+  const todosTurnos = await TurnoModel.find({ empresaId }).sort({ fechaInicio: 1 }).limit(10);
+  console.log(`   🔍 DEBUG - Total turnos en BD para ${empresaId}: ${todosTurnos.length}`);
+  todosTurnos.forEach((t: any, i: number) => {
+    console.log(`      ${i + 1}. ${t._id} - Fecha: ${t.fechaInicio.toISOString()} - Estado: ${t.estado} - Notif: ${t.notificaciones?.length || 0}`);
+  });
   
   if (turnos.length > 0) {
     turnos.forEach((turno: any, index: number) => {
