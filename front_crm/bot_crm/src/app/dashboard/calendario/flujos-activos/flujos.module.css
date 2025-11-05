@@ -23,6 +23,7 @@
   margin-bottom: 0;
   display: flex;
   justify-content: space-between;
+  background: var(--momento-black-light, #2A2A2A);
   align-items: center;
   flex-wrap: wrap;
   gap: 1.5rem;
@@ -381,7 +382,7 @@ input:checked + .slider:before {
 /* Tabs */
 .tabs {
   display: flex;
-  background: var(--momento-black, #1A1A1A);
+  background: var(--momento-black-light, #2A2A2A);
   border-bottom: 2px solid rgba(255, 107, 74, 0.3);
 }
 

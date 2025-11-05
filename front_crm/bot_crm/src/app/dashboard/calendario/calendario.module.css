@@ -191,7 +191,7 @@
   background: var(--momento-black, #1A1A1A);
   border-radius: 16px;
   padding: 1.5rem;
-  box-shadow: 0 4px 12px rgba(255, 107, 74, 0.2);
+  background: var(--momento-black-light, #2A2A2A);
 }
 
 .sectionHeader {

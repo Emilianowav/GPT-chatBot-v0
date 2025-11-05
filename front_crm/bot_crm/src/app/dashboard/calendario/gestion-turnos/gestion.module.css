@@ -47,7 +47,6 @@
   border-bottom: 2px solid var(--momento-orange, #FF6B4A);
   margin-bottom: 0;
   gap: 1.5rem;
-  box-shadow: 0 4px 12px rgba(255, 107, 74, 0.3);
 }
 
 .headerLeft h1 {
