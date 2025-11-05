@@ -87,7 +87,16 @@ export const notificacionViajesFlow: Flow = {
         
         let mensaje = '¿Qué viaje querés editar?\n\n';
         viajes.forEach((viaje: any, index: number) => {
-          mensaje += `${index + 1}. ${viaje.origen} → ${viaje.destino} (${viaje.horario})\n`;
+          // Formatear hora correctamente
+          const fechaInicio = new Date(viaje.fechaInicio);
+          const horas = String(fechaInicio.getUTCHours()).padStart(2, '0');
+          const minutos = String(fechaInicio.getUTCMinutes()).padStart(2, '0');
+          const hora = `${horas}:${minutos}`;
+          
+          const origen = viaje.datos?.origen || 'No especificado';
+          const destino = viaje.datos?.destino || 'No especificado';
+          
+          mensaje += `${index + 1}. ${origen} → ${destino} (${hora})\n`;
         });
         mensaje += '\nRespondé con el número del viaje.';
         
@@ -375,12 +384,24 @@ export const notificacionViajesFlow: Flow = {
       }
       
       // Parsear hora y actualizar fechaInicio
+      // IMPORTANTE: El usuario ingresa hora en Argentina (UTC-3)
+      // Debemos crear la fecha en hora local, que se guardará automáticamente en UTC
       const [horas, minutos] = mensajeTrim.split(':').map(Number);
       const fechaActual = new Date(viaje.fechaInicio);
-      fechaActual.setUTCHours(horas, minutos, 0, 0);
+      
+      // Crear fecha en hora local de Argentina
+      const fechaNueva = new Date(
+        fechaActual.getUTCFullYear(),
+        fechaActual.getUTCMonth(),
+        fechaActual.getUTCDate(),
+        horas,
+        minutos,
+        0,
+        0
+      );
       
       await TurnoModel.findByIdAndUpdate(viaje._id, {
-        fechaInicio: fechaActual
+        fechaInicio: fechaNueva
       });
       
       await enviarMensajeWhatsAppTexto(
@@ -460,7 +481,16 @@ export const notificacionViajesFlow: Flow = {
         
         let mensaje = '¿Qué viaje querés editar?\n\n';
         viajes.forEach((viaje: any, index: number) => {
-          mensaje += `${index + 1}. ${viaje.origen} → ${viaje.destino} (${viaje.horario})\n`;
+          // Formatear hora correctamente
+          const fechaInicio = new Date(viaje.fechaInicio);
+          const horas = String(fechaInicio.getUTCHours()).padStart(2, '0');
+          const minutos = String(fechaInicio.getUTCMinutes()).padStart(2, '0');
+          const hora = `${horas}:${minutos}`;
+          
+          const origen = viaje.datos?.origen || 'No especificado';
+          const destino = viaje.datos?.destino || 'No especificado';
+          
+          mensaje += `${index + 1}. ${origen} → ${destino} (${hora})\n`;
         });
         mensaje += '\nRespondé con el número del viaje.';
         
@@ -474,6 +504,13 @@ export const notificacionViajesFlow: Flow = {
       }
       
       if (mensajeTrim === '2') {
+        // Confirmar el viaje editado
+        const viaje = data.viajeSeleccionado;
+        await TurnoModel.findByIdAndUpdate(viaje._id, {
+          estado: 'confirmado',
+          confirmadoEn: new Date()
+        });
+        
         await enviarMensajeWhatsAppTexto(
           telefono,
           '✅ ¡Perfecto! Tus cambios han sido guardados. Te esperamos mañana.',

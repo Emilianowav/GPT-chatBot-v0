@@ -24,8 +24,13 @@ export async function procesarNotificacionesProgramadas() {
     console.log(`⏰ [${horaActual}] Verificando notificaciones programadas... (UTC)`);
 
     // Obtener todas las configuraciones activas
-    const configuraciones = await ConfiguracionModuloModel.find({ activo: true });
+    const configuraciones = await ConfiguracionModuloModel.find({ activo: true }).lean();
     console.log(`   📋 Configuraciones activas encontradas: ${configuraciones.length}`);
+    
+    // DEBUG: Mostrar IDs de configuraciones
+    configuraciones.forEach((config, index) => {
+      console.log(`   ${index + 1}. _id: ${config._id}, empresaId: ${config.empresaId}, notifs: ${config.notificaciones?.length || 0}`);
+    });
 
     for (const config of configuraciones) {
       if (!config.notificaciones || config.notificaciones.length === 0) continue;
