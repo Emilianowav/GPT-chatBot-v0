@@ -5,12 +5,11 @@
 }
 
 .header {
-  background: var(--momento-black, #1A1A1A);
-  border-bottom: 1px solid #e5e7eb;
+  background: var(--momento-black-light, #2A2A2A);
+  border-bottom: 2px solid var(--momento-orange, #FF6B4A);
   position: sticky;
   top: 0;
   z-index: 50;
-  margin: -2rem -2rem 0 -2rem;
   padding: 0;
 }
 
@@ -18,21 +17,26 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 1.5rem 2rem;
+  padding: 2rem 2rem;
   gap: 2rem;
 }
 
 .headerLeft h1 {
-  margin: 0 0 0.25rem 0;
-  font-size: 1.75rem;
+  margin: 0;
+  font-size: 1.875rem;
   font-weight: 700;
-  color: white;
+  letter-spacing: -0.5px;
+  background: linear-gradient(135deg, #FF6B4A 0%, #FF8A6E 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
 }
 
 .headerLeft p {
-  margin: 0;
-  font-size: 0.875rem;
-  color: #6b7280;
+  margin: 0.5rem 0 0 0;
+  font-size: 1rem;
+  color: rgba(255, 255, 255, 0.7);
+  font-weight: 400;
 }
 
 .headerRight {
@@ -47,24 +51,31 @@
 }
 
 .btnConfig {
-  display: flex;
+  display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 0.5rem;
-  padding: 0.625rem 1rem;
-  background: var(--momento-black, #1A1A1A);
-  border: 1px solid #e5e7eb;
-  border-radius: 8px;
+  padding: 0.625rem 1.25rem;
+  background: var(--momento-black-light, #2A2A2A);
+  border: 2px solid var(--momento-orange, #FF6B4A);
+  border-radius: 6px;
   cursor: pointer;
   font-size: 0.875rem;
-  font-weight: 500;
-  color: #374151;
-  transition: all 0.2s;
+  font-weight: 600;
+  color: var(--momento-white, #FFFFFF);
+  transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+  letter-spacing: 0.3px;
+  white-space: nowrap;
 }
 
 .btnConfig:hover {
-  background: rgba(255, 107, 74, 0.05);
-  border-color: var(--momento-orange, #FF6B4A);
-  color: var(--momento-orange, #FF6B4A);
+  background: rgba(255, 107, 74, 0.1);
+  border-color: #FF8A6E;
+  transform: translateY(-2px);
+}
+
+.btnConfig:active {
+  transform: translateY(0);
 }
 
 .configMenu {
@@ -97,12 +108,12 @@
   align-items: center;
   gap: 0.75rem;
   padding: 0.875rem 1.25rem;
-  color: #374151;
+  color: rgba(255, 255, 255, 0.9);
   text-decoration: none;
   font-size: 0.875rem;
   font-weight: 500;
   transition: all 0.15s;
-  border-bottom: 1px solid #f3f4f6;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
   cursor: pointer;
 }
 
@@ -135,7 +146,6 @@
 /* Tabs de Navegación */
 .tabs {
   display: flex;
-  gap: 0.5rem;
   padding: 0 2rem;
   overflow-x: auto;
   scrollbar-width: none;
@@ -150,35 +160,27 @@
   align-items: center;
   gap: 0.5rem;
   padding: 0.875rem 1.25rem;
-  color: #6b7280;
+  color: rgba(255, 255, 255, 0.6);
   text-decoration: none;
   font-size: 0.875rem;
-  font-weight: 500;
-  border-bottom: 2px solid transparent;
+  font-weight: 600;
   transition: all 0.2s;
   white-space: nowrap;
   position: relative;
+  letter-spacing: 0.3px;
 }
 
 .tab:hover {
   color: var(--momento-orange, #FF6B4A);
-  background: rgba(255, 107, 74, 0.05);
+  background: rgba(255, 107, 74, 0.1);
 }
 
 .tabActive {
   color: var(--momento-orange, #FF6B4A);
-  border-bottom-color: var(--momento-orange, #FF6B4A);
+  border-left:  var(--momento-orange, #FF6B4A) 2px solid;
+  border-right: var(--momento-orange, #FF6B4A) 2px solid;
 }
 
-.tabActive::after {
-  content: '';
-  position: absolute;
-  bottom: -2px;
-  left: 0;
-  right: 0;
-  height: 2px;
-  background: var(--momento-orange, #FF6B4A);
-}
 
 /* Contenido */
 .content {

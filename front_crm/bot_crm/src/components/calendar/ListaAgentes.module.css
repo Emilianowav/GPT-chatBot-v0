@@ -22,7 +22,7 @@
 }
 
 .agenteCard {
-  background: var(--momento-black, #1A1A1A);
+  background-color: #a3626256;
   border-radius: 12px;
   overflow: hidden;
   border: 1px solid #e8ecf1;
@@ -40,7 +40,6 @@
   align-items: center;
   gap: 1rem;
   padding: 1.5rem;
-  background: #1A1A1A;
   border-bottom: 1px solid #e8ecf1;
 }
 
