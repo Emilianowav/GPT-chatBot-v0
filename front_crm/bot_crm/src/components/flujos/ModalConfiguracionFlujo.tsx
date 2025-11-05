@@ -214,38 +214,61 @@ export default function ModalConfiguracionFlujo({
                 <small>Cuando está inactivo, este flujo no se ejecutará automáticamente</small>
               </div>
 
-              <div className={styles.field}>
-                <label>
-                  <Clock size={16} />
-                  Tiempo de Anticipación *
-                </label>
-                <select
-                  value={config.anticipacion}
-                  onChange={(e) => setConfig({ ...config, anticipacion: parseInt(e.target.value) })}
-                  required
-                >
-                  <option value="1">1 hora antes</option>
-                  <option value="3">3 horas antes</option>
-                  <option value="6">6 horas antes</option>
-                  <option value="12">12 horas antes</option>
-                  <option value="24">24 horas antes (1 día)</option>
-                  <option value="48">48 horas antes (2 días)</option>
-                </select>
-                <small>Cuánto tiempo antes del turno se enviará el recordatorio</small>
+              <div className={styles.fieldGroup}>
+                <div className={styles.field} style={{ flex: 1 }}>
+                  <label>
+                    <Clock size={16} />
+                    Días de Anticipación *
+                  </label>
+                  <select
+                    value={config.anticipacion}
+                    onChange={(e) => setConfig({ ...config, anticipacion: parseInt(e.target.value) })}
+                    required
+                    style={{ 
+                      backgroundColor: 'var(--momento-black, #1A1A1A)',
+                      color: 'var(--momento-white, #FFFFFF)',
+                      border: '2px solid rgba(255, 255, 255, 0.1)'
+                    }}
+                  >
+                    <option value="1">1 día antes</option>
+                    <option value="2">2 días antes</option>
+                    <option value="3">3 días antes</option>
+                    <option value="7">1 semana antes</option>
+                  </select>
+                  <small>Cuántos días antes del turno</small>
+                </div>
+
+                <div className={styles.field} style={{ flex: 1 }}>
+                  <label>
+                    <Clock size={16} />
+                    Hora de Envío *
+                  </label>
+                  <input
+                    type="time"
+                    value={config.horaEnvio}
+                    onChange={(e) => setConfig({ ...config, horaEnvio: e.target.value })}
+                    required
+                    style={{ 
+                      backgroundColor: 'var(--momento-black, #1A1A1A)',
+                      color: 'var(--momento-white, #FFFFFF)',
+                      border: '2px solid rgba(255, 255, 255, 0.1)'
+                    }}
+                  />
+                  <small>Hora específica del día (ej: 22:00)</small>
+                </div>
               </div>
 
-              <div className={styles.field}>
-                <label>
-                  <Clock size={16} />
-                  Hora de Envío *
-                </label>
-                <input
-                  type="time"
-                  value={config.horaEnvio}
-                  onChange={(e) => setConfig({ ...config, horaEnvio: e.target.value })}
-                  required
-                />
-                <small>Hora específica del día en que se enviarán las notificaciones (ej: 22:00)</small>
+              <div className={styles.infoBox} style={{
+                backgroundColor: 'rgba(255, 107, 74, 0.1)',
+                border: '1px solid rgba(255, 107, 74, 0.3)',
+                borderRadius: '8px',
+                padding: '1rem',
+                marginBottom: '1.5rem'
+              }}>
+                <p style={{ margin: 0, fontSize: '0.9rem', color: 'var(--momento-white, #FFFFFF)' }}>
+                  📅 <strong>Ejemplo:</strong> Si seleccionas "1 día antes" a las "22:00", las notificaciones se enviarán 
+                  todos los días a las 22:00 para los turnos del día siguiente.
+                </p>
               </div>
 
               <div className={styles.field}>

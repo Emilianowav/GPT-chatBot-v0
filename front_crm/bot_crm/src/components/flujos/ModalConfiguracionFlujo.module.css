@@ -183,6 +183,12 @@
 }
 
 /* Fields */
+.fieldGroup {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
 .field {
   display: flex;
   flex-direction: column;
@@ -204,24 +210,47 @@
 
 .field input[type="text"],
 .field input[type="number"],
+.field input[type="time"],
 .field select,
 .field textarea {
   padding: 0.75rem 1rem;
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  border: 2px solid rgba(255, 255, 255, 0.1);
   border-radius: 8px;
-  font-size: 0.875rem;
-  background: rgba(255, 255, 255, 0.05);
+  font-size: 0.9375rem;
+  background: var(--momento-black, #1A1A1A);
   color: var(--momento-white, #FFFFFF);
   transition: all 0.2s;
+  font-weight: 500;
+}
+
+.field select {
+  cursor: pointer;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23FF6B4A' d='M6 9L1 4h10z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 1rem center;
+  padding-right: 2.5rem;
+}
+
+.field select option {
+  background: var(--momento-black, #1A1A1A);
+  color: var(--momento-white, #FFFFFF);
+  padding: 0.5rem;
+}
+
+.field input[type="time"] {
+  color-scheme: dark;
 }
 
 .field input[type="text"]:focus,
 .field input[type="number"]:focus,
+.field input[type="time"]:focus,
 .field select:focus,
 .field textarea:focus {
   outline: none;
   border-color: var(--momento-orange, #FF6B4A);
-  background: rgba(255, 255, 255, 0.08);
+  background: var(--momento-black-light, #2A2A2A);
+  box-shadow: 0 0 0 3px rgba(255, 107, 74, 0.1);
 }
 
 .field textarea {
