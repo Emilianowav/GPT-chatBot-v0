@@ -35,6 +35,7 @@ export async function procesarNotificacionesProgramadas() {
       // Procesar cada notificación activa
       for (const notif of config.notificaciones) {
         console.log(`      🔔 Notificación: ${notif.tipo} - activa: ${notif.activa} - momento: ${notif.momento} - horaEnvio: ${notif.horaEnvioDiaAntes || notif.horaEnvio}`);
+        console.log(`      🔍 DEBUG - diasAntes: ${notif.diasAntes}, horasAntesTurno: ${(notif as any).horasAntesTurno}`);
         
         if (!notif.activa) {
           console.log(`      ⏭️ Saltando (inactiva)`);
