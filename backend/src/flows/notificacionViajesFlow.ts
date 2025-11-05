@@ -121,7 +121,28 @@ export const notificacionViajesFlow: Flow = {
       if (viajeIndex >= 0 && viajeIndex < viajes.length) {
         const viaje = viajes[viajeIndex];
         
-        const mensaje = `Viaje seleccionado:\n📍 ${viaje.origen} → ${viaje.destino}\n🕐 ${viaje.horario}\n\n¿Qué querés modificar?\n\n1️⃣ Origen\n2️⃣ Destino\n3️⃣ Horario\n4️⃣ Cancelar este viaje\n\nRespondé con el número.`;
+        // Formatear hora
+        const fechaInicio = new Date(viaje.fechaInicio);
+        const horas = String(fechaInicio.getUTCHours()).padStart(2, '0');
+        const minutos = String(fechaInicio.getUTCMinutes()).padStart(2, '0');
+        const hora = `${horas}:${minutos}`;
+        
+        let mensaje = `✏️ *Editando Viaje #${viajeIndex + 1}*\n\n`;
+        mensaje += `🕐 *Hora actual:* ${hora}\n`;
+        mensaje += `📍 *Origen:* ${viaje.datos?.origen || 'No especificado'}\n`;
+        mensaje += `📍 *Destino:* ${viaje.datos?.destino || 'No especificado'}\n`;
+        mensaje += `👥 *Cantidad de pasajeros:* ${viaje.datos?.pasajeros || '1'}\n`;
+        mensaje += `🧳 *Equipaje:* ${viaje.datos?.equipaje || 'No especificado'}\n\n`;
+        mensaje += `*¿Qué deseas modificar?*\n\n`;
+        mensaje += `1️⃣ Cambiar hora\n`;
+        mensaje += `2️⃣ Cambiar origen\n`;
+        mensaje += `3️⃣ Cambiar destino\n`;
+        mensaje += `4️⃣ Cambiar cantidad de pasajeros\n`;
+        mensaje += `5️⃣ Cambiar equipaje\n`;
+        mensaje += `6️⃣ Confirmar este viaje\n`;
+        mensaje += `7️⃣ Cancelar este viaje\n`;
+        mensaje += `0️⃣ Volver atrás\n\n`;
+        mensaje += `Escribe el número de la opción.`;
         
         await enviarMensajeWhatsAppTexto(telefono, mensaje, context.phoneNumberId);
         
@@ -150,9 +171,49 @@ export const notificacionViajesFlow: Flow = {
     
     if (state === 'esperando_tipo_modificacion') {
       const viaje = data.viajeSeleccionado;
+      const viajes = data.viajes || [];
+      const viajeIndex = data.viajeIndex;
       
       switch (mensajeTrim) {
+        case '0':
+          // Volver atrás - mostrar lista de viajes
+          let mensajeVolver = '📋 *Tus viajes pendientes:*\n\n';
+          viajes.forEach((v: any, i: number) => {
+            const fechaV = new Date(v.fechaInicio);
+            const horaV = `${String(fechaV.getUTCHours()).padStart(2, '0')}:${String(fechaV.getUTCMinutes()).padStart(2, '0')}`;
+            mensajeVolver += `${i + 1}️⃣ *Viaje ${i + 1}*\n`;
+            mensajeVolver += `   📍 ${v.datos?.origen || 'N/A'} → ${v.datos?.destino || 'N/A'}\n`;
+            mensajeVolver += `   🕐 ${horaV}\n\n`;
+          });
+          mensajeVolver += '\n*¿Qué deseas hacer?*\n\n';
+          mensajeVolver += `1️⃣ Confirmar ${viajes.length > 1 ? 'todos los viajes' : 'el viaje'}\n`;
+          mensajeVolver += '2️⃣ Editar un viaje (escribe el número)\n';
+          mensajeVolver += '0️⃣ Cancelar\n\n';
+          mensajeVolver += 'Escribe el número de la opción.';
+          
+          await enviarMensajeWhatsAppTexto(telefono, mensajeVolver, context.phoneNumberId);
+          
+          return {
+            success: true,
+            nextState: 'esperando_opcion_inicial',
+            data: { viajes }
+          };
+        
         case '1':
+          // Cambiar hora
+          await enviarMensajeWhatsAppTexto(
+            telefono,
+            '🕐 ¿Cuál es la nueva hora? (formato HH:MM)',
+            context.phoneNumberId
+          );
+          return {
+            success: true,
+            nextState: 'esperando_nueva_hora',
+            data
+          };
+          
+        case '2':
+          // Cambiar origen
           await enviarMensajeWhatsAppTexto(
             telefono,
             '📍 ¿Cuál es el nuevo origen?',
@@ -164,7 +225,8 @@ export const notificacionViajesFlow: Flow = {
             data
           };
           
-        case '2':
+        case '3':
+          // Cambiar destino
           await enviarMensajeWhatsAppTexto(
             telefono,
             '📍 ¿Cuál es el nuevo destino?',
@@ -176,20 +238,52 @@ export const notificacionViajesFlow: Flow = {
             data
           };
           
-        case '3':
+        case '4':
+          // Cambiar cantidad de pasajeros
           await enviarMensajeWhatsAppTexto(
             telefono,
-            '🕐 ¿Cuál es el nuevo horario? (formato HH:MM)',
+            '👥 ¿Cuántos pasajeros serán?',
             context.phoneNumberId
           );
           return {
             success: true,
-            nextState: 'esperando_nuevo_horario',
+            nextState: 'esperando_nuevos_pasajeros',
             data
           };
           
-        case '4':
-          // Cancelar viaje
+        case '5':
+          // Cambiar equipaje
+          await enviarMensajeWhatsAppTexto(
+            telefono,
+            '🧳 ¿Qué tipo de equipaje llevarás? (Ej: 2 valijas grandes)',
+            context.phoneNumberId
+          );
+          return {
+            success: true,
+            nextState: 'esperando_nuevo_equipaje',
+            data
+          };
+          
+        case '6':
+          // Confirmar este viaje
+          await TurnoModel.findByIdAndUpdate(viaje._id, {
+            estado: 'confirmado',
+            confirmadoEn: new Date()
+          });
+          
+          await enviarMensajeWhatsAppTexto(
+            telefono,
+            '✅ ¡Perfecto! Tu viaje ha sido confirmado.\n\n¡Nos vemos pronto! 🚗',
+            context.phoneNumberId
+          );
+          
+          return {
+            success: true,
+            end: true
+          };
+          
+        case '7':
+          // Cancelar este viaje
           await TurnoModel.findByIdAndUpdate(viaje._id, {
             estado: 'cancelado',
             canceladoEn: new Date()
@@ -197,7 +291,7 @@ export const notificacionViajesFlow: Flow = {
           
           await enviarMensajeWhatsAppTexto(
             telefono,
-            '✅ Viaje cancelado exitosamente.',
+            '❌ Viaje cancelado.\n\nSi necesitas reprogramar, contáctanos.',
             context.phoneNumberId
           );
           
@@ -209,7 +303,7 @@ export const notificacionViajesFlow: Flow = {
         default:
           await enviarMensajeWhatsAppTexto(
             telefono,
-            'Por favor, respondé con un número del 1 al 4.',
+            '❌ Opción inválida. Por favor selecciona un número del 0 al 7.',
             context.phoneNumberId
           );
           return {
@@ -262,14 +356,93 @@ export const notificacionViajesFlow: Flow = {
       };
     }
     
-    if (state === 'esperando_nuevo_horario') {
+    if (state === 'esperando_nueva_hora') {
       const viaje = data.viajeSeleccionado;
       
-      // Actualizar horario
-      // TODO: Parsear horario y actualizar fechaInicio
+      // Validar formato HH:MM
+      const horaRegex = /^([0-1]?[0-9]|2[0-3]):([0-5][0-9])$/;
+      if (!horaRegex.test(mensajeTrim)) {
+        await enviarMensajeWhatsAppTexto(
+          telefono,
+          '❌ Formato inválido. Por favor ingresa la hora en formato HH:MM (ej: 14:30)',
+          context.phoneNumberId
+        );
+        return {
+          success: true,
+          nextState: 'esperando_nueva_hora',
+          data
+        };
+      }
+      
+      // Parsear hora y actualizar fechaInicio
+      const [horas, minutos] = mensajeTrim.split(':').map(Number);
+      const fechaActual = new Date(viaje.fechaInicio);
+      fechaActual.setUTCHours(horas, minutos, 0, 0);
+      
+      await TurnoModel.findByIdAndUpdate(viaje._id, {
+        fechaInicio: fechaActual
+      });
+      
       await enviarMensajeWhatsAppTexto(
         telefono,
-        `✅ Horario actualizado a: ${mensajeTrim}\n\n¿Querés hacer otra modificación?\n\n1️⃣ Sí\n2️⃣ No, confirmar cambios`,
+        `✅ Hora actualizada a: ${mensajeTrim}\n\n¿Querés hacer otra modificación?\n\n1️⃣ Sí\n2️⃣ No, confirmar cambios`,
+        context.phoneNumberId
+      );
+      
+      return {
+        success: true,
+        nextState: 'esperando_confirmacion_final',
+        data
+      };
+    }
+    
+    if (state === 'esperando_nuevos_pasajeros') {
+      const viaje = data.viajeSeleccionado;
+      
+      // Validar que sea un número
+      const numPasajeros = parseInt(mensajeTrim);
+      if (isNaN(numPasajeros) || numPasajeros < 1) {
+        await enviarMensajeWhatsAppTexto(
+          telefono,
+          '❌ Por favor ingresa un número válido de pasajeros (mínimo 1)',
+          context.phoneNumberId
+        );
+        return {
+          success: true,
+          nextState: 'esperando_nuevos_pasajeros',
+          data
+        };
+      }
+      
+      // Actualizar pasajeros
+      await TurnoModel.findByIdAndUpdate(viaje._id, {
+        'datos.pasajeros': numPasajeros
+      });
+      
+      await enviarMensajeWhatsAppTexto(
+        telefono,
+        `✅ Cantidad de pasajeros actualizada a: ${numPasajeros}\n\n¿Querés hacer otra modificación?\n\n1️⃣ Sí\n2️⃣ No, confirmar cambios`,
+        context.phoneNumberId
+      );
+      
+      return {
+        success: true,
+        nextState: 'esperando_confirmacion_final',
+        data
+      };
+    }
+    
+    if (state === 'esperando_nuevo_equipaje') {
+      const viaje = data.viajeSeleccionado;
+      
+      // Actualizar equipaje
+      await TurnoModel.findByIdAndUpdate(viaje._id, {
+        'datos.equipaje': mensajeTrim
+      });
+      
+      await enviarMensajeWhatsAppTexto(
+        telefono,
+        `✅ Equipaje actualizado a: ${mensajeTrim}\n\n¿Querés hacer otra modificación?\n\n1️⃣ Sí\n2️⃣ No, confirmar cambios`,
         context.phoneNumberId
       );
       
