@@ -3,6 +3,7 @@
 
 import { useState, useMemo, useEffect } from 'react';
 import type { Turno } from '@/lib/calendarApi';
+import { formatearHora } from '@/lib/fechaUtils';
 import styles from './CalendarioMensual.module.css';
 import DetalleTurno from './DetalleTurno';
 
@@ -297,11 +298,7 @@ export default function CalendarioMensual({
                           )
                           .map(turno => {
                             const agente = turno.agenteId as any;
-                            const horaInicio = new Date(turno.fechaInicio).toLocaleTimeString('es-AR', {
-                              hour: '2-digit',
-                              minute: '2-digit',
-                              hour12: false
-                            });
+                            const horaInicio = formatearHora(turno.fechaInicio);
                             const clienteInfo = (turno as any).clienteInfo;
                             
                             return (

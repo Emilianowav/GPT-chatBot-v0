@@ -3,6 +3,7 @@
 
 import { useState, useEffect } from 'react';
 import type { Turno } from '@/lib/calendarApi';
+import { formatearHora } from '@/lib/fechaUtils';
 import styles from './SelectorTurnos.module.css';
 
 interface SelectorTurnosProps {
@@ -85,14 +86,6 @@ export default function SelectorTurnos({
   const confirmarSeleccion = () => {
     const turnosAEnviar = turnos.filter(t => turnosSeleccionados.has(t._id));
     onSeleccionar(turnosAEnviar);
-  };
-
-  const formatearHora = (fecha: string) => {
-    return new Date(fecha).toLocaleTimeString('es-AR', {
-      hour: '2-digit',
-      minute: '2-digit',
-      hour12: false
-    });
   };
 
   const cambiarFecha = (dias: number) => {

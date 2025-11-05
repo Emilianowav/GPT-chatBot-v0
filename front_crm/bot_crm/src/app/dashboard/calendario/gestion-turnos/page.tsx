@@ -122,8 +122,8 @@ export default function GestionTurnosPage() {
     setFormEdicion({
       agenteId: typeof turno.agenteId === 'string' ? turno.agenteId : (turno.agenteId as any)?._id || '',
       fecha: fechaInicio.toISOString().split('T')[0],
-      horaInicio: `${fechaInicio.getHours().toString().padStart(2, '0')}:${fechaInicio.getMinutes().toString().padStart(2, '0')}`,
-      horaFin: fechaFin ? `${fechaFin.getHours().toString().padStart(2, '0')}:${fechaFin.getMinutes().toString().padStart(2, '0')}` : '',
+      horaInicio: `${fechaInicio.getUTCHours().toString().padStart(2, '0')}:${fechaInicio.getUTCMinutes().toString().padStart(2, '0')}`,
+      horaFin: fechaFin ? `${fechaFin.getUTCHours().toString().padStart(2, '0')}:${fechaFin.getUTCMinutes().toString().padStart(2, '0')}` : '',
       notas: turno.notas || '',
       datos: turno.datos || {}
     });

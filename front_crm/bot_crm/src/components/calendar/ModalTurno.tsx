@@ -8,6 +8,7 @@ import SelectorCliente from '@/components/clientes/SelectorCliente';
 import type { Cliente } from '@/lib/clientesApi';
 import * as configuracionApi from '@/lib/configuracionApi';
 import * as calendarApi from '@/lib/calendarApi';
+import { formatearHora } from '@/lib/fechaUtils';
 import styles from './ModalTurno.module.css';
 
 interface TurnoData {
@@ -512,12 +513,7 @@ export default function ModalTurno({ isOpen, onClose, onSubmit }: ModalTurnoProp
                     >
                       <option value="">Seleccionar horario...</option>
                       {slotsDisponibles.map((slot, index) => {
-                        const fecha = new Date(slot.fecha);
-                        const hora = fecha.toLocaleTimeString('es-AR', {
-                          hour: '2-digit',
-                          minute: '2-digit',
-                          hour12: false
-                        });
+                        const hora = formatearHora(slot.fecha);
                         return (
                           <option key={index} value={hora}>
                             {hora} ({slot.duracion} min)

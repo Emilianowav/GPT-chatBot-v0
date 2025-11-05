@@ -4,6 +4,7 @@
 import { useState } from 'react';
 import type { Turno } from '@/lib/calendarApi';
 import type { ConfiguracionModulo } from '@/lib/configuracionApi';
+import { formatearHora } from '@/lib/fechaUtils';
 import styles from './ListaTurnos.module.css';
 
 interface ListaTurnosProps {
@@ -99,11 +100,7 @@ export default function ListaTurnos({ turnos, configuracion, onCancelar, onActua
                     <circle cx="12" cy="12" r="10"/>
                     <polyline points="12 6 12 12 16 14"/>
                   </svg>
-                  {fechaInicio.toLocaleTimeString('es-AR', { 
-                    hour: '2-digit', 
-                    minute: '2-digit',
-                    hour12: false
-                  })}
+                  {formatearHora(fechaInicio)}
                 </div>
                 <div 
                   className={styles.turnoEstado}

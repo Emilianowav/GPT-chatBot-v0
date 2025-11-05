@@ -3,6 +3,7 @@
 
 import { useState } from 'react';
 import type { Turno } from '@/lib/calendarApi';
+import { formatearHora } from '@/lib/fechaUtils';
 import styles from './DetalleTurno.module.css';
 
 interface DetalleTurnoProps {
@@ -28,17 +29,8 @@ export default function DetalleTurno({
   const fechaInicio = new Date(turno.fechaInicio);
   const fechaFin = new Date(turno.fechaFin);
   
-  const horaInicio = fechaInicio.toLocaleTimeString('es-AR', {
-    hour: '2-digit',
-    minute: '2-digit',
-    hour12: false
-  });
-  
-  const horaFin = fechaFin.toLocaleTimeString('es-AR', {
-    hour: '2-digit',
-    minute: '2-digit',
-    hour12: false
-  });
+  const horaInicio = formatearHora(fechaInicio);
+  const horaFin = formatearHora(fechaFin);
   
   const fecha = fechaInicio.toLocaleDateString('es-AR', {
     weekday: 'long',
