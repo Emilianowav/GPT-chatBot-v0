@@ -207,8 +207,10 @@ export default function AdministradorFlujosPage() {
     }
   };
 
-  const handleGuardarConfigFlujo = async () => {
-    if (!configEditada || !modalConfigFlujo) return;
+  const handleGuardarConfigFlujo = async (config: any) => {
+    if (!config || !modalConfigFlujo) return;
+    
+    console.log('🔧 Guardando configuración:', config);
     
     setGuardandoConfig(true);
     try {
@@ -231,16 +233,27 @@ export default function AdministradorFlujosPage() {
       // Actualizar la notificación específica
       const notificacionesActualizadas = configActual.notificaciones.map((notif: any) => {
         if (notif.tipo === (modalConfigFlujo.id === 'confirmacion_turnos' ? 'confirmacion' : 'estado')) {
-          return {
+          const notifActualizada = {
             ...notif,
-            activa: configEditada.activo,
-            plantillaMensaje: configEditada.mensaje,
-            diasAntes: configEditada.anticipacion ? Math.floor(configEditada.anticipacion / 24) : notif.diasAntes,
-            requiereConfirmacion: configEditada.solicitarConfirmacion ?? notif.requiereConfirmacion
+            activa: config.activo,
+            plantillaMensaje: config.mensaje,
+            diasAntes: config.anticipacion || notif.diasAntes,
+            horaEnvioDiaAntes: config.horaEnvio || notif.horaEnvioDiaAntes,
+            momento: 'dia_antes_turno',
+            requiereConfirmacion: config.solicitarConfirmacion ?? notif.requiereConfirmacion,
+            mensajeConfirmacion: config.mensajeConfirmacion || notif.mensajeConfirmacion,
+            filtros: {
+              ...notif.filtros,
+              estados: config.estados || notif.filtros?.estados || ['no_confirmado', 'pendiente']
+            }
           };
+          console.log('📝 Notificación actualizada:', notifActualizada);
+          return notifActualizada;
         }
         return notif;
       });
+      
+      console.log('💾 Enviando al backend:', { notificaciones: notificacionesActualizadas });
       
       // Guardar configuración actualizada
       const response = await fetch(`${apiUrl}/api/modules/calendar/configuracion/${empresaId}`, {
