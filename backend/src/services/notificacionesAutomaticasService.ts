@@ -266,6 +266,10 @@ async function obtenerTurnosParaNotificacion(empresaId: string, notif: any) {
     fechaFin = new Date(fechaInicio);
     fechaFin.setHours(23, 59, 59, 999);
     
+    console.log(`   📅 Buscando turnos de dentro de ${notif.diasAntes} día(s):`);
+    console.log(`      Desde: ${fechaInicio.toISOString()}`);
+    console.log(`      Hasta: ${fechaFin.toISOString()}`);
+    
   } else if (notif.momento === 'noche_anterior') {
     // Turnos de mañana (mantener compatibilidad)
     // Para confirmaciones: buscar TODOS los turnos de mañana
@@ -352,7 +356,8 @@ async function obtenerTurnosParaNotificacion(empresaId: string, notif: any) {
   // Aplicar límite si está configurado
   const limite = notif.filtros?.limite || 1000;
 
-  console.log(`   🔎 Query MongoDB:`, JSON.stringify(query, null, 2));
+  console.log(`   🔍 Query MongoDB:`, JSON.stringify(query, null, 2));
+  console.log(`   🔍 Query MongoDB (string):`, JSON.stringify(query));
 
   let turnos = await TurnoModel.find(query)
     .populate('agenteId')
