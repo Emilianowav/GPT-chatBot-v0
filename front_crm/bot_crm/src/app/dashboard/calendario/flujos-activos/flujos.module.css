@@ -91,7 +91,6 @@
   background: rgba(231, 76, 60, 0.1);
   border-color: #e74c3c;
   color: #e74c3c;
-  transform: translateY(-2px);
 }
 
 .btnToggle.active {
