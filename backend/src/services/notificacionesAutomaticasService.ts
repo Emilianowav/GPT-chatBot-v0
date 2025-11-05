@@ -103,8 +103,16 @@ function verificarSiDebeEnviar(
   
   if (notif.momento === 'dia_antes_turno' && notif.horaEnvioDiaAntes) {
     // Para "X días antes a hora específica", verificar hora
-    console.log(`         🕐 Comparando: horaEnvioDiaAntes="${notif.horaEnvioDiaAntes}" vs horaActual="${horaActual}"`);
-    const coincide = notif.horaEnvioDiaAntes === horaActual;
+    // La hora configurada está en Argentina (UTC-3), pero el servidor está en UTC
+    // Convertir hora de Argentina a UTC: sumar 3 horas
+    const [horaArg, minArg] = notif.horaEnvioDiaAntes.split(':').map(Number);
+    const horaUTC = (horaArg + 3) % 24; // Sumar 3 horas y ajustar si pasa de 24
+    const horaEnvioUTC = `${horaUTC.toString().padStart(2, '0')}:${minArg.toString().padStart(2, '0')}`;
+    
+    console.log(`         🕐 Hora configurada (Argentina): ${notif.horaEnvioDiaAntes}`);
+    console.log(`         🌍 Hora convertida (UTC): ${horaEnvioUTC}`);
+    console.log(`         ⏰ Hora actual (servidor UTC): ${horaActual}`);
+    const coincide = horaEnvioUTC === horaActual;
     console.log(`         ✅ Coincide: ${coincide}`);
     return coincide;
   }
