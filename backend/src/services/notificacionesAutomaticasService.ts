@@ -18,8 +18,9 @@ const ultimasEjecuciones = new Map<string, Date>();
 export async function procesarNotificacionesProgramadas() {
   try {
     const ahora = new Date();
-    const horaActual = `${ahora.getHours().toString().padStart(2, '0')}:${ahora.getMinutes().toString().padStart(2, '0')}`;
-    const diaActual = ahora.getDay(); // 0 = Domingo, 6 = Sábado
+    // ⚠️ IMPORTANTE: Usar getUTCHours() para que funcione igual en local y en Render
+    const horaActual = `${ahora.getUTCHours().toString().padStart(2, '0')}:${ahora.getUTCMinutes().toString().padStart(2, '0')}`;
+    const diaActual = ahora.getUTCDay(); // 0 = Domingo, 6 = Sábado
 
     console.log(`⏰ [${horaActual}] Verificando notificaciones programadas... (UTC)`);
 
