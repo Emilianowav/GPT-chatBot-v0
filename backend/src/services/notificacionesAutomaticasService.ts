@@ -154,27 +154,39 @@ async function enviarNotificacion(empresaId: string, notif: any) {
           continue;
         }
 
-        // Generar mensaje
-        const mensaje = await generarMensaje(notif, turnosCliente, contacto);
+        // Si es notificación de confirmación, usar el servicio especializado
+        if (notif.tipo === 'confirmacion') {
+          const { enviarNotificacionConfirmacion } = await import('../modules/calendar/services/confirmacionTurnosService.js');
+          const enviado = await enviarNotificacionConfirmacion(clienteId, turnosCliente, empresaId);
+          
+          if (enviado) {
+            console.log(`✅ Enviado a ${contacto.nombre} ${contacto.apellido} (${contacto.telefono})`);
+          } else {
+            console.error(`❌ Error enviando a ${contacto.nombre} ${contacto.apellido}`);
+          }
+        } else {
+          // Para otros tipos de notificación, usar el método genérico
+          const mensaje = await generarMensaje(notif, turnosCliente, contacto);
 
-        // Enviar mensaje
-        await enviarMensajeWhatsAppTexto(contacto.telefono, mensaje, phoneNumberId);
-        
-        console.log(`✅ Enviado a ${contacto.nombre} ${contacto.apellido} (${contacto.telefono})`);
+          // Enviar mensaje
+          await enviarMensajeWhatsAppTexto(contacto.telefono, mensaje, phoneNumberId);
+          
+          console.log(`✅ Enviado a ${contacto.nombre} ${contacto.apellido} (${contacto.telefono})`);
 
-        // Marcar notificación como enviada en el turno
-        for (const turno of turnosCliente) {
-          await TurnoModel.findByIdAndUpdate(turno._id, {
-            $push: {
-              notificaciones: {
-                tipo: notif.tipo,
-                programadaPara: new Date(),
-                enviada: true,
-                enviadaEn: new Date(),
-                plantilla: notif.plantillaMensaje
+          // Marcar notificación como enviada en el turno
+          for (const turno of turnosCliente) {
+            await TurnoModel.findByIdAndUpdate(turno._id, {
+              $push: {
+                notificaciones: {
+                  tipo: notif.tipo,
+                  programadaPara: new Date(),
+                  enviada: true,
+                  enviadaEn: new Date(),
+                  plantilla: notif.plantillaMensaje
+                }
               }
-            }
-          });
+            });
+          }
         }
 
         // Esperar 500ms entre envíos
