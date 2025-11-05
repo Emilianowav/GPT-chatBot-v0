@@ -7,6 +7,10 @@ import { EmpresaModel } from '../models/Empresa.js';
 import { enviarMensajeWhatsAppTexto } from './metaService.js';
 import { enviarNotificacionConfirmacion } from '../modules/calendar/services/confirmacionTurnosService.js';
 
+// Registro de últimas ejecuciones para evitar duplicados
+// Key: empresaId + notificacionId + fecha (YYYY-MM-DD-HH)
+const ultimasEjecuciones = new Map<string, Date>();
+
 /**
  * Procesar notificaciones programadas
  * Se ejecuta cada minuto para verificar si hay notificaciones que enviar
@@ -48,8 +52,27 @@ export async function procesarNotificacionesProgramadas() {
         console.log(`      ⏰ Debe enviar: ${debeEnviar}`);
 
         if (debeEnviar) {
+          // Verificar si ya se envió en esta hora
+          const claveEjecucion = `${config.empresaId}-${notif.tipo}-${notif.momento}-${ahora.getFullYear()}-${ahora.getMonth()}-${ahora.getDate()}-${ahora.getHours()}`;
+          const ultimaEjecucion = ultimasEjecuciones.get(claveEjecucion);
+          
+          if (ultimaEjecucion && (ahora.getTime() - ultimaEjecucion.getTime()) < 5 * 60 * 1000) {
+            console.log(`      ⏭️ Ya se envió en los últimos 5 minutos (${ultimaEjecucion.toISOString()})`);
+            continue;
+          }
+          
           console.log(`📨 Enviando notificación: ${notif.tipo} - ${notif.momento}`);
           await enviarNotificacion(config.empresaId, notif);
+          
+          // Registrar ejecución
+          ultimasEjecuciones.set(claveEjecucion, ahora);
+          
+          // Limpiar ejecuciones antiguas (más de 2 horas)
+          for (const [clave, fecha] of ultimasEjecuciones.entries()) {
+            if (ahora.getTime() - fecha.getTime() > 2 * 60 * 60 * 1000) {
+              ultimasEjecuciones.delete(clave);
+            }
+          }
         }
       }
     }
@@ -102,19 +125,28 @@ function verificarSiDebeEnviar(
   }
   
   if (notif.momento === 'dia_antes_turno' && notif.horaEnvioDiaAntes) {
-    // Para "X días antes a hora específica", verificar hora
+    // Para "X días antes a hora específica", verificar hora con margen de tolerancia
     // La hora configurada está en Argentina (UTC-3), pero el servidor está en UTC
     // Convertir hora de Argentina a UTC: sumar 3 horas
     const [horaArg, minArg] = notif.horaEnvioDiaAntes.split(':').map(Number);
     const horaUTC = (horaArg + 3) % 24; // Sumar 3 horas y ajustar si pasa de 24
-    const horaEnvioUTC = `${horaUTC.toString().padStart(2, '0')}:${minArg.toString().padStart(2, '0')}`;
+    
+    // Convertir hora actual a minutos para comparar con margen
+    const [horaActualH, horaActualM] = horaActual.split(':').map(Number);
+    const minutosActuales = horaActualH * 60 + horaActualM;
+    const minutosConfigurados = horaUTC * 60 + minArg;
+    
+    // Margen de tolerancia: ±2 minutos
+    const diferencia = Math.abs(minutosActuales - minutosConfigurados);
+    const dentroDelMargen = diferencia <= 2;
     
     console.log(`         🕐 Hora configurada (Argentina): ${notif.horaEnvioDiaAntes}`);
-    console.log(`         🌍 Hora convertida (UTC): ${horaEnvioUTC}`);
+    console.log(`         🌍 Hora convertida (UTC): ${horaUTC.toString().padStart(2, '0')}:${minArg.toString().padStart(2, '0')}`);
     console.log(`         ⏰ Hora actual (servidor UTC): ${horaActual}`);
-    const coincide = horaEnvioUTC === horaActual;
-    console.log(`         ✅ Coincide: ${coincide}`);
-    return coincide;
+    console.log(`         📊 Diferencia en minutos: ${diferencia}`);
+    console.log(`         ✅ Dentro del margen (±2 min): ${dentroDelMargen}`);
+    
+    return dentroDelMargen;
   }
   
   if (notif.momento === 'noche_anterior' || notif.momento === 'hora_exacta') {
