@@ -58,6 +58,7 @@ async function verificarConfigNotificaciones() {
       // Corregir valores
       notif.momento = 'dia_antes_turno';
       notif.diasAntes = 1;
+      notif.horaEnvioDiaAntes = notif.horaEnvioDiaAntes || notif.horaEnvio || '22:00';
       
       if (!notif.filtros) {
         notif.filtros = {};
