@@ -45,17 +45,30 @@ export class ApiClient {
       Object.assign(headers, options.headers);
     }
 
-    const response = await fetch(`${this.baseUrl}${endpoint}`, {
-      ...options,
-      headers,
-    });
+    const url = `${this.baseUrl}${endpoint}`;
+    console.log('🌐 API Request:', { url, method: options.method || 'GET' });
 
-    if (!response.ok) {
-      const error = await response.json().catch(() => ({ message: 'Error desconocido' }));
-      throw new Error(error.message || `Error: ${response.status}`);
+    try {
+      const response = await fetch(url, {
+        ...options,
+        headers,
+      });
+
+      console.log('📡 API Response:', { status: response.status, ok: response.ok });
+
+      if (!response.ok) {
+        const error = await response.json().catch(() => ({ message: 'Error desconocido' }));
+        console.error('❌ API Error:', error);
+        throw new Error(error.message || `Error: ${response.status}`);
+      }
+
+      const data = await response.json();
+      console.log('✅ API Success:', data);
+      return data;
+    } catch (error) {
+      console.error('❌ Fetch Error:', error);
+      throw error;
     }
-
-    return response.json();
   }
 
   // Autenticación
@@ -118,6 +131,89 @@ export class ApiClient {
 
   async buscarConversaciones(empresaId: string, query: string) {
     return this.request<Record<string, unknown>>(`/api/conversaciones/${empresaId}/buscar?q=${encodeURIComponent(query)}`);
+  }
+
+  // SuperAdmin - Gestión de Empresas
+  async superAdminGetEmpresas(filtros?: {
+    nombre?: string;
+    categoria?: string;
+    plan?: string;
+    estadoFacturacion?: string;
+    sinUso?: boolean;
+    cercaLimite?: boolean;
+    conWhatsApp?: boolean;
+  }) {
+    const params = new URLSearchParams();
+    if (filtros) {
+      Object.entries(filtros).forEach(([key, value]) => {
+        if (value !== undefined && value !== null && value !== '') {
+          params.append(key, String(value));
+        }
+      });
+    }
+    const queryString = params.toString();
+    return this.request<{
+      success: boolean;
+      total: number;
+      empresas: Array<Record<string, unknown>>;
+    }>(`/api/sa/empresas${queryString ? `?${queryString}` : ''}`);
+  }
+
+  async superAdminGetEmpresaDetalle(empresaId: string) {
+    return this.request<{
+      success: boolean;
+      empresa: Record<string, unknown>;
+    }>(`/api/sa/empresas/${encodeURIComponent(empresaId)}`);
+  }
+
+  async superAdminCrearEmpresa(data: {
+    nombre: string;
+    email: string;
+    telefono?: string;
+    plan?: string;
+    categoria?: string;
+  }) {
+    return this.request<{
+      success: boolean;
+      message: string;
+      empresa?: Record<string, unknown>;
+    }>('/api/sa/empresas', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async superAdminCrearUsuarioAdmin(empresaId: string, data: {
+    username: string;
+    password: string;
+    email: string;
+    nombre: string;
+    apellido?: string;
+  }) {
+    return this.request<{
+      success: boolean;
+      message: string;
+      usuario?: Record<string, unknown>;
+    }>(`/api/sa/empresas/${encodeURIComponent(empresaId)}/user`, {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async superAdminEliminarEmpresa(empresaId: string) {
+    return this.request<{
+      success: boolean;
+      message: string;
+    }>(`/api/sa/empresas/${encodeURIComponent(empresaId)}`, {
+      method: 'DELETE',
+    });
+  }
+
+  // Método genérico DELETE
+  async delete(endpoint: string) {
+    return this.request(`${endpoint}`, {
+      method: 'DELETE',
+    });
   }
 }
 

@@ -27,9 +27,17 @@ export default function LoginPage() {
     setLoading(true);
 
     try {
-      await login(username, password);
-      router.push('/dashboard');
+      const response = await login(username, password);
+      
+      // Redirigir según el rol del usuario
+      const userRole = localStorage.getItem('user_role');
+      if (userRole === 'super_admin') {
+        router.push('/superadmin');
+      } else {
+        router.push('/dashboard');
+      }
     } catch (err) {
+      console.error('Error en login:', err);
       setError(err instanceof Error ? err.message : 'Error al iniciar sesión');
     } finally {
       setLoading(false);
