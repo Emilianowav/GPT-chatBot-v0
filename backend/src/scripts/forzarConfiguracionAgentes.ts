@@ -25,7 +25,7 @@ async function forzarConfiguracion() {
       activa: true,
       horaEnvio: '06:00',
       enviarATodos: false,
-      plantillaMensaje: 'Buenos días {agente}! Estos son tus {turnos} de hoy:',
+      plantillaMensaje: '', // ⚠️ VACÍO - Solo usar plantilla de Meta
       
       frecuencia: {
         tipo: 'diaria',

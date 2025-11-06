@@ -57,10 +57,10 @@ async function corregirPlantillas() {
           console.log(`⚠️  Plantilla de notificación diaria incorrecta en ${config.empresaId}:`);
           console.log(`   Plantilla: ${plantillaOriginal.substring(0, 100)}...`);
           
-          // Plantilla correcta con variables válidas
-          config.notificacionDiariaAgentes.plantillaMensaje = 'Buenos días {agente}! 🌅\n\nTienes *{cantidad} {turnos}* programados para hoy:\n\n{lista}\n\n¡Que tengas un excelente día! 🚗';
+          // ⚠️ VACÍO - Solo usar plantilla de Meta
+          config.notificacionDiariaAgentes.plantillaMensaje = '';
           
-          console.log(`   ✅ Corregida\n`);
+          console.log(`   ✅ Vaciada (solo usar plantilla Meta)\n`);
           cambios = true;
         }
       }

@@ -27,7 +27,7 @@ import {
 } from "./services/metaTokenService.js";
 import { iniciarServicioNotificaciones } from "./services/notificacionesService.js";
 import { procesarNotificacionesProgramadas } from "./services/notificacionesAutomaticasService.js";
-// import { enviarNotificacionesDiariasAgentes, esHoraDeEnviarNotificacionesDiarias } from "./services/notificacionesDiariasAgentes.js"; // DESACTIVADO
+import { enviarNotificacionesDiariasAgentes } from "./services/notificacionesDiariasAgentes.js";
 import { initializeFlows } from "./flows/index.js";
 
 const app = express();
@@ -190,12 +190,11 @@ app.use(errorHandler);
       await procesarNotificacionesProgramadas();
     }, 5000); // Esperar 5 segundos después del inicio
 
-    // 7. ❌ DESACTIVADO - Cron job de notificaciones diarias de agentes
-    // Las empresas usan plantillas de Meta que se envían manualmente desde el CRM
-    console.log('ℹ️  Notificaciones diarias de agentes: DESACTIVADAS (se usan plantillas de Meta)');
+    // 7. ✅ Cron job de notificaciones diarias de agentes
+    // Se ejecuta cada minuto y verifica si es hora de enviar según configuración en MongoDB
+    console.log('✅ Notificaciones diarias de agentes: ACTIVAS');
+    console.log('   Se enviarán automáticamente según horario configurado en MongoDB');
     
-    // CÓDIGO COMENTADO - Descomentar solo si se necesita envío automático
-    /*
     setInterval(async () => {
       try {
         await enviarNotificacionesDiariasAgentes();
@@ -203,7 +202,6 @@ app.use(errorHandler);
         console.error('❌ Error en cron job de notificaciones diarias:', error);
       }
     }, 60 * 1000);
-    */
 
     // 8. Iniciar servidor
     server.listen(PORT, () => {

@@ -42,6 +42,10 @@ function procesarPlantilla(plantilla: string, variables: Record<string, any>): s
  */
 export async function enviarNotificacionPruebaAgente(req: Request, res: Response) {
   try {
+    console.log(`\n🚨🚨🚨 ENDPOINT /test LLAMADO 🚨🚨🚨`);
+    console.log(`   Hora: ${new Date().toLocaleString('es-AR', { timeZone: 'America/Argentina/Buenos_Aires' })}`);
+    console.log(`   Body:`, req.body);
+    
     const { empresaId, telefono } = req.body;
     
     if (!empresaId || !telefono) {
@@ -146,17 +150,18 @@ export async function enviarNotificacionPruebaAgente(req: Request, res: Response
     
     console.log(`📋 Turnos encontrados: ${turnos.length}`);
     
-    // Construir lista de turnos formateada
+    // Construir lista de turnos formateada con separadores (Meta NO permite saltos de línea)
     let listaTurnos = '';
     
     if (turnos.length === 0) {
-      listaTurnos = `No tienes ${config.nomenclatura.turnos.toLowerCase()} programados para hoy. 🎉`;
+      listaTurnos = `No tienes ${config.nomenclatura.turnos.toLowerCase()} programados para hoy.`;
     } else {
       for (let i = 0; i < turnos.length; i++) {
         const turno = turnos[i];
         const { hora } = formatearFechaHora(new Date(turno.fechaInicio));
         
-        listaTurnos += `${i + 1}. 🕐 ${hora}`;
+        // Construir línea del viaje con separadores
+        let lineaViaje = `${i + 1}. ${hora}`;
         
         // Obtener contacto
         const contacto = await ContactoEmpresaModel.findOne({
@@ -164,33 +169,32 @@ export async function enviarNotificacionPruebaAgente(req: Request, res: Response
           empresaId
         });
         
-        const detalles: string[] = [];
-        
         if (notifConfig.incluirDetalles.nombreCliente && contacto) {
-          detalles.push(`${contacto.nombre} ${contacto.apellido}`);
+          lineaViaje += ` - ${contacto.nombre} ${contacto.apellido}`;
         }
         
         if (notifConfig.incluirDetalles.telefonoCliente && contacto) {
-          detalles.push(`📞 ${contacto.telefono}`);
+          lineaViaje += ` | Tel: ${contacto.telefono}`;
         }
         
         if (notifConfig.incluirDetalles.origen && turno.datos?.origen) {
-          detalles.push(`📍 Origen: ${turno.datos.origen}`);
+          lineaViaje += ` | Origen: ${turno.datos.origen}`;
         }
         
         if (notifConfig.incluirDetalles.destino && turno.datos?.destino) {
-          detalles.push(`🎯 Destino: ${turno.datos.destino}`);
+          lineaViaje += ` | Destino: ${turno.datos.destino}`;
         }
         
         if (notifConfig.incluirDetalles.notasInternas && turno.notasInternas) {
-          detalles.push(`📝 ${turno.notasInternas}`);
+          lineaViaje += ` | Notas: ${turno.notasInternas}`;
         }
         
-        if (detalles.length > 0) {
-          listaTurnos += '\n   ' + detalles.join('\n   ');
-        }
+        listaTurnos += lineaViaje;
         
-        listaTurnos += '\n\n';
+        // Agregar separador entre viajes (excepto el último)
+        if (i < turnos.length - 1) {
+          listaTurnos += ' || ';  // Separador visual entre viajes
+        }
       }
     }
     
@@ -228,13 +232,13 @@ export async function enviarNotificacionPruebaAgente(req: Request, res: Response
     
     const plantilla = notifConfig.plantillaMeta;
     
-    // ✅ ESTRATEGIA: Enviar SOLO plantilla de Meta con TODOS los detalles
-    // La plantilla debe contener toda la información necesaria en sus parámetros
+    // ✅ ESTRATEGIA: Enviar SOLO plantilla de Meta con DETALLE COMPLETO
+    // Meta NO permite saltos de línea en parámetros, usar separadores visuales: " | "
     
-    // 1. Preparar lista completa de turnos con detalles para la plantilla
+    // 1. Usar el detalle completo que ya construimos en listaTurnos (con separadores)
     const variables = {
       agente: `${agente.nombre} ${agente.apellido}`,
-      lista_turnos: listaTurnos.trim()  // Lista completa con todos los detalles
+      lista_turnos: listaTurnos  // Detalle completo con separadores
     };
 
     console.log('   Variables:', { agente: variables.agente, lista_turnos: variables.lista_turnos });

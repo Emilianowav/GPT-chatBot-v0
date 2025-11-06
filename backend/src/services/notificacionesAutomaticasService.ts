@@ -272,25 +272,28 @@ async function obtenerTurnosParaNotificacion(empresaId: string, notif: any) {
   } else if (notif.momento === 'dia_antes_turno' && notif.diasAntes && notif.horaEnvioDiaAntes) {
     // ✅ NUEVO: X días antes a una hora específica
     // Ejemplo: 1 día antes a las 22:00
-    // Si ahora son las 22:00, buscar turnos de mañana
+    // Si ahora son las 22:00 (Argentina), buscar turnos de mañana (Argentina)
     
     // Buscar turnos de dentro de X días
     // IMPORTANTE: Los turnos se guardan con Date.UTC() que guarda la hora tal cual
     // Ejemplo: Usuario dice "6 nov 14:00" → Se guarda como 2025-11-06T14:00:00.000Z
     // Buscamos desde 00:00 hasta 23:59 del día objetivo EN UTC
     
-    // Calcular fecha objetivo (X días desde ahora)
+    // Calcular fecha objetivo usando HORA LOCAL DE ARGENTINA
+    // Convertir hora UTC a hora Argentina (UTC-3)
+    const ahoraArgentina = new Date(ahora.getTime() - (3 * 60 * 60 * 1000));
+    
     fechaInicio = new Date(Date.UTC(
-      ahora.getUTCFullYear(),
-      ahora.getUTCMonth(),
-      ahora.getUTCDate() + notif.diasAntes,
+      ahoraArgentina.getUTCFullYear(),
+      ahoraArgentina.getUTCMonth(),
+      ahoraArgentina.getUTCDate() + notif.diasAntes,
       0, 0, 0, 0
     ));
 
     fechaFin = new Date(Date.UTC(
-      ahora.getUTCFullYear(),
-      ahora.getUTCMonth(),
-      ahora.getUTCDate() + notif.diasAntes,
+      ahoraArgentina.getUTCFullYear(),
+      ahoraArgentina.getUTCMonth(),
+      ahoraArgentina.getUTCDate() + notif.diasAntes,
       23, 59, 59, 999
     ));
     

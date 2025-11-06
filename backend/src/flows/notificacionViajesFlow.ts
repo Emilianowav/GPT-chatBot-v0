@@ -127,19 +127,43 @@ export const notificacionViajesFlow: Flow = {
             data
           };
         } else {
-          // Solo un viaje, ir directo a modificar
+          // Solo un viaje, mostrar opciones completas
+          const viaje = viajes[0];
           const turnoId = turnosIds[0];
           
-          await enviarMensajeWhatsAppTexto(
-            telefono,
-            '🔧 ¿Qué querés modificar?\n\n1️⃣ Hora\n2️⃣ Origen\n3️⃣ Destino\n4️⃣ Pasajeros\n\nEscribí el número de la opción.',
-            context.phoneNumberId
-          );
+          // Formatear hora
+          const fechaInicio = new Date(viaje.fechaInicio);
+          const horas = String(fechaInicio.getUTCHours()).padStart(2, '0');
+          const minutos = String(fechaInicio.getUTCMinutes()).padStart(2, '0');
+          const hora = `${horas}:${minutos}`;
+          
+          let mensaje = `✏️ *Editando Viaje #1*\n\n`;
+          mensaje += `🕐 *Hora actual:* ${hora}\n`;
+          mensaje += `📍 *Origen:* ${viaje.datos?.origen || 'No especificado'}\n`;
+          mensaje += `📍 *Destino:* ${viaje.datos?.destino || 'No especificado'}\n`;
+          mensaje += `👥 *Cantidad de pasajeros:* ${viaje.datos?.pasajeros || '1'}\n`;
+          mensaje += `🧳 *Equipaje:* ${viaje.datos?.equipaje || 'No especificado'}\n\n`;
+          mensaje += `*¿Qué deseas modificar?*\n\n`;
+          mensaje += `1️⃣ Cambiar hora\n`;
+          mensaje += `2️⃣ Cambiar origen\n`;
+          mensaje += `3️⃣ Cambiar destino\n`;
+          mensaje += `4️⃣ Cambiar cantidad de pasajeros\n`;
+          mensaje += `5️⃣ Cambiar equipaje\n`;
+          mensaje += `6️⃣ Confirmar este viaje\n`;
+          mensaje += `7️⃣ Cancelar este viaje\n`;
+          mensaje += `0️⃣ Volver atrás\n\n`;
+          mensaje += `Escribe el número de la opción.`;
+          
+          await enviarMensajeWhatsAppTexto(telefono, mensaje, context.phoneNumberId);
           
           return {
             success: true,
-            nextState: 'esperando_campo_modificar',
-            data: { ...data, turnoSeleccionado: turnoId }
+            nextState: 'esperando_tipo_modificacion',
+            data: {
+              ...data,
+              viajeSeleccionado: viaje,
+              viajeIndex: 0
+            }
           };
         }
       }
@@ -157,6 +181,8 @@ export const notificacionViajesFlow: Flow = {
         data
       };
     }
+    
+    // Estado 'esperando_campo_modificar' eliminado - ahora se usa 'esperando_tipo_modificacion' para todos los casos
     
     if (state === 'esperando_seleccion_viaje') {
       const viajeIndex = parseInt(mensajeTrim) - 1;

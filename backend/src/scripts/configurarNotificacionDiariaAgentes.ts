@@ -41,7 +41,7 @@ async function configurarNotificacionDiariaAgentes() {
       activa: true,
       horaEnvio: HORA_ENVIO,
       enviarATodos: ENVIAR_A_TODOS,
-      plantillaMensaje: 'Buenos días {agente}! 🌅\nEstos son tus {turnos} de hoy:',
+      plantillaMensaje: '', // ⚠️ VACÍO - Solo usar plantilla de Meta
       
       // Frecuencia: Diaria
       frecuencia: {

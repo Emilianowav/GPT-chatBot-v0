@@ -102,6 +102,7 @@ export async function enviarNotificacionesDiariasAgentes() {
     const diaActual = ahoraArgentina.toISOString().split('T')[0]; // YYYY-MM-DD
     
     // Obtener todas las configuraciones con notificaciones diarias activas
+    // ⚠️ NO usar .lean() para poder recargar después
     const configuraciones = await ConfiguracionModuloModel.find({
       'notificacionDiariaAgentes.activa': true
     });
@@ -112,8 +113,11 @@ export async function enviarNotificacionesDiariasAgentes() {
     
     console.log(`📅 Verificando ${configuraciones.length} empresas con notificaciones diarias activas...`);
     
-    for (const config of configuraciones) {
+    for (let config of configuraciones) {
       try {
+        // ⚠️ IMPORTANTE: Recargar config en cada iteración para obtener ultimoEnvio actualizado
+        config = await ConfiguracionModuloModel.findById(config._id) || config;
+        
         const horaEnvio = config.notificacionDiariaAgentes?.horaEnvio || '06:00';
         const [horaConfig, minutoConfig] = horaEnvio.split(':').map(Number);
         
@@ -121,8 +125,15 @@ export async function enviarNotificacionesDiariasAgentes() {
         const ultimoEnvio = config.notificacionDiariaAgentes?.ultimoEnvio;
         const ultimoEnvioDia = ultimoEnvio ? new Date(ultimoEnvio).toISOString().split('T')[0] : null;
         
+        console.log(`   📅 Verificación de envío:`);
+        console.log(`      Último envío: ${ultimoEnvio ? new Date(ultimoEnvio).toLocaleString('es-AR', { timeZone: 'America/Argentina/Buenos_Aires' }) : 'Nunca'}`);
+        console.log(`      Día del último envío: ${ultimoEnvioDia}`);
+        console.log(`      Día actual: ${diaActual}`);
+        console.log(`      ¿Ya se envió hoy?: ${ultimoEnvioDia === diaActual}`);
+        
         if (ultimoEnvioDia === diaActual) {
           // Ya se envió hoy, saltar
+          console.log(`   ⏭️ Saltando - ya se envió hoy`);
           continue;
         }
         
@@ -137,11 +148,17 @@ export async function enviarNotificacionesDiariasAgentes() {
           await enviarNotificacionesDiariasPorEmpresa(config);
           
           // Actualizar última ejecución
-          await ConfiguracionModuloModel.findByIdAndUpdate(config._id, {
-            'notificacionDiariaAgentes.ultimoEnvio': ahora
-          });
+          console.log(`💾 Actualizando ultimoEnvio en MongoDB...`);
+          const resultado = await ConfiguracionModuloModel.findByIdAndUpdate(
+            config._id, 
+            {
+              'notificacionDiariaAgentes.ultimoEnvio': ahora
+            },
+            { new: true }
+          );
           
           console.log(`✅ Notificaciones enviadas y registradas para ${config.empresaId}`);
+          console.log(`   ultimoEnvio actualizado a: ${resultado?.notificacionDiariaAgentes?.ultimoEnvio}`);
         }
       } catch (error) {
         console.error(`❌ Error procesando empresa ${config.empresaId}:`, error);
@@ -413,56 +430,6 @@ async function enviarNotificacionDiariaAgente(
     return;
   }
 
-  // Construir lista de turnos formateada
-  let listaTurnos = '';
-  
-  if (turnos.length === 0) {
-    listaTurnos = `No tienes ${nomenclatura.turnos.toLowerCase()} programados para hoy. 🎉`;
-  } else {
-    // Agregar detalles de cada turno
-    for (let i = 0; i < turnos.length; i++) {
-      const turno = turnos[i];
-      const { hora } = formatearFechaHora(new Date(turno.fechaInicio));
-      
-      listaTurnos += `${i + 1}. 🕐 ${hora}`;
-      
-      // Obtener datos del contacto
-      const contacto = await ContactoEmpresaModel.findOne({
-        _id: turno.clienteId,
-        empresaId
-      });
-      
-      // Agregar detalles según configuración
-      const detalles: string[] = [];
-      
-      if (config.incluirDetalles.nombreCliente && contacto) {
-        detalles.push(`${contacto.nombre} ${contacto.apellido}`);
-      }
-      
-      if (config.incluirDetalles.telefonoCliente && contacto) {
-        detalles.push(`📞 ${contacto.telefono}`);
-      }
-      
-      if (config.incluirDetalles.origen && turno.datos.origen) {
-        detalles.push(`📍 Origen: ${turno.datos.origen}`);
-      }
-      
-      if (config.incluirDetalles.destino && turno.datos.destino) {
-        detalles.push(`🎯 Destino: ${turno.datos.destino}`);
-      }
-      
-      if (config.incluirDetalles.notasInternas && turno.notasInternas) {
-        detalles.push(`📝 ${turno.notasInternas}`);
-      }
-      
-      if (detalles.length > 0) {
-        listaTurnos += '\n   ' + detalles.join('\n   ');
-      }
-      
-      listaTurnos += '\n\n';
-    }
-  }
-
   // Obtener empresa para phoneNumberId
   const empresa = await EmpresaModel.findOne({ nombre: empresaId });
   if (!empresa || !empresa.phoneNumberId) {
@@ -475,15 +442,55 @@ async function enviarNotificacionDiariaAgente(
   
   const plantilla = config.plantillaMeta;
   
-  // ✅ ESTRATEGIA: Enviar SOLO plantilla de Meta con TODOS los detalles
-  // La plantilla debe contener toda la información necesaria en sus parámetros
+  // ✅ ESTRATEGIA: Enviar SOLO plantilla de Meta con DETALLE COMPLETO
+  // Meta NO permite saltos de línea en parámetros, usar separadores visuales: " | "
   
-  // 1. Preparar lista completa de turnos con detalles para la plantilla
+  // 1. Preparar detalle completo para la plantilla con separadores
   const cantidadTurnos = turnos.length;
+  
+  // Construir detalle completo con separadores en lugar de saltos de línea
+  let detalleCompleto = '';
+  
+  if (turnos.length === 0) {
+    detalleCompleto = `No tienes ${nomenclatura.turnos.toLowerCase()} programados para hoy.`;
+  } else {
+    for (let i = 0; i < turnos.length; i++) {
+      const turno = turnos[i];
+      const { hora } = formatearFechaHora(new Date(turno.fechaInicio));
+      
+      // Obtener contacto
+      const contacto = await ContactoEmpresaModel.findOne({
+        _id: turno.clienteId,
+        empresaId
+      });
+      
+      // Construir línea del viaje con separadores
+      let lineaViaje = `${i + 1}. ${hora}`;
+      
+      if (config.incluirDetalles.nombreCliente && contacto) {
+        lineaViaje += ` - ${contacto.nombre} ${contacto.apellido}`;
+      }
+      
+      if (config.incluirDetalles.origen && turno.datos?.origen) {
+        lineaViaje += ` | Origen: ${turno.datos.origen}`;
+      }
+      
+      if (config.incluirDetalles.destino && turno.datos?.destino) {
+        lineaViaje += ` | Destino: ${turno.datos.destino}`;
+      }
+      
+      detalleCompleto += lineaViaje;
+      
+      // Agregar separador entre viajes (excepto el último)
+      if (i < turnos.length - 1) {
+        detalleCompleto += ' || ';  // Separador visual entre viajes
+      }
+    }
+  }
   
   const variables = {
     agente: `${agente.nombre} ${agente.apellido}`,
-    lista_turnos: listaTurnos.trim()  // Lista completa con todos los detalles
+    lista_turnos: detalleCompleto  // Detalle completo con separadores
   };
 
   console.log('   Variables:', { agente: variables.agente, lista_turnos: variables.lista_turnos });
