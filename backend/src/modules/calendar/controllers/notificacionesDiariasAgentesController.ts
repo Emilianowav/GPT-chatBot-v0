@@ -1,12 +1,14 @@
 // 📅 Controlador para notificaciones diarias de agentes
+// ⚠️ IMPORTANTE: Este controlador SOLO usa configuración de MongoDB
+// NO auto-configura NADA, solo lee y envía lo que está guardado
+
 import { Request, Response } from 'express';
 import { ConfiguracionModuloModel } from '../models/ConfiguracionModulo.js';
 import { AgenteModel } from '../models/Agente.js';
 import { TurnoModel } from '../models/Turno.js';
 import { ContactoEmpresaModel } from '../../../models/ContactoEmpresa.js';
 import { EmpresaModel } from '../../../models/Empresa.js';
-import { enviarMensajeWhatsAppTexto } from '../../../services/metaService.js';
-import { enviarMensajePlantillaMeta, generarComponentesPlantilla } from '../../../services/metaTemplateService.js';
+import { enviarMensajePlantillaMeta } from '../../../services/metaTemplateService.js';
 
 /**
  * Formatear fecha y hora
@@ -23,17 +25,32 @@ function formatearFechaHora(fecha: Date) {
 }
 
 /**
- * Procesar plantilla con variables
+ * Construir componentes para Meta desde la configuración de MongoDB
  */
-function procesarPlantilla(plantilla: string, variables: Record<string, any>): string {
-  let resultado = plantilla;
-  
-  for (const [key, value] of Object.entries(variables)) {
-    const regex = new RegExp(`\\{${key}\\}`, 'g');
-    resultado = resultado.replace(regex, value);
+function construirComponentesMeta(plantillaMeta: any, variables: Record<string, any>): any[] {
+  const componentes: any[] = [];
+
+  // Body (obligatorio)
+  if (plantillaMeta.componentes?.body) {
+    const parametros: any[] = [];
+    
+    for (const param of plantillaMeta.componentes.body) {
+      const valor = variables[param.text] || '';
+      parametros.push({
+        type: 'text',
+        text: String(valor)
+      });
+    }
+    
+    if (parametros.length > 0) {
+      componentes.push({
+        type: 'body',
+        parameters: parametros
+      });
+    }
   }
   
-  return resultado;
+  return componentes;
 }
 
 /**
@@ -79,34 +96,24 @@ export async function enviarNotificacionPruebaAgente(req: Request, res: Response
     
     const notifConfig = config.notificacionDiariaAgentes;
     
-    // ✅ AUTO-CONFIGURAR PLANTILLA SI NO EXISTE (igual que en confirmacionTurnosService)
+    // ⚠️ VALIDAR QUE LA PLANTILLA ESTÉ CONFIGURADA EN MONGODB
     if (!notifConfig.usarPlantillaMeta || !notifConfig.plantillaMeta) {
-      console.log('⚙️ Auto-configurando plantilla de Meta para notificación diaria de agentes...');
-      
-      notifConfig.usarPlantillaMeta = true;
-      notifConfig.plantillaMeta = {
-        nombre: 'chofer_sanjose',
-        idioma: 'es',
-        activa: true,
-        componentes: {
-          body: {
-            parametros: [
-              { tipo: 'text', variable: 'agente' },
-              { tipo: 'text', variable: 'lista_turnos' }
-            ]
-          }
-        }
-      };
-      
-      (config as any).markModified('notificacionDiariaAgentes');
-      await config.save();
-      console.log('✅ Plantilla auto-configurada: chofer_sanjose (2 parámetros: agente, lista_turnos)');
-      
-      // ⚠️ IMPORTANTE: Recargar la configuración para obtener los cambios
-      const configActualizada = await ConfiguracionModuloModel.findOne({ empresaId });
-      if (configActualizada?.notificacionDiariaAgentes) {
-        Object.assign(notifConfig, configActualizada.notificacionDiariaAgentes);
-      }
+      console.error('❌ [NotifAgentes] Plantilla NO configurada en MongoDB');
+      res.status(400).json({
+        success: false,
+        message: 'Plantilla de Meta no configurada. Configure la plantilla en MongoDB primero.',
+        instrucciones: 'Ejecuta: npx tsx src/scripts/configurarChoferSanjose.ts'
+      });
+      return;
+    }
+    
+    if (!notifConfig.plantillaMeta.activa) {
+      console.error('❌ [NotifAgentes] Plantilla inactiva en MongoDB');
+      res.status(400).json({
+        success: false,
+        message: 'Plantilla de Meta está inactiva en la configuración'
+      });
+      return;
     }
     
     // Buscar agente por teléfono (normalizar con y sin +)
@@ -237,42 +244,27 @@ export async function enviarNotificacionPruebaAgente(req: Request, res: Response
     
     const phoneNumberId = empresa.phoneNumberId;
     
-    // ✅ OBLIGATORIO: Solo enviar con plantilla de Meta
-    if (!notifConfig.usarPlantillaMeta || !notifConfig.plantillaMeta?.activa) {
-      console.error('❌ [NotifAgentes] NO SE PUEDE ENVIAR: Plantilla de Meta no configurada o inactiva');
-      console.error('   Las notificaciones DEBEN usar plantillas de Meta para abrir ventana de 24hs');
-      res.status(400).json({
-        success: false,
-        message: 'No se puede enviar: Plantilla de Meta no configurada. Configure la plantilla primero.',
-        detalles: {
-          usarPlantillaMeta: notifConfig.usarPlantillaMeta || false,
-          plantillaActiva: notifConfig.plantillaMeta?.activa || false
-        }
-      });
-      return;
-    }
 
-    console.log('📋 [NotifAgentes] Usando plantilla de Meta para abrir ventana de 24h');
+    console.log('📋 [NotifAgentes] Usando plantilla de MongoDB');
     console.log('   Plantilla:', notifConfig.plantillaMeta.nombre);
+    console.log('   Idioma:', notifConfig.plantillaMeta.idioma);
+    console.log('   Componentes:', JSON.stringify(notifConfig.plantillaMeta.componentes, null, 2));
     
     const plantilla = notifConfig.plantillaMeta;
     
-    // ✅ ESTRATEGIA: Enviar SOLO plantilla de Meta con DETALLE COMPLETO
-    // Meta NO permite saltos de línea en parámetros, usar separadores visuales: " | "
-    
-    // 1. Usar el detalle completo que ya construimos en listaTurnos (con separadores)
-    const variables = {
+    // Construir variables según la configuración de MongoDB
+    const variables: Record<string, any> = {
       agente: `${agente.nombre} ${agente.apellido}`,
-      lista_turnos: listaTurnos  // Detalle completo con separadores
+      lista_turnos: listaTurnos
     };
 
-    console.log('   Variables:', { agente: variables.agente, lista_turnos: variables.lista_turnos });
+    console.log('📝 Variables construidas:', variables);
 
-    // Generar componentes de la plantilla
-    const componentes = generarComponentesPlantilla(plantilla, variables);
+    // Construir componentes EXACTAMENTE como están en MongoDB
+    const componentes = construirComponentesMeta(plantilla, variables);
+    console.log('🔧 Componentes para Meta:', JSON.stringify(componentes, null, 2));
 
-    // 2. Enviar SOLO plantilla de Meta (NO enviar mensaje de texto adicional)
-    let enviado = false;
+    // Enviar a Meta API
     try {
       await enviarMensajePlantillaMeta(
         agente.telefono,
@@ -281,13 +273,18 @@ export async function enviarNotificacionPruebaAgente(req: Request, res: Response
         componentes,
         phoneNumberId
       );
-      enviado = true;
-      console.log(`✅ [NotifAgentes] Plantilla enviada exitosamente a ${agente.telefono}`);
-      console.log(`   ℹ️ NO se envía mensaje de texto adicional - la plantilla de Meta contiene toda la información necesaria`);
+      console.log(`✅ [NotifAgentes] Plantilla enviada exitosamente`);
       
     } catch (error: any) {
-      console.error(`❌ [NotifAgentes] ERROR CRÍTICO: No se pudo enviar plantilla de Meta:`, error);
-      throw new Error(`No se pudo enviar la notificación: ${error.message}`);
+      console.error(`❌ [NotifAgentes] ERROR enviando a Meta:`, error);
+      res.status(500).json({
+        success: false,
+        message: `Error al enviar plantilla de Meta: ${error.message}`,
+        detalles: {
+          plantilla: plantilla.nombre,
+          error: error.response?.data || error.message
+        }
+      });
       return;
     }
     
