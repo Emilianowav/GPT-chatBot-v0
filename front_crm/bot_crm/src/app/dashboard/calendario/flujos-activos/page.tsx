@@ -205,6 +205,69 @@ export default function AdministradorFlujosPage() {
     }
   };
 
+  const handleToggleFlujo = async (flujoId: string, nuevoEstado: boolean) => {
+    try {
+      const token = localStorage.getItem('auth_token');
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';
+      
+      // Obtener configuración actual
+      const getResponse = await fetch(`${apiUrl}/api/modules/calendar/configuracion/${empresaId}`, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      
+      if (!getResponse.ok) throw new Error('Error al obtener configuración');
+      
+      const configActual = await getResponse.json();
+      
+      // Actualizar según el flujo
+      let configActualizada = { ...configActual };
+      
+      if (flujoId === 'notificacion_diaria_agentes') {
+        configActualizada.notificacionDiariaAgentes = {
+          ...configActual.notificacionDiariaAgentes,
+          activa: nuevoEstado
+        };
+      } else if (flujoId === 'confirmacion_turnos') {
+        // Actualizar todas las notificaciones de confirmación
+        configActualizada.notificaciones = configActual.notificaciones?.map((notif: any) => {
+          if (notif.tipo === 'confirmacion') {
+            return { ...notif, activa: nuevoEstado };
+          }
+          return notif;
+        });
+      }
+      
+      // Guardar
+      const response = await fetch(`${apiUrl}/api/modules/calendar/configuracion/${empresaId}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify(configActualizada)
+      });
+      
+      if (!response.ok) throw new Error('Error al guardar configuración');
+      
+      setMensaje({
+        tipo: 'success',
+        texto: nuevoEstado ? '✅ Flujo activado' : '⏸️ Flujo desactivado'
+      });
+      
+      // Recargar configuración
+      window.location.reload();
+    } catch (err: any) {
+      setMensaje({
+        tipo: 'error',
+        texto: err.message || 'Error al cambiar estado del flujo'
+      });
+    } finally {
+      setTimeout(() => setMensaje(null), 3000);
+    }
+  };
+
   const handleEnviarPrueba = async (flujoId: string, telefono: string) => {
     setEnviandoPrueba(flujoId);
     
@@ -609,7 +672,7 @@ export default function AdministradorFlujosPage() {
                           <input
                             type="checkbox"
                             checked={flujo.activo}
-                            onChange={() => {/* TODO: toggle flujo */}}
+                            onChange={() => handleToggleFlujo(flujo.id, !flujo.activo)}
                           />
                           <span className={styles.slider}></span>
                         </label>
