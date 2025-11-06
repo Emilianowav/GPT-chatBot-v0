@@ -89,89 +89,85 @@ export default function AdministradorFlujosPage() {
     ]
   };
 
-  // Flujos automáticos - Cargar desde configuración
-  const notificacionConfirmacion = configModulo?.notificaciones?.find(n => n.tipo === 'confirmacion');
-  const notificacionDiariaAgentes = configModulo?.notificacionDiariaAgentes;
+  // ✅ NUEVA ESTRUCTURA: plantillasMeta
+  const confirmacionTurnos = configModulo?.plantillasMeta?.confirmacionTurnos;
+  const notificacionDiariaAgentes = configModulo?.plantillasMeta?.notificacionDiariaAgentes;
   
   const flujosAutomaticos = [
     {
       id: 'confirmacion_turnos',
       nombre: 'Confirmación de Turnos',
-      descripcion: 'Envía recordatorios automáticos antes del turno',
+      descripcion: 'Envía recordatorios automáticos antes del turno (Plantilla Meta)',
       tipo: 'automatico',
-      activo: notificacionConfirmacion?.activa ?? false,
+      activo: confirmacionTurnos?.activa ?? false,
       icono: '⏰',
       trigger: (() => {
-        const momento = notificacionConfirmacion?.momento;
-        const horasAntes = (notificacionConfirmacion as any)?.horasAntesTurno;
-        const diasAntes = notificacionConfirmacion?.diasAntes;
-        const horaEnvio = (notificacionConfirmacion as any)?.horaEnvioDiaAntes;
+        const programacion = confirmacionTurnos?.programacion;
         
-        // Debug: Ver qué valores llegan
-        console.log('🔍 Debug notificación:', {
-          momento,
-          horasAntes,
-          diasAntes,
-          horaEnvio
-        });
-        
-        if (momento === 'horas_antes_turno' && horasAntes) {
-          return `${horasAntes} horas antes del turno`;
-        } else if (momento === 'dia_antes_turno' && diasAntes && horaEnvio) {
-          return `${diasAntes} día${diasAntes > 1 ? 's' : ''} antes a las ${horaEnvio}`;
-        } else if (momento === 'noche_anterior') {
-          return 'Noche anterior';
+        if (!programacion) {
+          return 'Configuración pendiente';
         }
         
-        // Fallback: intentar mostrar lo que tengamos
+        const diasAntes = programacion.diasAntes;
+        const horaEnvio = programacion.horaEnvio;
+        
         if (diasAntes && horaEnvio) {
           return `${diasAntes} día${diasAntes > 1 ? 's' : ''} antes a las ${horaEnvio}`;
         }
+        
         return 'Configuración pendiente';
       })(),
       config: {
-        anticipacion: notificacionConfirmacion?.diasAntes || 1,
-        horaEnvio: (notificacionConfirmacion as any)?.horaEnvioDiaAntes || '22:00',
-        estados: (notificacionConfirmacion as any)?.filtros?.estados || ['pendiente', 'no_confirmado'],
-        mensaje: notificacionConfirmacion?.plantillaMensaje || '¡Hola! 👋 Te recordamos que tenés un turno agendado para mañana.\n\n📅 Fecha: {fecha}\n🕐 Hora: {hora}\n📍 Destino: {destino}\n\n¿Confirmás tu asistencia? Respondé SÍ o NO',
-        mensajeConfirmacion: notificacionConfirmacion?.mensajeConfirmacion || '✅ ¡Perfecto! Todos tus viajes han sido confirmados.\n\n¡Nos vemos pronto! 🚗',
-        solicitarConfirmacion: notificacionConfirmacion?.requiereConfirmacion ?? true
+        plantilla: confirmacionTurnos?.nombre || 'clientes_sanjose',
+        idioma: confirmacionTurnos?.idioma || 'es',
+        anticipacion: confirmacionTurnos?.programacion?.diasAntes || 1,
+        horaEnvio: confirmacionTurnos?.programacion?.horaEnvio || '21:00',
+        estados: confirmacionTurnos?.programacion?.filtroEstado || ['pendiente', 'no_confirmado'],
+        metaApiUrl: confirmacionTurnos?.metaApiUrl || '',
+        variables: confirmacionTurnos?.variables || {}
       }
     },
     {
       id: 'notificacion_diaria_agentes',
       nombre: 'Recordatorio Diario para Agentes',
-      descripcion: 'Envía un resumen diario a los agentes con todas sus reservas del día',
+      descripcion: 'Envía un resumen diario a los agentes con todas sus reservas del día (Plantilla Meta)',
       tipo: 'automatico',
       activo: notificacionDiariaAgentes?.activa ?? false,
       icono: '📅',
       trigger: (() => {
-        const horaEnvio = notificacionDiariaAgentes?.horaEnvio || '06:00';
-        const frecuencia = (notificacionDiariaAgentes as any)?.frecuencia?.tipo || 'diaria';
+        const programacion = notificacionDiariaAgentes?.programacion;
+        
+        if (!programacion) {
+          return 'Configuración pendiente';
+        }
+        
+        const horaEnvio = programacion.horaEnvio || '06:00';
+        const frecuencia = programacion.frecuencia || 'diaria';
         
         if (frecuencia === 'diaria') {
           return `Todos los días a las ${horaEnvio}`;
-        } else if (frecuencia === 'semanal') {
-          const dias = (notificacionDiariaAgentes as any)?.frecuencia?.diasSemana || [];
-          const nombresDias = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
-          const diasTexto = dias.map((d: number) => nombresDias[d]).join(', ');
-          return `${diasTexto} a las ${horaEnvio}`;
         }
+        
         return `Frecuencia ${frecuencia} a las ${horaEnvio}`;
       })(),
       config: {
-        horaEnvio: notificacionDiariaAgentes?.horaEnvio || '06:00',
-        enviarATodos: notificacionDiariaAgentes?.enviarATodos ?? false,
-        mensaje: notificacionDiariaAgentes?.plantillaMensaje || '', // ⚠️ VACÍO - Solo usar plantilla de Meta
-        frecuencia: (notificacionDiariaAgentes as any)?.frecuencia || { tipo: 'diaria' },
-        incluirDetalles: notificacionDiariaAgentes?.incluirDetalles || {
+        plantilla: notificacionDiariaAgentes?.nombre || 'chofer_sanjose',
+        idioma: notificacionDiariaAgentes?.idioma || 'es',
+        horaEnvio: notificacionDiariaAgentes?.programacion?.horaEnvio || '06:00',
+        frecuencia: notificacionDiariaAgentes?.programacion?.frecuencia || 'diaria',
+        rangoHorario: notificacionDiariaAgentes?.programacion?.rangoHorario || 'hoy',
+        estados: notificacionDiariaAgentes?.programacion?.filtroEstado || ['pendiente', 'confirmado'],
+        incluirDetalles: notificacionDiariaAgentes?.programacion?.incluirDetalles || {
           origen: true,
           destino: true,
           nombreCliente: true,
           telefonoCliente: false,
           horaReserva: true,
           notasInternas: false
-        }
+        },
+        metaApiUrl: notificacionDiariaAgentes?.metaApiUrl || '',
+        variables: notificacionDiariaAgentes?.variables || {},
+        ultimoEnvio: notificacionDiariaAgentes?.ultimoEnvio || null
       }
     },
     {
@@ -534,7 +530,7 @@ export default function AdministradorFlujosPage() {
         {/* Header */}
         <div className={styles.header}>
           <div className={styles.headerContent}>
-            <h1>🤖 Administrador de Flujos</h1>
+            <h1>Administrador de Flujos</h1>
             <p>Gestiona, configura y prueba los flujos del chatbot</p>
           </div>
           
@@ -688,6 +684,28 @@ export default function AdministradorFlujosPage() {
                       <span className={styles.triggerLabel}>Se activa:</span>
                       <span className={styles.triggerValue}>{flujo.trigger}</span>
                     </div>
+
+                    {/* ✅ Información de Plantilla Meta */}
+                    {flujo.config.plantilla && (
+                      <div className={styles.flujoMeta}>
+                        <div className={styles.metaInfo}>
+                          <span className={styles.metaLabel}>📋 Plantilla:</span>
+                          <span className={styles.metaValue}>{flujo.config.plantilla}</span>
+                        </div>
+                        <div className={styles.metaInfo}>
+                          <span className={styles.metaLabel}>🌐 Idioma:</span>
+                          <span className={styles.metaValue}>{flujo.config.idioma}</span>
+                        </div>
+                        {flujo.config.ultimoEnvio && (
+                          <div className={styles.metaInfo}>
+                            <span className={styles.metaLabel}>⏰ Último envío:</span>
+                            <span className={styles.metaValue}>
+                              {new Date(flujo.config.ultimoEnvio).toLocaleString('es-AR')}
+                            </span>
+                          </div>
+                        )}
+                      </div>
+                    )}
 
                     <div className={styles.flujoAcciones}>
                       <button

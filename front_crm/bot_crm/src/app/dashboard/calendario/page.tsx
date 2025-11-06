@@ -249,7 +249,7 @@ export default function CalendarioPage() {
                 <div className={styles.sectionHeader}>
                   <h2>
                     {vistaCalendario 
-                      ? 'Calendario Mensual' 
+                      ? '' 
                       : fechaSeleccionada 
                         ? `Turnos del ${fechaSeleccionada.toLocaleDateString('es-AR', { day: 'numeric', month: 'long', year: 'numeric' })}`
                         : 'Turnos del Día'

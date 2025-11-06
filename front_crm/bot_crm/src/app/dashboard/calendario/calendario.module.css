@@ -98,7 +98,7 @@
   align-items: center;
   gap: 0.5rem;
   padding: 0.5rem 1rem;
-  border-radius: 8px;
+  border-radius: 2px;
   font-weight: 500;
   cursor: pointer;
   transition: all 0.2s;
@@ -121,8 +121,8 @@
 }
 
 .btnToggleActive:hover {
-  background: #5568d3;
-  border-color: #5568d3;
+  background: var(--momento-black, #1a1a1a);
+  border-color: var(--momento-black-light, #2A2A2A);
 }
 
 /* Stats Grid */
@@ -130,25 +130,24 @@
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
   gap: 1.5rem;
-  margin-bottom: 2rem;
+  margin: 2rem;
 }
 
 .statCard {
   background: linear-gradient(135deg, var(--momento-orange, #FF6B4A) 0%, var(--momento-orange-light, #FF8A6E) 100%);
   border: none;
-  border-radius: 16px;
+  border-radius: 2px;
   padding: 24px;
   display: flex;
   align-items: center;
   gap: 16px;
-  box-shadow: 0 4px 12px rgba(255, 107, 74, 0.3);
+  box-shadow: 0 4px 12px rgba(255, 107, 74, 0.1);
   transition: all 0.3s ease;
   color: white;
 }
 
 .statCard:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.12);
+  box-shadow: 0 4px 12px rgba(255, 107, 74, 0.8);
 }
 
 .statIcon {
@@ -187,10 +186,9 @@
 
 .calendarSection,
 .turnosSection {
-  background: var(--momento-black, #1A1A1A);
-  border-radius: 16px;
   padding: 1.5rem;
-  background: var(--momento-black-light, #2A2A2A);
+  background: var(--momento-black-light, #1A1A1A);
+  margin: 2rem;
 }
 
 .sectionHeader {
@@ -295,8 +293,7 @@
 
 /* Info Banner */
 .infoBanner {
-  background: linear-gradient(135deg, #FF6B4A 0%, #FF8A6E 100%);
-  border-radius: 16px;
+  background: linear-gradient(#ff6b4aaa);
   padding: 2rem;
   display: flex;
   align-items: center;
