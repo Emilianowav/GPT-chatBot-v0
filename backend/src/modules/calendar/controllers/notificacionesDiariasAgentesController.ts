@@ -26,19 +26,45 @@ function formatearFechaHora(fecha: Date) {
 
 /**
  * Construir componentes para Meta desde la configuración de MongoDB
+ * 
+ * MongoDB guarda:
+ * {
+ *   "body": [
+ *     { "type": "text", "text": "agente" },
+ *     { "type": "text", "text": "lista_turnos" }
+ *   ]
+ * }
+ * 
+ * Esto se convierte en el payload para Meta:
+ * {
+ *   "type": "body",
+ *   "parameters": [
+ *     { "type": "text", "text": "Juan Pérez" },
+ *     { "type": "text", "text": "1. 10:00 a. m. - ..." }
+ *   ]
+ * }
  */
 function construirComponentesMeta(plantillaMeta: any, variables: Record<string, any>): any[] {
   const componentes: any[] = [];
 
+  console.log('🔧 [construirComponentesMeta] Entrada:');
+  console.log('   plantillaMeta.componentes:', JSON.stringify(plantillaMeta.componentes, null, 2));
+  console.log('   variables:', variables);
+
   // Body (obligatorio)
-  if (plantillaMeta.componentes?.body) {
+  if (plantillaMeta.componentes?.body && Array.isArray(plantillaMeta.componentes.body)) {
     const parametros: any[] = [];
     
+    // Cada elemento del array body es: { "type": "text", "text": "nombre_variable" }
     for (const param of plantillaMeta.componentes.body) {
-      const valor = variables[param.text] || '';
+      const nombreVariable = param.text; // "agente" o "lista_turnos"
+      const valorVariable = variables[nombreVariable]; // Valor real
+      
+      console.log(`   📝 Mapeando: ${nombreVariable} → "${valorVariable?.substring(0, 50)}..."`);
+      
       parametros.push({
         type: 'text',
-        text: String(valor)
+        text: String(valorVariable || '')
       });
     }
     
@@ -47,9 +73,13 @@ function construirComponentesMeta(plantillaMeta: any, variables: Record<string, 
         type: 'body',
         parameters: parametros
       });
+      console.log(`   ✅ Body construido con ${parametros.length} parámetros`);
     }
+  } else {
+    console.log('   ⚠️ No se encontró body en componentes o no es un array');
   }
   
+  console.log('🔧 [construirComponentesMeta] Salida:', JSON.stringify(componentes, null, 2));
   return componentes;
 }
 
