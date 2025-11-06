@@ -3,7 +3,6 @@ import { TurnoModel, EstadoTurno } from '../modules/calendar/models/Turno.js';
 import { ConfiguracionModuloModel } from '../modules/calendar/models/ConfiguracionModulo.js';
 import { AgenteModel } from '../modules/calendar/models/Agente.js';
 import { ContactoEmpresaModel } from '../models/ContactoEmpresa.js';
-import { enviarMensajeWhatsAppTexto } from '../services/metaService.js';
 import { EmpresaModel } from '../models/Empresa.js';
 import { enviarMensajePlantillaMeta, generarComponentesPlantilla } from '../services/metaTemplateService.js';
 
@@ -24,56 +23,9 @@ function formatearFechaHora(fecha: Date): { fecha: string; hora: string } {
   };
 }
 
-/**
- * Enviar notificación vía WhatsApp usando el número del chatbot
- */
-async function enviarNotificacion(
-  telefono: string, 
-  mensaje: string, 
-  empresaId: string
-): Promise<boolean> {
-  try {
-    console.log('📤 Enviando notificación diaria:');
-    console.log('  Teléfono:', telefono);
-    console.log('  Empresa:', empresaId);
-    console.log('  Mensaje:', mensaje);
-    
-    // Obtener configuración de la empresa para el phoneNumberId
-    // empresaId puede ser el nombre de la empresa o el ObjectId
-    let empresa;
-    
-    // Intentar primero por nombre (más común en este sistema)
-    empresa = await EmpresaModel.findOne({ nombre: empresaId });
-    
-    // Si no se encuentra y el ID parece ser un ObjectId válido, intentar por _id
-    if (!empresa && empresaId.match(/^[0-9a-fA-F]{24}$/)) {
-      empresa = await EmpresaModel.findOne({ _id: empresaId });
-    }
-    
-    if (!empresa) {
-      console.error('❌ Empresa no encontrada:', empresaId);
-      return false;
-    }
-    
-    // Obtener phoneNumberId de la empresa
-    const phoneNumberId = (empresa as any).phoneNumberId;
-    
-    if (!phoneNumberId) {
-      console.error('❌ phoneNumberId no configurado para empresa:', empresaId);
-      return false;
-    }
-    
-    // Enviar mensaje vía WhatsApp API
-    await enviarMensajeWhatsAppTexto(telefono, mensaje, phoneNumberId);
-    
-    console.log('✅ Notificación diaria enviada exitosamente');
-    return true;
-    
-  } catch (error) {
-    console.error('❌ Error al enviar notificación:', error);
-    return false;
-  }
-}
+// ⚠️ FUNCIÓN ELIMINADA: enviarNotificacion
+// Esta función enviaba mensajes de texto y causaba duplicados
+// Ahora SOLO se usan plantillas de Meta en enviarNotificacionDiariaAgente()
 
 /**
  * Procesar plantilla de mensaje con variables
