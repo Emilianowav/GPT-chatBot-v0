@@ -25,62 +25,49 @@ function formatearFechaHora(fecha: Date) {
 }
 
 /**
- * Construir componentes para Meta desde la configuración de MongoDB
- * 
- * MongoDB guarda:
- * {
- *   "body": [
- *     { "type": "text", "text": "agente" },
- *     { "type": "text", "text": "lista_turnos" }
- *   ]
- * }
- * 
- * Esto se convierte en el payload para Meta:
- * {
- *   "type": "body",
- *   "parameters": [
- *     { "type": "text", "text": "Juan Pérez" },
- *     { "type": "text", "text": "1. 10:00 a. m. - ..." }
- *   ]
- * }
+ * Reemplazar variables en un objeto (recursivo)
+ * Reemplaza {{variable}} con el valor real
  */
-function construirComponentesMeta(plantillaMeta: any, variables: Record<string, any>): any[] {
-  const componentes: any[] = [];
-
-  console.log('🔧 [construirComponentesMeta] Entrada:');
-  console.log('   plantillaMeta.componentes:', JSON.stringify(plantillaMeta.componentes, null, 2));
-  console.log('   variables:', variables);
-
-  // Body (obligatorio)
-  if (plantillaMeta.componentes?.body && Array.isArray(plantillaMeta.componentes.body)) {
-    const parametros: any[] = [];
-    
-    // Cada elemento del array body es: { "type": "text", "text": "nombre_variable" }
-    for (const param of plantillaMeta.componentes.body) {
-      const nombreVariable = param.text; // "agente" o "lista_turnos"
-      const valorVariable = variables[nombreVariable]; // Valor real
-      
-      console.log(`   📝 Mapeando: ${nombreVariable} → "${valorVariable?.substring(0, 50)}..."`);
-      
-      parametros.push({
-        type: 'text',
-        text: String(valorVariable || '')
-      });
-    }
-    
-    if (parametros.length > 0) {
-      componentes.push({
-        type: 'body',
-        parameters: parametros
-      });
-      console.log(`   ✅ Body construido con ${parametros.length} parámetros`);
-    }
-  } else {
-    console.log('   ⚠️ No se encontró body en componentes o no es un array');
+function reemplazarVariables(obj: any, variables: Record<string, any>): any {
+  if (typeof obj === 'string') {
+    // Reemplazar {{variable}} con el valor
+    return obj.replace(/\{\{(\w+)\}\}/g, (match, varName) => {
+      return variables[varName] !== undefined ? String(variables[varName]) : match;
+    });
   }
   
-  console.log('🔧 [construirComponentesMeta] Salida:', JSON.stringify(componentes, null, 2));
-  return componentes;
+  if (Array.isArray(obj)) {
+    return obj.map(item => reemplazarVariables(item, variables));
+  }
+  
+  if (typeof obj === 'object' && obj !== null) {
+    const result: any = {};
+    for (const key in obj) {
+      result[key] = reemplazarVariables(obj[key], variables);
+    }
+    return result;
+  }
+  
+  return obj;
+}
+
+/**
+ * Construir payload completo para Meta desde MongoDB
+ * Lee TODO de la configuración: URL, body, componentes
+ */
+function construirPayloadMeta(plantillaMeta: any, variables: Record<string, any>): { url: string; payload: any } {
+  console.log('🔧 [construirPayloadMeta] Construyendo desde MongoDB');
+  console.log('   Variables disponibles:', Object.keys(variables));
+  
+  // 1. Construir URL (reemplazar {{phoneNumberId}})
+  const url = reemplazarVariables(plantillaMeta.metaApiUrl, variables);
+  console.log('   📍 URL:', url);
+  
+  // 2. Construir payload (reemplazar todas las variables)
+  const payload = reemplazarVariables(plantillaMeta.metaPayload, variables);
+  console.log('   📦 Payload:', JSON.stringify(payload, null, 2));
+  
+  return { url, payload };
 }
 
 /**
@@ -275,47 +262,74 @@ export async function enviarNotificacionPruebaAgente(req: Request, res: Response
     const phoneNumberId = empresa.phoneNumberId;
     
 
-    console.log('📋 [NotifAgentes] Usando plantilla de MongoDB');
-    console.log('   Plantilla:', notifConfig.plantillaMeta.nombre);
-    console.log('   Idioma:', notifConfig.plantillaMeta.idioma);
-    console.log('   Componentes:', JSON.stringify(notifConfig.plantillaMeta.componentes, null, 2));
+    console.log('📋 [NotifAgentes] Usando configuración COMPLETA de MongoDB');
     
     const plantilla = notifConfig.plantillaMeta;
     
-    // Construir variables según la configuración de MongoDB
+    // Construir TODAS las variables (incluye phoneNumberId, telefono, agente, lista_turnos)
     const variables: Record<string, any> = {
+      phoneNumberId: phoneNumberId,
+      telefono: agente.telefono,
       agente: `${agente.nombre} ${agente.apellido}`,
       lista_turnos: listaTurnos
     };
 
-    console.log('📝 Variables construidas:', variables);
+    console.log('📝 Variables para reemplazo:', Object.keys(variables));
 
-    // Construir componentes EXACTAMENTE como están en MongoDB
-    const componentes = construirComponentesMeta(plantilla, variables);
-    console.log('🔧 Componentes para Meta:', JSON.stringify(componentes, null, 2));
-
-    // Enviar a Meta API
-    try {
-      await enviarMensajePlantillaMeta(
-        agente.telefono,
-        plantilla.nombre,
-        plantilla.idioma,
-        componentes,
-        phoneNumberId
-      );
-      console.log(`✅ [NotifAgentes] Plantilla enviada exitosamente`);
+    // ✅ NUEVO SISTEMA ESCALABLE: Construir TODO desde MongoDB
+    if (plantilla.metaApiUrl && plantilla.metaPayload) {
+      console.log('🚀 Usando sistema ESCALABLE (URL + Payload desde MongoDB)');
       
-    } catch (error: any) {
-      console.error(`❌ [NotifAgentes] ERROR enviando a Meta:`, error);
-      res.status(500).json({
-        success: false,
-        message: `Error al enviar plantilla de Meta: ${error.message}`,
-        detalles: {
-          plantilla: plantilla.nombre,
-          error: error.response?.data || error.message
-        }
-      });
-      return;
+      const { url, payload } = construirPayloadMeta(plantilla, variables);
+      
+      // Enviar directamente a Meta con axios
+      try {
+        const axios = require('axios');
+        const token = process.env.META_WHATSAPP_TOKEN || process.env.WHATSAPP_TOKEN;
+        
+        const response = await axios.post(url, payload, {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          }
+        });
+        
+        console.log(`✅ [NotifAgentes] Mensaje enviado (sistema escalable)`);
+        console.log('   Message ID:', response.data.messages?.[0]?.id);
+        
+      } catch (error: any) {
+        console.error(`❌ [NotifAgentes] ERROR enviando a Meta:`, error.response?.data || error);
+        res.status(500).json({
+          success: false,
+          message: `Error al enviar a Meta: ${error.message}`,
+          detalles: error.response?.data || error.message
+        });
+        return;
+      }
+      
+    } else {
+      // ⚠️ SISTEMA ANTIGUO: Usar función helper (fallback)
+      console.log('⚠️ Usando sistema antiguo (función helper)');
+      
+      try {
+        await enviarMensajePlantillaMeta(
+          agente.telefono,
+          plantilla.nombre,
+          plantilla.idioma,
+          [],
+          phoneNumberId
+        );
+        console.log(`✅ [NotifAgentes] Plantilla enviada (sistema antiguo)`);
+        
+      } catch (error: any) {
+        console.error(`❌ [NotifAgentes] ERROR:`, error);
+        res.status(500).json({
+          success: false,
+          message: `Error: ${error.message}`,
+          detalles: error.response?.data || error.message
+        });
+        return;
+      }
     }
     
     console.log(`✅ Notificación de prueba enviada a ${agente.nombre} ${agente.apellido}`);

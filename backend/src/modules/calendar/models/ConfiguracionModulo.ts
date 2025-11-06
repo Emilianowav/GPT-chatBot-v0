@@ -189,6 +189,12 @@ export interface NotificacionDiariaAgentes {
     nombre: string;                // Nombre de la plantilla en Meta: "choferes_sanjose"
     idioma: string;                // Código de idioma: "es"
     activa: boolean;
+    
+    // ✅ SISTEMA ESCALABLE: URL y Payload completo de Meta
+    metaApiUrl?: string;           // URL de Meta API con variables: "https://graph.facebook.com/v22.0/{{phoneNumberId}}/messages"
+    metaPayload?: any;             // Payload completo para Meta con variables {{variable}}
+    
+    // ⚠️ SISTEMA ANTIGUO: Componentes (fallback)
     componentes?: {
       header?: {
         tipo: 'text' | 'image' | 'video' | 'document';
