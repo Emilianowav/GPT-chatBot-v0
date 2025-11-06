@@ -101,25 +101,34 @@ export async function enviarNotificacionesDiariasAgentes() {
     const minutoActual = ahoraArgentina.getMinutes();
     const diaActual = ahoraArgentina.toISOString().split('T')[0]; // YYYY-MM-DD
     
+    // Log visible en cada ejecución del cron
+    const horaFormateada = `${String(horaActual).padStart(2, '0')}:${String(minutoActual).padStart(2, '0')}`;
+    console.log(`\n⏰ [${horaFormateada}] Verificando notificaciones diarias de agentes... (Argentina)`);
+    
     // Obtener todas las configuraciones con notificaciones diarias activas
     // ⚠️ NO usar .lean() para poder recargar después
     const configuraciones = await ConfiguracionModuloModel.find({
       'notificacionDiariaAgentes.activa': true
     });
     
-    if (configuraciones.length === 0) {
-      return; // No hay configuraciones activas, salir silenciosamente
-    }
+    console.log(`   📋 Configuraciones activas encontradas: ${configuraciones.length}`);
     
-    console.log(`📅 Verificando ${configuraciones.length} empresas con notificaciones diarias activas...`);
+    if (configuraciones.length === 0) {
+      console.log(`   ℹ️ No hay empresas con notificación diaria de agentes activa\n`);
+      return;
+    }
     
     for (let config of configuraciones) {
       try {
+        console.log(`   🏢 Procesando empresa: ${config.empresaId}`);
+        
         // ⚠️ IMPORTANTE: Recargar config en cada iteración para obtener ultimoEnvio actualizado
         config = await ConfiguracionModuloModel.findById(config._id) || config;
         
         const horaEnvio = config.notificacionDiariaAgentes?.horaEnvio || '06:00';
         const [horaConfig, minutoConfig] = horaEnvio.split(':').map(Number);
+        
+        console.log(`      ⏰ Hora configurada: ${horaEnvio} (Argentina)`);
         
         // Verificar si ya se envió hoy
         const ultimoEnvio = config.notificacionDiariaAgentes?.ultimoEnvio;

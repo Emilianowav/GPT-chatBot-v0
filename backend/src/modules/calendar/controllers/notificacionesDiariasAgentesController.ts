@@ -110,13 +110,24 @@ export async function enviarNotificacionPruebaAgente(req: Request, res: Response
     }
     
     // Buscar agente por teléfono
+    console.log(`🔍 Buscando agente con query:`, { empresaId, telefono, activo: true });
+    
     const agente = await AgenteModel.findOne({ 
       empresaId, 
       telefono,
       activo: true 
     });
     
+    console.log(`📊 Resultado búsqueda:`, agente ? `Encontrado: ${agente.nombre} ${agente.apellido}` : 'No encontrado');
+    
     if (!agente) {
+      // Buscar todos los agentes para debug
+      const todosAgentes = await AgenteModel.find({ empresaId, activo: true });
+      console.log(`🔍 DEBUG - Agentes activos en ${empresaId}:`, todosAgentes.map(a => ({ 
+        nombre: a.nombre, 
+        telefono: a.telefono 
+      })));
+      
       res.status(404).json({
         success: false,
         message: 'Agente no encontrado con este teléfono. Verifica que el teléfono esté registrado como agente activo.'

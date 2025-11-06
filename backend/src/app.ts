@@ -203,6 +203,15 @@ app.use(errorHandler);
       }
     }, 60 * 1000);
 
+    // Ejecutar una vez al iniciar (después de 5 segundos)
+    setTimeout(async () => {
+      try {
+        await enviarNotificacionesDiariasAgentes();
+      } catch (error) {
+        console.error('❌ Error en ejecución inicial de notificaciones diarias:', error);
+      }
+    }, 5000);
+
     // 8. Iniciar servidor
     server.listen(PORT, () => {
       console.log(`🚀 Servidor corriendo en puerto ${PORT}`);

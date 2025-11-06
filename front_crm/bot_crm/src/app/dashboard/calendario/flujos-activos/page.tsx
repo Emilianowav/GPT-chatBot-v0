@@ -162,7 +162,7 @@ export default function AdministradorFlujosPage() {
       config: {
         horaEnvio: notificacionDiariaAgentes?.horaEnvio || '06:00',
         enviarATodos: notificacionDiariaAgentes?.enviarATodos ?? false,
-        mensaje: notificacionDiariaAgentes?.plantillaMensaje || 'Buenos días {agente}! 🌅\nEstos son tus {turnos} de hoy:',
+        mensaje: notificacionDiariaAgentes?.plantillaMensaje || '', // ⚠️ VACÍO - Solo usar plantilla de Meta
         frecuencia: (notificacionDiariaAgentes as any)?.frecuencia || { tipo: 'diaria' },
         incluirDetalles: notificacionDiariaAgentes?.incluirDetalles || {
           origen: true,
