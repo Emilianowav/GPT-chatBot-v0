@@ -79,42 +79,35 @@ export async function enviarNotificacionPruebaAgente(req: Request, res: Response
     
     const notifConfig = config.notificacionDiariaAgentes;
     
-    // ✅ AUTO-CONFIGURAR PLANTILLA SI NO EXISTE
+    // Verificar que la plantilla esté configurada
     if (!notifConfig.usarPlantillaMeta || !notifConfig.plantillaMeta) {
-      console.log('⚙️ Auto-configurando plantilla de Meta para notificación diaria...');
-      
-      notifConfig.usarPlantillaMeta = true;
-      notifConfig.plantillaMeta = {
-        nombre: 'chofer_sanjose',
-        idioma: 'es',
-        activa: true,
-        componentes: {
-          body: {
-            parametros: [
-              { tipo: 'text', variable: 'agente' },
-              { tipo: 'text', variable: 'lista_turnos' }
-            ]
-          }
-        }
-      };
-      
-      (config as any).markModified('notificacionDiariaAgentes');
-      await config.save();
-      console.log('✅ Plantilla auto-configurada: chofer_sanjose');
-      
-      // ⚠️ IMPORTANTE: Recargar la configuración para obtener los cambios
-      const configActualizada = await ConfiguracionModuloModel.findOne({ empresaId });
-      if (configActualizada?.notificacionDiariaAgentes) {
-        Object.assign(notifConfig, configActualizada.notificacionDiariaAgentes);
-      }
+      res.status(400).json({
+        success: false,
+        message: 'No hay plantilla de Meta configurada. Configúrala desde el frontend en la sección de notificaciones de agentes.'
+      });
+      return;
     }
     
-    // Buscar agente por teléfono
-    console.log(`🔍 Buscando agente con query:`, { empresaId, telefono, activo: true });
+    // Buscar agente por teléfono (normalizar con y sin +)
+    const telefonoNormalizado = telefono.startsWith('+') ? telefono : `+${telefono}`;
+    const telefonoSinMas = telefono.replace('+', '');
     
+    console.log(`🔍 Buscando agente con teléfonos:`, { 
+      empresaId, 
+      original: telefono,
+      conMas: telefonoNormalizado,
+      sinMas: telefonoSinMas,
+      activo: true 
+    });
+    
+    // Buscar con ambas variantes
     const agente = await AgenteModel.findOne({ 
       empresaId, 
-      telefono,
+      $or: [
+        { telefono: telefono },
+        { telefono: telefonoNormalizado },
+        { telefono: telefonoSinMas }
+      ],
       activo: true 
     });
     

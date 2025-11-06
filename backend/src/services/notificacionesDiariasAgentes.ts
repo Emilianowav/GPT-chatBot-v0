@@ -411,26 +411,11 @@ async function enviarNotificacionDiariaAgente(
     return;
   }
   
-  // ✅ AUTO-CONFIGURAR PLANTILLA SI NO EXISTE
+  // Verificar que la plantilla esté configurada
   if (!config.usarPlantillaMeta || !config.plantillaMeta) {
-    console.log(`⚙️ Auto-configurando plantilla de Meta para ${agente.nombre}...`);
-    
-    config.usarPlantillaMeta = true;
-    config.plantillaMeta = {
-      nombre: 'chofer_sanjose',
-      idioma: 'es',
-      activa: true,
-      componentes: {
-        body: {
-          parametros: [
-            { tipo: 'text', variable: 'agente' },
-            { tipo: 'text', variable: 'lista_turnos' }
-          ]
-        }
-      }
-    };
-    
-    console.log('✅ Plantilla auto-configurada: choferes_sanjose');
+    console.error(`❌ [NotifAgentes] No hay plantilla de Meta configurada para ${agente.nombre}`);
+    console.error(`   Configura la plantilla desde el frontend en la sección de notificaciones de agentes`);
+    return;
   }
   
   // Verificar que esté activa
@@ -508,6 +493,11 @@ async function enviarNotificacionDiariaAgente(
   const componentes = generarComponentesPlantilla(plantilla, variables);
 
   // 2. Enviar SOLO plantilla de Meta (NO enviar mensaje de texto adicional)
+  console.log(`\n🚨🚨🚨 ENVIANDO PLANTILLA META A ${agente.telefono} 🚨🚨🚨`);
+  console.log(`   Plantilla: ${plantilla.nombre}`);
+  console.log(`   Agente: ${agente.nombre} ${agente.apellido}`);
+  console.log(`   Turnos: ${turnos.length}`);
+  
   try {
     await enviarMensajePlantillaMeta(
       agente.telefono,
