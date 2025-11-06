@@ -103,32 +103,35 @@ export async function enviarNotificacionPruebaAgente(req: Request, res: Response
       return;
     }
     
-    if (!config.notificacionDiariaAgentes) {
+    // ✅ NUEVA ESTRUCTURA: plantillasMeta.notificacionDiariaAgentes
+    if (!config.plantillasMeta?.notificacionDiariaAgentes) {
       res.status(404).json({
         success: false,
-        message: 'Esta empresa no tiene configurada la notificación diaria de agentes'
+        message: 'Esta empresa no tiene configurada la notificación diaria de agentes',
+        instrucciones: 'Ejecuta: npx tsx src/scripts/migrarConfiguracionLimpia.ts'
       });
       return;
     }
     
-    const notifConfig = config.notificacionDiariaAgentes;
+    const notifConfig = config.plantillasMeta.notificacionDiariaAgentes;
     
-    // ⚠️ VALIDAR QUE LA PLANTILLA ESTÉ CONFIGURADA EN MONGODB
-    if (!notifConfig.usarPlantillaMeta || !notifConfig.plantillaMeta) {
-      console.error('❌ [NotifAgentes] Plantilla NO configurada en MongoDB');
-      res.status(400).json({
-        success: false,
-        message: 'Plantilla de Meta no configurada. Configure la plantilla en MongoDB primero.',
-        instrucciones: 'Ejecuta: npx tsx src/scripts/configurarChoferSanjose.ts'
-      });
-      return;
-    }
-    
-    if (!notifConfig.plantillaMeta.activa) {
+    // ⚠️ VALIDAR QUE LA PLANTILLA ESTÉ ACTIVA
+    if (!notifConfig.activa) {
       console.error('❌ [NotifAgentes] Plantilla inactiva en MongoDB');
       res.status(400).json({
         success: false,
         message: 'Plantilla de Meta está inactiva en la configuración'
+      });
+      return;
+    }
+    
+    // ⚠️ VALIDAR QUE TENGA LA ESTRUCTURA COMPLETA
+    if (!notifConfig.metaApiUrl || !notifConfig.metaPayload) {
+      console.error('❌ [NotifAgentes] Plantilla NO tiene metaApiUrl o metaPayload');
+      res.status(400).json({
+        success: false,
+        message: 'Plantilla incompleta. Falta metaApiUrl o metaPayload.',
+        instrucciones: 'Ejecuta: npx tsx src/scripts/migrarConfiguracionLimpia.ts'
       });
       return;
     }
@@ -187,8 +190,9 @@ export async function enviarNotificacionPruebaAgente(req: Request, res: Response
       fechaInicio: { $gte: inicio, $lt: fin }
     };
     
-    if (notifConfig.filtroEstado && notifConfig.filtroEstado.activo) {
-      query.estado = { $in: notifConfig.filtroEstado.estados };
+    // ✅ NUEVA ESTRUCTURA: programacion.filtroEstado
+    if (notifConfig.programacion?.filtroEstado) {
+      query.estado = { $in: notifConfig.programacion.filtroEstado };
     } else {
       query.estado = { $in: ['pendiente', 'confirmado'] };
     }
@@ -218,23 +222,26 @@ export async function enviarNotificacionPruebaAgente(req: Request, res: Response
           empresaId
         });
         
-        if (notifConfig.incluirDetalles.nombreCliente && contacto) {
+        // ✅ NUEVA ESTRUCTURA: programacion.incluirDetalles
+        const incluirDetalles = notifConfig.programacion?.incluirDetalles || {};
+        
+        if (incluirDetalles.nombreCliente && contacto) {
           lineaViaje += ` - ${contacto.nombre} ${contacto.apellido}`;
         }
         
-        if (notifConfig.incluirDetalles.telefonoCliente && contacto) {
+        if (incluirDetalles.telefonoCliente && contacto) {
           lineaViaje += ` | Tel: ${contacto.telefono}`;
         }
         
-        if (notifConfig.incluirDetalles.origen && turno.datos?.origen) {
+        if (incluirDetalles.origen && turno.datos?.origen) {
           lineaViaje += ` | Origen: ${turno.datos.origen}`;
         }
         
-        if (notifConfig.incluirDetalles.destino && turno.datos?.destino) {
+        if (incluirDetalles.destino && turno.datos?.destino) {
           lineaViaje += ` | Destino: ${turno.datos.destino}`;
         }
         
-        if (notifConfig.incluirDetalles.notasInternas && turno.notasInternas) {
+        if (incluirDetalles.notasInternas && turno.notasInternas) {
           lineaViaje += ` | Notas: ${turno.notasInternas}`;
         }
         
@@ -262,9 +269,10 @@ export async function enviarNotificacionPruebaAgente(req: Request, res: Response
     const phoneNumberId = empresa.phoneNumberId;
     
 
-    console.log('📋 [NotifAgentes] Usando configuración COMPLETA de MongoDB');
-    
-    const plantilla = notifConfig.plantillaMeta;
+    console.log('📋 [NotifAgentes] Usando NUEVA ESTRUCTURA de MongoDB');
+    console.log('   Plantilla:', notifConfig.nombre);
+    console.log('   Idioma:', notifConfig.idioma);
+    console.log('   URL:', notifConfig.metaApiUrl);
     
     // Construir TODAS las variables (incluye phoneNumberId, telefono, agente, lista_turnos)
     const variables: Record<string, any> = {
@@ -275,22 +283,9 @@ export async function enviarNotificacionPruebaAgente(req: Request, res: Response
     };
 
     console.log('📝 Variables para reemplazo:', Object.keys(variables));
-
-    // ✅ VALIDAR que la plantilla tenga la estructura completa
-    if (!plantilla.metaApiUrl || !plantilla.metaPayload) {
-      console.error('❌ [NotifAgentes] Plantilla NO tiene metaApiUrl o metaPayload');
-      console.error('   La plantilla debe estar configurada con la estructura completa en MongoDB');
-      res.status(400).json({
-        success: false,
-        message: 'Plantilla incompleta. Debe tener metaApiUrl y metaPayload configurados en MongoDB.',
-        instrucciones: 'Ejecuta: npx tsx src/scripts/configurarPlantillaCompleta.ts'
-      });
-      return;
-    }
-    
     console.log('🚀 Construyendo payload desde MongoDB');
     
-    const { url, payload } = construirPayloadMeta(plantilla, variables);
+    const { url, payload } = construirPayloadMeta(notifConfig, variables);
     
     // Enviar directamente a Meta con axios
     try {
@@ -341,7 +336,8 @@ export async function enviarNotificacionPruebaAgente(req: Request, res: Response
         agente: `${agente.nombre} ${agente.apellido}`,
         turnosEncontrados: turnos.length,
         telefono,
-        usaPlantillaMeta: notifConfig.usarPlantillaMeta || false
+        plantilla: notifConfig.nombre,
+        activa: notifConfig.activa
       }
     });
     

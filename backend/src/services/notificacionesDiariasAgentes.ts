@@ -57,10 +57,9 @@ export async function enviarNotificacionesDiariasAgentes() {
     const horaFormateada = `${String(horaActual).padStart(2, '0')}:${String(minutoActual).padStart(2, '0')}`;
     console.log(`\n⏰ [${horaFormateada}] Verificando notificaciones diarias de agentes... (Argentina)`);
     
-    // Obtener todas las configuraciones con notificaciones diarias activas
-    // ⚠️ NO usar .lean() para poder recargar después
+    // ✅ NUEVA ESTRUCTURA: plantillasMeta.notificacionDiariaAgentes
     const configuraciones = await ConfiguracionModuloModel.find({
-      'notificacionDiariaAgentes.activa': true
+      'plantillasMeta.notificacionDiariaAgentes.activa': true
     });
     
     console.log(`   📋 Configuraciones activas encontradas: ${configuraciones.length}`);
@@ -77,13 +76,17 @@ export async function enviarNotificacionesDiariasAgentes() {
         // ⚠️ IMPORTANTE: Recargar config en cada iteración para obtener ultimoEnvio actualizado
         config = await ConfiguracionModuloModel.findById(config._id) || config;
         
-        const horaEnvio = config.notificacionDiariaAgentes?.horaEnvio || '06:00';
+        // ✅ NUEVA ESTRUCTURA
+        const notifConfig = config.plantillasMeta?.notificacionDiariaAgentes;
+        if (!notifConfig) continue;
+        
+        const horaEnvio = notifConfig.programacion?.horaEnvio || '06:00';
         const [horaConfig, minutoConfig] = horaEnvio.split(':').map(Number);
         
         console.log(`      ⏰ Hora configurada: ${horaEnvio} (Argentina)`);
         
         // Verificar si ya se envió hoy
-        const ultimoEnvio = config.notificacionDiariaAgentes?.ultimoEnvio;
+        const ultimoEnvio = notifConfig.ultimoEnvio;
         const ultimoEnvioDia = ultimoEnvio ? new Date(ultimoEnvio).toISOString().split('T')[0] : null;
         
         console.log(`   📅 Verificación de envío:`);
@@ -108,12 +111,12 @@ export async function enviarNotificacionesDiariasAgentes() {
           
           await enviarNotificacionesDiariasPorEmpresa(config);
           
-          // Actualizar última ejecución
+          // ✅ Actualizar última ejecución en NUEVA ESTRUCTURA
           console.log(`💾 Actualizando ultimoEnvio en MongoDB...`);
           const resultado = await ConfiguracionModuloModel.findByIdAndUpdate(
             config._id, 
             {
-              'notificacionDiariaAgentes.ultimoEnvio': ahora
+              'plantillasMeta.notificacionDiariaAgentes.ultimoEnvio': ahora
             },
             { new: true }
           );

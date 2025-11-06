@@ -247,22 +247,67 @@ export interface IConfiguracionModulo extends Document {
   // Campos personalizados para los turnos
   camposPersonalizados: CampoPersonalizado[];
   
-  // Configuración de agentes/recursos
-  usaAgentes: boolean;
-  agenteRequerido: boolean;
-  usaRecursos: boolean;
-  recursoRequerido: boolean;
+  // ✅ NUEVA ESTRUCTURA: Configuración de turnos
+  turnos?: {
+    usaAgentes: boolean;
+    agenteRequerido: boolean;
+    usaRecursos: boolean;
+    recursoRequerido: boolean;
+    duracionPorDefecto: number;
+    permiteDuracionVariable: boolean;
+  };
   
-  // Configuración de horarios
-  usaHorariosDisponibilidad: boolean; // Si false, permite cualquier horario
-  duracionPorDefecto: number;         // Duración en minutos
-  permiteDuracionVariable: boolean;
-  
-  // Notificaciones automáticas
-  notificaciones: NotificacionAutomatica[];
-  
-  // Notificación diaria para agentes
+  // ⚠️ CAMPOS OBSOLETOS (mantener para compatibilidad temporal)
+  usaAgentes?: boolean;
+  agenteRequerido?: boolean;
+  usaRecursos?: boolean;
+  recursoRequerido?: boolean;
+  usaHorariosDisponibilidad?: boolean;
+  duracionPorDefecto?: number;
+  permiteDuracionVariable?: boolean;
+  notificaciones?: NotificacionAutomatica[];
   notificacionDiariaAgentes?: NotificacionDiariaAgentes;
+  
+  // ✅ NUEVA ESTRUCTURA ESCALABLE: Plantillas de Meta
+  plantillasMeta?: {
+    notificacionDiariaAgentes?: {
+      activa: boolean;
+      nombre: string;
+      idioma: string;
+      metaApiUrl: string;
+      metaPayload: any;
+      variables?: any;
+      programacion?: {
+        horaEnvio: string;
+        frecuencia: string;
+        rangoHorario: string;
+        filtroEstado: string[];
+        incluirDetalles: {
+          origen?: boolean;
+          destino?: boolean;
+          nombreCliente?: boolean;
+          telefonoCliente?: boolean;
+          horaReserva?: boolean;
+          notasInternas?: boolean;
+        };
+      };
+      ultimoEnvio?: Date;
+    };
+    confirmacionTurnos?: {
+      activa: boolean;
+      nombre: string;
+      idioma: string;
+      metaApiUrl: string;
+      metaPayload: any;
+      variables?: any;
+      programacion?: {
+        momento: string;
+        horaEnvio: string;
+        diasAntes: number;
+        filtroEstado: string[];
+      };
+    };
+  };
   
   // Confirmación de turnos
   requiereConfirmacion: boolean;
