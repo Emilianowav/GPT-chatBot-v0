@@ -256,14 +256,15 @@ export default function AdministradorFlujosPage() {
         texto: nuevoEstado ? '✅ Flujo activado' : '⏸️ Flujo desactivado'
       });
       
-      // Recargar configuración
-      window.location.reload();
+      // Recargar después de un breve delay para mostrar el mensaje
+      setTimeout(() => {
+        window.location.reload();
+      }, 800);
     } catch (err: any) {
       setMensaje({
         tipo: 'error',
         texto: err.message || 'Error al cambiar estado del flujo'
       });
-    } finally {
       setTimeout(() => setMensaje(null), 3000);
     }
   };
@@ -441,8 +442,10 @@ export default function AdministradorFlujosPage() {
         setModalConfigFlujo(null);
         setConfigEditada(null);
         
-        // Recargar configuración
-        window.location.reload();
+        // Recargar después de un breve delay
+        setTimeout(() => {
+          window.location.reload();
+        }, 800);
         return;
       }
       
@@ -510,8 +513,10 @@ export default function AdministradorFlujosPage() {
       setModalConfigFlujo(null);
       setConfigEditada(null);
       
-      // Recargar configuración
-      window.location.reload();
+      // Recargar después de un breve delay
+      setTimeout(() => {
+        window.location.reload();
+      }, 800);
     } catch (err: any) {
       setMensaje({
         tipo: 'error',
