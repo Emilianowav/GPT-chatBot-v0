@@ -190,27 +190,27 @@ app.use(errorHandler);
       await procesarNotificacionesProgramadas();
     }, 5000); // Esperar 5 segundos después del inicio
 
-    // 7. ✅ Cron job de notificaciones diarias de agentes
+    // 7. ⚠️ Cron job de notificaciones diarias de agentes - DESACTIVADO TEMPORALMENTE
     // Se ejecuta cada minuto y verifica si es hora de enviar según configuración en MongoDB
-    console.log('✅ Notificaciones diarias de agentes: ACTIVAS');
-    console.log('   Se enviarán automáticamente según horario configurado en MongoDB');
+    console.log('⚠️ Notificaciones diarias de agentes: DESACTIVADAS TEMPORALMENTE');
+    console.log('   Para reactivar, descomentar el código en app.ts');
     
-    setInterval(async () => {
-      try {
-        await enviarNotificacionesDiariasAgentes();
-      } catch (error) {
-        console.error('❌ Error en cron job de notificaciones diarias:', error);
-      }
-    }, 60 * 1000);
+    // setInterval(async () => {
+    //   try {
+    //     await enviarNotificacionesDiariasAgentes();
+    //   } catch (error) {
+    //     console.error('❌ Error en cron job de notificaciones diarias:', error);
+    //   }
+    // }, 60 * 1000);
 
-    // Ejecutar una vez al iniciar (después de 5 segundos)
-    setTimeout(async () => {
-      try {
-        await enviarNotificacionesDiariasAgentes();
-      } catch (error) {
-        console.error('❌ Error en ejecución inicial de notificaciones diarias:', error);
-      }
-    }, 5000);
+    // // Ejecutar una vez al iniciar (después de 5 segundos)
+    // setTimeout(async () => {
+    //   try {
+    //     await enviarNotificacionesDiariasAgentes();
+    //   } catch (error) {
+    //     console.error('❌ Error en ejecución inicial de notificaciones diarias:', error);
+    //   }
+    // }, 5000);
 
     // 8. Iniciar servidor
     server.listen(PORT, () => {

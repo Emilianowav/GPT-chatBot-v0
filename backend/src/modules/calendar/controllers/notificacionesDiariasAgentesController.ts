@@ -79,13 +79,34 @@ export async function enviarNotificacionPruebaAgente(req: Request, res: Response
     
     const notifConfig = config.notificacionDiariaAgentes;
     
-    // Verificar que la plantilla esté configurada
+    // ✅ AUTO-CONFIGURAR PLANTILLA SI NO EXISTE (igual que en confirmacionTurnosService)
     if (!notifConfig.usarPlantillaMeta || !notifConfig.plantillaMeta) {
-      res.status(400).json({
-        success: false,
-        message: 'No hay plantilla de Meta configurada. Configúrala desde el frontend en la sección de notificaciones de agentes.'
-      });
-      return;
+      console.log('⚙️ Auto-configurando plantilla de Meta para notificación diaria de agentes...');
+      
+      notifConfig.usarPlantillaMeta = true;
+      notifConfig.plantillaMeta = {
+        nombre: 'chofer_sanjose',
+        idioma: 'es',
+        activa: true,
+        componentes: {
+          body: {
+            parametros: [
+              { tipo: 'text', variable: 'agente' },
+              { tipo: 'text', variable: 'lista_turnos' }
+            ]
+          }
+        }
+      };
+      
+      (config as any).markModified('notificacionDiariaAgentes');
+      await config.save();
+      console.log('✅ Plantilla auto-configurada: chofer_sanjose (2 parámetros: agente, lista_turnos)');
+      
+      // ⚠️ IMPORTANTE: Recargar la configuración para obtener los cambios
+      const configActualizada = await ConfiguracionModuloModel.findOne({ empresaId });
+      if (configActualizada?.notificacionDiariaAgentes) {
+        Object.assign(notifConfig, configActualizada.notificacionDiariaAgentes);
+      }
     }
     
     // Buscar agente por teléfono (normalizar con y sin +)

@@ -411,11 +411,26 @@ async function enviarNotificacionDiariaAgente(
     return;
   }
   
-  // Verificar que la plantilla esté configurada
+  // ✅ AUTO-CONFIGURAR PLANTILLA SI NO EXISTE (igual que en confirmacionTurnosService)
   if (!config.usarPlantillaMeta || !config.plantillaMeta) {
-    console.error(`❌ [NotifAgentes] No hay plantilla de Meta configurada para ${agente.nombre}`);
-    console.error(`   Configura la plantilla desde el frontend en la sección de notificaciones de agentes`);
-    return;
+    console.log(`⚙️ Auto-configurando plantilla de Meta para notificación diaria de agentes...`);
+    
+    config.usarPlantillaMeta = true;
+    config.plantillaMeta = {
+      nombre: 'chofer_sanjose',
+      idioma: 'es',
+      activa: true,
+      componentes: {
+        body: {
+          parametros: [
+            { tipo: 'text', variable: 'agente' },
+            { tipo: 'text', variable: 'lista_turnos' }
+          ]
+        }
+      }
+    };
+    
+    console.log('✅ Plantilla auto-configurada: chofer_sanjose (2 parámetros: agente, lista_turnos)');
   }
   
   // Verificar que esté activa
