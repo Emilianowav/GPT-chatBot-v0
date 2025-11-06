@@ -180,6 +180,9 @@ export interface NotificacionDiariaAgentes {
   // Agentes específicos (si no se envía a todos)
   agentesEspecificos?: string[];
   
+  // Control de última ejecución (para evitar envíos duplicados)
+  ultimoEnvio?: Date;
+  
   // 📋 NUEVO: Plantilla de Meta para primer mensaje
   usarPlantillaMeta?: boolean;
   plantillaMeta?: {
@@ -474,7 +477,8 @@ const NotificacionDiariaAgentesSchema = new Schema<NotificacionDiariaAgentes>(
       horaReserva: { type: Boolean, default: true },
       notasInternas: { type: Boolean, default: false }
     },
-    agentesEspecificos: [String]
+    agentesEspecificos: [String],
+    ultimoEnvio: { type: Date }
   },
   { _id: false }
 );

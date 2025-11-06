@@ -94,9 +94,12 @@ function procesarPlantilla(plantilla: string, variables: Record<string, any>): s
  */
 export async function enviarNotificacionesDiariasAgentes() {
   try {
+    // Obtener hora actual en Argentina (UTC-3)
     const ahora = new Date();
-    const horaActual = ahora.getHours();
-    const minutoActual = ahora.getMinutes();
+    const ahoraArgentina = new Date(ahora.toLocaleString('en-US', { timeZone: 'America/Argentina/Buenos_Aires' }));
+    const horaActual = ahoraArgentina.getHours();
+    const minutoActual = ahoraArgentina.getMinutes();
+    const diaActual = ahoraArgentina.toISOString().split('T')[0]; // YYYY-MM-DD
     
     // Obtener todas las configuraciones con notificaciones diarias activas
     const configuraciones = await ConfiguracionModuloModel.find({
@@ -114,10 +117,31 @@ export async function enviarNotificacionesDiariasAgentes() {
         const horaEnvio = config.notificacionDiariaAgentes?.horaEnvio || '06:00';
         const [horaConfig, minutoConfig] = horaEnvio.split(':').map(Number);
         
-        // Verificar si es la hora de envío (con margen de 1 minuto)
-        if (horaActual === horaConfig && minutoActual === minutoConfig) {
-          console.log(`⏰ Es hora de enviar notificaciones para empresa ${config.empresaId} (${horaEnvio})`);
+        // Verificar si ya se envió hoy
+        const ultimoEnvio = config.notificacionDiariaAgentes?.ultimoEnvio;
+        const ultimoEnvioDia = ultimoEnvio ? new Date(ultimoEnvio).toISOString().split('T')[0] : null;
+        
+        if (ultimoEnvioDia === diaActual) {
+          // Ya se envió hoy, saltar
+          continue;
+        }
+        
+        // Verificar si es la hora de envío (con margen de 2 minutos para evitar perder el envío)
+        const diferenciaMinutos = Math.abs((horaActual * 60 + minutoActual) - (horaConfig * 60 + minutoConfig));
+        
+        if (diferenciaMinutos <= 2) {
+          console.log(`⏰ Es hora de enviar notificaciones para empresa ${config.empresaId} (${horaEnvio} Argentina)`);
+          console.log(`   Hora actual Argentina: ${horaActual}:${String(minutoActual).padStart(2, '0')}`);
+          console.log(`   Hora configurada: ${horaConfig}:${String(minutoConfig).padStart(2, '0')}`);
+          
           await enviarNotificacionesDiariasPorEmpresa(config);
+          
+          // Actualizar última ejecución
+          await ConfiguracionModuloModel.findByIdAndUpdate(config._id, {
+            'notificacionDiariaAgentes.ultimoEnvio': ahora
+          });
+          
+          console.log(`✅ Notificaciones enviadas y registradas para ${config.empresaId}`);
         }
       } catch (error) {
         console.error(`❌ Error procesando empresa ${config.empresaId}:`, error);
@@ -446,29 +470,30 @@ async function enviarNotificacionDiariaAgente(
     return;
   }
 
-  console.log('📋 [NotifAgentes] Usando plantilla de Meta (OBLIGATORIO)');
+  console.log('📋 [NotifAgentes] Usando plantilla de Meta para abrir ventana de 24h');
   console.log('   Plantilla:', config.plantillaMeta.nombre);
   
   const plantilla = config.plantillaMeta;
   
-  // Preparar variables para la plantilla
-  // ⚠️ IMPORTANTE: Meta no permite saltos de línea, tabs o más de 4 espacios consecutivos
-  const listaTurnosLimpia = listaTurnos
-    .replace(/\n/g, ' ')  // Reemplazar saltos de línea por espacios
-    .replace(/\t/g, ' ')  // Reemplazar tabs por espacios
-    .replace(/ {5,}/g, '    ');  // Reducir más de 4 espacios consecutivos a 4
+  // ✅ ESTRATEGIA: Enviar SOLO plantilla de Meta con TODOS los detalles
+  // La plantilla debe contener toda la información necesaria en sus parámetros
+  
+  // 1. Preparar lista completa de turnos con detalles para la plantilla
+  const cantidadTurnos = turnos.length;
   
   const variables = {
     agente: `${agente.nombre} ${agente.apellido}`,
-    lista_turnos: listaTurnosLimpia
+    lista_turnos: listaTurnos.trim()  // Lista completa con todos los detalles
   };
+
+  console.log('   Variables:', { agente: variables.agente, lista_turnos: variables.lista_turnos });
 
   // Generar componentes de la plantilla
   const componentes = generarComponentesPlantilla(plantilla, variables);
 
-  // Enviar usando plantilla de Meta (SIN FALLBACK)
+  // 2. Enviar SOLO plantilla de Meta (NO enviar mensaje de texto adicional)
   try {
-    const enviado = await enviarMensajePlantillaMeta(
+    await enviarMensajePlantillaMeta(
       agente.telefono,
       plantilla.nombre,
       plantilla.idioma,
@@ -476,11 +501,11 @@ async function enviarNotificacionDiariaAgente(
       empresa.phoneNumberId
     );
     
-    if (enviado) {
-      console.log(`✅ Notificación diaria enviada a ${agente.nombre} ${agente.apellido} (${turnos.length} turnos)`);
-    }
+    console.log(`✅ [NotifAgentes] Plantilla enviada a ${agente.nombre} ${agente.apellido} (${turnos.length} turnos)`);
+    console.log(`   ℹ️ NO se envía mensaje de texto adicional - la plantilla de Meta contiene toda la información necesaria`);
+    
   } catch (error) {
-    console.error(`❌ ERROR CRÍTICO enviando plantilla a ${agente.nombre}:`, error);
+    console.error(`❌ ERROR CRÍTICO enviando notificación a ${agente.nombre}:`, error);
     console.error('   Verifica que la plantilla esté aprobada en Meta Business Manager');
     throw error;
   }

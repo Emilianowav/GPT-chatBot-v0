@@ -54,6 +54,14 @@ function procesarPlantilla(plantilla: string, variables: Record<string, any>): s
  */
 async function testNotificacionesDiariasAgentesDirecto() {
   try {
+    console.log('⚠️  ⚠️  ⚠️  ADVERTENCIA  ⚠️  ⚠️  ⚠️');
+    console.log('Este script ENVIARÁ MENSAJES REALES a los agentes.');
+    console.log('Esperando 5 segundos antes de continuar...');
+    console.log('Presiona Ctrl+C para cancelar.\n');
+    
+    // Esperar 5 segundos para dar tiempo a cancelar
+    await new Promise(resolve => setTimeout(resolve, 5000));
+    
     console.log('🧪 Iniciando prueba DIRECTA de notificaciones diarias para agentes...\n');
     
     // Conectar a la base de datos

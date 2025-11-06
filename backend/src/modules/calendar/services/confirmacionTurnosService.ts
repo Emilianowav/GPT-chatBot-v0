@@ -112,33 +112,52 @@ export async function enviarNotificacionConfirmacion(
       return false;
     }
 
-    console.log('📋 [ConfirmacionTurnos] Usando plantilla de Meta (OBLIGATORIO)');
+    console.log('📋 [ConfirmacionTurnos] Usando plantilla de Meta');
     console.log('   Plantilla:', notifConfirmacion.plantillaMeta.nombre);
     
     const plantilla = notifConfirmacion.plantillaMeta;
     
-    // Preparar variables para la plantilla
-    // {{1}} = nombre_cliente, {{2}} = lista de turnos
-    // ⚠️ IMPORTANTE: Meta no permite saltos de línea, tabs o más de 4 espacios consecutivos
-    const mensajeLimpio = mensaje
-      .replace(/\n/g, ' ')  // Reemplazar saltos de línea por espacios
-      .replace(/\t/g, ' ')  // Reemplazar tabs por espacios
-      .replace(/ {5,}/g, '    ');  // Reducir más de 4 espacios consecutivos a 4
+    // ✅ ESTRATEGIA: Enviar SOLO plantilla de Meta (no mensajes de texto adicionales)
+    // Meta NO permite saltos de línea en parámetros, usar separadores visuales: " | "
+    
+    // 1. Construir detalles con separadores en lugar de saltos de línea
+    let detallesViaje = '';
+    
+    turnos.forEach((turno, index) => {
+      const fechaInicio = new Date(turno.fechaInicio);
+      const horas = String(fechaInicio.getUTCHours()).padStart(2, '0');
+      const minutos = String(fechaInicio.getUTCMinutes()).padStart(2, '0');
+      const hora = `${horas}:${minutos}`;
+      
+      const origen = turno.datos?.origen || 'No especificado';
+      const destino = turno.datos?.destino || 'No especificado';
+      const pasajeros = turno.datos?.pasajeros || '1';
+      
+      if (turnos.length > 1) {
+        detallesViaje += `Viaje ${index + 1}: `;
+      }
+      
+      detallesViaje += `Hora: ${hora} | Origen: ${origen} | Destino: ${destino} | Pasajeros: ${pasajeros}`;
+      
+      if (index < turnos.length - 1) {
+        detallesViaje += ' || ';  // Separador entre viajes
+      }
+    });
     
     const variables = {
       nombre_cliente: `${contacto.nombre} ${contacto.apellido}`,
-      fecha_hora: mensajeLimpio
+      fecha_hora: detallesViaje  // Detalles completos con separadores
     };
     
     console.log('   Variables:', { 
       nombre_cliente: variables.nombre_cliente, 
-      fecha_hora: variables.fecha_hora.substring(0, 50) + '...' 
+      fecha_hora: variables.fecha_hora.substring(0, 100) + (variables.fecha_hora.length > 100 ? '...' : '')
     });
     
     // Generar componentes de la plantilla
     const componentes = generarComponentesPlantilla(plantilla, variables);
 
-    // Enviar usando plantilla de Meta (SIN FALLBACK)
+    // 2. Enviar SOLO plantilla de Meta (NO enviar mensaje de texto adicional)
     try {
       enviado = await enviarMensajePlantillaMeta(
         contacto.telefono,
@@ -148,9 +167,10 @@ export async function enviarNotificacionConfirmacion(
         phoneNumberId
       );
       console.log('✅ [ConfirmacionTurnos] Plantilla enviada exitosamente');
-      console.log('   El usuario puede responder y nuestra infraestructura maneja el flujo');
+      console.log('   ℹ️ NO se envía mensaje de texto adicional - la plantilla de Meta contiene toda la información necesaria');
+      
     } catch (error) {
-      console.error('❌ [ConfirmacionTurnos] ERROR CRÍTICO: No se pudo enviar plantilla de Meta:', error);
+      console.error('❌ [ConfirmacionTurnos] ERROR CRÍTICO: No se pudo enviar notificación:', error);
       console.error('   Verifica que la plantilla esté aprobada en Meta Business Manager');
       throw error; // Propagar el error para que falle el proceso
     }

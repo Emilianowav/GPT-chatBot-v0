@@ -315,16 +315,53 @@ export const notificacionViajesFlow: Flow = {
             confirmadoEn: new Date()
           });
           
-          await enviarMensajeWhatsAppTexto(
-            telefono,
-            '✅ ¡Perfecto! Tu viaje ha sido confirmado.\n\n¡Nos vemos pronto! 🚗',
-            context.phoneNumberId
-          );
+          console.log(`✅ [NotificacionViajes] Viaje confirmado: ${viaje._id}`);
           
-          return {
-            success: true,
-            end: true
-          };
+          // Verificar si hay más viajes sin confirmar
+          const viajesRestantes = viajes.filter((v: any, i: number) => i !== viajeIndex);
+          
+          console.log(`📋 [NotificacionViajes] Viajes restantes: ${viajesRestantes.length}`);
+          
+          if (viajesRestantes.length > 0) {
+            // Hay más viajes - preguntar qué hacer
+            let mensajeRestantes = `✅ ¡Viaje confirmado!\n\n`;
+            mensajeRestantes += `Todavía tenés ${viajesRestantes.length} viaje${viajesRestantes.length > 1 ? 's' : ''} pendiente${viajesRestantes.length > 1 ? 's' : ''}:\n\n`;
+            
+            viajesRestantes.forEach((v: any, i: number) => {
+              const fechaV = new Date(v.fechaInicio);
+              const horaV = `${String(fechaV.getUTCHours()).padStart(2, '0')}:${String(fechaV.getUTCMinutes()).padStart(2, '0')}`;
+              mensajeRestantes += `${i + 1}. ${v.datos?.origen || 'N/A'} → ${v.datos?.destino || 'N/A'} (${horaV})\n`;
+            });
+            
+            mensajeRestantes += `\n*¿Qué deseas hacer?*\n\n`;
+            mensajeRestantes += `1️⃣ Confirmar todos los viajes restantes\n`;
+            mensajeRestantes += `2️⃣ Editar otro viaje\n`;
+            mensajeRestantes += `0️⃣ Finalizar (los demás quedan pendientes)\n\n`;
+            mensajeRestantes += `Escribe el número de la opción.`;
+            
+            await enviarMensajeWhatsAppTexto(telefono, mensajeRestantes, context.phoneNumberId);
+            
+            return {
+              success: true,
+              nextState: 'esperando_accion_viajes_restantes',
+              data: {
+                viajes: viajesRestantes,
+                turnosIds: data.turnosIds.filter((id: string) => id !== viaje._id.toString())
+              }
+            };
+          } else {
+            // No hay más viajes - finalizar
+            await enviarMensajeWhatsAppTexto(
+              telefono,
+              '✅ ¡Perfecto! Todos tus viajes han sido confirmados.\n\n¡Nos vemos pronto! 🚗',
+              context.phoneNumberId
+            );
+            
+            return {
+              success: true,
+              end: true
+            };
+          }
           
         case '7':
           // Cancelar este viaje
@@ -569,6 +606,129 @@ export const notificacionViajesFlow: Flow = {
         nextState: 'esperando_confirmacion_final',
         data
       };
+    }
+    
+    if (state === 'esperando_accion_viajes_restantes') {
+      const viajes = data.viajes || [];
+      const turnosIds = data.turnosIds || [];
+      
+      switch (mensajeTrim) {
+        case '1':
+          // Confirmar todos los viajes restantes
+          console.log(`✅ [NotificacionViajes] Confirmando ${viajes.length} viaje(s) restantes`);
+          
+          for (const turnoId of turnosIds) {
+            try {
+              await TurnoModel.findByIdAndUpdate(turnoId, {
+                estado: 'confirmado',
+                confirmadoEn: new Date()
+              });
+              console.log(`   ✅ Turno ${turnoId} confirmado`);
+            } catch (error) {
+              console.error(`   ❌ Error confirmando turno ${turnoId}:`, error);
+            }
+          }
+          
+          await enviarMensajeWhatsAppTexto(
+            telefono,
+            `✅ ¡Perfecto! Todos tus ${viajes.length + 1} viajes han sido confirmados.\n\n¡Nos vemos pronto! 🚗`,
+            context.phoneNumberId
+          );
+          
+          return {
+            success: true,
+            end: true
+          };
+          
+        case '2':
+          // Editar otro viaje
+          if (viajes.length > 1) {
+            let mensaje = '🔧 ¿Qué viaje querés modificar?\n\n';
+            viajes.forEach((viaje: any, index: number) => {
+              const fechaInicio = new Date(viaje.fechaInicio);
+              const horas = String(fechaInicio.getUTCHours()).padStart(2, '0');
+              const minutos = String(fechaInicio.getUTCMinutes()).padStart(2, '0');
+              const hora = `${horas}:${minutos}`;
+              
+              const origen = viaje.datos?.origen || 'No especificado';
+              const destino = viaje.datos?.destino || 'No especificado';
+              
+              mensaje += `${index + 1}. ${origen} → ${destino} (${hora})\n`;
+            });
+            mensaje += '\nRespondé con el número del viaje.';
+            
+            await enviarMensajeWhatsAppTexto(telefono, mensaje, context.phoneNumberId);
+            
+            return {
+              success: true,
+              nextState: 'esperando_seleccion_viaje',
+              data
+            };
+          } else {
+            // Solo queda un viaje, ir directo a editar
+            const viaje = viajes[0];
+            
+            const fechaInicio = new Date(viaje.fechaInicio);
+            const horas = String(fechaInicio.getUTCHours()).padStart(2, '0');
+            const minutos = String(fechaInicio.getUTCMinutes()).padStart(2, '0');
+            const hora = `${horas}:${minutos}`;
+            
+            let mensaje = `✏️ *Editando último viaje pendiente*\n\n`;
+            mensaje += `🕐 *Hora actual:* ${hora}\n`;
+            mensaje += `📍 *Origen:* ${viaje.datos?.origen || 'No especificado'}\n`;
+            mensaje += `📍 *Destino:* ${viaje.datos?.destino || 'No especificado'}\n`;
+            mensaje += `👥 *Cantidad de pasajeros:* ${viaje.datos?.pasajeros || '1'}\n`;
+            mensaje += `🧳 *Equipaje:* ${viaje.datos?.equipaje || 'No especificado'}\n\n`;
+            mensaje += `*¿Qué deseas modificar?*\n\n`;
+            mensaje += `1️⃣ Cambiar hora\n`;
+            mensaje += `2️⃣ Cambiar origen\n`;
+            mensaje += `3️⃣ Cambiar destino\n`;
+            mensaje += `4️⃣ Cambiar cantidad de pasajeros\n`;
+            mensaje += `5️⃣ Cambiar equipaje\n`;
+            mensaje += `6️⃣ Confirmar este viaje\n`;
+            mensaje += `7️⃣ Cancelar este viaje\n`;
+            mensaje += `0️⃣ Volver atrás\n\n`;
+            mensaje += `Escribe el número de la opción.`;
+            
+            await enviarMensajeWhatsAppTexto(telefono, mensaje, context.phoneNumberId);
+            
+            return {
+              success: true,
+              nextState: 'esperando_tipo_modificacion',
+              data: {
+                ...data,
+                viajeSeleccionado: viaje,
+                viajeIndex: 0
+              }
+            };
+          }
+          
+        case '0':
+          // Finalizar - dejar los demás pendientes
+          await enviarMensajeWhatsAppTexto(
+            telefono,
+            `✅ Perfecto. Los ${viajes.length} viaje${viajes.length > 1 ? 's' : ''} restante${viajes.length > 1 ? 's' : ''} quedan pendientes.\n\nPodés confirmarlos más tarde. ¡Nos vemos pronto! 🚗`,
+            context.phoneNumberId
+          );
+          
+          return {
+            success: true,
+            end: true
+          };
+          
+        default:
+          await enviarMensajeWhatsAppTexto(
+            telefono,
+            '❌ Opción inválida. Por favor selecciona:\n\n1️⃣ Confirmar todos\n2️⃣ Editar otro viaje\n0️⃣ Finalizar',
+            context.phoneNumberId
+          );
+          
+          return {
+            success: true,
+            nextState: 'esperando_accion_viajes_restantes',
+            data
+          };
+      }
     }
     
     return {

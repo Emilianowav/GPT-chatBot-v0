@@ -206,6 +206,8 @@ export async function enviarNotificacionPruebaAgente(req: Request, res: Response
       return;
     }
     
+    const phoneNumberId = empresa.phoneNumberId;
+    
     // ✅ OBLIGATORIO: Solo enviar con plantilla de Meta
     if (!notifConfig.usarPlantillaMeta || !notifConfig.plantillaMeta?.activa) {
       console.error('❌ [NotifAgentes] NO SE PUEDE ENVIAR: Plantilla de Meta no configurada o inactiva');
@@ -221,49 +223,42 @@ export async function enviarNotificacionPruebaAgente(req: Request, res: Response
       return;
     }
 
-    console.log('📋 [NotifAgentes] Usando plantilla de Meta (OBLIGATORIO)');
+    console.log('📋 [NotifAgentes] Usando plantilla de Meta para abrir ventana de 24h');
     console.log('   Plantilla:', notifConfig.plantillaMeta.nombre);
     
     const plantilla = notifConfig.plantillaMeta;
     
-    // Preparar variables para la plantilla
-    // ⚠️ IMPORTANTE: Meta no permite saltos de línea, tabs o más de 4 espacios consecutivos
-    // Limpiar el texto para cumplir con las restricciones de Meta
-    const listaTurnosLimpia = listaTurnos
-      .replace(/\n/g, ' ')  // Reemplazar saltos de línea por espacios
-      .replace(/\t/g, ' ')  // Reemplazar tabs por espacios
-      .replace(/ {5,}/g, '    ');  // Reducir más de 4 espacios consecutivos a 4
+    // ✅ ESTRATEGIA: Enviar SOLO plantilla de Meta con TODOS los detalles
+    // La plantilla debe contener toda la información necesaria en sus parámetros
     
+    // 1. Preparar lista completa de turnos con detalles para la plantilla
     const variables = {
       agente: `${agente.nombre} ${agente.apellido}`,
-      lista_turnos: listaTurnosLimpia
+      lista_turnos: listaTurnos.trim()  // Lista completa con todos los detalles
     };
 
-    console.log('   Variables:', { agente: variables.agente, lista_turnos: variables.lista_turnos.substring(0, 50) + '...' });
+    console.log('   Variables:', { agente: variables.agente, lista_turnos: variables.lista_turnos });
 
     // Generar componentes de la plantilla
     const componentes = generarComponentesPlantilla(plantilla, variables);
 
-    // Enviar usando plantilla de Meta (SIN FALLBACK)
+    // 2. Enviar SOLO plantilla de Meta (NO enviar mensaje de texto adicional)
     let enviado = false;
     try {
-      enviado = await enviarMensajePlantillaMeta(
-        telefono,
+      await enviarMensajePlantillaMeta(
+        agente.telefono,
         plantilla.nombre,
         plantilla.idioma,
         componentes,
-        empresa.phoneNumberId
+        phoneNumberId
       );
-      console.log('✅ [NotifAgentes] Plantilla enviada exitosamente');
-    } catch (error) {
-      console.error('❌ [NotifAgentes] ERROR CRÍTICO: No se pudo enviar plantilla de Meta:', error);
-      console.error('   Verifica que la plantilla esté aprobada en Meta Business Manager');
-      res.status(500).json({
-        success: false,
-        message: 'Error al enviar plantilla de Meta. Verifica que esté aprobada en Meta Business Manager.',
-        error: (error as Error).message,
-        plantilla: plantilla.nombre
-      });
+      enviado = true;
+      console.log(`✅ [NotifAgentes] Plantilla enviada exitosamente a ${agente.telefono}`);
+      console.log(`   ℹ️ NO se envía mensaje de texto adicional - la plantilla de Meta contiene toda la información necesaria`);
+      
+    } catch (error: any) {
+      console.error(`❌ [NotifAgentes] ERROR CRÍTICO: No se pudo enviar plantilla de Meta:`, error);
+      throw new Error(`No se pudo enviar la notificación: ${error.message}`);
       return;
     }
     
