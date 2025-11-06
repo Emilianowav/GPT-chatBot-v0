@@ -1,6 +1,7 @@
 // 📅 Controlador para notificaciones diarias de agentes
 // ⚠️ IMPORTANTE: Este controlador SOLO usa configuración de MongoDB
 // NO auto-configura NADA, solo lee y envía lo que está guardado
+// ✅ Sistema 100% escalable: URL y payload completo desde MongoDB
 
 import { Request, Response } from 'express';
 import { ConfiguracionModuloModel } from '../models/ConfiguracionModulo.js';
@@ -8,7 +9,6 @@ import { AgenteModel } from '../models/Agente.js';
 import { TurnoModel } from '../models/Turno.js';
 import { ContactoEmpresaModel } from '../../../models/ContactoEmpresa.js';
 import { EmpresaModel } from '../../../models/Empresa.js';
-import { enviarMensajePlantillaMeta } from '../../../services/metaTemplateService.js';
 
 /**
  * Formatear fecha y hora
@@ -276,60 +276,60 @@ export async function enviarNotificacionPruebaAgente(req: Request, res: Response
 
     console.log('📝 Variables para reemplazo:', Object.keys(variables));
 
-    // ✅ NUEVO SISTEMA ESCALABLE: Construir TODO desde MongoDB
-    if (plantilla.metaApiUrl && plantilla.metaPayload) {
-      console.log('🚀 Usando sistema ESCALABLE (URL + Payload desde MongoDB)');
+    // ✅ VALIDAR que la plantilla tenga la estructura completa
+    if (!plantilla.metaApiUrl || !plantilla.metaPayload) {
+      console.error('❌ [NotifAgentes] Plantilla NO tiene metaApiUrl o metaPayload');
+      console.error('   La plantilla debe estar configurada con la estructura completa en MongoDB');
+      res.status(400).json({
+        success: false,
+        message: 'Plantilla incompleta. Debe tener metaApiUrl y metaPayload configurados en MongoDB.',
+        instrucciones: 'Ejecuta: npx tsx src/scripts/configurarPlantillaCompleta.ts'
+      });
+      return;
+    }
+    
+    console.log('🚀 Construyendo payload desde MongoDB');
+    
+    const { url, payload } = construirPayloadMeta(plantilla, variables);
+    
+    // Enviar directamente a Meta con axios
+    try {
+      const axios = require('axios');
+      const token = process.env.META_WHATSAPP_TOKEN || process.env.WHATSAPP_TOKEN;
       
-      const { url, payload } = construirPayloadMeta(plantilla, variables);
-      
-      // Enviar directamente a Meta con axios
-      try {
-        const axios = require('axios');
-        const token = process.env.META_WHATSAPP_TOKEN || process.env.WHATSAPP_TOKEN;
-        
-        const response = await axios.post(url, payload, {
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json'
-          }
-        });
-        
-        console.log(`✅ [NotifAgentes] Mensaje enviado (sistema escalable)`);
-        console.log('   Message ID:', response.data.messages?.[0]?.id);
-        
-      } catch (error: any) {
-        console.error(`❌ [NotifAgentes] ERROR enviando a Meta:`, error.response?.data || error);
-        res.status(500).json({
-          success: false,
-          message: `Error al enviar a Meta: ${error.message}`,
-          detalles: error.response?.data || error.message
-        });
-        return;
+      if (!token) {
+        throw new Error('META_WHATSAPP_TOKEN no configurado en .env');
       }
       
-    } else {
-      // ⚠️ SISTEMA ANTIGUO: Usar función helper (fallback)
-      console.log('⚠️ Usando sistema antiguo (función helper)');
+      console.log('📤 Enviando a Meta API...');
+      console.log('   URL:', url);
+      console.log('   Payload:', JSON.stringify(payload, null, 2));
       
-      try {
-        await enviarMensajePlantillaMeta(
-          agente.telefono,
-          plantilla.nombre,
-          plantilla.idioma,
-          [],
-          phoneNumberId
-        );
-        console.log(`✅ [NotifAgentes] Plantilla enviada (sistema antiguo)`);
-        
-      } catch (error: any) {
-        console.error(`❌ [NotifAgentes] ERROR:`, error);
-        res.status(500).json({
-          success: false,
-          message: `Error: ${error.message}`,
-          detalles: error.response?.data || error.message
-        });
-        return;
-      }
+      const response = await axios.post(url, payload, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+      
+      console.log(`✅ [NotifAgentes] Mensaje enviado exitosamente`);
+      console.log('   Message ID:', response.data.messages?.[0]?.id);
+      console.log('   Response:', JSON.stringify(response.data, null, 2));
+      
+    } catch (error: any) {
+      console.error(`❌ [NotifAgentes] ERROR enviando a Meta:`);
+      console.error('   Status:', error.response?.status);
+      console.error('   Data:', JSON.stringify(error.response?.data, null, 2));
+      
+      res.status(500).json({
+        success: false,
+        message: `Error al enviar a Meta: ${error.message}`,
+        detalles: {
+          status: error.response?.status,
+          error: error.response?.data || error.message
+        }
+      });
+      return;
     }
     
     console.log(`✅ Notificación de prueba enviada a ${agente.nombre} ${agente.apellido}`);
