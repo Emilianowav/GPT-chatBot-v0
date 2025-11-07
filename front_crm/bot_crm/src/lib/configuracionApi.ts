@@ -156,6 +156,51 @@ export interface ConfiguracionModulo {
     color: string;
     esEstadoFinal: boolean;
   }>;
+  // ✅ NUEVO: Sistema unificado de notificaciones con plantillas de Meta
+  plantillasMeta?: {
+    confirmacionTurnos?: {
+      activa: boolean;
+      nombre: string;
+      idioma: string;
+      metaApiUrl: string;
+      metaPayload: any;
+      variables: Record<string, any>;
+      programacion: {
+        metodoVerificacion: 'hora_fija' | 'horas_antes_turno';
+        horaEnvio?: string;
+        diasAntes?: number;
+        horasAntes?: number;
+        filtroEstado: string[];
+      };
+    };
+    notificacionDiariaAgentes?: {
+      activa: boolean;
+      nombre: string;
+      idioma: string;
+      metaApiUrl: string;
+      metaPayload: any;
+      variables: Record<string, any>;
+      programacion: {
+        metodoVerificacion: 'hora_fija' | 'inicio_jornada_agente';
+        horaEnvio?: string;
+        minutosAntes?: number;
+        frecuencia: string;
+        rangoHorario: string;
+        filtroEstado: string[];
+        incluirDetalles?: {
+          origen: boolean;
+          destino: boolean;
+          nombreCliente: boolean;
+          telefonoCliente: boolean;
+          horaReserva: boolean;
+          notasInternas: boolean;
+          pasajeros?: boolean;
+          hora?: boolean;
+        };
+      };
+      ultimoEnvio?: Date;
+    };
+  };
   activo: boolean;
   creadoEn?: Date;
   actualizadoEn?: Date;

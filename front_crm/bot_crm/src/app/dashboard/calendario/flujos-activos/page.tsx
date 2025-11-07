@@ -272,22 +272,32 @@ export default function AdministradorFlujosPage() {
       const token = localStorage.getItem('auth_token');
       const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';
       
-      // DEBUG: Ver qué flujoId está llegando
-      console.log('🔍 [DEBUG] handleEnviarPrueba llamado con:', { flujoId, telefono });
-      console.log('🔍 [DEBUG] Comparación:', flujoId === 'notificacion_diaria_agentes', flujoId.length, 'notificacion_diaria_agentes'.length);
+      console.log('🧪 [Prueba] Enviando notificación:', { flujoId, telefono });
       
-      // Si es notificación diaria de agentes, usar endpoint específico
+      // ✅ NUEVO SISTEMA UNIFICADO: Determinar tipo según flujoId
+      let tipo: 'agente' | 'cliente';
+      
       if (flujoId === 'notificacion_diaria_agentes') {
-        console.log('✅ [DEBUG] Usando endpoint de agentes');
-        const response = await fetch(`${apiUrl}/api/modules/calendar/notificaciones-diarias-agentes/test`, {
+        tipo = 'agente';
+        console.log('   📅 Tipo: Notificación diaria de agente');
+      } else if (flujoId === 'confirmacion_turnos') {
+        tipo = 'cliente';
+        console.log('   ✅ Tipo: Confirmación de turno');
+      } else {
+        // Fallback para otros flujos (usar endpoint antiguo)
+        console.log('   ⚠️ Flujo no reconocido, usando endpoint antiguo');
+        const response = await fetch(`${apiUrl}/api/modules/calendar/configuracion/notificaciones/enviar-prueba`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
             'Authorization': `Bearer ${token}`
-          },
+        },
           body: JSON.stringify({
             empresaId,
-            telefono
+            notificacion: {
+              tipo: flujoId === 'confirmacion_turnos' ? 'confirmacion' : 'estado',
+              telefono
+            }
           })
         });
 
@@ -300,7 +310,7 @@ export default function AdministradorFlujosPage() {
         
         setMensaje({
           tipo: 'success',
-          texto: `✅ ${data.message || 'Mensaje de prueba enviado al agente'}`
+          texto: `✅ ${data.message || 'Mensaje de prueba enviado'}`
         });
         setModalPrueba(null);
         setEnviandoPrueba(null);
@@ -308,20 +318,18 @@ export default function AdministradorFlujosPage() {
         return;
       }
       
-      // Usar el endpoint existente de notificaciones para otros flujos
-      console.log('⚠️ [DEBUG] Usando endpoint de clientes (fallback)');
-      const response = await fetch(`${apiUrl}/api/modules/calendar/configuracion/notificaciones/enviar-prueba`, {
+      // ✅ USAR NUEVO ENDPOINT UNIFICADO para agentes y clientes
+      console.log(`   🎯 Usando endpoint unificado: /notificaciones-meta/test`);
+      const response = await fetch(`${apiUrl}/api/modules/calendar/notificaciones-meta/test`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`
         },
         body: JSON.stringify({
+          tipo,
           empresaId,
-          notificacion: {
-            tipo: flujoId === 'confirmacion_turnos' ? 'confirmacion' : 'estado',
-            telefono
-          }
+          telefono
         })
       });
 
@@ -369,7 +377,7 @@ export default function AdministradorFlujosPage() {
       const token = localStorage.getItem('auth_token');
       const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';
       
-      // Si es el flujo de notificación diaria de agentes
+      // ✅ NUEVO: Si es el flujo de notificación diaria de agentes
       if (modalConfigFlujo.id === 'notificacion_diaria_agentes') {
         // Primero obtener la configuración actual
         const getResponse = await fetch(`${apiUrl}/api/modules/calendar/configuracion/${empresaId}`, {
@@ -384,37 +392,33 @@ export default function AdministradorFlujosPage() {
         
         const { configuracion: configActual } = await getResponse.json();
         
-        // Actualizar notificación diaria de agentes
+        // ✅ Actualizar en plantillasMeta (NUEVO SISTEMA UNIFICADO)
         const configActualizada = {
           ...configActual,
-          notificacionDiariaAgentes: {
-            activa: config.activo,
-            horaEnvio: config.horaEnvio,
-            enviarATodos: config.enviarATodos,
-            plantillaMensaje: config.mensaje,
-            frecuencia: config.frecuencia,
-            rangoHorario: {
-              activo: true,
-              tipo: 'hoy'
-            },
-            filtroHorario: {
-              activo: false,
-              tipo: 'todo_el_dia'
-            },
-            filtroEstado: {
-              activo: true,
-              estados: ['pendiente', 'confirmado']
-            },
-            filtroTipo: {
-              activo: false,
-              tipos: []
-            },
-            incluirDetalles: config.incluirDetalles,
-            agentesEspecificos: []
+          plantillasMeta: {
+            ...configActual.plantillasMeta,
+            notificacionDiariaAgentes: {
+              ...configActual.plantillasMeta?.notificacionDiariaAgentes,
+              activa: config.activo,
+              programacion: {
+                ...configActual.plantillasMeta?.notificacionDiariaAgentes?.programacion,
+                metodoVerificacion: 'hora_fija',
+                horaEnvio: config.horaEnvio,
+                frecuencia: 'diaria',
+                rangoHorario: 'hoy',
+                filtroEstado: ['pendiente', 'confirmado']
+              },
+              incluirDetalles: config.incluirDetalles || {
+                origen: true,
+                destino: true,
+                pasajeros: true,
+                hora: true
+              }
+            }
           }
         };
         
-        console.log('💾 Enviando al backend:', configActualizada);
+        console.log('💾 [Agentes] Guardando en plantillasMeta:', configActualizada.plantillasMeta.notificacionDiariaAgentes);
         
         // Guardar configuración actualizada
         const response = await fetch(`${apiUrl}/api/modules/calendar/configuracion/${empresaId}`, {
@@ -445,8 +449,72 @@ export default function AdministradorFlujosPage() {
         return;
       }
       
-      // Para otros flujos (confirmación de turnos)
-      // Primero obtener la configuración actual
+      // ✅ NUEVO: Para confirmación de turnos
+      if (modalConfigFlujo.id === 'confirmacion_turnos') {
+        // Primero obtener la configuración actual
+        const getResponse = await fetch(`${apiUrl}/api/modules/calendar/configuracion/${empresaId}`, {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+        
+        if (!getResponse.ok) {
+          throw new Error('Error al obtener configuración actual');
+        }
+        
+        const { configuracion: configActual } = await getResponse.json();
+        
+        // ✅ Actualizar en plantillasMeta (NUEVO SISTEMA UNIFICADO)
+        const configActualizada = {
+          ...configActual,
+          plantillasMeta: {
+            ...configActual.plantillasMeta,
+            confirmacionTurnos: {
+              ...configActual.plantillasMeta?.confirmacionTurnos,
+              activa: config.activo,
+              programacion: {
+                ...configActual.plantillasMeta?.confirmacionTurnos?.programacion,
+                metodoVerificacion: 'hora_fija',
+                horaEnvio: config.horaEnvio || '22:00',
+                diasAntes: config.anticipacion || 1,
+                filtroEstado: config.estados || ['no_confirmado', 'pendiente']
+              }
+            }
+          }
+        };
+        
+        console.log('💾 [Clientes] Guardando en plantillasMeta:', configActualizada.plantillasMeta.confirmacionTurnos);
+        
+        // Guardar configuración actualizada
+        const response = await fetch(`${apiUrl}/api/modules/calendar/configuracion/${empresaId}`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
+          body: JSON.stringify(configActualizada)
+        });
+
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(errorData.message || 'Error al guardar configuración');
+        }
+
+        setMensaje({
+          tipo: 'success',
+          texto: '✅ Configuración de confirmación guardada correctamente'
+        });
+        setModalConfigFlujo(null);
+        setConfigEditada(null);
+        
+        // Recargar después de un breve delay
+        setTimeout(() => {
+          window.location.reload();
+        }, 800);
+        return;
+      }
+      
+      // ⚠️ FALLBACK: Para otros flujos antiguos (mantener compatibilidad)
       const getResponse = await fetch(`${apiUrl}/api/modules/calendar/configuracion/${empresaId}`, {
         headers: {
           'Authorization': `Bearer ${token}`
@@ -461,7 +529,7 @@ export default function AdministradorFlujosPage() {
       
       // Actualizar la notificación específica
       const notificacionesActualizadas = configActual.notificaciones.map((notif: any) => {
-        if (notif.tipo === (modalConfigFlujo.id === 'confirmacion_turnos' ? 'confirmacion' : 'estado')) {
+        if (notif.tipo === 'confirmacion') {
           const notifActualizada = {
             ...notif,
             activa: config.activo,
@@ -476,13 +544,13 @@ export default function AdministradorFlujosPage() {
               estados: config.estados || notif.filtros?.estados || ['no_confirmado', 'pendiente']
             }
           };
-          console.log('📝 Notificación actualizada:', notifActualizada);
+          console.log('📝 Notificación actualizada (fallback):', notifActualizada);
           return notifActualizada;
         }
         return notif;
       });
       
-      console.log('💾 Enviando al backend:', { notificaciones: notificacionesActualizadas });
+      console.log('💾 Enviando al backend (fallback):', { notificaciones: notificacionesActualizadas });
       
       // Guardar configuración actualizada
       const response = await fetch(`${apiUrl}/api/modules/calendar/configuracion/${empresaId}`, {
