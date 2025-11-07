@@ -2,7 +2,6 @@
 import { Request, Response } from 'express';
 import * as turnoService from '../services/turnoService.js';
 import { EstadoTurno } from '../models/Turno.js';
-import { programarNotificacionesTurno } from '../../../services/notificacionesService.js';
 
 /**
  * POST /api/modules/calendar/turnos
@@ -55,13 +54,10 @@ export async function crearTurno(req: Request, res: Response) {
       creadoPor: 'admin'
     });
 
-    // Programar notificaciones automáticas
-    try {
-      await programarNotificacionesTurno(turno._id.toString(), empresaId);
-    } catch (error) {
-      console.error('Error programando notificaciones:', error);
-      // No fallar la creación del turno si falla la programación de notificaciones
-    }
+    // ✅ Las notificaciones ahora se manejan automáticamente por el sistema unificado
+    // El cron job de notificaciones procesará este turno según la configuración en MongoDB
+    console.log(`✅ Turno creado: ${turno._id}`);
+    console.log(`   Las notificaciones se enviarán automáticamente según plantillasMeta`);
 
     res.status(201).json({
       success: true,

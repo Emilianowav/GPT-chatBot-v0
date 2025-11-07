@@ -1,7 +1,7 @@
 // 🚗 Flujo de Notificaciones de Viajes
-import type { Flow, FlowContext, FlowResult } from './types.js';
-import { enviarMensajeWhatsAppTexto } from '../services/metaService.js';
-import { TurnoModel } from '../modules/calendar/models/Turno.js';
+import type { Flow, FlowContext, FlowResult } from '../types.js';
+import { enviarMensajeWhatsAppTexto } from '../../services/metaService.js';
+import { TurnoModel } from '../../modules/calendar/models/Turno.js';
 
 export const notificacionViajesFlow: Flow = {
   name: 'notificacion_viajes',

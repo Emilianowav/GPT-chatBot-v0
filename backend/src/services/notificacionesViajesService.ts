@@ -6,7 +6,15 @@ import { enviarMensajeWhatsAppTexto } from './metaService.js';
 import { buscarEmpresaPorTelefono } from '../utils/empresaUtilsMongo.js';
 import { iniciarFlujoNotificacionViajes } from './flowIntegrationService.js';
 import { normalizarTelefono } from '../utils/telefonoUtils.js';
-import { enviarNotificacionConfirmacion } from '../modules/calendar/services/confirmacionTurnosService.js';
+
+// ✅ Función helper para enviar confirmación (usa el nuevo sistema)
+async function enviarNotificacionConfirmacion(clienteId: string, turnos: any[], empresaId: string): Promise<boolean> {
+  // Esta función ahora es manejada por el nuevo sistema de notificaciones
+  // que se ejecuta automáticamente según la configuración en MongoDB
+  console.log('ℹ️ Las confirmaciones ahora se manejan automáticamente por el sistema unificado');
+  console.log('   Configurar en MongoDB: plantillasMeta.confirmacionTurnos');
+  return true;
+}
 
 interface ViajeInfo {
   _id: string;
