@@ -5,10 +5,10 @@
   "main": "dist/app.js",
   "type": "module",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
+    "dev": "node --loader ts-node/esm src/app.ts",
     "build": "tsc",
     "start": "npm run build && node dist/app.js",
-    "dev": "node --loader ts-node/esm src/app.ts",
+    "test": "echo \"Error: no test specified\" && exit 1",
     "tunnel": "ngrok http 3000",
     "migrar": "node --loader ts-node/esm src/scripts/migrarAMongoDB.ts",
     "crear-admins": "node --loader ts-node/esm src/scripts/crearAdminInicial.ts",
@@ -71,7 +71,10 @@
     "verificar:flujo-confirmacion": "tsx scripts/verificarFlujoConfirmacion.ts",
     "enviar:notificacion-prueba": "tsx scripts/enviarNotificacionPrueba.ts",
     "diagnosticar:notificaciones": "tsx scripts/diagnosticarNotificaciones.ts",
-    "diagnosticar:notif-especifica": "tsx src/scripts/diagnosticarNotificacionEspecifica.ts"
+    "diagnosticar:notif-especifica": "tsx src/scripts/diagnosticarNotificacionEspecifica.ts",
+    "config:plantillas-meta": "tsx src/scripts/configurarPlantillaCompleta.ts",
+    "migrate:sistema": "tsx src/scripts/migrarSistemaNotificaciones.ts",
+    "verify:config": "tsx src/scripts/verificarConfiguracionNotificaciones.ts"
   },
   "keywords": [],
   "author": "",
@@ -90,6 +93,7 @@
     "nodemailer": "^7.0.3",
     "openai": "^4.103.0",
     "twilio": "^5.6.1",
+    "winston": "^3.18.3",
     "ws": "^8.18.3"
   },
   "devDependencies": {

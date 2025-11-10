@@ -20,6 +20,10 @@ interface Payload {
               title?: string;
             };
           };
+          button?: {
+            payload?: string;
+            text?: string;
+          };
           type?: string;
         }>;
         contacts?: Array<{
@@ -82,6 +86,10 @@ export function extraerDatosDePayloadWhatsApp(payload: Payload): WhatsAppDatos {
       respuestaInteractiva = mensajeObj.interactive.list_reply.id ?? null;
       mensaje = mensajeObj.interactive.list_reply.title ?? null;
     }
+  } else if (tipoMensaje === 'button') {
+    // Botón de respuesta rápida (quick reply button)
+    respuestaInteractiva = mensajeObj.button?.payload ?? null;
+    mensaje = mensajeObj.button?.text ?? null;
   } else {
     // Mensaje de texto normal
     mensaje = mensajeObj.text?.body ?? null;

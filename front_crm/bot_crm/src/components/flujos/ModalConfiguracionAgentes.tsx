@@ -91,10 +91,7 @@ export default function ModalConfiguracionAgentes({
   };
 
   const validarPaso2 = () => {
-    if (!config.mensaje.trim()) {
-      setError('El mensaje es requerido');
-      return false;
-    }
+    // La plantilla de Meta se configura en Meta Business Manager, no aquí
     return true;
   };
 
@@ -337,37 +334,18 @@ export default function ModalConfiguracionAgentes({
                 </div>
               </div>
 
-              <div className={styles.field}>
-                <label>Plantilla del Mensaje *</label>
-                <textarea
-                  value={config.mensaje}
-                  onChange={(e) => setConfig({ ...config, mensaje: e.target.value })}
-                  rows={4}
-                  placeholder="Buenos días {agente}! 🌅&#10;Estos son tus {turnos} de hoy:"
-                  required
-                />
-                <small>
-                  Variables disponibles: <code>{'{agente}'}</code>, <code>{'{turnos}'}</code>, <code>{'{cantidad}'}</code>
-                </small>
-              </div>
-
               <div className={styles.infoBox} style={{
-                backgroundColor: 'rgba(255, 107, 74, 0.1)',
-                border: '1px solid rgba(255, 107, 74, 0.3)',
+                backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                border: '1px solid rgba(59, 130, 246, 0.3)',
                 borderRadius: '8px',
-                padding: '1rem',
-                marginTop: '1rem'
+                padding: '1.5rem',
+                marginTop: '0'
               }}>
-                <p style={{ margin: 0, fontSize: '0.9rem', color: 'var(--momento-white, #FFFFFF)' }}>
-                  💡 <strong>Ejemplo de mensaje enviado:</strong><br/>
-                  Buenos días Juan Pérez! 🌅<br/>
-                  Estos son tus viajes de hoy:<br/>
-                  <br/>
-                  📋 *3 Viajes:*<br/>
-                  <br/>
-                  1. 🕐 08:00 - María González...<br/>
-                  2. 🕐 12:30 - Carlos Rodríguez...<br/>
-                  3. 🕐 18:00 - Ana López...
+                <p style={{ margin: 0, fontSize: '0.95rem', color: 'var(--momento-white, #FFFFFF)', lineHeight: '1.6' }}>
+                  📱 <strong>Plantilla de Meta WhatsApp</strong><br/><br/>
+                  Las notificaciones de agentes utilizan plantillas de WhatsApp Business configuradas en Meta Business Manager.<br/><br/>
+                  El contenido y formato del mensaje se gestiona directamente en Meta, no desde este panel.<br/><br/>
+                  💡 <em>Contacta al administrador del sistema para modificar el contenido de la plantilla.</em>
                 </p>
               </div>
             </div>

@@ -15,21 +15,20 @@ import conversacionesRoutes from "./routes/conversacionesRoutes.js";
 import clienteRoutes from "./routes/clienteRoutes.js";
 import calendarRoutes from "./modules/calendar/routes/calendarRoutes.js";
 import flujosRoutes from "./modules/calendar/routes/flujos.js";
-import notificacionesDiariasAgentesRoutes from "./modules/calendar/routes/notificacionesDiariasAgentes.js";
+import notificacionesMetaRoutes from "./modules/calendar/routes/notificacionesMeta.js";
 import usuarioEmpresaRoutes from "./routes/usuarioEmpresaRoutes.js";
 import flowRoutes from "./routes/flowRoutes.js";
 import superAdminRoutes from "./routes/superAdminRoutes.js";
 import { errorHandler } from "./middlewares/errorHandler.js";
 import { connectDB } from "./config/database.js";
 import { createSuperAdminIfNotExists } from "./services/authService.js";
+import { loggers } from "./utils/logger.js";
 
 import {
   refreshMetaToken,
   shouldRefreshMetaToken
 } from "./services/metaTokenService.js";
-import { iniciarServicioNotificaciones } from "./services/notificacionesService.js";
-import { procesarNotificacionesProgramadas } from "./services/notificacionesAutomaticasService.js";
-import { enviarNotificacionesDiariasAgentes, esHoraDeEnviarNotificacionesDiarias } from "./services/notificacionesDiariasAgentes.js";
+import { procesarNotificacionesDiariasAgentes, procesarNotificacionesConfirmacion } from "./services/notificacionesMetaService.js";
 import { initializeFlows } from "./flows/index.js";
 
 const app = express();
@@ -46,7 +45,7 @@ export const wss = new WebSocketServer({
   clientTracking: true
 });
 
-console.log('🔧 WebSocket Server creado');
+loggers.system('WebSocket Server creado');
 
 // CORS configuration - Orígenes permitidos
 const allowedOrigins = [
@@ -65,7 +64,7 @@ app.use(cors({
     if (allowedOrigins.includes(origin)) {
       callback(null, true);
     } else {
-      console.log('❌ Origen bloqueado por CORS:', origin);
+      loggers.warn('Origen bloqueado por CORS', { origin });
       callback(new Error('No permitido por CORS'));
     }
   },
@@ -81,9 +80,9 @@ app.use(cors({
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Middleware de logging simple (sin bucles infinitos)
+// Middleware de logging HTTP
 app.use((req, res, next) => {
-  console.log(`[${new Date().toISOString()}] ${req.method} ${req.originalUrl} - Origin: ${req.headers.origin || 'none'}`);
+  loggers.api(`${req.method} ${req.originalUrl}`, { origin: req.headers.origin || 'none' });
   next();
 });
 
@@ -97,7 +96,7 @@ app.use("/api/conversaciones", conversacionesRoutes);
 app.use("/api/openai", openaiRoutes);
 app.use("/api/whatsapp", whatsappRoutes);
 // ⚠️ IMPORTANTE: Rutas específicas ANTES de rutas generales
-app.use("/api/modules/calendar/notificaciones-diarias-agentes", notificacionesDiariasAgentesRoutes);
+app.use("/api/modules/calendar/notificaciones-meta", notificacionesMetaRoutes);
 app.use("/api/modules/calendar", calendarRoutes);
 app.use("/api/flujos", flujosRoutes);
 app.use("/api/flows", flowRoutes);
@@ -108,7 +107,7 @@ app.use(errorHandler);
 (async () => {
   try {
     // 1. Conectar a MongoDB
-    console.log('🔌 Conectando a MongoDB...');
+    loggers.db('Conectando a MongoDB...');
     await connectDB();
     
     // 1.5. Crear SuperAdmin si no existe
@@ -116,33 +115,37 @@ app.use(errorHandler);
     
     // 1.6. Inicializar sistema de flujos dinámicos
     console.log('🔄 Inicializando sistema de flujos...');
+    // 1.5. Inicializar sistema de flujos dinámicos
+    loggers.flow('Inicializando sistema de flujos...');
     initializeFlows();
     
     // 2. Token refresh al iniciar
     if (shouldRefreshMetaToken()) {
-      console.log("🔄 Refrescando token Meta al iniciar la app...");
+      loggers.system('Refrescando token Meta al iniciar la app...');
       await refreshMetaToken();
     } else {
-      console.log("🟢 Token Meta aún válido al iniciar.");
+      loggers.system('Token Meta aún válido al iniciar.');
     }
 
     // 3. Refresco cada 24 horas (en lugar de 59 días)
     setInterval(async () => {
       if (shouldRefreshMetaToken()) {
-        console.log("⏳ Token cercano a vencerse. Renovando...");
+        loggers.system('Token cercano a vencerse. Renovando...');
         await refreshMetaToken();
       } else {
-        console.log("🕒 Token aún vigente. No se renueva.");
+        loggers.debug('Token aún vigente. No se renueva.');
       }
     }, 1000 * 60 * 60 * 24); // Cada 24h
 
     // 4. Configurar WebSocket
-    console.log('🔧 Configurando handlers de WebSocket...');
+    loggers.system('Configurando handlers de WebSocket...');
     
     wss.on('connection', (ws: WebSocket, req) => {
-      console.log('🔌 Cliente WebSocket conectado desde:', req.socket.remoteAddress);
-      console.log('📍 Path:', req.url);
-      console.log('👥 Total clientes conectados:', wss.clients.size);
+      loggers.system('Cliente WebSocket conectado', { 
+        from: req.socket.remoteAddress,
+        path: req.url,
+        totalClients: wss.clients.size
+      });
       
       // Enviar confirmación de conexión
       ws.send(JSON.stringify({ type: 'connected', message: 'Conexión establecida' }));
@@ -150,79 +153,90 @@ app.use(errorHandler);
       ws.on('message', (message: Buffer) => {
         try {
           const data = JSON.parse(message.toString());
-          console.log('📨 Mensaje WebSocket recibido:', data);
+          loggers.debug('Mensaje WebSocket recibido', data);
           
           // Suscribir cliente a una empresa específica
           if (data.type === 'subscribe' && data.empresaId) {
             (ws as any).empresaId = data.empresaId;
-            console.log(`✅ Cliente suscrito a empresa: ${data.empresaId}`);
+            loggers.system('Cliente suscrito a empresa', { empresaId: data.empresaId });
             ws.send(JSON.stringify({ type: 'subscribed', empresaId: data.empresaId }));
           }
         } catch (error) {
-          console.error('❌ Error procesando mensaje WebSocket:', error);
+          loggers.error('Error procesando mensaje WebSocket', error);
         }
       });
       
       ws.on('close', () => {
-        console.log('🔌 Cliente WebSocket desconectado');
-        console.log('👥 Total clientes conectados:', wss.clients.size);
+        loggers.system('Cliente WebSocket desconectado', { totalClients: wss.clients.size });
       });
       
       ws.on('error', (error: Error) => {
-        console.error('❌ Error WebSocket del cliente:', error);
+        loggers.error('Error WebSocket del cliente', error);
       });
     });
     
     wss.on('error', (error: Error) => {
-      console.error('❌ Error del servidor WebSocket:', error);
+      loggers.error('Error del servidor WebSocket', error);
     });
     
     wss.on('listening', () => {
-      console.log('👂 WebSocket Server escuchando...');
+      loggers.system('WebSocket Server escuchando...');
     });
 
-    // 5. Iniciar servicio de notificaciones automáticas
-    console.log('🔔 Iniciando servicio de notificaciones...');
-    iniciarServicioNotificaciones();
-
-    // 6. Iniciar cron job para notificaciones programadas (cada minuto)
-    console.log('⏰ Iniciando cron job de notificaciones programadas...');
-    setInterval(async () => {
-      await procesarNotificacionesProgramadas();
-    }, 60 * 1000); // Cada 60 segundos
-
-    // Ejecutar una vez al iniciar
-    setTimeout(async () => {
-      await procesarNotificacionesProgramadas();
-    }, 5000); // Esperar 5 segundos después del inicio
-
-    // 7. Iniciar cron job para notificaciones diarias de agentes (cada minuto)
-    console.log('📅 Iniciando cron job de notificaciones diarias para agentes...');
+    // 5. ✅ NUEVO SISTEMA UNIFICADO DE NOTIFICACIONES
+    loggers.notification('Iniciando sistema unificado de notificaciones con Plantillas de Meta...');
+    
+    // 5.1. Notificaciones diarias para agentes (cada minuto)
+    loggers.notification('Notificaciones diarias de agentes: ACTIVAS');
+    loggers.debug('Verificación flexible: hora_fija o inicio_jornada_agente');
+    loggers.debug('Solo plantillas de Meta (ventana 24h)');
+    
     setInterval(async () => {
       try {
-        // Verificar si es hora de enviar notificaciones diarias
-        // Se ejecuta cada minuto pero solo envía cuando corresponde según configuración
-        await enviarNotificacionesDiariasAgentes();
+        await procesarNotificacionesDiariasAgentes();
       } catch (error) {
-        console.error('❌ Error en cron job de notificaciones diarias:', error);
+        loggers.error('Error en notificaciones diarias', error);
       }
-    }, 60 * 1000); // Cada 60 segundos
+    }, 60 * 1000);
+
+    // 5.2. Notificaciones de confirmación para clientes (cada minuto)
+    loggers.notification('Notificaciones de confirmación: ACTIVAS');
+    loggers.debug('Verificación flexible: hora_fija o horas_antes_turno');
+    loggers.debug('Solo plantillas de Meta (ventana 24h)');
+    
+    setInterval(async () => {
+      try {
+        await procesarNotificacionesConfirmacion();
+      } catch (error) {
+        loggers.error('Error en notificaciones de confirmación', error);
+      }
+    }, 60 * 1000);
+
+    // Ejecutar una vez al iniciar (después de 5 segundos)
+    setTimeout(async () => {
+      try {
+        await procesarNotificacionesDiariasAgentes();
+        await procesarNotificacionesConfirmacion();
+      } catch (error) {
+        loggers.error('Error en ejecución inicial', error);
+      }
+    }, 5000);
 
     // 8. Iniciar servidor
     server.listen(PORT, () => {
-      console.log(`🚀 Servidor corriendo en puerto ${PORT}`);
-      console.log(`📊 MongoDB: Conectado`);
-      console.log(`🔌 WebSocket: Activo en /ws`);
-      console.log(`🌐 CORS: Orígenes permitidos:`);
-      allowedOrigins.forEach(origin => console.log(`   - ${origin}`));
-      console.log(`🌐 Endpoints disponibles:`);
-      console.log(`   - POST /api/whatsapp/webhook`);
-      console.log(`   - GET  /api/status`);
-      console.log(`   - GET  /api/usuarios`);
-      console.log(`   - WS   ws://localhost:${PORT}/ws`);
+      loggers.system(`Servidor corriendo en puerto ${PORT}`);
+      loggers.db('MongoDB: Conectado');
+      loggers.system('WebSocket: Activo en /ws');
+      loggers.system('CORS: Orígenes permitidos', { origins: allowedOrigins });
+      loggers.system('Endpoints disponibles', {
+        webhook: 'POST /api/whatsapp/webhook',
+        status: 'GET /api/status',
+        usuarios: 'GET /api/usuarios',
+        websocket: `ws://localhost:${PORT}/ws`
+      });
     });
   } catch (error) {
-    console.error('❌ Error al iniciar la aplicación:', error);
+    loggers.error('Error al iniciar la aplicación', error);
     process.exit(1);
   }
 })();

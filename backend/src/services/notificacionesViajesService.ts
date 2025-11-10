@@ -6,7 +6,15 @@ import { enviarMensajeWhatsAppTexto } from './metaService.js';
 import { buscarEmpresaPorTelefono } from '../utils/empresaUtilsMongo.js';
 import { iniciarFlujoNotificacionViajes } from './flowIntegrationService.js';
 import { normalizarTelefono } from '../utils/telefonoUtils.js';
-import { enviarNotificacionConfirmacion } from '../modules/calendar/services/confirmacionTurnosService.js';
+
+// ✅ Función helper para enviar confirmación (usa el nuevo sistema)
+async function enviarNotificacionConfirmacion(clienteId: string, turnos: any[], empresaId: string): Promise<boolean> {
+  // Esta función ahora es manejada por el nuevo sistema de notificaciones
+  // que se ejecuta automáticamente según la configuración en MongoDB
+  console.log('ℹ️ Las confirmaciones ahora se manejan automáticamente por el sistema unificado');
+  console.log('   Configurar en MongoDB: plantillasMeta.confirmacionTurnos');
+  return true;
+}
 
 interface ViajeInfo {
   _id: string;
@@ -75,27 +83,21 @@ export async function enviarNotificacionConfirmacionViajes(
   // ✅ El teléfono ya está normalizado en contactos_empresa
 
   // 3. Definir rango de fechas
+  // ✅ UNIFICADO: Tanto modo prueba como normal buscan turnos de MAÑANA
   let fechaInicio: Date;
   let fechaFin: Date;
   
   if (modoPrueba) {
-    // Modo prueba: buscar turnos en los próximos 7 días
-    console.log('🧪 Modo prueba: buscando turnos en los próximos 7 días');
-    fechaInicio = new Date();
-    fechaInicio.setHours(0, 0, 0, 0);
-    
-    fechaFin = new Date();
-    fechaFin.setDate(fechaFin.getDate() + 7);
-    fechaFin.setHours(23, 59, 59, 999);
-  } else {
-    // Modo normal: solo mañana
-    fechaInicio = new Date();
-    fechaInicio.setDate(fechaInicio.getDate() + 1);
-    fechaInicio.setHours(0, 0, 0, 0);
-    
-    fechaFin = new Date(fechaInicio);
-    fechaFin.setHours(23, 59, 59, 999);
+    console.log('🧪 Modo prueba: usando misma lógica que modo normal (turnos de mañana)');
   }
+  
+  // Buscar turnos de mañana (día siguiente)
+  fechaInicio = new Date();
+  fechaInicio.setDate(fechaInicio.getDate() + 1);
+  fechaInicio.setHours(0, 0, 0, 0);
+  
+  fechaFin = new Date(fechaInicio);
+  fechaFin.setHours(23, 59, 59, 999);
 
   console.log('📅 Rango de búsqueda:');
   console.log('   Desde:', fechaInicio.toISOString());

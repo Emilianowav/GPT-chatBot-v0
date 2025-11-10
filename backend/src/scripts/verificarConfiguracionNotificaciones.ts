@@ -1,160 +1,157 @@
-// 🔍 Script para verificar configuración de notificaciones
-import mongoose from 'mongoose';
-import { EmpresaModel } from '../models/Empresa.js';
-import { ClienteModel } from '../models/Cliente.js';
-import { TurnoModel } from '../modules/calendar/models/Turno.js';
-import { AgenteModel } from '../modules/calendar/models/Agente.js';
-import { ConfiguracionModuloModel } from '../modules/calendar/models/ConfiguracionModulo.js';
-import { normalizarTelefono } from '../utils/telefonoUtils.js';
-import dotenv from 'dotenv';
+// 🔍 Script de Verificación: Sistema de Notificaciones
+// Verifica que la configuración esté correcta y lista para usar
 
+import dotenv from 'dotenv';
 dotenv.config();
+
+import { connectDB } from '../config/database.js';
+import { ConfiguracionModuloModel } from '../modules/calendar/models/ConfiguracionModulo.js';
+import { EmpresaModel } from '../models/Empresa.js';
+import { AgenteModel } from '../modules/calendar/models/Agente.js';
 
 async function verificarConfiguracion() {
   try {
-    console.log('🔌 Conectando a MongoDB...');
-    await mongoose.connect(process.env.MONGODB_URI || '');
+    console.log('\n🔍 ========================================');
+    console.log('   VERIFICACIÓN: Sistema de Notificaciones');
+    console.log('========================================\n');
+
+    await connectDB();
     console.log('✅ Conectado a MongoDB\n');
 
-    // 1. Verificar empresas
-    console.log('📋 ========== EMPRESAS ==========');
-    const empresas = await EmpresaModel.find({});
-    console.log(`Total empresas: ${empresas.length}\n`);
+    const configuraciones = await ConfiguracionModuloModel.find({});
+    console.log(`📋 Encontradas ${configuraciones.length} configuraciones\n`);
 
-    for (const empresa of empresas) {
-      console.log(`🏢 Empresa: ${empresa.nombre}`);
-      console.log(`   _id: ${empresa._id}`);
-      console.log(`   Teléfono: ${empresa.telefono}`);
-      console.log(`   phoneNumberId: ${(empresa as any).phoneNumberId || '❌ NO CONFIGURADO'}`);
-      
-      if (!(empresa as any).phoneNumberId) {
-        console.log('   ⚠️ PROBLEMA: Esta empresa NO tiene phoneNumberId configurado');
-        console.log('   📝 Solución: Agregar phoneNumberId en MongoDB');
-        console.log('   Ejemplo: db.empresas.updateOne({ nombre: "' + empresa.nombre + '" }, { $set: { phoneNumberId: "768730689655171" } })');
+    for (const config of configuraciones) {
+      console.log(`\n🏢 ${config.empresaId}`);
+      console.log('═══════════════════════════════════════\n');
+
+      // 1. Verificar empresa
+      const empresa = await EmpresaModel.findOne({ nombre: config.empresaId });
+      if (!empresa) {
+        console.log('❌ Empresa no encontrada en colección Empresas');
+        continue;
       }
-      console.log('');
-    }
 
-    // 2. Verificar clientes
-    console.log('\n📋 ========== CLIENTES ==========');
-    const clientes = await ClienteModel.find({}).limit(10);
-    console.log(`Total clientes (mostrando primeros 10): ${clientes.length}\n`);
+      const phoneNumberId = (empresa as any).phoneNumberId;
+      console.log(`📱 Phone Number ID: ${phoneNumberId ? '✅ ' + phoneNumberId : '❌ No configurado'}`);
 
-    for (const cliente of clientes) {
-      const telefonoNormalizado = normalizarTelefono(cliente.telefono);
-      const esNormalizado = cliente.telefono === telefonoNormalizado;
-      
-      console.log(`👤 Cliente: ${cliente.nombre} ${cliente.apellido}`);
-      console.log(`   _id: ${cliente._id}`);
-      console.log(`   Teléfono: ${cliente.telefono}`);
-      console.log(`   Normalizado: ${esNormalizado ? '✅' : '❌ ' + telefonoNormalizado}`);
-      console.log(`   Empresa: ${cliente.empresaId}`);
-      
-      if (!esNormalizado) {
-        console.log('   ⚠️ PROBLEMA: Teléfono NO normalizado');
-        console.log('   📝 Solución: npm run normalizar:telefonos');
+      // 2. Verificar plantillasMeta
+      if (!config.plantillasMeta) {
+        console.log('❌ No tiene plantillasMeta configurado');
+        console.log('   👉 Ejecutar: npm run migrate:notificaciones\n');
+        continue;
       }
-      console.log('');
-    }
 
-    // 3. Verificar turnos recientes
-    console.log('\n📋 ========== TURNOS RECIENTES ==========');
-    const turnos = await TurnoModel.find({})
-      .sort({ creadoEn: -1 })
-      .limit(5);
-    
-    console.log(`Total turnos (mostrando últimos 5): ${turnos.length}\n`);
-
-    for (const turno of turnos) {
-      console.log(`📅 Turno: ${turno._id}`);
-      console.log(`   Empresa: ${turno.empresaId}`);
-      console.log(`   Cliente ID: ${turno.clienteId}`);
-      console.log(`   Fecha: ${new Date(turno.fechaInicio).toLocaleString('es-AR')}`);
-      console.log(`   Estado: ${turno.estado}`);
-      console.log(`   Notificaciones programadas: ${turno.notificaciones?.length || 0}`);
+      // 3. Verificar notificación diaria agentes
+      console.log('\n📅 Notificación Diaria Agentes:');
+      const notifAgentes = config.plantillasMeta.notificacionDiariaAgentes;
       
-      if (turno.notificaciones && turno.notificaciones.length > 0) {
-        turno.notificaciones.forEach((notif: any, i: number) => {
-          console.log(`     ${i + 1}. Tipo: ${notif.tipo}`);
-          console.log(`        Programada para: ${new Date(notif.programadaPara).toLocaleString('es-AR')}`);
-          console.log(`        Enviada: ${notif.enviada ? '✅' : '❌ Pendiente'}`);
-        });
+      if (!notifAgentes) {
+        console.log('   ❌ No configurada');
       } else {
-        console.log('   ⚠️ PROBLEMA: Sin notificaciones programadas');
+        console.log(`   Estado: ${notifAgentes.activa ? '✅ Activa' : '⚠️  Inactiva'}`);
+        console.log(`   Plantilla: ${notifAgentes.nombre || '❌ No definida'}`);
+        console.log(`   Idioma: ${notifAgentes.idioma || '❌ No definido'}`);
+        
+        if (notifAgentes.programacion) {
+          console.log(`   Método: ${notifAgentes.programacion.metodoVerificacion || '❌ No definido'}`);
+          
+          if (notifAgentes.programacion.metodoVerificacion === 'hora_fija') {
+            console.log(`   Hora envío: ${notifAgentes.programacion.horaEnvio || '❌ No definida'}`);
+          } else if (notifAgentes.programacion.metodoVerificacion === 'inicio_jornada_agente') {
+            console.log(`   Minutos antes: ${notifAgentes.programacion.minutosAntes || '❌ No definido'}`);
+          }
+          
+          console.log(`   Filtro estados: ${notifAgentes.programacion.filtroEstado?.join(', ') || '❌ No definido'}`);
+        } else {
+          console.log('   ❌ Sin programación configurada');
+        }
+
+        // Verificar si hay agentes
+        const agentes = await AgenteModel.find({ empresaId: config.empresaId, activo: true });
+        console.log(`   Agentes activos: ${agentes.length}`);
+        
+        if (agentes.length > 0) {
+          const agentesConTelefono = agentes.filter(a => a.telefono);
+          console.log(`   Agentes con teléfono: ${agentesConTelefono.length}`);
+          
+          if (agentesConTelefono.length > 0) {
+            console.log(`   Ejemplo: ${agentesConTelefono[0].nombre} ${agentesConTelefono[0].apellido} - ${agentesConTelefono[0].telefono}`);
+          }
+        }
       }
 
-      // Verificar cliente
-      const cliente = await ClienteModel.findOne({ 
-        _id: turno.clienteId,
-        empresaId: turno.empresaId
-      });
-
-      if (cliente) {
-        const telefonoNormalizado = normalizarTelefono(cliente.telefono);
-        console.log(`   Cliente: ${cliente.nombre} ${cliente.apellido}`);
-        console.log(`   Teléfono cliente: ${cliente.telefono}`);
-        console.log(`   Teléfono normalizado: ${telefonoNormalizado === cliente.telefono ? '✅' : '❌ ' + telefonoNormalizado}`);
-      } else {
-        console.log('   ❌ PROBLEMA: Cliente no encontrado');
-      }
-
-      // Verificar empresa
-      const empresa = await EmpresaModel.findOne({ nombre: turno.empresaId });
-      if (empresa) {
-        console.log(`   Empresa encontrada: ✅`);
-        console.log(`   phoneNumberId: ${(empresa as any).phoneNumberId || '❌ NO CONFIGURADO'}`);
-      } else {
-        console.log(`   ❌ PROBLEMA: Empresa no encontrada`);
-      }
-
-      console.log('');
-    }
-
-    // 4. Verificar configuración de módulo
-    console.log('\n📋 ========== CONFIGURACIÓN MÓDULO ==========');
-    const configs = await ConfiguracionModuloModel.find({ activo: true });
-    console.log(`Total configuraciones activas: ${configs.length}\n`);
-
-    for (const config of configs) {
-      console.log(`⚙️ Configuración: ${config.empresaId}`);
-      console.log(`   Tipo negocio: ${config.tipoNegocio}`);
-      console.log(`   Notificaciones configuradas: ${config.notificaciones?.length || 0}`);
+      // 4. Verificar confirmación turnos
+      console.log('\n✅ Confirmación de Turnos:');
+      const notifClientes = config.plantillasMeta.confirmacionTurnos;
       
-      if (config.notificaciones && config.notificaciones.length > 0) {
-        config.notificaciones.forEach((notif: any, i: number) => {
-          console.log(`     ${i + 1}. Tipo: ${notif.tipo}`);
-          console.log(`        Activa: ${notif.activa ? '✅' : '❌'}`);
-          console.log(`        Momento: ${notif.momento}`);
-          console.log(`        Ejecución: ${notif.ejecucion}`);
-        });
+      if (!notifClientes) {
+        console.log('   ❌ No configurada');
       } else {
-        console.log('   ⚠️ ADVERTENCIA: Sin notificaciones configuradas');
+        console.log(`   Estado: ${notifClientes.activa ? '✅ Activa' : '⚠️  Inactiva'}`);
+        console.log(`   Plantilla: ${notifClientes.nombre || '❌ No definida'}`);
+        console.log(`   Idioma: ${notifClientes.idioma || '❌ No definido'}`);
+        
+        if (notifClientes.programacion) {
+          console.log(`   Método: ${notifClientes.programacion.metodoVerificacion || '❌ No definido'}`);
+          
+          if (notifClientes.programacion.metodoVerificacion === 'hora_fija') {
+            console.log(`   Hora envío: ${notifClientes.programacion.horaEnvio || '❌ No definida'}`);
+            console.log(`   Días antes: ${notifClientes.programacion.diasAntes || '❌ No definido'}`);
+          } else if (notifClientes.programacion.metodoVerificacion === 'horas_antes_turno') {
+            console.log(`   Horas antes: ${notifClientes.programacion.horasAntes || '❌ No definido'}`);
+          }
+          
+          console.log(`   Filtro estados: ${notifClientes.programacion.filtroEstado?.join(', ') || '❌ No definido'}`);
+        } else {
+          console.log('   ❌ Sin programación configurada');
+        }
       }
-      console.log('');
+
+      // 5. Resumen de estado
+      console.log('\n📊 Resumen:');
+      const todoOk = phoneNumberId && 
+                     notifAgentes?.activa && 
+                     notifAgentes?.nombre && 
+                     notifClientes?.activa && 
+                     notifClientes?.nombre;
+      
+      if (todoOk) {
+        console.log('   ✅ Configuración completa y lista para usar');
+      } else {
+        console.log('   ⚠️  Configuración incompleta');
+        
+        if (!phoneNumberId) {
+          console.log('      - Falta phoneNumberId en Empresa');
+        }
+        if (!notifAgentes?.activa || !notifAgentes?.nombre) {
+          console.log('      - Notificación de agentes incompleta');
+        }
+        if (!notifClientes?.activa || !notifClientes?.nombre) {
+          console.log('      - Confirmación de turnos incompleta');
+        }
+      }
     }
 
-    // 5. Verificar modo DEV
-    console.log('\n📋 ========== CONFIGURACIÓN SISTEMA ==========');
-    console.log(`MODO_DEV: ${process.env.MODO_DEV}`);
-    console.log(`MONGODB_URI: ${process.env.MONGODB_URI ? '✅ Configurado' : '❌ No configurado'}`);
-    console.log(`META_WHATSAPP_TOKEN: ${process.env.META_WHATSAPP_TOKEN ? '✅ Configurado' : '❌ No configurado'}`);
-    console.log(`TEST_PHONE_NUMBER_ID: ${process.env.TEST_PHONE_NUMBER_ID || '❌ No configurado'}`);
+    console.log('\n\n📝 ========================================');
+    console.log('   ENDPOINTS DISPONIBLES');
+    console.log('========================================');
+    console.log('POST /api/modules/calendar/notificaciones-meta/test');
+    console.log('Body: {');
+    console.log('  "tipo": "agente" | "cliente",');
+    console.log('  "empresaId": "San Jose",');
+    console.log('  "telefono": "+543794946066"');
+    console.log('}\n');
 
-    if (process.env.MODO_DEV === 'true') {
-      console.log('\n⚠️ ADVERTENCIA: MODO_DEV está en TRUE');
-      console.log('   Los mensajes NO se enviarán realmente a WhatsApp');
-      console.log('   Cambiar a MODO_DEV=false en .env para enviar mensajes reales');
-    }
+    console.log('🔗 Meta Business Manager:');
+    console.log('https://business.facebook.com/wa/manage/message-templates/\n');
 
-    console.log('\n✅ Verificación completada');
+    process.exit(0);
 
   } catch (error) {
-    console.error('❌ Error:', error);
-  } finally {
-    await mongoose.disconnect();
-    console.log('\n🔌 Desconectado de MongoDB');
+    console.error('\n❌ Error en verificación:', error);
+    process.exit(1);
   }
 }
 
-// Ejecutar script
 verificarConfiguracion();

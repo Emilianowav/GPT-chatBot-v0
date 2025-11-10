@@ -58,7 +58,7 @@
   padding: 0.625rem 1.25rem;
   background: var(--momento-black-light, #2A2A2A);
   border: 2px solid var(--momento-orange, #FF6B4A);
-  border-radius: 6px;
+  border-radius: 2px;
   cursor: pointer;
   font-size: 0.875rem;
   font-weight: 600;
@@ -177,15 +177,13 @@
 
 .tabActive {
   color: var(--momento-orange, #FF6B4A);
-  border-left:  var(--momento-orange, #FF6B4A) 2px solid;
-  border-right: var(--momento-orange, #FF6B4A) 2px solid;
+  background: rgba(255, 107, 74, 0.1);
 }
 
 
 /* Contenido */
 .content {
   padding: 0;
-  padding-top: 4rem;
   max-width: 100%;
   margin: 0;
 }

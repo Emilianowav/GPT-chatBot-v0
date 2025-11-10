@@ -1,8 +1,7 @@
 /* 📅 Estilos del Calendario Mensual */
 
 .container {
-  background: var(--momento-black, #1A1A1A);
-  border-radius: 12px;
+  background: var(--momento-black, #2A2A2A);
   padding: 1.5rem;
 }
 
