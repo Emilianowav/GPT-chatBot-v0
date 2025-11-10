@@ -388,12 +388,63 @@ export const enviarNotificacionPrueba = async (req: Request, res: Response): Pro
     // ✅ Usar el nuevo sistema unificado (siempre es cliente para confirmaciones)
     await enviarPruebaMeta('cliente', empresaId, telefonoNormalizado);
 
+    // ✅ INICIAR FLUJO DE CONFIRMACIÓN después de enviar la plantilla
+    const { ConversationStateModel } = await import('../../../models/ConversationState.js');
+    const { EmpresaModel } = await import('../../../models/Empresa.js');
+    const { TurnoModel } = await import('../models/Turno.js');
+    
+    // Buscar turnos del cliente para incluir en el flujo
+    const { ContactoEmpresaModel } = await import('../../../models/ContactoEmpresa.js');
+    const cliente = await ContactoEmpresaModel.findOne({ 
+      telefono: telefonoNormalizado,
+      empresaId 
+    });
+    
+    if (cliente) {
+      // Buscar turnos pendientes del cliente
+      const ahora = new Date();
+      const mañana = new Date(ahora);
+      mañana.setDate(mañana.getDate() + 2);
+      
+      const turnos = await TurnoModel.find({
+        empresaId,
+        clienteId: cliente._id,
+        fechaInicio: { $gte: ahora, $lte: mañana },
+        estado: { $in: ['no_confirmado', 'pendiente'] }
+      });
+      
+      if (turnos.length > 0) {
+        const empresa = await EmpresaModel.findOne({ nombre: empresaId });
+        
+        await ConversationStateModel.findOneAndUpdate(
+          { telefono: telefonoNormalizado, empresaId },
+          {
+            telefono: telefonoNormalizado,
+            empresaId,
+            phoneNumberId: empresa?.phoneNumberId || process.env.META_PHONE_NUMBER_ID,
+            flujo_activo: 'confirmacion_turnos',
+            estado_actual: 'esperando_confirmacion',
+            data: {
+              turnosIds: turnos.map(t => t._id.toString()),
+              clienteId: cliente._id.toString(),
+              intentos: 0
+            },
+            ultima_interaccion: new Date()
+          },
+          { upsert: true, new: true }
+        );
+        
+        console.log(`🔄 Flujo de confirmación iniciado para ${telefonoNormalizado}`);
+      }
+    }
+
     res.json({
       success: true,
       message: `✅ Notificación de prueba enviada con plantilla de Meta`,
       telefono: telefonoNormalizado,
       tipo: 'confirmacion_turnos',
-      sistema: 'plantillas_meta'
+      sistema: 'plantillas_meta',
+      flujoIniciado: !!cliente
     });
 
   } catch (error: any) {
