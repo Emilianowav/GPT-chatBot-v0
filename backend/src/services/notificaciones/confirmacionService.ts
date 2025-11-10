@@ -197,6 +197,32 @@ async function enviarConfirmacionesPorEmpresa(
       await enviarConfirmacionConTurnos(cliente, turnos, config);
       console.log(`✅ Enviado a ${cliente.nombre}`);
       
+      // ✅ INICIAR FLUJO DE CONFIRMACIÓN
+      const { ConversationStateModel } = await import('../../models/ConversationState.js');
+      const { EmpresaModel } = await import('../../models/Empresa.js');
+      
+      const empresa = await EmpresaModel.findOne({ nombre: empresaId });
+      
+      await ConversationStateModel.findOneAndUpdate(
+        { telefono: cliente.telefono, empresaId },
+        {
+          telefono: cliente.telefono,
+          empresaId,
+          phoneNumberId: empresa?.phoneNumberId || process.env.META_PHONE_NUMBER_ID,
+          flujo_activo: 'confirmacion_turnos',
+          estado_actual: 'esperando_confirmacion',
+          data: {
+            turnosIds: turnos.map(t => t._id.toString()),
+            clienteId: clienteId,
+            intentos: 0
+          },
+          ultima_interaccion: new Date()
+        },
+        { upsert: true, new: true }
+      );
+      
+      console.log(`🔄 Flujo de confirmación iniciado para ${cliente.telefono}`);
+      
       // Marcar turnos como notificados
       for (const turno of turnos) {
         if (!turno.notificaciones) turno.notificaciones = [];

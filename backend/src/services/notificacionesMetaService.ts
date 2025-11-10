@@ -55,17 +55,18 @@ function construirListaTurnos(turnos: any[], config: any): string {
     
     lista += `${i + 1}. ${hora}`;
     
-    const incluir = config.plantillasMeta?.notificacionDiariaAgentes?.programacion?.incluirDetalles;
-    
-    if (incluir?.nombreCliente && turno.clienteNombre) {
+    // ✅ SIEMPRE incluir nombre del cliente si existe
+    if (turno.clienteNombre) {
       lista += ` - ${turno.clienteNombre}`;
     }
     
-    if (incluir?.origen && turno.datos?.origen) {
+    // ✅ SIEMPRE incluir origen si existe
+    if (turno.datos?.origen) {
       lista += ` | Origen: ${turno.datos.origen}`;
     }
     
-    if (incluir?.destino && turno.datos?.destino) {
+    // ✅ SIEMPRE incluir destino si existe
+    if (turno.datos?.destino) {
       lista += ` | Destino: ${turno.datos.destino}`;
     }
     

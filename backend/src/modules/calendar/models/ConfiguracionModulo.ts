@@ -268,30 +268,33 @@ export interface IConfiguracionModulo extends Document {
   notificaciones?: NotificacionAutomatica[];
   notificacionDiariaAgentes?: NotificacionDiariaAgentes;
   
-  // ✅ NUEVA ESTRUCTURA ESCALABLE: Plantillas de Meta
+  // ✅ SISTEMA FLEXIBLE DE NOTIFICACIONES
   plantillasMeta?: {
     // Notificación diaria para agentes (choferes, médicos, etc.)
     notificacionDiariaAgentes?: {
       activa: boolean;
-      nombre: string;                    // Nombre de la plantilla en Meta: "chofer_sanjose"
-      idioma: string;                    // Código de idioma: "es"
-      metaApiUrl: string;                // URL completa: "https://graph.facebook.com/v22.0/{{phoneNumberId}}/messages"
-      metaPayload: any;                  // Payload completo con variables {{variable}}
-      variables?: {
-        phoneNumberId?: { origen: string; campo: string };
-        telefono?: { origen: string; campo: string };
-        agente?: { origen: string; formula: string };
-        lista_turnos?: { origen: string; formula: string };
-      };
+      tipo: 'plantilla_meta' | 'texto_directo';  // ✅ Tipo de notificación
+      
+      // Si tipo === 'plantilla_meta'
+      nombre?: string;                   // Nombre de la plantilla en Meta: "chofer_sanjose"
+      idioma?: string;                   // Código de idioma: "es"
+      parametros?: Array<{               // ✅ Parámetros de la plantilla
+        orden: number;                   // 1, 2, 3... (orden en {{1}}, {{2}}, {{3}})
+        variable: string;                // 'nombre', 'lista_turnos'
+        valor: string;                   // '{{nombre}}', '{{lista_turnos}}'
+      }>;
+      
+      // Si tipo === 'texto_directo'
+      mensajeDirecto?: string;           // Texto con variables: "Hola {{nombre}}, tus turnos: {{lista_turnos}}"
+      
       programacion?: {
-        // ✅ VERIFICACIÓN DE ENVÍO FLEXIBLE
-        metodoVerificacion: 'hora_fija' | 'inicio_jornada_agente';  // Nuevo campo
-        horaEnvio?: string;              // Para 'hora_fija': "14:51"
-        minutosAntes?: number;           // Para 'inicio_jornada_agente': 30 minutos antes
-        frecuencia: string;              // "diaria"
-        rangoHorario: string;            // "hoy", "manana", etc.
-        filtroEstado: string[];          // ["pendiente", "confirmado"]
-        incluirDetalles: {
+        metodoVerificacion: 'hora_fija' | 'inicio_jornada_agente';
+        horaEnvio?: string;
+        minutosAntes?: number;
+        frecuencia: string;
+        rangoHorario: string;
+        filtroEstado: string[];
+        incluirDetalles?: {
           origen?: boolean;
           destino?: boolean;
           nombreCliente?: boolean;
@@ -306,24 +309,31 @@ export interface IConfiguracionModulo extends Document {
     // Confirmación de turnos para clientes
     confirmacionTurnos?: {
       activa: boolean;
-      nombre: string;                    // Nombre de la plantilla en Meta: "clientes_sanjose"
-      idioma: string;                    // Código de idioma: "es"
-      metaApiUrl: string;                // URL completa: "https://graph.facebook.com/v22.0/{{phoneNumberId}}/messages"
-      metaPayload: any;                  // Payload completo con variables {{variable}}
-      variables?: {
-        phoneNumberId?: { origen: string; campo: string };
-        telefono?: { origen: string; campo: string };
-        nombre_cliente?: { origen: string; formula: string };
-        fecha_hora?: { origen: string; formula: string };
-      };
+      tipo: 'plantilla_meta' | 'texto_directo';  // ✅ Tipo de notificación
+      
+      // Si tipo === 'plantilla_meta'
+      nombre?: string;                   // Nombre de la plantilla en Meta: "clientes_sanjose"
+      idioma?: string;                   // Código de idioma: "es"
+      parametros?: Array<{               // ✅ Parámetros de la plantilla
+        orden: number;                   // 1, 2, 3...
+        variable: string;                // 'nombre', 'turnos'
+        valor: string;                   // '{{nombre}}', '{{turnos}}'
+      }>;
+      
+      // Si tipo === 'texto_directo'
+      mensajeDirecto?: string;           // Texto con variables: "Hola {{nombre}}, tus turnos: {{turnos}}"
+      
       programacion?: {
-        // ✅ VERIFICACIÓN DE ENVÍO FLEXIBLE
-        metodoVerificacion: 'hora_fija' | 'horas_antes_turno';  // Nuevo campo
-        momento?: string;                // "noche_anterior", "dia_antes_turno"
-        horaEnvio?: string;              // Para 'hora_fija': "22:00"
-        horasAntes?: number;             // Para 'horas_antes_turno': 24
-        diasAntes?: number;              // 1 = día anterior
-        filtroEstado: string[];          // ["no_confirmado", "pendiente"]
+        metodoVerificacion: 'hora_fija' | 'horas_antes_turno';
+        momento?: string;
+        horaEnvio?: string;
+        horasAntes?: number;
+        diasAntes?: number;
+        filtroEstado: string[];
+        incluirDetalles?: {
+          origen?: boolean;
+          destino?: boolean;
+        };
       };
       ultimoEnvio?: Date;
     };
@@ -568,16 +578,26 @@ const NomenclaturaSchema = new Schema<Nomenclatura>(
   { _id: false }
 );
 
-// Schema para plantillasMeta
+// Schema para plantillasMeta (Sistema Flexible)
 const PlantillasMetaSchema = new Schema(
   {
     notificacionDiariaAgentes: {
       activa: { type: Boolean, default: false },
+      tipo: {
+        type: String,
+        enum: ['plantilla_meta', 'texto_directo'],
+        default: 'plantilla_meta'
+      },
+      // Para plantilla_meta
       nombre: String,
       idioma: String,
-      metaApiUrl: String,
-      metaPayload: Schema.Types.Mixed,
-      variables: Schema.Types.Mixed,
+      parametros: [{
+        orden: Number,
+        variable: String,
+        valor: String
+      }],
+      // Para texto_directo
+      mensajeDirecto: String,
       programacion: {
         metodoVerificacion: {
           type: String,
@@ -602,11 +622,21 @@ const PlantillasMetaSchema = new Schema(
     },
     confirmacionTurnos: {
       activa: { type: Boolean, default: false },
+      tipo: {
+        type: String,
+        enum: ['plantilla_meta', 'texto_directo'],
+        default: 'plantilla_meta'
+      },
+      // Para plantilla_meta
       nombre: String,
       idioma: String,
-      metaApiUrl: String,
-      metaPayload: Schema.Types.Mixed,
-      variables: Schema.Types.Mixed,
+      parametros: [{
+        orden: Number,
+        variable: String,
+        valor: String
+      }],
+      // Para texto_directo
+      mensajeDirecto: String,
       programacion: {
         metodoVerificacion: {
           type: String,

@@ -8,6 +8,7 @@ import * as disponibilidadController from '../controllers/disponibilidadControll
 import * as notificacionController from '../controllers/notificacionController.js';
 import configuracionRoutes from './configuracionRoutes.js';
 import botRoutes from './botRoutes.js';
+import plantillasRoutes from './plantillasRoutes.js';
 
 const router = Router();
 
@@ -19,6 +20,9 @@ router.use('/configuracion', configuracionRoutes);
 
 // ========== RUTAS DEL BOT ==========
 router.use('/bot', botRoutes);
+
+// ========== RUTAS DE PLANTILLAS ==========
+router.use('/plantillas', plantillasRoutes);
 
 // ========== RUTAS DE TURNOS ==========
 
