@@ -18,8 +18,10 @@ import flujosRoutes from "./modules/calendar/routes/flujos.js";
 import notificacionesDiariasAgentesRoutes from "./modules/calendar/routes/notificacionesDiariasAgentes.js";
 import usuarioEmpresaRoutes from "./routes/usuarioEmpresaRoutes.js";
 import flowRoutes from "./routes/flowRoutes.js";
+import superAdminRoutes from "./routes/superAdminRoutes.js";
 import { errorHandler } from "./middlewares/errorHandler.js";
 import { connectDB } from "./config/database.js";
+import { createSuperAdminIfNotExists } from "./services/authService.js";
 
 import {
   refreshMetaToken,
@@ -87,6 +89,7 @@ app.use((req, res, next) => {
 
 // Rutas
 app.use("/api/auth", authRoutes);
+app.use("/api/sa", superAdminRoutes);
 app.use("/api/empresas", empresaRoutes);
 app.use("/api/usuarios-empresa", usuarioEmpresaRoutes);
 app.use("/api/clientes", clienteRoutes);
@@ -108,7 +111,10 @@ app.use(errorHandler);
     console.log('🔌 Conectando a MongoDB...');
     await connectDB();
     
-    // 1.5. Inicializar sistema de flujos dinámicos
+    // 1.5. Crear SuperAdmin si no existe
+    await createSuperAdminIfNotExists();
+    
+    // 1.6. Inicializar sistema de flujos dinámicos
     console.log('🔄 Inicializando sistema de flujos...');
     initializeFlows();
     

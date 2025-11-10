@@ -7,7 +7,7 @@ export interface IAdminUser extends Document {
   username: string;
   password: string;
   empresaId: string; // Referencia a la empresa que administra
-  role: 'admin' | 'viewer';
+  role: 'admin' | 'viewer' | 'super_admin';
   email?: string;
   activo: boolean;
   ultimoAcceso?: Date;
@@ -38,7 +38,7 @@ const AdminUserSchema = new Schema<IAdminUser>(
     },
     role: {
       type: String,
-      enum: ['admin', 'viewer'],
+      enum: ['admin', 'viewer', 'super_admin'],
       default: 'viewer'
     },
     email: {
