@@ -220,19 +220,23 @@ export default function AdministradorFlujosPage() {
       // Actualizar según el flujo
       let configActualizada = { ...configActual };
       
+      // ✅ NUEVO SISTEMA: Actualizar en plantillasMeta
       if (flujoId === 'notificacion_diaria_agentes') {
-        configActualizada.notificacionDiariaAgentes = {
-          ...configActual.notificacionDiariaAgentes,
-          activa: nuevoEstado
+        configActualizada.plantillasMeta = {
+          ...configActual.plantillasMeta,
+          notificacionDiariaAgentes: {
+            ...configActual.plantillasMeta?.notificacionDiariaAgentes,
+            activa: nuevoEstado
+          }
         };
       } else if (flujoId === 'confirmacion_turnos') {
-        // Actualizar todas las notificaciones de confirmación
-        configActualizada.notificaciones = configActual.notificaciones?.map((notif: any) => {
-          if (notif.tipo === 'confirmacion') {
-            return { ...notif, activa: nuevoEstado };
+        configActualizada.plantillasMeta = {
+          ...configActual.plantillasMeta,
+          confirmacionTurnos: {
+            ...configActual.plantillasMeta?.confirmacionTurnos,
+            activa: nuevoEstado
           }
-          return notif;
-        });
+        };
       }
       
       // Guardar
