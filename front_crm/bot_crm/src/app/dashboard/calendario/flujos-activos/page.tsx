@@ -222,19 +222,56 @@ export default function AdministradorFlujosPage() {
       
       // ✅ NUEVO SISTEMA: Actualizar en plantillasMeta
       if (flujoId === 'notificacion_diaria_agentes') {
+        // Inicializar plantillasMeta si no existe
+        if (!configActual.plantillasMeta) {
+          configActual.plantillasMeta = {};
+        }
+        
         configActualizada.plantillasMeta = {
           ...configActual.plantillasMeta,
           notificacionDiariaAgentes: {
             ...configActual.plantillasMeta?.notificacionDiariaAgentes,
-            activa: nuevoEstado
+            activa: nuevoEstado,
+            // Valores por defecto si no existen
+            nombre: configActual.plantillasMeta?.notificacionDiariaAgentes?.nombre || 'chofer_sanjose',
+            idioma: configActual.plantillasMeta?.notificacionDiariaAgentes?.idioma || 'es',
+            programacion: configActual.plantillasMeta?.notificacionDiariaAgentes?.programacion || {
+              metodoVerificacion: 'hora_fija',
+              horaEnvio: '06:00',
+              frecuencia: 'diaria',
+              rangoHorario: 'hoy',
+              filtroEstado: ['pendiente', 'confirmado'],
+              incluirDetalles: {
+                origen: true,
+                destino: true,
+                nombreCliente: true,
+                telefonoCliente: false,
+                horaReserva: true,
+                notasInternas: false
+              }
+            }
           }
         };
       } else if (flujoId === 'confirmacion_turnos') {
+        // Inicializar plantillasMeta si no existe
+        if (!configActual.plantillasMeta) {
+          configActual.plantillasMeta = {};
+        }
+        
         configActualizada.plantillasMeta = {
           ...configActual.plantillasMeta,
           confirmacionTurnos: {
             ...configActual.plantillasMeta?.confirmacionTurnos,
-            activa: nuevoEstado
+            activa: nuevoEstado,
+            // Valores por defecto si no existen
+            nombre: configActual.plantillasMeta?.confirmacionTurnos?.nombre || 'clientes_sanjose',
+            idioma: configActual.plantillasMeta?.confirmacionTurnos?.idioma || 'es',
+            programacion: configActual.plantillasMeta?.confirmacionTurnos?.programacion || {
+              metodoVerificacion: 'hora_fija',
+              horaEnvio: '22:00',
+              diasAntes: 1,
+              filtroEstado: ['no_confirmado', 'pendiente']
+            }
           }
         };
       }
