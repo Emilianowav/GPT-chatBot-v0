@@ -116,6 +116,111 @@ async function enviarPlantillaMeta(
   }
 }
 
+/**
+ * Enviar mensaje de texto simple (para mensajes dentro de conversaciones)
+ */
+export async function enviarMensajeWhatsAppTexto(
+  telefono: string,
+  mensaje: string,
+  phoneNumberId: string
+): Promise<boolean> {
+  try {
+    const token = process.env.META_WHATSAPP_TOKEN || process.env.WHATSAPP_TOKEN;
+    if (!token) {
+      throw new Error('META_WHATSAPP_TOKEN no configurado');
+    }
+
+    const telefonoLimpio = telefono.replace(/[^\d+]/g, '');
+    const url = `https://graph.facebook.com/v22.0/${phoneNumberId}/messages`;
+
+    const payload = {
+      messaging_product: 'whatsapp',
+      to: telefonoLimpio,
+      type: 'text',
+      text: {
+        body: mensaje
+      }
+    };
+
+    console.log('📤 [WhatsApp] Enviando mensaje de texto:', telefonoLimpio);
+
+    const response = await axios.post(url, payload, {
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json'
+      }
+    });
+
+    console.log('✅ [WhatsApp] Mensaje enviado:', response.data.messages?.[0]?.id);
+    return true;
+
+  } catch (error: any) {
+    console.error('❌ [WhatsApp] Error enviando mensaje:', error.response?.data || error.message);
+    throw error;
+  }
+}
+
+/**
+ * Enviar mensaje con botones interactivos
+ */
+export async function enviarMensajeWhatsAppBotones(
+  telefono: string,
+  mensaje: string,
+  botones: Array<{ id: string; texto: string }>,
+  phoneNumberId: string
+): Promise<boolean> {
+  try {
+    const token = process.env.META_WHATSAPP_TOKEN || process.env.WHATSAPP_TOKEN;
+    if (!token) {
+      throw new Error('META_WHATSAPP_TOKEN no configurado');
+    }
+
+    const telefonoLimpio = telefono.replace(/[^\d+]/g, '');
+    const url = `https://graph.facebook.com/v22.0/${phoneNumberId}/messages`;
+
+    // Limitar a máximo 3 botones (límite de WhatsApp)
+    const botonesLimitados = botones.slice(0, 3);
+
+    const payload = {
+      messaging_product: 'whatsapp',
+      to: telefonoLimpio,
+      type: 'interactive',
+      interactive: {
+        type: 'button',
+        body: {
+          text: mensaje
+        },
+        action: {
+          buttons: botonesLimitados.map(boton => ({
+            type: 'reply',
+            reply: {
+              id: boton.id,
+              title: boton.texto.substring(0, 20) // Máximo 20 caracteres
+            }
+          }))
+        }
+      }
+    };
+
+    console.log('📤 [WhatsApp] Enviando mensaje con botones:', telefonoLimpio);
+    console.log('   🔘 Botones:', botonesLimitados.map(b => b.texto).join(', '));
+
+    const response = await axios.post(url, payload, {
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json'
+      }
+    });
+
+    console.log('✅ [WhatsApp] Mensaje con botones enviado:', response.data.messages?.[0]?.id);
+    return true;
+
+  } catch (error: any) {
+    console.error('❌ [WhatsApp] Error enviando mensaje con botones:', error.response?.data || error.message);
+    throw error;
+  }
+}
+
 // Exportar funciones de procesamiento
 export { procesarNotificacionesDiariasAgentes } from './notificaciones/agentesService.js';
 export { procesarNotificacionesConfirmacion } from './notificaciones/confirmacionService.js';
