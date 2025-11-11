@@ -53,50 +53,33 @@ export async function procesarNotificacionesDiariasAgentes() {
           console.log(`         Hora configurada: ${horaEnvio}`);
           console.log(`         Hora actual: ${horaFormateada}`);
           
-          // ✅ ELIMINADO: Verificación "Ya se envió hoy" para permitir múltiples envíos
-          
           const diferenciaMinutos = Math.abs((horaActual * 60 + minutoActual) - (horaConfig * 60 + minutoConfig));
           console.log(`         Diferencia minutos: ${diferenciaMinutos}`);
-          debeEnviar = diferenciaMinutos <= 2;
+          
+          // ✅ Verificar que no se haya enviado recientemente (últimos 5 minutos)
+          const ultimoEnvio = notifConfig.ultimoEnvio;
+          let minutosDesdUltimoEnvio = 999;
+          
+          if (ultimoEnvio) {
+            const ultimoEnvioArgentina = new Date(ultimoEnvio.toLocaleString('en-US', { timeZone: 'America/Argentina/Buenos_Aires' }));
+            const diferenciaMs = ahoraArgentina.getTime() - ultimoEnvioArgentina.getTime();
+            minutosDesdUltimoEnvio = Math.floor(diferenciaMs / 60000);
+            console.log(`         Último envío: ${ultimoEnvioArgentina.toLocaleTimeString('es-AR')}`);
+            console.log(`         Minutos desde último envío: ${minutosDesdUltimoEnvio}`);
+          } else {
+            console.log(`         Último envío: Nunca`);
+            console.log(`         Minutos desde último envío: ${minutosDesdUltimoEnvio}`);
+          }
+          
+          // Solo enviar si estamos en la ventana de tiempo Y no se envió en los últimos 5 minutos
+          debeEnviar = diferenciaMinutos <= 2 && minutosDesdUltimoEnvio >= 5;
           console.log(`         Debe enviar: ${debeEnviar}`);
           
         } else if (programacion.metodoVerificacion === 'inicio_jornada_agente') {
-          const minutosAntes = programacion.minutosAntes || 30;
-          
-          const inicioHoy = new Date(ahoraArgentina);
-          inicioHoy.setHours(0, 0, 0, 0);
-          const finHoy = new Date(inicioHoy);
-          finHoy.setDate(finHoy.getDate() + 1);
-          
-          const agentesConTurnos = await TurnoModel.distinct('agenteId', {
-            empresaId: config.empresaId,
-            fechaInicio: { $gte: inicioHoy, $lt: finHoy },
-            estado: { $in: programacion.filtroEstado || ['pendiente', 'confirmado'] }
-          });
-          
-          for (const agenteId of agentesConTurnos) {
-            const agente = await AgenteModel.findById(agenteId);
-            if (!agente || !agente.disponibilidad) continue;
-            
-            const diaSemanHoy = ahoraArgentina.getDay();
-            const dispHoy = agente.disponibilidad.find((d: any) => d.diaSemana === diaSemanHoy && d.activo);
-            
-            if (!dispHoy || !dispHoy.horaInicio) continue;
-            
-            const [horaInicio, minInicio] = dispHoy.horaInicio.split(':').map(Number);
-            const minutosInicio = horaInicio * 60 + minInicio;
-            const minutosEnvio = minutosInicio - minutosAntes;
-            
-            const minutosActuales = horaActual * 60 + minutoActual;
-            const diferencia = Math.abs(minutosActuales - minutosEnvio);
-            
-            if (diferencia <= 2) {
-              console.log(`      ✅ Enviando a ${agente.nombre}`);
-              const { enviarPruebaAgente } = await import('./pruebaService.js');
-              await enviarPruebaAgente(agente, config);
-            }
-          }
-          
+          // ❌ ELIMINADO: Lógica duplicada que causaba envíos múltiples
+          // Esta lógica ahora se maneja en enviarNotificacionesDiariasPorEmpresa
+          console.log(`      ⚠️ Modo 'inicio_jornada_agente' no soportado actualmente`);
+          console.log(`      💡 Usar 'hora_fija' en su lugar`);
           continue;
         }
         
@@ -123,6 +106,12 @@ export async function procesarNotificacionesDiariasAgentes() {
 }
 
 async function enviarNotificacionesDiariasPorEmpresa(config: any) {
+  console.log(`\n${'*'.repeat(80)}`);
+  console.log(`🔔 [ENVÍO AUTOMÁTICO] Iniciando envío diario para empresa`);
+  console.log(`   🏢 Empresa: ${config.empresaId}`);
+  console.log(`   ⏰ Hora: ${new Date().toLocaleTimeString('es-AR')}`);
+  console.log(`${'*'.repeat(80)}\n`);
+  
   const { empresaId } = config;
   const notifConfig = config.plantillasMeta?.notificacionDiariaAgentes;
   

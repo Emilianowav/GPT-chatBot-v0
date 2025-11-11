@@ -74,7 +74,12 @@ export async function enviarNotificacionPrueba(
  * ✅ LÓGICA EXACTA usada por agentesService.ts
  */
 export async function enviarPruebaAgente(agente: any, config: any): Promise<boolean> {
-  console.log(`\n📤 [PruebaAgente] Enviando a ${agente.nombre} ${agente.apellido}`);
+  console.log(`\n${'='.repeat(80)}`);
+  console.log(`📤 [PruebaAgente] INICIANDO ENVÍO DE NOTIFICACIÓN`);
+  console.log(`   👤 Agente: ${agente.nombre} ${agente.apellido}`);
+  console.log(`   📞 Teléfono: ${agente.telefono}`);
+  console.log(`   🏢 Empresa: ${config.empresaId}`);
+  console.log(`${'='.repeat(80)}\n`);
   
   const notifConfig = config.plantillasMeta?.notificacionDiariaAgentes;
   if (!notifConfig?.activa) {
@@ -99,20 +104,62 @@ export async function enviarPruebaAgente(agente: any, config: any): Promise<bool
     fechaInicio: { $gte: inicio, $lt: fin },
     estado: { $in: notifConfig.programacion?.filtroEstado || ['pendiente', 'confirmado'] }
   })
-  .populate('clienteId', 'nombre apellido')
   .sort({ fechaInicio: 1 })
   .lean();
   
   console.log(`   📊 Turnos encontrados: ${turnos.length}`);
   
-  // Agregar nombre del cliente a cada turno
-  const turnosConNombre = turnos.map((t: any) => ({
-    ...t,
-    clienteNombre: t.clienteId ? `${t.clienteId.nombre} ${t.clienteId.apellido}` : 'Sin cliente'
+  if (turnos.length > 0) {
+    console.log(`   📋 Primer turno (ejemplo):`, {
+      _id: turnos[0]._id,
+      clienteId: turnos[0].clienteId,
+      clienteIdType: typeof turnos[0].clienteId,
+      datos: turnos[0].datos
+    });
+  }
+  
+  // ✅ Buscar clientes manualmente (clienteId es String, no ObjectId)
+  const turnosConNombre = await Promise.all(turnos.map(async (t: any) => {
+    let clienteNombre = 'Sin cliente';
+    
+    if (t.clienteId) {
+      try {
+        console.log(`      🔍 Buscando cliente ID: ${t.clienteId} (tipo: ${typeof t.clienteId})`);
+        const cliente = await ContactoEmpresaModel.findById(t.clienteId);
+        if (cliente) {
+          clienteNombre = `${cliente.nombre} ${cliente.apellido}`;
+          console.log(`      ✅ Cliente encontrado: ${clienteNombre}`);
+        } else {
+          console.log(`      ⚠️ Cliente NO encontrado en ContactoEmpresa con ID: ${t.clienteId}`);
+          // Verificar si existe en la colección
+          const count = await ContactoEmpresaModel.countDocuments({ _id: t.clienteId });
+          console.log(`      📊 Count en BD: ${count}`);
+          // Intentar buscar por empresaId para ver si hay clientes
+          const clientesEmpresa = await ContactoEmpresaModel.countDocuments({ empresaId: config.empresaId });
+          console.log(`      📊 Total clientes en empresa ${config.empresaId}: ${clientesEmpresa}`);
+        }
+      } catch (error) {
+        console.error(`      ❌ Error buscando cliente ${t.clienteId}:`, error);
+      }
+    } else {
+      console.log(`      ⚠️ Turno sin clienteId`);
+    }
+    
+    return {
+      ...t,
+      clienteNombre
+    };
   }));
   
+  console.log(`   📋 Turnos con nombre procesados:`, turnosConNombre.map(t => ({
+    clienteId: t.clienteId,
+    clienteNombre: t.clienteNombre,
+    origen: t.datos?.origen,
+    destino: t.datos?.destino
+  })));
+  
   const listaTurnos = construirListaTurnos(turnosConNombre, config);
-  console.log(`   📝 Lista generada: ${listaTurnos.substring(0, 100)}...`);
+  console.log(`   📝 Lista generada: ${listaTurnos}`);
   
   const tipo = notifConfig.tipo || 'plantilla_meta';
   console.log(`   📋 Tipo de notificación: ${tipo}`);
@@ -207,7 +254,11 @@ export async function enviarPruebaAgente(agente: any, config: any): Promise<bool
     await enviarPlantillaMeta(agente.telefono, url, payload);
   }
   
-  console.log(`✅ Notificación enviada a ${agente.nombre}`);
+  console.log(`\n${'='.repeat(80)}`);
+  console.log(`✅ [PruebaAgente] NOTIFICACIÓN ENVIADA EXITOSAMENTE`);
+  console.log(`   👤 Agente: ${agente.nombre} ${agente.apellido}`);
+  console.log(`   📝 Mensaje incluía: ${turnosConNombre.length} turno(s)`);
+  console.log(`${'='.repeat(80)}\n`);
   return true;
 }
 
