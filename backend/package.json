@@ -5,10 +5,12 @@
   "main": "dist/app.js",
   "type": "module",
   "scripts": {
-    "dev": "node --loader ts-node/esm src/app.ts",
+    "dev": "nodemon --exec node --loader ts-node/esm src/app.ts",
     "build": "tsc",
     "start": "npm run build && node dist/app.js",
     "test": "echo \"Error: no test specified\" && exit 1",
+    "analyze-db": "node scripts/analizar-base-datos.js",
+    "migrate:flow-messages": "node scripts/migrar-mensajes-flujo.js",
     "tunnel": "ngrok http 3000",
     "config:plantillas-meta": "tsx src/scripts/configurarPlantillaCompleta.ts",
     "migrate:sistema": "tsx src/scripts/migrarSistemaNotificaciones.ts",

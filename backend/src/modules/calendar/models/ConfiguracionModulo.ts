@@ -234,6 +234,54 @@ export interface Nomenclatura {
   recursos?: string;          // "Vehículos", "Salas", "Mesas", "Canchas"
 }
 
+// ✨ NUEVO: Interfaces para mensajes de flujos configurables
+export interface IMensajeFlujo {
+  mensaje: string;
+  botones?: Array<{
+    id: string;
+    texto: string;
+  }>;
+}
+
+export interface IMensajeFlujoConOpciones extends IMensajeFlujo {
+  opciones?: Array<{
+    id: string;
+    texto: string;
+    descripcion: string;
+  }>;
+}
+
+export interface IFlujoConfirmacion {
+  esperando_confirmacion?: IMensajeFlujo;
+  confirmado?: IMensajeFlujo;
+  cancelado?: IMensajeFlujo;
+  modificado?: IMensajeFlujo;
+  error?: IMensajeFlujo;
+}
+
+export interface IFlujoMenu {
+  bienvenida?: IMensajeFlujoConOpciones;
+  opcion_invalida?: IMensajeFlujo;
+}
+
+export interface IFlujoNotificacion {
+  esperando_opcion_inicial?: IMensajeFlujo;
+  confirmado?: IMensajeFlujo;
+  cancelado?: IMensajeFlujo;
+}
+
+// ✨ NUEVO: Variables dinámicas por empresa
+export interface IVariablesDinamicas {
+  nombre_empresa: string;
+  nomenclatura_turno: string;
+  nomenclatura_turnos: string;
+  nomenclatura_agente: string;
+  nomenclatura_agentes: string;
+  zona_horaria: string;
+  moneda: string;
+  idioma: string;
+}
+
 export interface IConfiguracionModulo extends Document {
   empresaId: string;
   
@@ -268,7 +316,7 @@ export interface IConfiguracionModulo extends Document {
   notificaciones?: NotificacionAutomatica[];
   notificacionDiariaAgentes?: NotificacionDiariaAgentes;
   
-  // ✅ SISTEMA FLEXIBLE DE NOTIFICACIONES
+  // ✅ SISTEMA FLEXIBLE DE NOTIFICACIONES (para INICIAR conversaciones)
   plantillasMeta?: {
     // Notificación diaria para agentes (choferes, médicos, etc.)
     notificacionDiariaAgentes?: {
@@ -338,6 +386,16 @@ export interface IConfiguracionModulo extends Document {
       ultimoEnvio?: Date;
     };
   };
+  
+  // ✨ NUEVO: Mensajes de flujos (para DENTRO de conversaciones)
+  mensajesFlujo?: {
+    confirmacion_turnos?: IFlujoConfirmacion;
+    menu_principal?: IFlujoMenu;
+    notificacion_viajes?: IFlujoNotificacion;
+  };
+  
+  // ✨ NUEVO: Variables dinámicas por empresa
+  variablesDinamicas?: IVariablesDinamicas;
   
   // Confirmación de turnos
   requiereConfirmacion: boolean;
@@ -578,6 +636,70 @@ const NomenclaturaSchema = new Schema<Nomenclatura>(
   { _id: false }
 );
 
+// ✨ NUEVO: Schemas para mensajes de flujo
+const MensajeFlujoSchema = new Schema(
+  {
+    mensaje: { type: String, required: true },
+    botones: [{
+      id: String,
+      texto: String
+    }]
+  },
+  { _id: false }
+);
+
+const MensajeFlujoConOpcionesSchema = new Schema(
+  {
+    mensaje: { type: String, required: true },
+    botones: [{
+      id: String,
+      texto: String
+    }],
+    opciones: [{
+      id: String,
+      texto: String,
+      descripcion: String
+    }]
+  },
+  { _id: false }
+);
+
+const MensajesFlujosSchema = new Schema(
+  {
+    confirmacion_turnos: {
+      esperando_confirmacion: MensajeFlujoSchema,
+      confirmado: MensajeFlujoSchema,
+      cancelado: MensajeFlujoSchema,
+      modificado: MensajeFlujoSchema,
+      error: MensajeFlujoSchema
+    },
+    menu_principal: {
+      bienvenida: MensajeFlujoConOpcionesSchema,
+      opcion_invalida: MensajeFlujoSchema
+    },
+    notificacion_viajes: {
+      esperando_opcion_inicial: MensajeFlujoSchema,
+      confirmado: MensajeFlujoSchema,
+      cancelado: MensajeFlujoSchema
+    }
+  },
+  { _id: false }
+);
+
+const VariablesDinamicasSchema = new Schema(
+  {
+    nombre_empresa: { type: String, required: true },
+    nomenclatura_turno: { type: String, required: true },
+    nomenclatura_turnos: { type: String, required: true },
+    nomenclatura_agente: { type: String, required: true },
+    nomenclatura_agentes: { type: String, required: true },
+    zona_horaria: { type: String, required: true },
+    moneda: { type: String, required: true },
+    idioma: { type: String, required: true }
+  },
+  { _id: false }
+);
+
 // Schema para plantillasMeta (Sistema Flexible)
 const PlantillasMetaSchema = new Schema(
   {
@@ -724,6 +846,18 @@ const ConfiguracionModuloSchema = new Schema<IConfiguracionModulo>(
     // ✅ NUEVA ESTRUCTURA: Plantillas de Meta
     plantillasMeta: {
       type: PlantillasMetaSchema,
+      default: undefined
+    },
+    
+    // ✨ NUEVO: Mensajes de flujos configurables
+    mensajesFlujo: {
+      type: MensajesFlujosSchema,
+      default: undefined
+    },
+    
+    // ✨ NUEVO: Variables dinámicas por empresa
+    variablesDinamicas: {
+      type: VariablesDinamicasSchema,
       default: undefined
     },
     

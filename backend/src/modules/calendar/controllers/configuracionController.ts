@@ -350,131 +350,13 @@ async function crearConfiguracionPorDefecto(empresaId: string) {
 }
 
 /**
- * Enviar notificación de prueba
- * ✅ ACTUALIZADO: Usa el nuevo sistema unificado de notificaciones con plantillas de Meta
+ * ⚠️ DEPRECADO: Este endpoint ya no se usa
+ * Usar en su lugar: POST /api/modules/calendar/notificaciones-meta/test
  */
 export const enviarNotificacionPrueba = async (req: Request, res: Response): Promise<void> => {
-  try {
-    const { empresaId, notificacion } = req.body;
-
-    if (!empresaId || !notificacion) {
-      res.status(400).json({
-        success: false,
-        message: 'Faltan datos requeridos: empresaId y notificacion'
-      });
-      return;
-    }
-
-    // Validar que se envió el teléfono
-    if (!notificacion.telefono) {
-      res.status(400).json({
-        success: false,
-        message: 'Falta el teléfono del destinatario en notificacion.telefono'
-      });
-      return;
-    }
-
-    // ✅ Importar el nuevo servicio unificado
-    const { enviarNotificacionPrueba: enviarPruebaMeta } = await import('../../../services/notificacionesMetaService.js');
-    const { normalizarTelefono } = await import('../../../utils/telefonoUtils.js');
-
-    // Normalizar el teléfono recibido
-    const telefonoNormalizado = normalizarTelefono(notificacion.telefono);
-    
-    console.log(`\n🧪 [Prueba] Enviando notificación de confirmación`);
-    console.log(`   📞 Teléfono: ${telefonoNormalizado}`);
-    console.log(`   🏢 Empresa: ${empresaId}`);
-
-    // ✅ Usar el nuevo sistema unificado (siempre es cliente para confirmaciones)
-    await enviarPruebaMeta('cliente', empresaId, telefonoNormalizado);
-
-    // ✅ INICIAR FLUJO DE CONFIRMACIÓN después de enviar la plantilla
-    console.log(`\n🔄 [Prueba] Iniciando flujo de confirmación...`);
-    
-    const { ConversationStateModel } = await import('../../../models/ConversationState.js');
-    const { EmpresaModel } = await import('../../../models/Empresa.js');
-    const { TurnoModel } = await import('../models/Turno.js');
-    
-    // Buscar turnos del cliente para incluir en el flujo
-    const { ContactoEmpresaModel } = await import('../../../models/ContactoEmpresa.js');
-    
-    console.log(`   🔍 Buscando cliente: ${telefonoNormalizado} en empresa ${empresaId}`);
-    const cliente = await ContactoEmpresaModel.findOne({ 
-      telefono: telefonoNormalizado,
-      empresaId 
-    });
-    
-    console.log(`   📋 Cliente encontrado:`, cliente ? `${cliente.nombre} (${cliente._id})` : 'NO ENCONTRADO');
-    
-    if (cliente) {
-      // Buscar turnos pendientes del cliente
-      const ahora = new Date();
-      const mañana = new Date(ahora);
-      mañana.setDate(mañana.getDate() + 2);
-      
-      console.log(`   🔍 Buscando turnos entre ${ahora.toISOString()} y ${mañana.toISOString()}`);
-      
-      const turnos = await TurnoModel.find({
-        empresaId,
-        clienteId: cliente._id,
-        fechaInicio: { $gte: ahora, $lte: mañana },
-        estado: { $in: ['no_confirmado', 'pendiente'] }
-      });
-      
-      console.log(`   📋 Turnos encontrados: ${turnos.length}`);
-      
-      if (turnos.length > 0) {
-        const empresa = await EmpresaModel.findOne({ nombre: empresaId });
-        
-        console.log(`   💾 Guardando estado en ConversationState...`);
-        
-        const estadoGuardado = await ConversationStateModel.findOneAndUpdate(
-          { telefono: telefonoNormalizado, empresaId },
-          {
-            telefono: telefonoNormalizado,
-            empresaId,
-            phoneNumberId: empresa?.phoneNumberId || process.env.META_PHONE_NUMBER_ID,
-            flujo_activo: 'confirmacion_turnos',
-            estado_actual: 'esperando_confirmacion',
-            data: {
-              turnosIds: turnos.map(t => t._id.toString()),
-              clienteId: cliente._id.toString(),
-              intentos: 0
-            },
-            ultima_interaccion: new Date()
-          },
-          { upsert: true, new: true }
-        );
-        
-        console.log(`   ✅ Estado guardado:`, {
-          _id: estadoGuardado._id,
-          flujo_activo: estadoGuardado.flujo_activo,
-          estado_actual: estadoGuardado.estado_actual
-        });
-        
-        console.log(`🔄 Flujo de confirmación iniciado para ${telefonoNormalizado}`);
-      } else {
-        console.log(`   ⚠️ No se encontraron turnos pendientes para iniciar el flujo`);
-      }
-    } else {
-      console.log(`   ⚠️ No se encontró el cliente para iniciar el flujo`);
-    }
-
-    res.json({
-      success: true,
-      message: `✅ Notificación de prueba enviada con plantilla de Meta`,
-      telefono: telefonoNormalizado,
-      tipo: 'confirmacion_turnos',
-      sistema: 'plantillas_meta',
-      flujoIniciado: !!cliente
-    });
-
-  } catch (error: any) {
-    console.error('❌ Error al enviar notificación de prueba:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Error al enviar notificación de prueba',
-      error: error.message
-    });
-  }
+  res.status(410).json({
+    success: false,
+    message: 'Este endpoint está deprecado. Usar: POST /api/modules/calendar/notificaciones-meta/test',
+    endpoint_correcto: '/api/modules/calendar/notificaciones-meta/test'
+  });
 };
