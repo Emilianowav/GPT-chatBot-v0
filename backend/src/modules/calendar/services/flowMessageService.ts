@@ -12,9 +12,9 @@
  * - Enviar mensajes de WhatsApp con botones/opciones
  */
 
-import { ConfiguracionModuloModel } from '../modules/calendar/models/ConfiguracionModulo.js';
-import { enviarMensajeWhatsAppTexto, enviarMensajeWhatsAppBotones } from './notificacionesMetaService.js';
-import { EmpresaModel } from '../models/Empresa.js';
+import { ConfiguracionModuloModel } from '../models/ConfiguracionModulo.js';
+import { enviarMensajeWhatsAppTexto, enviarMensajeWhatsAppBotones } from '../../../services/notificacionesMetaService.js';
+import { EmpresaModel } from '../../../models/Empresa.js';
 
 // ============================================================================
 // TIPOS

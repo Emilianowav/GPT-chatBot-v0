@@ -1,6 +1,6 @@
 // 🔔 Flujo de Confirmación de Turnos (Configurable)
 import type { Flow, FlowContext, FlowResult } from './types.js';
-import { flowMessageService } from '../services/flowMessageService.js';
+import { flowMessageService } from '../modules/calendar/services/flowMessageService.js';
 import { enviarMensajeWhatsAppTexto } from '../services/notificacionesMetaService.js';
 import { TurnoModel } from '../modules/calendar/models/Turno.js';
 import { ContactoEmpresaModel } from '../models/ContactoEmpresa.js';

@@ -16,6 +16,7 @@ import clienteRoutes from "./routes/clienteRoutes.js";
 import calendarRoutes from "./modules/calendar/routes/calendarRoutes.js";
 import flujosRoutes from "./modules/calendar/routes/flujos.js";
 import notificacionesMetaRoutes from "./modules/calendar/routes/notificacionesMeta.js";
+import mensajesFlujoRoutes from "./modules/calendar/routes/mensajesFlujoRoutes.js";
 import usuarioEmpresaRoutes from "./routes/usuarioEmpresaRoutes.js";
 import flowRoutes from "./routes/flowRoutes.js";
 import { errorHandler } from "./middlewares/errorHandler.js";
@@ -94,6 +95,7 @@ app.use("/api/openai", openaiRoutes);
 app.use("/api/whatsapp", whatsappRoutes);
 // ⚠️ IMPORTANTE: Rutas específicas ANTES de rutas generales
 app.use("/api/modules/calendar/notificaciones-meta", notificacionesMetaRoutes);
+app.use("/api/modules/calendar/mensajes-flujo", mensajesFlujoRoutes);
 app.use("/api/modules/calendar", calendarRoutes);
 app.use("/api/flujos", flujosRoutes);
 app.use("/api/flows", flowRoutes);
