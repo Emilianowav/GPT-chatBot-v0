@@ -3,10 +3,13 @@ import mongoose, { Schema, Document } from 'mongoose';
 
 export type IntegrationProvider = 
   | 'google_calendar' 
+  | 'google_sheets'
   | 'google_drive' 
   | 'outlook_calendar'
   | 'zoom' 
   | 'slack'
+  | 'woocommerce'
+  | 'zapier'
   | 'microsoft_teams';
 
 export type IntegrationStatus = 'active' | 'expired' | 'revoked' | 'error';
@@ -28,8 +31,29 @@ export interface GoogleCalendarConfig {
   default_calendar_id?: string; // Calendario por defecto
 }
 
+export interface WooCommerceConfig {
+  store_url: string;         // URL de la tienda
+  webhook_secret?: string;   // Secret para validar webhooks
+  sync_products?: boolean;   // Sincronizar productos
+  sync_orders?: boolean;     // Sincronizar órdenes
+  sync_customers?: boolean;  // Sincronizar clientes
+  order_statuses?: string[]; // Estados de órdenes a sincronizar
+  sync_interval?: number;    // Minutos entre sincronizaciones
+  auto_sync?: boolean;       // Sincronización automática
+}
+
+export interface GoogleSheetsConfig {
+  spreadsheet_ids?: string[]; // IDs de hojas a las que tiene acceso
+  default_spreadsheet_id?: string; // Hoja por defecto
+  auto_sync?: boolean;        // Sincronización automática
+  sync_interval?: number;     // Minutos entre sincronizaciones
+  read_only?: boolean;        // Solo lectura
+}
+
 export interface IntegrationConfig {
   google_calendar?: GoogleCalendarConfig;
+  google_sheets?: GoogleSheetsConfig;
+  woocommerce?: WooCommerceConfig;
   // Futuros providers aquí
   [key: string]: any;
 }
@@ -107,7 +131,7 @@ const MarketplaceIntegrationSchema = new Schema<IMarketplaceIntegration>(
     provider: {
       type: String,
       required: true,
-      enum: ['google_calendar', 'google_drive', 'outlook_calendar', 'zoom', 'slack', 'microsoft_teams'],
+      enum: ['google_calendar', 'google_sheets', 'google_drive', 'outlook_calendar', 'zoom', 'slack', 'woocommerce', 'zapier', 'microsoft_teams'],
       index: true
     },
     provider_name: {

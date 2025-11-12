@@ -2,6 +2,8 @@
 import { Request, Response } from 'express';
 import { MarketplaceIntegrationModel } from '../models/MarketplaceIntegration.js';
 import * as googleCalendarService from '../services/googleCalendarService.js';
+import * as googleSheetsService from '../services/googleSheetsService.js';
+import * as woocommerceService from '../services/woocommerceService.js';
 
 /**
  * Lista todas las integraciones disponibles en el marketplace
@@ -49,6 +51,36 @@ export async function listAvailableIntegrations(req: Request, res: Response) {
         category: 'communication',
         features: ['Próximamente'],
         status: 'coming_soon'
+      },
+      {
+        id: 'woocommerce',
+        name: 'WooCommerce',
+        description: 'Gestiona productos, órdenes y clientes de tu tienda online',
+        icon: '🛒',
+        category: 'ecommerce',
+        features: [
+          'Sincronización de productos',
+          'Gestión de órdenes en tiempo real',
+          'Gestión de clientes',
+          'Reportes de ventas',
+          'Actualización de inventario'
+        ],
+        status: 'available'
+      },
+      {
+        id: 'google_sheets',
+        name: 'Google Sheets',
+        description: 'Lee y escribe datos en hojas de cálculo de Google',
+        icon: '📊',
+        category: 'productivity',
+        features: [
+          'Lectura y escritura de datos',
+          'Creación de hojas de cálculo',
+          'Gestión de pestañas',
+          'Actualización en tiempo real',
+          'Integración con Drive'
+        ],
+        status: 'available'
       }
     ];
 
@@ -498,6 +530,939 @@ export async function deleteGoogleCalendarEvent(req: Request, res: Response) {
     res.status(500).json({
       success: false,
       message: error.message || 'Error al eliminar evento'
+    });
+  }
+}
+
+// ==================== WOOCOMMERCE ====================
+
+/**
+ * Conecta una tienda de WooCommerce
+ */
+export async function connectWooCommerce(req: Request, res: Response) {
+  try {
+    const { empresaId } = req.params;
+    const { storeUrl, consumerKey, consumerSecret } = req.body;
+    const usuarioEmpresaId = (req as any).user?.id || (req as any).user?._id;
+
+    if (!usuarioEmpresaId) {
+      return res.status(401).json({
+        success: false,
+        message: 'Usuario no autenticado'
+      });
+    }
+
+    if (!storeUrl || !consumerKey || !consumerSecret) {
+      return res.status(400).json({
+        success: false,
+        message: 'Faltan datos requeridos: storeUrl, consumerKey, consumerSecret'
+      });
+    }
+
+    // Guardar integración
+    const integration = await woocommerceService.saveWooCommerceIntegration(
+      empresaId,
+      usuarioEmpresaId.toString(),
+      storeUrl,
+      consumerKey,
+      consumerSecret
+    );
+
+    // Verificar conexión
+    const isConnected = await woocommerceService.testConnection(integration);
+
+    if (!isConnected) {
+      return res.status(400).json({
+        success: false,
+        message: 'No se pudo conectar con la tienda. Verifica las credenciales.'
+      });
+    }
+
+    res.json({
+      success: true,
+      message: 'WooCommerce conectado exitosamente',
+      integration: {
+        id: integration._id,
+        provider: integration.provider,
+        connected_account: integration.connected_account,
+        status: integration.status
+      }
+    });
+  } catch (error: any) {
+    console.error('❌ Error conectando WooCommerce:', error);
+    res.status(500).json({
+      success: false,
+      message: error.message || 'Error al conectar con WooCommerce'
+    });
+  }
+}
+
+/**
+ * Lista productos de WooCommerce
+ */
+export async function listWooCommerceProducts(req: Request, res: Response) {
+  try {
+    const { empresaId } = req.params;
+    const { page, per_page, search, category, status } = req.query;
+
+    const integration = await MarketplaceIntegrationModel.findOne({
+      empresaId,
+      provider: 'woocommerce',
+      status: 'active'
+    });
+
+    if (!integration) {
+      return res.status(404).json({
+        success: false,
+        message: 'No hay integración activa de WooCommerce'
+      });
+    }
+
+    const products = await woocommerceService.listProducts(integration, {
+      page,
+      per_page,
+      search,
+      category,
+      status
+    });
+
+    res.json({
+      success: true,
+      products
+    });
+  } catch (error: any) {
+    console.error('❌ Error listando productos:', error);
+    res.status(500).json({
+      success: false,
+      message: error.message || 'Error al listar productos'
+    });
+  }
+}
+
+/**
+ * Obtiene un producto específico
+ */
+export async function getWooCommerceProduct(req: Request, res: Response) {
+  try {
+    const { empresaId, productId } = req.params;
+
+    const integration = await MarketplaceIntegrationModel.findOne({
+      empresaId,
+      provider: 'woocommerce',
+      status: 'active'
+    });
+
+    if (!integration) {
+      return res.status(404).json({
+        success: false,
+        message: 'No hay integración activa de WooCommerce'
+      });
+    }
+
+    const product = await woocommerceService.getProduct(integration, productId);
+
+    res.json({
+      success: true,
+      product
+    });
+  } catch (error: any) {
+    console.error('❌ Error obteniendo producto:', error);
+    res.status(500).json({
+      success: false,
+      message: error.message || 'Error al obtener producto'
+    });
+  }
+}
+
+/**
+ * Crea un producto en WooCommerce
+ */
+export async function createWooCommerceProduct(req: Request, res: Response) {
+  try {
+    const { empresaId } = req.params;
+    const productData = req.body;
+
+    const integration = await MarketplaceIntegrationModel.findOne({
+      empresaId,
+      provider: 'woocommerce',
+      status: 'active'
+    });
+
+    if (!integration) {
+      return res.status(404).json({
+        success: false,
+        message: 'No hay integración activa de WooCommerce'
+      });
+    }
+
+    const product = await woocommerceService.createProduct(integration, productData);
+
+    res.json({
+      success: true,
+      product,
+      message: 'Producto creado exitosamente'
+    });
+  } catch (error: any) {
+    console.error('❌ Error creando producto:', error);
+    res.status(500).json({
+      success: false,
+      message: error.message || 'Error al crear producto'
+    });
+  }
+}
+
+/**
+ * Actualiza un producto en WooCommerce
+ */
+export async function updateWooCommerceProduct(req: Request, res: Response) {
+  try {
+    const { empresaId, productId } = req.params;
+    const productData = req.body;
+
+    const integration = await MarketplaceIntegrationModel.findOne({
+      empresaId,
+      provider: 'woocommerce',
+      status: 'active'
+    });
+
+    if (!integration) {
+      return res.status(404).json({
+        success: false,
+        message: 'No hay integración activa de WooCommerce'
+      });
+    }
+
+    const product = await woocommerceService.updateProduct(integration, productId, productData);
+
+    res.json({
+      success: true,
+      product,
+      message: 'Producto actualizado exitosamente'
+    });
+  } catch (error: any) {
+    console.error('❌ Error actualizando producto:', error);
+    res.status(500).json({
+      success: false,
+      message: error.message || 'Error al actualizar producto'
+    });
+  }
+}
+
+/**
+ * Elimina un producto de WooCommerce
+ */
+export async function deleteWooCommerceProduct(req: Request, res: Response) {
+  try {
+    const { empresaId, productId } = req.params;
+
+    const integration = await MarketplaceIntegrationModel.findOne({
+      empresaId,
+      provider: 'woocommerce',
+      status: 'active'
+    });
+
+    if (!integration) {
+      return res.status(404).json({
+        success: false,
+        message: 'No hay integración activa de WooCommerce'
+      });
+    }
+
+    await woocommerceService.deleteProduct(integration, productId);
+
+    res.json({
+      success: true,
+      message: 'Producto eliminado exitosamente'
+    });
+  } catch (error: any) {
+    console.error('❌ Error eliminando producto:', error);
+    res.status(500).json({
+      success: false,
+      message: error.message || 'Error al eliminar producto'
+    });
+  }
+}
+
+/**
+ * Lista órdenes de WooCommerce
+ */
+export async function listWooCommerceOrders(req: Request, res: Response) {
+  try {
+    const { empresaId } = req.params;
+    const { page, per_page, status, after, before } = req.query;
+
+    const integration = await MarketplaceIntegrationModel.findOne({
+      empresaId,
+      provider: 'woocommerce',
+      status: 'active'
+    });
+
+    if (!integration) {
+      return res.status(404).json({
+        success: false,
+        message: 'No hay integración activa de WooCommerce'
+      });
+    }
+
+    const orders = await woocommerceService.listOrders(integration, {
+      page,
+      per_page,
+      status,
+      after,
+      before
+    });
+
+    res.json({
+      success: true,
+      orders
+    });
+  } catch (error: any) {
+    console.error('❌ Error listando órdenes:', error);
+    res.status(500).json({
+      success: false,
+      message: error.message || 'Error al listar órdenes'
+    });
+  }
+}
+
+/**
+ * Obtiene una orden específica
+ */
+export async function getWooCommerceOrder(req: Request, res: Response) {
+  try {
+    const { empresaId, orderId } = req.params;
+
+    const integration = await MarketplaceIntegrationModel.findOne({
+      empresaId,
+      provider: 'woocommerce',
+      status: 'active'
+    });
+
+    if (!integration) {
+      return res.status(404).json({
+        success: false,
+        message: 'No hay integración activa de WooCommerce'
+      });
+    }
+
+    const order = await woocommerceService.getOrder(integration, orderId);
+
+    res.json({
+      success: true,
+      order
+    });
+  } catch (error: any) {
+    console.error('❌ Error obteniendo orden:', error);
+    res.status(500).json({
+      success: false,
+      message: error.message || 'Error al obtener orden'
+    });
+  }
+}
+
+/**
+ * Actualiza una orden en WooCommerce
+ */
+export async function updateWooCommerceOrder(req: Request, res: Response) {
+  try {
+    const { empresaId, orderId } = req.params;
+    const orderData = req.body;
+
+    const integration = await MarketplaceIntegrationModel.findOne({
+      empresaId,
+      provider: 'woocommerce',
+      status: 'active'
+    });
+
+    if (!integration) {
+      return res.status(404).json({
+        success: false,
+        message: 'No hay integración activa de WooCommerce'
+      });
+    }
+
+    const order = await woocommerceService.updateOrder(integration, orderId, orderData);
+
+    res.json({
+      success: true,
+      order,
+      message: 'Orden actualizada exitosamente'
+    });
+  } catch (error: any) {
+    console.error('❌ Error actualizando orden:', error);
+    res.status(500).json({
+      success: false,
+      message: error.message || 'Error al actualizar orden'
+    });
+  }
+}
+
+/**
+ * Lista clientes de WooCommerce
+ */
+export async function listWooCommerceCustomers(req: Request, res: Response) {
+  try {
+    const { empresaId } = req.params;
+    const { page, per_page, search, email } = req.query;
+
+    const integration = await MarketplaceIntegrationModel.findOne({
+      empresaId,
+      provider: 'woocommerce',
+      status: 'active'
+    });
+
+    if (!integration) {
+      return res.status(404).json({
+        success: false,
+        message: 'No hay integración activa de WooCommerce'
+      });
+    }
+
+    const customers = await woocommerceService.listCustomers(integration, {
+      page,
+      per_page,
+      search,
+      email
+    });
+
+    res.json({
+      success: true,
+      customers
+    });
+  } catch (error: any) {
+    console.error('❌ Error listando clientes:', error);
+    res.status(500).json({
+      success: false,
+      message: error.message || 'Error al listar clientes'
+    });
+  }
+}
+
+/**
+ * Lista categorías de productos
+ */
+export async function listWooCommerceCategories(req: Request, res: Response) {
+  try {
+    const { empresaId } = req.params;
+
+    const integration = await MarketplaceIntegrationModel.findOne({
+      empresaId,
+      provider: 'woocommerce',
+      status: 'active'
+    });
+
+    if (!integration) {
+      return res.status(404).json({
+        success: false,
+        message: 'No hay integración activa de WooCommerce'
+      });
+    }
+
+    const categories = await woocommerceService.listCategories(integration, req.query);
+
+    res.json({
+      success: true,
+      categories
+    });
+  } catch (error: any) {
+    console.error('❌ Error listando categorías:', error);
+    res.status(500).json({
+      success: false,
+      message: error.message || 'Error al listar categorías'
+    });
+  }
+}
+
+/**
+ * Obtiene reporte de ventas
+ */
+export async function getWooCommerceSalesReport(req: Request, res: Response) {
+  try {
+    const { empresaId } = req.params;
+    const { period, date_min, date_max } = req.query;
+
+    const integration = await MarketplaceIntegrationModel.findOne({
+      empresaId,
+      provider: 'woocommerce',
+      status: 'active'
+    });
+
+    if (!integration) {
+      return res.status(404).json({
+        success: false,
+        message: 'No hay integración activa de WooCommerce'
+      });
+    }
+
+    const report = await woocommerceService.getSalesReport(integration, {
+      period,
+      date_min,
+      date_max
+    });
+
+    res.json({
+      success: true,
+      report
+    });
+  } catch (error: any) {
+    console.error('❌ Error obteniendo reporte:', error);
+    res.status(500).json({
+      success: false,
+      message: error.message || 'Error al obtener reporte de ventas'
+    });
+  }
+}
+
+// ==================== GOOGLE SHEETS ====================
+
+/**
+ * Inicia la conexión con Google Sheets
+ */
+export async function connectGoogleSheets(req: Request, res: Response) {
+  try {
+    const { empresaId } = req.params;
+    const usuarioEmpresaId = (req as any).user?.id || (req as any).user?._id;
+
+    if (!usuarioEmpresaId) {
+      return res.status(401).json({
+        success: false,
+        message: 'Usuario no autenticado'
+      });
+    }
+
+    // Generar URL de autorización
+    const authUrl = googleSheetsService.getGoogleSheetsAuthUrl(
+      empresaId,
+      usuarioEmpresaId.toString()
+    );
+
+    res.json({
+      success: true,
+      authUrl
+    });
+  } catch (error: any) {
+    console.error('❌ Error iniciando conexión Google Sheets:', error);
+    res.status(500).json({
+      success: false,
+      message: error.message || 'Error al iniciar conexión con Google Sheets'
+    });
+  }
+}
+
+/**
+ * Callback de OAuth de Google Sheets
+ */
+export async function googleSheetsCallback(req: Request, res: Response) {
+  try {
+    const { code, state, error } = req.query;
+
+    if (error) {
+      console.error('❌ Error en OAuth:', error);
+      const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3001';
+      return res.redirect(`${frontendUrl}/marketplace?integration=error&message=${encodeURIComponent(error as string)}`);
+    }
+
+    if (!code || !state) {
+      return res.status(400).json({
+        success: false,
+        message: 'Código o state faltante'
+      });
+    }
+
+    // Decodificar state
+    const { empresaId, usuarioEmpresaId } = JSON.parse(
+      Buffer.from(state as string, 'base64').toString('utf8')
+    );
+
+    // Intercambiar código por tokens
+    const tokens = await googleSheetsService.exchangeCodeForTokens(code as string);
+
+    // Obtener info del usuario
+    const userInfo = await googleSheetsService.getUserInfo(tokens.access_token);
+
+    // Guardar integración
+    await googleSheetsService.saveGoogleSheetsIntegration(
+      empresaId,
+      usuarioEmpresaId,
+      tokens,
+      userInfo
+    );
+
+    // Redirigir al frontend
+    const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3001';
+    res.redirect(`${frontendUrl}/marketplace?integration=success&provider=google_sheets`);
+  } catch (error: any) {
+    console.error('❌ Error en callback de Google Sheets:', error);
+    const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3001';
+    res.redirect(`${frontendUrl}/marketplace?integration=error&message=${encodeURIComponent(error.message)}`);
+  }
+}
+
+/**
+ * Lista las hojas de cálculo del usuario
+ */
+export async function listGoogleSpreadsheets(req: Request, res: Response) {
+  try {
+    const { empresaId } = req.params;
+
+    const integration = await MarketplaceIntegrationModel.findOne({
+      empresaId,
+      provider: 'google_sheets',
+      status: 'active'
+    });
+
+    if (!integration) {
+      return res.status(404).json({
+        success: false,
+        message: 'No hay integración activa de Google Sheets'
+      });
+    }
+
+    const spreadsheets = await googleSheetsService.listSpreadsheets(integration);
+
+    res.json({
+      success: true,
+      spreadsheets
+    });
+  } catch (error: any) {
+    console.error('❌ Error listando spreadsheets:', error);
+    res.status(500).json({
+      success: false,
+      message: error.message || 'Error al listar hojas de cálculo'
+    });
+  }
+}
+
+/**
+ * Obtiene información de una hoja de cálculo
+ */
+export async function getGoogleSpreadsheet(req: Request, res: Response) {
+  try {
+    const { empresaId, spreadsheetId } = req.params;
+
+    const integration = await MarketplaceIntegrationModel.findOne({
+      empresaId,
+      provider: 'google_sheets',
+      status: 'active'
+    });
+
+    if (!integration) {
+      return res.status(404).json({
+        success: false,
+        message: 'No hay integración activa de Google Sheets'
+      });
+    }
+
+    const spreadsheet = await googleSheetsService.getSpreadsheet(integration, spreadsheetId);
+
+    res.json({
+      success: true,
+      spreadsheet
+    });
+  } catch (error: any) {
+    console.error('❌ Error obteniendo spreadsheet:', error);
+    res.status(500).json({
+      success: false,
+      message: error.message || 'Error al obtener hoja de cálculo'
+    });
+  }
+}
+
+/**
+ * Crea una nueva hoja de cálculo
+ */
+export async function createGoogleSpreadsheet(req: Request, res: Response) {
+  try {
+    const { empresaId } = req.params;
+    const { title, sheets } = req.body;
+
+    if (!title) {
+      return res.status(400).json({
+        success: false,
+        message: 'El título es requerido'
+      });
+    }
+
+    const integration = await MarketplaceIntegrationModel.findOne({
+      empresaId,
+      provider: 'google_sheets',
+      status: 'active'
+    });
+
+    if (!integration) {
+      return res.status(404).json({
+        success: false,
+        message: 'No hay integración activa de Google Sheets'
+      });
+    }
+
+    const spreadsheet = await googleSheetsService.createSpreadsheet(integration, title, sheets);
+
+    res.json({
+      success: true,
+      spreadsheet,
+      message: 'Hoja de cálculo creada exitosamente'
+    });
+  } catch (error: any) {
+    console.error('❌ Error creando spreadsheet:', error);
+    res.status(500).json({
+      success: false,
+      message: error.message || 'Error al crear hoja de cálculo'
+    });
+  }
+}
+
+/**
+ * Lee valores de un rango
+ */
+export async function getGoogleSheetValues(req: Request, res: Response) {
+  try {
+    const { empresaId, spreadsheetId } = req.params;
+    const { range } = req.query;
+
+    if (!range) {
+      return res.status(400).json({
+        success: false,
+        message: 'El rango es requerido'
+      });
+    }
+
+    const integration = await MarketplaceIntegrationModel.findOne({
+      empresaId,
+      provider: 'google_sheets',
+      status: 'active'
+    });
+
+    if (!integration) {
+      return res.status(404).json({
+        success: false,
+        message: 'No hay integración activa de Google Sheets'
+      });
+    }
+
+    const values = await googleSheetsService.getValues(integration, spreadsheetId, range as string);
+
+    res.json({
+      success: true,
+      values
+    });
+  } catch (error: any) {
+    console.error('❌ Error leyendo valores:', error);
+    res.status(500).json({
+      success: false,
+      message: error.message || 'Error al leer valores'
+    });
+  }
+}
+
+/**
+ * Actualiza valores en un rango
+ */
+export async function updateGoogleSheetValues(req: Request, res: Response) {
+  try {
+    const { empresaId, spreadsheetId } = req.params;
+    const { range, values } = req.body;
+
+    if (!range || !values) {
+      return res.status(400).json({
+        success: false,
+        message: 'El rango y los valores son requeridos'
+      });
+    }
+
+    const integration = await MarketplaceIntegrationModel.findOne({
+      empresaId,
+      provider: 'google_sheets',
+      status: 'active'
+    });
+
+    if (!integration) {
+      return res.status(404).json({
+        success: false,
+        message: 'No hay integración activa de Google Sheets'
+      });
+    }
+
+    const result = await googleSheetsService.updateValues(integration, spreadsheetId, range, values);
+
+    res.json({
+      success: true,
+      result,
+      message: 'Valores actualizados exitosamente'
+    });
+  } catch (error: any) {
+    console.error('❌ Error actualizando valores:', error);
+    res.status(500).json({
+      success: false,
+      message: error.message || 'Error al actualizar valores'
+    });
+  }
+}
+
+/**
+ * Agrega valores al final de una hoja
+ */
+export async function appendGoogleSheetValues(req: Request, res: Response) {
+  try {
+    const { empresaId, spreadsheetId } = req.params;
+    const { range, values } = req.body;
+
+    if (!range || !values) {
+      return res.status(400).json({
+        success: false,
+        message: 'El rango y los valores son requeridos'
+      });
+    }
+
+    const integration = await MarketplaceIntegrationModel.findOne({
+      empresaId,
+      provider: 'google_sheets',
+      status: 'active'
+    });
+
+    if (!integration) {
+      return res.status(404).json({
+        success: false,
+        message: 'No hay integración activa de Google Sheets'
+      });
+    }
+
+    const result = await googleSheetsService.appendValues(integration, spreadsheetId, range, values);
+
+    res.json({
+      success: true,
+      result,
+      message: 'Valores agregados exitosamente'
+    });
+  } catch (error: any) {
+    console.error('❌ Error agregando valores:', error);
+    res.status(500).json({
+      success: false,
+      message: error.message || 'Error al agregar valores'
+    });
+  }
+}
+
+/**
+ * Limpia valores de un rango
+ */
+export async function clearGoogleSheetValues(req: Request, res: Response) {
+  try {
+    const { empresaId, spreadsheetId } = req.params;
+    const { range } = req.body;
+
+    if (!range) {
+      return res.status(400).json({
+        success: false,
+        message: 'El rango es requerido'
+      });
+    }
+
+    const integration = await MarketplaceIntegrationModel.findOne({
+      empresaId,
+      provider: 'google_sheets',
+      status: 'active'
+    });
+
+    if (!integration) {
+      return res.status(404).json({
+        success: false,
+        message: 'No hay integración activa de Google Sheets'
+      });
+    }
+
+    const result = await googleSheetsService.clearValues(integration, spreadsheetId, range);
+
+    res.json({
+      success: true,
+      result,
+      message: 'Valores limpiados exitosamente'
+    });
+  } catch (error: any) {
+    console.error('❌ Error limpiando valores:', error);
+    res.status(500).json({
+      success: false,
+      message: error.message || 'Error al limpiar valores'
+    });
+  }
+}
+
+/**
+ * Agrega una nueva pestaña a una hoja de cálculo
+ */
+export async function addGoogleSheet(req: Request, res: Response) {
+  try {
+    const { empresaId, spreadsheetId } = req.params;
+    const { sheetTitle } = req.body;
+
+    if (!sheetTitle) {
+      return res.status(400).json({
+        success: false,
+        message: 'El título de la pestaña es requerido'
+      });
+    }
+
+    const integration = await MarketplaceIntegrationModel.findOne({
+      empresaId,
+      provider: 'google_sheets',
+      status: 'active'
+    });
+
+    if (!integration) {
+      return res.status(404).json({
+        success: false,
+        message: 'No hay integración activa de Google Sheets'
+      });
+    }
+
+    const result = await googleSheetsService.addSheet(integration, spreadsheetId, sheetTitle);
+
+    res.json({
+      success: true,
+      result,
+      message: 'Pestaña agregada exitosamente'
+    });
+  } catch (error: any) {
+    console.error('❌ Error agregando pestaña:', error);
+    res.status(500).json({
+      success: false,
+      message: error.message || 'Error al agregar pestaña'
+    });
+  }
+}
+
+/**
+ * Elimina una pestaña de una hoja de cálculo
+ */
+export async function deleteGoogleSheet(req: Request, res: Response) {
+  try {
+    const { empresaId, spreadsheetId, sheetId } = req.params;
+
+    const integration = await MarketplaceIntegrationModel.findOne({
+      empresaId,
+      provider: 'google_sheets',
+      status: 'active'
+    });
+
+    if (!integration) {
+      return res.status(404).json({
+        success: false,
+        message: 'No hay integración activa de Google Sheets'
+      });
+    }
+
+    const result = await googleSheetsService.deleteSheet(integration, spreadsheetId, parseInt(sheetId));
+
+    res.json({
+      success: true,
+      result,
+      message: 'Pestaña eliminada exitosamente'
+    });
+  } catch (error: any) {
+    console.error('❌ Error eliminando pestaña:', error);
+    res.status(500).json({
+      success: false,
+      message: error.message || 'Error al eliminar pestaña'
     });
   }
 }
