@@ -18,6 +18,7 @@ import flujosRoutes from "./modules/calendar/routes/flujos.js";
 import notificacionesMetaRoutes from "./modules/calendar/routes/notificacionesMeta.js";
 import usuarioEmpresaRoutes from "./routes/usuarioEmpresaRoutes.js";
 import flowRoutes from "./routes/flowRoutes.js";
+import marketplaceRoutes from "./routes/marketplaceRoutes.js";
 import { errorHandler } from "./middlewares/errorHandler.js";
 import { connectDB } from "./config/database.js";
 import { loggers } from "./utils/logger.js";
@@ -28,6 +29,7 @@ import {
 } from "./services/metaTokenService.js";
 import { procesarNotificacionesDiariasAgentes, procesarNotificacionesConfirmacion } from "./services/notificacionesMetaService.js";
 import { initializeFlows } from "./flows/index.js";
+import { startMarketplaceSyncJobs } from "./services/marketplaceSyncService.js";
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -92,6 +94,7 @@ app.use("/api/clientes", clienteRoutes);
 app.use("/api/conversaciones", conversacionesRoutes);
 app.use("/api/openai", openaiRoutes);
 app.use("/api/whatsapp", whatsappRoutes);
+app.use("/api/marketplace", marketplaceRoutes);
 // ⚠️ IMPORTANTE: Rutas específicas ANTES de rutas generales
 app.use("/api/modules/calendar/notificaciones-meta", notificacionesMetaRoutes);
 app.use("/api/modules/calendar", calendarRoutes);
@@ -110,6 +113,10 @@ app.use(errorHandler);
     // 1.5. Inicializar sistema de flujos dinámicos
     loggers.flow('Inicializando sistema de flujos...');
     initializeFlows();
+    
+    // 1.6. Inicializar jobs de sincronización de Marketplace
+    loggers.system('Inicializando jobs de Marketplace...');
+    startMarketplaceSyncJobs();
     
     // 2. Token refresh al iniciar
     if (shouldRefreshMetaToken()) {

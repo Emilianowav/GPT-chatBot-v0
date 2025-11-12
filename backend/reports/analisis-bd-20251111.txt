@@ -1,0 +1,372 @@
+🚀 Iniciando análisis de base de datos...
+
+✅ Conectado a MongoDB
+
+📥 Recopilando información de las colecciones...
+
+   ✓ Usuario analizado
+   ✓ Empresa analizado
+   ✓ UsuarioEmpresa analizado
+   ✓ Cliente analizado
+   ✓ AdminUser analizado
+   ✓ ContactoEmpresa analizado
+   ✓ ConversationState analizado
+
+
+═══════════════════════════════════════════════════════════════
+📊 ESTADÍSTICAS DE COLECCIONES
+═══════════════════════════════════════════════════════════════
+
+📦 Colección: Usuario
+   📈 Documentos: 0
+   🔑 Índices: 4
+
+📦 Colección: Empresa
+   📈 Documentos: 0
+   🔑 Índices: 3
+
+📦 Colección: UsuarioEmpresa
+   📈 Documentos: 0
+   🔑 Índices: 7
+
+📦 Colección: Cliente
+   📈 Documentos: 0
+   🔑 Índices: 6
+
+📦 Colección: AdminUser
+   📈 Documentos: 0
+   🔑 Índices: 4
+
+📦 Colección: ContactoEmpresa
+   📈 Documentos: 0
+   🔑 Índices: 8
+
+📦 Colección: ConversationState
+   📈 Documentos: 0
+   🔑 Índices: 5
+
+═══════════════════════════════════════════════════════════════
+🏗️  ESTRUCTURA DE SCHEMAS
+═══════════════════════════════════════════════════════════════
+
+📐 Schema: Usuario
+─────────────────────────────────────────────────────────────
+   numero: String ✓required 🔍indexed
+   nombre: String
+   empresaId: String ✓required 🔍indexed
+   empresaTelefono: String ✓required
+   historial: [String]
+   interacciones: Number
+   ultimaInteraccion: String
+   ultima_actualizacion: String
+   saludado: Boolean
+   despedido: Boolean
+   ultima_saludo: String
+   resumen: String
+   num_mensajes_enviados: Number
+   num_mensajes_recibidos: Number
+   num_media_recibidos: Number
+   mensaje_ids: [String]
+   ultimo_status: String
+   tokens_consumidos: Number
+   contactoInformado: Boolean
+
+📐 Schema: Empresa
+─────────────────────────────────────────────────────────────
+   nombre: String ✓required ⚡unique 🔍indexed
+   categoria: String ✓required
+   telefono: String ✓required ⚡unique 🔍indexed
+   email: Mixed
+   derivarA: Mixed
+   prompt: String ✓required
+   saludos: Mixed
+   catalogoPath: String ✓required
+   linkCatalogo: Mixed
+   modelo: String
+   ubicaciones: Mixed
+   phoneNumberId: Mixed
+   plan: String
+   modulos: Mixed
+   limites: Mixed
+   uso: Mixed
+   facturacion: Mixed
+
+📐 Schema: UsuarioEmpresa
+─────────────────────────────────────────────────────────────
+   username: String ✓required ⚡unique 🔍indexed
+   password: String ✓required
+   email: String ✓required 🔍indexed
+   nombre: String ✓required
+   apellido: String
+   empresaId: String ✓required 🔍indexed
+   rol: String ✓required
+   permisos: [String]
+   activo: Boolean
+   avatar: String
+   telefono: String
+   ultimoAcceso: Date
+   createdBy: String ✓required
+
+📐 Schema: Cliente
+─────────────────────────────────────────────────────────────
+   empresaId: String ✓required 🔍indexed
+   nombre: String ✓required
+   apellido: String ✓required
+   email: String
+   telefono: String ✓required
+   direccion: String
+   ciudad: String
+   provincia: String
+   codigoPostal: String
+   fechaNacimiento: Date
+   dni: String
+   notas: String
+   sector: String
+   origen: String ✓required
+   chatbotUserId: String 🔍indexed
+   profileName: String
+   preferencias: [object Object]
+   activo: Boolean
+   creadoEn: Date
+   actualizadoEn: Date
+
+📐 Schema: AdminUser
+─────────────────────────────────────────────────────────────
+   username: String ✓required ⚡unique 🔍indexed
+   password: String ✓required
+   empresaId: String ✓required 🔍indexed
+   role: String
+   email: String
+   activo: Boolean
+   ultimoAcceso: Date
+
+📐 Schema: ContactoEmpresa
+─────────────────────────────────────────────────────────────
+   empresaId: String ✓required 🔍indexed
+   telefono: String ✓required 🔍indexed
+   nombre: String ✓required
+   apellido: String ✓required
+   email: String
+   profileName: String
+   direccion: String
+   ciudad: String
+   provincia: String
+   codigoPostal: String
+   fechaNacimiento: Date
+   dni: String
+   sector: String
+   notas: String
+   origen: String ✓required
+   preferencias: [object Object]
+   conversaciones: [object Object]
+   metricas: [object Object]
+   activo: Boolean
+
+📐 Schema: ConversationState
+─────────────────────────────────────────────────────────────
+   telefono: String ✓required 🔍indexed
+   empresaId: String ✓required 🔍indexed
+   flujo_activo: String
+   estado_actual: String
+   data: SchemaMixed
+   flujos_pendientes: [String]
+   prioridad: String
+   pausado: Boolean
+   ultima_interaccion: Date
+
+═══════════════════════════════════════════════════════════════
+🔗 RELACIONES DETECTADAS
+═══════════════════════════════════════════════════════════════
+
+📌 Usuario:
+   └─> empresa (via empresaId)
+
+📌 Empresa:
+   └─> phoneNumber (via phoneNumberId)
+
+📌 UsuarioEmpresa:
+   └─> empresa (via empresaId)
+
+📌 Cliente:
+   └─> empresa (via empresaId)
+   └─> chatbotUser (via chatbotUserId)
+
+📌 AdminUser:
+   └─> empresa (via empresaId)
+
+📌 ContactoEmpresa:
+   └─> empresa (via empresaId)
+
+📌 ConversationState:
+   └─> empresa (via empresaId)
+
+═══════════════════════════════════════════════════════════════
+🔍 ÍNDICES DE BASE DE DATOS
+═══════════════════════════════════════════════════════════════
+
+📇 Usuario:
+   • _id_: {}
+   • numero_1: {}
+   • empresaId_1: {}
+   • numero_1_empresaId_1: {}
+
+📇 Empresa:
+   • _id_: {}
+   • nombre_1: {}
+   • telefono_1: {}
+
+📇 UsuarioEmpresa:
+   • _id_: {}
+   • username_1: {}
+   • email_1: {}
+   • empresaId_1: {}
+   • username_1_empresaId_1: {}
+   • email_1_empresaId_1: {}
+   • empresaId_1_activo_1: {}
+
+📇 Cliente:
+   • _id_: {}
+   • empresaId_1: {}
+   • chatbotUserId_1: {}
+   • empresaId_1_telefono_1: {}
+   • empresaId_1_email_1: {}
+   • empresaId_1_activo_1: {}
+
+📇 AdminUser:
+   • _id_: {}
+   • username_1: {}
+   • empresaId_1: {}
+   • username_1_empresaId_1: {}
+
+📇 ContactoEmpresa:
+   • _id_: {}
+   • empresaId_1: {}
+   • telefono_1: {}
+   • empresaId_1_telefono_1: {}
+   • empresaId_1_email_1: {}
+   • empresaId_1_activo_1: {}
+   • empresaId_1_sector_1: {}
+   • metricas.ultimaInteraccion_1: {}
+
+📇 ConversationState:
+   • _id_: {}
+   • telefono_1: {}
+   • empresaId_1: {}
+   • telefono_1_empresaId_1: {}
+   • ultima_interaccion_1: {}
+
+═══════════════════════════════════════════════════════════════
+📊 DIAGRAMA MERMAID (Copiar en mermaid.live)
+═══════════════════════════════════════════════════════════════
+
+```mermaid
+erDiagram
+  Usuario {
+    string numero
+    string nombre
+    string empresaId
+    string empresaTelefono
+    string historial
+    number interacciones
+    string ultimaInteraccion
+    string ultima_actualizacion
+  }
+  Empresa {
+    string nombre
+    string categoria
+    string telefono
+    string email
+    string derivarA
+    string prompt
+    string saludos
+    string catalogoPath
+  }
+  UsuarioEmpresa {
+    string username
+    string password
+    string email
+    string nombre
+    string apellido
+    string empresaId
+    string rol
+    string permisos
+  }
+  Cliente {
+    string empresaId
+    string nombre
+    string apellido
+    string email
+    string telefono
+    string direccion
+    string ciudad
+    string provincia
+  }
+  AdminUser {
+    string username
+    string password
+    string empresaId
+    string role
+    string email
+    boolean activo
+    date ultimoAcceso
+  }
+  ContactoEmpresa {
+    string empresaId
+    string telefono
+    string nombre
+    string apellido
+    string email
+    string profileName
+    string direccion
+    string ciudad
+  }
+  ConversationState {
+    string telefono
+    string empresaId
+    string flujo_activo
+    string estado_actual
+    schemamixed data
+    string flujos_pendientes
+    string prioridad
+    boolean pausado
+  }
+
+  Usuario ||--o{ Eempresa : "empresaId"
+  Empresa ||--o{ PphoneNumber : "phoneNumberId"
+  UsuarioEmpresa ||--o{ Eempresa : "empresaId"
+  Cliente ||--o{ Eempresa : "empresaId"
+  Cliente ||--o{ CchatbotUser : "chatbotUserId"
+  AdminUser ||--o{ Eempresa : "empresaId"
+  ContactoEmpresa ||--o{ Eempresa : "empresaId"
+  ConversationState ||--o{ Eempresa : "empresaId"
+```
+
+═══════════════════════════════════════════════════════════════
+💡 RECOMENDACIONES PARA MARKETPLACE
+═══════════════════════════════════════════════════════════════
+
+📋 Para el módulo de Marketplace, recomiendo:
+
+1️⃣  Crear modelo: MarketplaceIntegration
+   Campos clave:
+   • usuarioEmpresaId: ObjectId (ref: UsuarioEmpresa)
+   • empresaId: string (ref: Empresa.nombre)
+   • provider: string (google_calendar, outlook, etc.)
+   • credentials: { access_token, refresh_token, expires_at }
+   • status: string (active, expired, revoked)
+
+2️⃣  Relaciones identificadas:
+   • Empresa usa: "String" como ID único
+   • UsuarioEmpresa referencia Empresa via: "empresaId"
+
+3️⃣  Consideraciones de seguridad:
+   • Encriptar tokens OAuth en la BD
+   • Almacenar client_id y client_secret en .env
+   • Implementar refresh automático de tokens
+
+═══════════════════════════════════════════════════════════════
+✅ Análisis completado exitosamente
+═══════════════════════════════════════════════════════════════
+
+🔌 Conexión cerrada
+
