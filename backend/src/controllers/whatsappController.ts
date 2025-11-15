@@ -52,6 +52,12 @@ export const recibirMensaje = async (req: Request, res: Response, next: NextFunc
     }
 
     console.log('🏢 Empresa encontrada:', { nombre: empresa.nombre, telefono: empresa.telefono });
+    
+    // Buscar el documento MongoDB de la empresa para obtener el _id
+    const empresaDoc = await EmpresaModel.findOne({ nombre: empresa.nombre });
+    const empresaMongoId = empresaDoc?._id?.toString();
+    
+    console.log('🆔 Empresa MongoDB ID:', empresaMongoId);
 
     // 🆕 SISTEMA UNIFICADO: Buscar o crear contacto (reemplaza usuario + cliente)
     console.log('🔍 [DEBUG] Llamando a buscarOCrearContacto con:', {
@@ -104,7 +110,7 @@ export const recibirMensaje = async (req: Request, res: Response, next: NextFunc
     const routerDecision = await universalRouter.route({
       mensaje,
       telefonoCliente,
-      empresaId: empresa.nombre,
+      empresaId: empresaMongoId || empresa.nombre, // Usar MongoDB ID si está disponible
       currentFlow: undefined // TODO: obtener flujo actual del contexto
     });
     
