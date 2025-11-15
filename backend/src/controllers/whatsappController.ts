@@ -58,6 +58,13 @@ export const recibirMensaje = async (req: Request, res: Response, next: NextFunc
     const empresaMongoId = empresaDoc?._id?.toString();
     
     console.log('🆔 Empresa MongoDB ID:', empresaMongoId);
+    
+    // Validación de seguridad: empresaMongoId debe existir
+    if (!empresaMongoId) {
+      console.error('❌ [SECURITY] No se pudo obtener empresaMongoId para:', empresa.nombre);
+      res.status(500).json({ error: 'Error interno: empresa no encontrada en BD' });
+      return;
+    }
 
     // 🆕 SISTEMA UNIFICADO: Buscar o crear contacto (reemplaza usuario + cliente)
     console.log('🔍 [DEBUG] Llamando a buscarOCrearContacto con:', {

@@ -321,6 +321,13 @@ ApiConfigurationSchema.index({ empresaId: 1, estado: 1 });
 ApiConfigurationSchema.index({ empresaId: 1, nombre: 1 });
 ApiConfigurationSchema.index({ 'endpoints.id': 1 });
 
+// Índice de seguridad para chatbot integration (asegura aislamiento por empresa)
+ApiConfigurationSchema.index({ 
+  empresaId: 1, 
+  'chatbotIntegration.habilitado': 1,
+  'chatbotIntegration.chatbotId': 1
+});
+
 // Método para encontrar endpoint por ID
 ApiConfigurationSchema.methods.findEndpoint = function(endpointId: string) {
   return this.endpoints.find((ep: IEndpoint) => ep.id === endpointId);

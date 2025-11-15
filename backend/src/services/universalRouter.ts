@@ -142,6 +142,17 @@ export class UniversalRouter {
           if (isExactMatch || isStartMatch) {
             console.log(`🎯 Keyword detectada: "${keyword.palabra}" en API: ${api.nombre}`);
             
+            // Log de auditoría de seguridad
+            console.log('🔒 [AUDIT] Keyword match', {
+              empresaId: context.empresaId,
+              chatbotId: chatbot._id.toString(),
+              apiId: (api as any)._id?.toString(),
+              apiNombre: api.nombre,
+              keyword: keyword.palabra,
+              cliente: context.telefonoCliente,
+              timestamp: new Date().toISOString()
+            });
+            
             // Extraer parámetros si está configurado
             const extractedParams = keyword.extraerParametros
               ? await this.extractParameters(context.mensaje, keyword)
