@@ -46,22 +46,40 @@ export function encrypt(text: string): string {
 
 /**
  * Desencripta un texto encriptado con AES-256-CBC
- * @param text Texto encriptado en formato "iv:encrypted"
- * @returns Texto desencriptado
+ * Si el texto no está encriptado (no tiene formato iv:encrypted), lo retorna tal cual
+ * @param text Texto encriptado en formato "iv:encrypted" o texto plano
+ * @returns Texto desencriptado o texto plano
  */
 export function decrypt(text: string): string {
   if (!text) return text;
   
   try {
+    // Verificar si ENCRYPTION_KEY está configurada
+    if (!process.env.ENCRYPTION_KEY) {
+      console.warn('⚠️ ENCRYPTION_KEY no configurada, usando texto plano');
+      return text;
+    }
+    
     const key = getEncryptionKey();
     const parts = text.split(':');
     
+    // Si no tiene el formato iv:encrypted, asumir que es texto plano
     if (parts.length !== 2) {
-      throw new Error('Formato de texto encriptado inválido');
+      console.warn('⚠️ Texto no encriptado detectado, usando como texto plano');
+      return text;
     }
     
-    const iv = Buffer.from(parts[0], 'hex');
-    const encryptedText = parts[1];
+    // Verificar que ambas partes sean hexadecimales válidos
+    const ivHex = parts[0];
+    const encryptedHex = parts[1];
+    
+    if (!/^[0-9a-f]+$/i.test(ivHex) || !/^[0-9a-f]+$/i.test(encryptedHex)) {
+      console.warn('⚠️ Formato no válido para desencriptación, usando como texto plano');
+      return text;
+    }
+    
+    const iv = Buffer.from(ivHex, 'hex');
+    const encryptedText = encryptedHex;
     
     const decipher = crypto.createDecipheriv(ALGORITHM, key, iv);
     
@@ -71,7 +89,9 @@ export function decrypt(text: string): string {
     return decrypted;
   } catch (error: any) {
     console.error('Error al desencriptar:', error.message);
-    throw new Error('Error al desencriptar datos sensibles');
+    console.warn('⚠️ Fallback: usando texto como plano');
+    // Fallback: si falla la desencriptación, retornar el texto original
+    return text;
   }
 }
 
