@@ -16,8 +16,10 @@ import clienteRoutes from "./routes/clienteRoutes.js";
 import calendarRoutes from "./modules/calendar/routes/calendarRoutes.js";
 import flujosRoutes from "./modules/calendar/routes/flujos.js";
 import notificacionesMetaRoutes from "./modules/calendar/routes/notificacionesMeta.js";
+import integrationsRoutes from "./modules/integrations/routes/index.js";
 import usuarioEmpresaRoutes from "./routes/usuarioEmpresaRoutes.js";
 import flowRoutes from "./routes/flowRoutes.js";
+import chatbotRoutes from "./routes/chatbotRoutes.js";
 import { errorHandler } from "./middlewares/errorHandler.js";
 import { connectDB } from "./config/database.js";
 import { loggers } from "./utils/logger.js";
@@ -84,6 +86,15 @@ app.use((req, res, next) => {
   next();
 });
 
+// Middleware de logging para debug
+app.use((req, res, next) => {
+  if (req.path.includes('/integrations')) {
+    console.log(`🔵 [REQUEST] ${req.method} ${req.path}`);
+    console.log(`🔵 [REQUEST] Full URL: ${req.originalUrl}`);
+  }
+  next();
+});
+
 // Rutas
 app.use("/api/auth", authRoutes);
 app.use("/api/empresas", empresaRoutes);
@@ -95,8 +106,11 @@ app.use("/api/whatsapp", whatsappRoutes);
 // ⚠️ IMPORTANTE: Rutas específicas ANTES de rutas generales
 app.use("/api/modules/calendar/notificaciones-meta", notificacionesMetaRoutes);
 app.use("/api/modules/calendar", calendarRoutes);
+console.log('🟢 [APP] Montando rutas de integraciones en /api/modules/integrations');
+app.use("/api/modules/integrations", integrationsRoutes);
 app.use("/api/flujos", flujosRoutes);
 app.use("/api/flows", flowRoutes);
+app.use("/api/chatbots", chatbotRoutes);
 app.use("/api", statusRoutes);
 app.use(errorHandler);
 

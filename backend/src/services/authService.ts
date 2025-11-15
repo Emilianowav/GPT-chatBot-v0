@@ -21,6 +21,7 @@ export interface LoginResponse {
     id: string;
     username: string;
     empresaId: string;
+    empresaMongoId?: string; // ID de MongoDB de la empresa
     empresaNombre: string;
     role: string;
     email?: string;
@@ -92,17 +93,17 @@ export async function login(username: string, password: string): Promise<LoginRe
     user.ultimoAcceso = new Date();
     await user.save();
 
-    // Generar token
+    // Generar token (mantener nombre en empresaId para compatibilidad)
     const payload: TokenPayload = {
       userId: user._id.toString(),
       username: user.username,
-      empresaId: user.empresaId,
+      empresaId: user.empresaId, // Mantener nombre para compatibilidad con sistema existente
       role: (user as any).rol || (user as any).role // Compatibilidad con ambos modelos
     };
 
     const token = jwt.sign(payload, JWT_SECRET, { expiresIn: JWT_EXPIRES_IN });
 
-    console.log('✅ Login exitoso:', { username, empresaId: user.empresaId });
+    console.log('✅ Login exitoso:', { username, empresaId: user.empresaId, empresaMongoId: empresa._id.toString(), empresaNombre: empresa.nombre });
 
     return {
       success: true,
@@ -110,7 +111,8 @@ export async function login(username: string, password: string): Promise<LoginRe
       user: {
         id: user._id.toString(),
         username: user.username,
-        empresaId: user.empresaId,
+        empresaId: user.empresaId, // Nombre de la empresa (para compatibilidad)
+        empresaMongoId: empresa._id.toString(), // ✅ ID de MongoDB (para módulo de integraciones)
         empresaNombre: empresa.nombre,
         role: (user as any).rol || (user as any).role,
         email: user.email
