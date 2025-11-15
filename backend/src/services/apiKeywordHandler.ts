@@ -180,8 +180,40 @@ export class ApiKeywordHandler {
         return '```json\n' + JSON.stringify(data, null, 2) + '\n```';
       }
       
+      console.log('🎨 Formateando respuesta con Mustache');
+      console.log('📊 Data recibida:', JSON.stringify(data, null, 2));
+      console.log('📝 Template:', template.substring(0, 100) + '...');
+      
+      // Normalizar datos: si viene en formato {success, data, count}, extraer data
+      let templateData = data;
+      
+      if (data && typeof data === 'object') {
+        // Si tiene estructura {success: true, data: [...]}
+        if (data.success && data.data) {
+          console.log('🔄 Detectada estructura con wrapper, extrayendo data...');
+          templateData = data.data;
+        }
+        
+        // Si es un array y el template usa una variable específica (ej: {{#sucursales}})
+        if (Array.isArray(templateData)) {
+          // Detectar la variable del template (primera palabra después de {{#)
+          const match = template.match(/\{\{#(\w+)\}\}/);
+          if (match && match[1]) {
+            const arrayName = match[1];
+            console.log(`🔄 Array detectado, mapeando a variable: ${arrayName}`);
+            templateData = { [arrayName]: templateData };
+          }
+        }
+      }
+      
+      console.log('📊 Data final para template:', JSON.stringify(templateData, null, 2));
+      
       // Renderizar con Mustache
-      const rendered = Mustache.render(template, data);
+      const rendered = Mustache.render(template, templateData);
+      
+      console.log('✅ Template renderizado, longitud:', rendered.length);
+      console.log('📄 Primeros 200 chars:', rendered.substring(0, 200));
+      
       return rendered;
       
     } catch (error) {
