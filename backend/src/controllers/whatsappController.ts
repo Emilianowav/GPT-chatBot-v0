@@ -10,6 +10,8 @@ import { buscarOCrearContacto, limpiarHistorial, incrementarMetricas } from '../
 import { flowManager } from '../flows/index.js';
 import type { FlowContext } from '../flows/types.js';
 import { EmpresaModel } from '../models/Empresa.js';
+import { universalRouter } from '../services/universalRouter.js';
+import { apiKeywordHandler } from '../services/apiKeywordHandler.js';
 
 import type { EmpresaConfig } from '../types/Types.js';
 
@@ -50,6 +52,12 @@ export const recibirMensaje = async (req: Request, res: Response, next: NextFunc
     }
 
     console.log('🏢 Empresa encontrada:', { nombre: empresa.nombre, telefono: empresa.telefono });
+    
+    // Buscar el documento MongoDB de la empresa para obtener el _id
+    const empresaDoc = await EmpresaModel.findOne({ nombre: empresa.nombre });
+    const empresaMongoId = empresaDoc?._id?.toString();
+    
+    console.log('🆔 Empresa MongoDB ID:', empresaMongoId);
 
     // 🆕 SISTEMA UNIFICADO: Buscar o crear contacto (reemplaza usuario + cliente)
     console.log('🔍 [DEBUG] Llamando a buscarOCrearContacto con:', {
@@ -96,6 +104,52 @@ export const recibirMensaje = async (req: Request, res: Response, next: NextFunc
       return;
     }
 
+    // 🎯 ROUTER UNIVERSAL: Evaluar triggers ANTES de decidir flujo
+    console.log('\n🎯 ========== ROUTER UNIVERSAL ==========');
+    
+    const routerDecision = await universalRouter.route({
+      mensaje,
+      telefonoCliente,
+      empresaId: empresaMongoId || empresa.nombre, // Usar MongoDB ID si está disponible
+      currentFlow: undefined // TODO: obtener flujo actual del contexto
+    });
+    
+    console.log('📍 Decisión del router:', routerDecision.action);
+    
+    // Si se detectó una keyword de API, ejecutarla y responder
+    if (routerDecision.action === 'execute_api' && routerDecision.metadata) {
+      console.log('🚀 Ejecutando API keyword...');
+      
+      const apiResult = await apiKeywordHandler.execute(routerDecision.metadata);
+      
+      if (apiResult.success) {
+        console.log('✅ API ejecutada exitosamente');
+        
+        // Guardar en historial
+        const { actualizarHistorialConversacion, incrementarMetricas } = await import('../services/contactoService.js');
+        await actualizarHistorialConversacion(contacto._id.toString(), mensaje);
+        await actualizarHistorialConversacion(contacto._id.toString(), apiResult.response);
+        
+        // Actualizar métricas
+        await incrementarMetricas(contacto._id.toString(), {
+          mensajesRecibidos: 1,
+          mensajesEnviados: 1,
+          interacciones: 1
+        });
+        
+        // Enviar respuesta
+        await enviarMensajeWhatsAppTexto(telefonoCliente, apiResult.response, phoneNumberId);
+        
+        console.log(`⏱️ Tiempo de ejecución: ${apiResult.metadata?.executionTime}ms`);
+        
+        res.sendStatus(200);
+        return;
+      } else {
+        console.error('❌ Error ejecutando API:', apiResult.error);
+        // Continuar con flujo conversacional como fallback
+      }
+    }
+    
     // 🔄 DECISIÓN: ¿Bot de pasos o GPT conversacional?
     console.log('\n🔄 ========== DECIDIENDO TIPO DE BOT ==========');
     
