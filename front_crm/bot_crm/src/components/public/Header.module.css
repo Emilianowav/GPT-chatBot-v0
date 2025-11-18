@@ -1,0 +1,213 @@
+/* GALXE NAVBAR - NOTCH STYLE: Isla flotante centrada */
+
+.header {
+  position: fixed;
+  top: 16px;
+  left: 0;
+  right: 0;
+  z-index: 1000;
+  height: auto;
+  background: transparent;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.container {
+  background: #000000;
+  backdrop-filter: blur(20px);
+  border: 1px solid var(--line-base);
+  border-radius: 100px;
+  padding: 12px 32px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 48px;
+}
+
+.logo {
+  text-decoration: none;
+  display: flex;
+  align-items: center;
+}
+
+/* Logo SVG */
+.logoSvg {
+  height: 24px;
+  width: auto;
+  display: block;
+}
+
+/* Typography: Manrope Regular (backup) */
+.logoText {
+  font-size: 18px;
+  font-weight: 400;
+  color: var(--text-primary);
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+.nav {
+  display: flex;
+  align-items: center;
+  gap: 32px;
+}
+
+/* Dropdown */
+.dropdown {
+  position: relative;
+  display: inline-block;
+}
+
+.dropdown .navLink {
+  cursor: pointer;
+  background: transparent;
+  border: none;
+  font-family: inherit;
+  padding: 0;
+  vertical-align: baseline;
+}
+
+.dropdownContent {
+  display: none;
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #000000;
+  border: 1px solid var(--line-base);
+  border-radius: 12px;
+  padding: 8px 0;
+  min-width: 220px;
+  z-index: 10000;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+  margin-top: 4px;
+}
+
+.dropdown:hover .dropdownContent,
+.dropdownContent:hover {
+  display: block;
+}
+
+/* Puente invisible para mantener el hover */
+.dropdown::after {
+  content: '';
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  height: 16px;
+  pointer-events: none;
+}
+
+.dropdownLink {
+  display: block;
+  padding: 12px 24px;
+  color: var(--text-secondary);
+  text-decoration: none;
+  font-size: 14px;
+  font-weight: 400;
+  letter-spacing: 0;
+  transition: all 300ms cubic-bezier(0.4, 0, 0.2, 1);
+  cursor: pointer;
+  pointer-events: auto;
+  position: relative;
+  z-index: 10001;
+}
+
+.dropdownLink:hover {
+  color: var(--text-primary);
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.dropdownLink:active {
+  color: var(--gradient-cyan);
+}
+
+/* Navigation Links: Manrope Regular */
+.navLink {
+  color: var(--text-secondary);
+  text-decoration: none;
+  font-size: 14px;
+  font-weight: 400;
+  letter-spacing: 0;
+  text-transform: none;
+  transition: color 300ms cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+}
+
+/* Active Link: 1px neon gradient underline, 6px offset */
+.navLink::after {
+  content: '';
+  position: absolute;
+  bottom: -6px;
+  left: 0;
+  width: 0;
+  height: 1px;
+  background: linear-gradient(90deg, var(--line-neon-start) 0%, var(--line-neon-end) 100%);
+  transition: width 300ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.navLink:hover {
+  color: var(--text-primary);
+}
+
+.navLink:hover::after {
+  width: 100%;
+}
+
+/* CTA Button: outline white, Manrope Regular */
+.ctaButton {
+  padding: 10px 24px;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 100px;
+  color: var(--text-primary);
+  text-decoration: none;
+  font-size: 14px;
+  font-weight: 400;
+  letter-spacing: 0;
+  text-transform: none;
+  transition: all 300ms cubic-bezier(0.4, 0, 0.2, 1);
+  background: transparent;
+  overflow: hidden;
+}
+
+/* Hover: background blanco, texto negro */
+.ctaButton:hover {
+  background: #FFFFFF;
+  color: #000000;
+}
+
+@media (max-width: 1024px) {
+  .container {
+    padding: 12px 24px;
+    gap: 32px;
+  }
+  
+  .nav {
+    gap: 24px;
+  }
+  
+  .navLink {
+    font-size: 13px;
+  }
+}
+
+@media (max-width: 768px) {
+  .header {
+    top: 12px;
+  }
+  
+  .container {
+    padding: 10px 20px;
+    gap: 20px;
+  }
+  
+  .logoText {
+    font-size: 16px;
+  }
+  
+  .nav {
+    display: none;
+  }
+}

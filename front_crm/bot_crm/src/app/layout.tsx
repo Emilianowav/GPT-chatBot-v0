@@ -1,22 +1,19 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Manrope } from "next/font/google";
 import "./globals.css";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { ThemeProvider } from "@/contexts/ThemeContext";
+import GradientAdjuster from "@/components/GradientAdjuster";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
+const manrope = Manrope({
   subsets: ["latin"],
-});
-
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
+  weight: ["400", "700"],
+  variable: "--font-manrope",
 });
 
 export const metadata: Metadata = {
-  title: "Momento CRM - Sistema de Gestión",
-  description: "CRM para gestión de chatbots y clientes",
+  title: "Momento IA - Automatización inteligente para tu negocio",
+  description: "Chatbots, dashboards y desarrollos a medida. Automatizá tu negocio con IA.",
 };
 
 export default function RootLayout({
@@ -26,7 +23,8 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="es">
-      <body className={`${geistSans.variable} ${geistMono.variable}`}>
+      <body className={manrope.variable}>
+        <GradientAdjuster />
         <ThemeProvider>
           <AuthProvider>
             {children}
