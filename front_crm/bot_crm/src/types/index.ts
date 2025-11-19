@@ -38,7 +38,8 @@ export interface Estadisticas {
 }
 
 export interface EmpresaAuth {
-  empresaId: string;
+  empresaId: string; // Nombre de la empresa (para compatibilidad)
+  empresaMongoId?: string; // ID de MongoDB (para APIs)
   empresaNombre: string;
   token: string;
   role?: string;

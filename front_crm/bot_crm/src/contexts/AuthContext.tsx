@@ -23,12 +23,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     // Verificar si hay sesión guardada
     const token = localStorage.getItem('auth_token');
     const empresaId = localStorage.getItem('empresa_id');
+    const empresaMongoId = localStorage.getItem('empresa_mongo_id');
     const empresaNombre = localStorage.getItem('empresa_nombre');
     const role = localStorage.getItem('user_role');
     const username = localStorage.getItem('username');
 
     if (token && empresaId && empresaNombre) {
-      setEmpresa({ empresaId, empresaNombre, token, role: role || undefined, username: username || undefined });
+      setEmpresa({ 
+        empresaId, 
+        empresaMongoId: empresaMongoId || undefined,
+        empresaNombre, 
+        token, 
+        role: role || undefined, 
+        username: username || undefined 
+      });
       apiClient.setToken(token);
     }
     setLoading(false);
@@ -44,6 +52,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       const authData: EmpresaAuth = {
         empresaId: response.user.empresaId,
+        empresaMongoId: response.user.empresaMongoId,
         empresaNombre: response.user.empresaNombre,
         token: response.token,
         role: response.user.role,
@@ -55,6 +64,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       
       localStorage.setItem('auth_token', response.token);
       localStorage.setItem('empresa_id', response.user.empresaId);
+      localStorage.setItem('empresa_mongo_id', response.user.empresaMongoId || '');
       localStorage.setItem('empresa_nombre', response.user.empresaNombre);
       localStorage.setItem('user_role', response.user.role || '');
       localStorage.setItem('username', response.user.username || '');
@@ -69,6 +79,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     apiClient.clearToken();
     localStorage.removeItem('auth_token');
     localStorage.removeItem('empresa_id');
+    localStorage.removeItem('empresa_mongo_id');
     localStorage.removeItem('empresa_nombre');
     localStorage.removeItem('user_role');
     localStorage.removeItem('username');
