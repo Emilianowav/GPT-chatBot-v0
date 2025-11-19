@@ -36,6 +36,16 @@ export interface MetricasContacto {
   ultimaInteraccion: Date;
 }
 
+export interface WorkflowState {
+  workflowId: string;
+  apiId: string;
+  pasoActual: number;
+  datosRecopilados: Record<string, any>;
+  intentosFallidos: number;
+  iniciadoEn: Date;
+  ultimaActividad: Date;
+}
+
 export interface IContactoEmpresa extends Document {
   _id: mongoose.Types.ObjectId;
   
@@ -70,6 +80,9 @@ export interface IContactoEmpresa extends Document {
   
   // Métricas
   metricas: MetricasContacto;
+  
+  // Estado de workflow activo
+  workflowState?: WorkflowState;
   
   // Estado
   activo: boolean;
@@ -223,6 +236,20 @@ const ContactoEmpresaSchema = new Schema<IContactoEmpresa>({
       turnosCancelados: 0,
       ultimaInteraccion: new Date()
     })
+  },
+  
+  // Estado de workflow activo
+  workflowState: {
+    type: {
+      workflowId: String,
+      apiId: String,
+      pasoActual: Number,
+      datosRecopilados: Schema.Types.Mixed,
+      intentosFallidos: Number,
+      iniciadoEn: Date,
+      ultimaActividad: Date
+    },
+    required: false
   },
   
   // Estado

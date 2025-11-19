@@ -7,7 +7,8 @@ import type {
   IEndpoint,
   IApiConfiguracion,
   IApiEstadisticas,
-  IChatbotIntegration
+  IChatbotIntegration,
+  IWorkflow
 } from '../types/api.types.js';
 
 export interface IApiConfiguration extends Document {
@@ -20,6 +21,7 @@ export interface IApiConfiguration extends Document {
   version?: string;
   autenticacion: IAuthConfiguration;
   endpoints: IEndpoint[];
+  workflows: IWorkflow[];
   configuracion: IApiConfiguracion;
   estadisticas: IApiEstadisticas;
   chatbotIntegration?: IChatbotIntegration;
@@ -239,6 +241,86 @@ const ChatbotIntegrationSchema = new Schema(
   { _id: false }
 );
 
+const StepValidationSchema = new Schema(
+  {
+    tipo: { 
+      type: String, 
+      enum: ['texto', 'numero', 'opcion', 'regex'],
+      required: true 
+    },
+    opciones: [String],
+    regex: String,
+    mensajeError: String
+  },
+  { _id: false }
+);
+
+const WorkflowStepSchema = new Schema(
+  {
+    orden: { type: Number, required: true },
+    tipo: { 
+      type: String, 
+      enum: ['recopilar', 'ejecutar', 'validar'],
+      required: true 
+    },
+    
+    // Para pasos de recopilación
+    pregunta: String,
+    nombreVariable: { type: String, required: true },
+    validacion: StepValidationSchema,
+    
+    // Para pasos de ejecución
+    endpointId: String,
+    mapeoParametros: Schema.Types.Mixed,
+    
+    // Opcionales
+    nombre: String,
+    descripcion: String,
+    mensajeError: String,
+    intentosMaximos: { type: Number, default: 3 }
+  },
+  { _id: false }
+);
+
+const WorkflowTriggerSchema = new Schema(
+  {
+    tipo: { 
+      type: String, 
+      enum: ['keyword', 'primer_mensaje', 'manual'],
+      required: true 
+    },
+    keywords: [String],
+    primeraRespuesta: { type: Boolean, default: false }
+  },
+  { _id: false }
+);
+
+const WorkflowSchema = new Schema(
+  {
+    id: { type: String, required: true },
+    nombre: { type: String, required: true },
+    descripcion: String,
+    activo: { type: Boolean, default: true },
+    
+    // Configuración de activación
+    trigger: { type: WorkflowTriggerSchema, required: true },
+    prioridad: { type: Number, default: 0 },
+    
+    // Pasos del workflow
+    steps: [WorkflowStepSchema],
+    
+    // Mensajes
+    mensajeInicial: String,
+    mensajeFinal: String,
+    mensajeAbandonar: String,
+    
+    // Configuración
+    permitirAbandonar: { type: Boolean, default: true },
+    timeoutMinutos: { type: Number, default: 30 }
+  },
+  { _id: false, timestamps: true }
+);
+
 const ApiConfigurationSchema = new Schema<IApiConfiguration>(
   {
     empresaId: { 
@@ -282,6 +364,7 @@ const ApiConfigurationSchema = new Schema<IApiConfiguration>(
       required: true 
     },
     endpoints: [EndpointSchema],
+    workflows: [WorkflowSchema],
     configuracion: { 
       type: ApiConfiguracionSchema,
       default: () => ({

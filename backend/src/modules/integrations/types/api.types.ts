@@ -162,6 +162,86 @@ export interface IChatbotIntegration {
 }
 
 // ============================================
+// TIPOS PARA WORKFLOWS (FLUJOS DE API)
+// ============================================
+
+/**
+ * Tipo de paso en el workflow
+ */
+export type WorkflowStepType = 'recopilar' | 'ejecutar' | 'validar';
+
+/**
+ * Tipo de validación para datos recopilados
+ */
+export interface IStepValidation {
+  tipo: 'texto' | 'numero' | 'opcion' | 'regex';
+  opciones?: string[];  // Para tipo 'opcion'
+  regex?: string;       // Para tipo 'regex'
+  mensajeError?: string;
+}
+
+/**
+ * Paso de workflow conversacional
+ */
+export interface IWorkflowStep {
+  orden: number;
+  tipo: WorkflowStepType;
+  
+  // Para pasos de recopilación
+  pregunta?: string;              // Pregunta a hacer al usuario
+  nombreVariable: string;         // Nombre de la variable a guardar
+  validacion?: IStepValidation;   // Validación del input
+  
+  // Para pasos de ejecución
+  endpointId?: string;            // ID del endpoint a ejecutar
+  mapeoParametros?: Record<string, string>;  // Mapeo de variables a parámetros
+  
+  // Opcionales
+  nombre?: string;
+  descripcion?: string;
+  mensajeError?: string;          // Mensaje si falla la validación
+  intentosMaximos?: number;       // Máximo de intentos para validación
+}
+
+/**
+ * Trigger para activar el workflow
+ */
+export interface IWorkflowTrigger {
+  tipo: 'keyword' | 'primer_mensaje' | 'manual';
+  keywords?: string[];            // Keywords que activan el workflow
+  primeraRespuesta?: boolean;     // Si se activa en el primer mensaje
+}
+
+/**
+ * Workflow conversacional completo
+ */
+export interface IWorkflow {
+  id?: string;
+  nombre: string;
+  descripcion?: string;
+  activo: boolean;
+  
+  // Configuración de activación
+  trigger: IWorkflowTrigger;
+  prioridad?: number;             // Mayor número = mayor prioridad
+  
+  // Pasos del workflow
+  steps: IWorkflowStep[];
+  
+  // Mensajes
+  mensajeInicial?: string;        // Mensaje al iniciar el workflow
+  mensajeFinal?: string;          // Mensaje al completar el workflow
+  mensajeAbandonar?: string;      // Mensaje si el usuario abandona
+  
+  // Configuración
+  permitirAbandonar?: boolean;    // Si el usuario puede salir con "cancelar"
+  timeoutMinutos?: number;        // Timeout de inactividad
+  
+  createdAt?: Date;
+  updatedAt?: Date;
+}
+
+// ============================================
 // TIPOS PARA LOGS
 // ============================================
 

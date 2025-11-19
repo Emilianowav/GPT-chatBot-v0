@@ -471,7 +471,295 @@ export const ejecutarEndpoint = async (req: Request, res: Response) => {
 };
 
 /**
- * Obtener logs de una API
+ * Crear workflow
+ */
+export const crearWorkflow = async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+    
+    console.log('🔄 [WORKFLOW] Creando workflow para API:', id);
+    console.log('📦 [WORKFLOW] Body recibido:', JSON.stringify(req.body, null, 2));
+    
+    const api = await ApiConfigurationModel.findById(id);
+    if (!api) {
+      console.error('❌ [WORKFLOW] API no encontrada:', id);
+      return res.status(404).json({
+        success: false,
+        message: 'API no encontrada'
+      });
+    }
+    
+    console.log('✅ [WORKFLOW] API encontrada:', api.nombre);
+    console.log('📊 [WORKFLOW] Workflows actuales:', api.workflows?.length || 0);
+    
+    const workflow = {
+      id: generateSecureToken(16),
+      ...req.body,
+      activo: req.body.activo !== undefined ? req.body.activo : true
+    };
+    
+    console.log('🆕 [WORKFLOW] Nuevo workflow:', workflow);
+    
+    if (!api.workflows) {
+      api.workflows = [];
+      console.log('📝 [WORKFLOW] Inicializando array de workflows');
+    }
+    
+    api.workflows.push(workflow);
+    console.log('➕ [WORKFLOW] Workflow agregado. Total:', api.workflows.length);
+    
+    await api.save();
+    console.log('💾 [WORKFLOW] API guardada exitosamente');
+    
+    res.status(201).json({
+      success: true,
+      message: 'Workflow creado exitosamente',
+      data: workflow
+    });
+  } catch (error: any) {
+    console.error('❌ [WORKFLOW] Error al crear workflow:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error al crear workflow',
+      error: error.message
+    });
+  }
+};
+
+/**
+ * Actualizar workflow
+ */
+export const actualizarWorkflow = async (req: Request, res: Response) => {
+  try {
+    const { id, workflowId } = req.params;
+    
+    const api = await ApiConfigurationModel.findById(id);
+    if (!api) {
+      return res.status(404).json({
+        success: false,
+        message: 'API no encontrada'
+      });
+    }
+    
+    if (!api.workflows) {
+      return res.status(404).json({
+        success: false,
+        message: 'No hay workflows configurados'
+      });
+    }
+    
+    const workflowIndex = api.workflows.findIndex((wf: any) => wf.id === workflowId);
+    if (workflowIndex === -1) {
+      return res.status(404).json({
+        success: false,
+        message: 'Workflow no encontrado'
+      });
+    }
+    
+    // Actualizar workflow manteniendo el ID
+    api.workflows[workflowIndex] = {
+      ...api.workflows[workflowIndex],
+      ...req.body,
+      id: workflowId
+    };
+    
+    await api.save();
+    
+    res.json({
+      success: true,
+      message: 'Workflow actualizado exitosamente',
+      data: api.workflows[workflowIndex]
+    });
+  } catch (error: any) {
+    console.error('Error al actualizar workflow:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error al actualizar workflow',
+      error: error.message
+    });
+  }
+};
+
+/**
+ * Eliminar workflow
+ */
+export const eliminarWorkflow = async (req: Request, res: Response) => {
+  try {
+    const { id, workflowId } = req.params;
+    
+    const api = await ApiConfigurationModel.findById(id);
+    if (!api) {
+      return res.status(404).json({
+        success: false,
+        message: 'API no encontrada'
+      });
+    }
+    
+    if (!api.workflows) {
+      return res.status(404).json({
+        success: false,
+        message: 'No hay workflows configurados'
+      });
+    }
+    
+    api.workflows = api.workflows.filter((wf: any) => wf.id !== workflowId);
+    await api.save();
+    
+    res.json({
+      success: true,
+      message: 'Workflow eliminado exitosamente'
+    });
+  } catch (error: any) {
+    console.error('Error al eliminar workflow:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error al eliminar workflow',
+      error: error.message
+    });
+  }
+};
+
+/**
+ * Proxy para ejecutar endpoint (evitar CORS)
+ */
+export const proxyEndpoint = async (req: Request, res: Response) => {
+  try {
+    const { id, endpointId } = req.params;
+    
+    // Obtener la API con credenciales
+    const api = await ApiConfigurationModel.findById(id);
+    if (!api) {
+      return res.status(404).json({
+        success: false,
+        message: 'API no encontrada'
+      });
+    }
+
+    // Buscar el endpoint
+    const endpoint = api.endpoints.find((e: any) => e.id === endpointId);
+    if (!endpoint) {
+      return res.status(404).json({
+        success: false,
+        message: 'Endpoint no encontrado'
+      });
+    }
+
+    // Construir URL completa
+    const fullUrl = `${api.baseUrl}${endpoint.path}`;
+
+    // Construir headers con autenticación
+    const headers: Record<string, string> = {
+      'Content-Type': 'application/json',
+      ...(endpoint.parametros?.headers || {}),
+    };
+
+    // Agregar autenticación
+    if (api.autenticacion) {
+      const { tipo, configuracion } = api.autenticacion;
+      
+      if (tipo === 'bearer' && configuracion?.token) {
+        headers['Authorization'] = `Bearer ${configuracion.token}`;
+      } else if (tipo === 'api_key' && configuracion?.apiKey) {
+        const keyName = configuracion.apiKeyName || 'X-API-Key';
+        headers[keyName] = configuracion.apiKey;
+      } else if (tipo === 'basic' && configuracion?.username && configuracion?.password) {
+        const credentials = Buffer.from(`${configuracion.username}:${configuracion.password}`).toString('base64');
+        headers['Authorization'] = `Basic ${credentials}`;
+      }
+
+      // Custom headers
+      if (configuracion?.customHeaders) {
+        Object.assign(headers, configuracion.customHeaders);
+      }
+    }
+
+    console.log('🔄 Proxy request:', {
+      url: fullUrl,
+      method: endpoint.metodo || 'GET',
+      headers
+    });
+
+    // Hacer la petición
+    const response = await fetch(fullUrl, {
+      method: endpoint.metodo || 'GET',
+      headers,
+      body: endpoint.metodo !== 'GET' && req.body ? JSON.stringify(req.body) : undefined
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      return res.status(response.status).json({
+        success: false,
+        message: `Error ${response.status}: ${response.statusText}`,
+        data
+      });
+    }
+
+    res.json({
+      success: true,
+      data
+    });
+  } catch (error: any) {
+    console.error('Error en proxy:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error al ejecutar endpoint',
+      error: error.message
+    });
+  }
+};
+
+/**
+ * Alternar estado de workflow
+ */
+export const toggleWorkflow = async (req: Request, res: Response) => {
+  try {
+    const { id, workflowId } = req.params;
+    
+    const api = await ApiConfigurationModel.findById(id);
+    if (!api) {
+      return res.status(404).json({
+        success: false,
+        message: 'API no encontrada'
+      });
+    }
+    
+    if (!api.workflows) {
+      return res.status(404).json({
+        success: false,
+        message: 'No hay workflows configurados'
+      });
+    }
+    
+    const workflow = api.workflows.find((wf: any) => wf.id === workflowId);
+    if (!workflow) {
+      return res.status(404).json({
+        success: false,
+        message: 'Workflow no encontrado'
+      });
+    }
+    
+    (workflow as any).activo = !(workflow as any).activo;
+    await api.save();
+    
+    res.json({
+      success: true,
+      message: `Workflow ${(workflow as any).activo ? 'activado' : 'desactivado'} exitosamente`,
+      data: workflow
+    });
+  } catch (error: any) {
+    console.error('Error al alternar workflow:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error al alternar workflow',
+      error: error.message
+    });
+  }
+};
+
+/**
+ * Obtener logs
  */
 export const obtenerLogs = async (req: Request, res: Response) => {
   try {

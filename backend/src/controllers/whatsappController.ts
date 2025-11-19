@@ -123,6 +123,69 @@ export const recibirMensaje = async (req: Request, res: Response, next: NextFunc
     
     console.log('📍 Decisión del router:', routerDecision.action);
     
+    // Si hay un workflow activo, continuar la conversación
+    if (routerDecision.action === 'continue_workflow' && routerDecision.metadata) {
+      console.log('🔄 Continuando Workflow conversacional...');
+      
+      const { workflowConversationalHandler } = await import('../services/workflowConversationalHandler.js');
+      const workflowResult = await workflowConversationalHandler.continueWorkflow(
+        mensaje,
+        routerDecision.metadata
+      );
+      
+      // Guardar en historial
+      const { actualizarHistorialConversacion, incrementarMetricas } = await import('../services/contactoService.js');
+      await actualizarHistorialConversacion(contacto._id.toString(), mensaje);
+      await actualizarHistorialConversacion(contacto._id.toString(), workflowResult.response);
+      
+      // Actualizar métricas
+      await incrementarMetricas(contacto._id.toString(), {
+        mensajesRecibidos: 1,
+        mensajesEnviados: 1,
+        interacciones: 1
+      });
+      
+      // Enviar respuesta
+      await enviarMensajeWhatsAppTexto(telefonoCliente, workflowResult.response, phoneNumberId);
+      
+      console.log(`📊 Paso: ${workflowResult.metadata?.pasoActual}/${workflowResult.metadata?.totalPasos}`);
+      console.log(`✅ Completado: ${workflowResult.completed}`);
+      
+      res.sendStatus(200);
+      return;
+    }
+    
+    // Si se detectó un nuevo workflow, iniciarlo
+    if (routerDecision.action === 'start_workflow' && routerDecision.metadata) {
+      console.log('🔄 Iniciando Workflow conversacional...');
+      
+      const { workflowConversationalHandler } = await import('../services/workflowConversationalHandler.js');
+      const workflowResult = await workflowConversationalHandler.startWorkflow(
+        contacto._id.toString(),
+        routerDecision.metadata
+      );
+      
+      // Guardar en historial
+      const { actualizarHistorialConversacion, incrementarMetricas } = await import('../services/contactoService.js');
+      await actualizarHistorialConversacion(contacto._id.toString(), mensaje);
+      await actualizarHistorialConversacion(contacto._id.toString(), workflowResult.response);
+      
+      // Actualizar métricas
+      await incrementarMetricas(contacto._id.toString(), {
+        mensajesRecibidos: 1,
+        mensajesEnviados: 1,
+        interacciones: 1
+      });
+      
+      // Enviar respuesta
+      await enviarMensajeWhatsAppTexto(telefonoCliente, workflowResult.response, phoneNumberId);
+      
+      console.log(`📊 Workflow iniciado: ${workflowResult.metadata?.workflowName}`);
+      
+      res.sendStatus(200);
+      return;
+    }
+    
     // Si se detectó una keyword de API, ejecutarla y responder
     if (routerDecision.action === 'execute_api' && routerDecision.metadata) {
       console.log('🚀 Ejecutando API keyword...');
