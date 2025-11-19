@@ -258,8 +258,23 @@ export class UniversalRouter {
             telefono: context.telefonoCliente
           });
           
-          if (contacto && contacto.metricas.interacciones === 0) {
+          if (!contacto) {
+            console.log('⚠️ Contacto no encontrado para verificar primer mensaje');
+            continue;
+          }
+          
+          // Verificar si es el primer mensaje:
+          // 1. interacciones === 0 (aún no se ha procesado ningún mensaje)
+          // 2. O el historial está vacío (contacto recién creado)
+          const esPrimerMensaje = 
+            contacto.metricas.interacciones === 0 || 
+            !contacto.conversaciones?.historial || 
+            contacto.conversaciones.historial.length === 0;
+          
+          if (esPrimerMensaje) {
             console.log(`🔄 Workflow detectado por primer mensaje: "${wf.nombre}"`);
+            console.log(`   - Interacciones: ${contacto.metricas.interacciones}`);
+            console.log(`   - Historial: ${contacto.conversaciones?.historial?.length || 0} mensajes`);
             
             return {
               workflow,
@@ -267,6 +282,8 @@ export class UniversalRouter {
               extractedParams: {},
               confidence: 1.0
             };
+          } else {
+            console.log(`⏭️ No es primer mensaje (interacciones: ${contacto.metricas.interacciones}, historial: ${contacto.conversaciones?.historial?.length || 0})`);
           }
         }
       }
