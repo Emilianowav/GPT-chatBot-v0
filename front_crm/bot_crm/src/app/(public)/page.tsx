@@ -42,82 +42,67 @@ export default function HomePage() {
         {/* Tech Stack Scroll */}
         <div className={styles.techScroll}>
           <div className={styles.techTrack}>
+            {/* Primera iteración */}
             <div className={styles.techItem}>
-              <svg width="60" height="60" viewBox="0 0 120 120" fill="none" stroke="white" strokeWidth="1.5">
-                <text x="60" y="70" fontSize="32" textAnchor="middle" fill="white" fontWeight="700">N</text>
-                <circle cx="60" cy="60" r="45"/>
-              </svg>
+              <img src="/logos tecnologias/react.svg" alt="React" />
             </div>
             <div className={styles.techItem}>
-              <svg width="60" height="60" viewBox="0 0 120 120" fill="none" stroke="white" strokeWidth="1.5">
-                <circle cx="60" cy="60" r="30"/>
-                <circle cx="60" cy="40" r="8"/>
-                <path d="M60 48 L60 72 M48 60 L72 60"/>
-              </svg>
+              <img src="/logos tecnologias/next.svg" alt="Next.js" />
             </div>
             <div className={styles.techItem}>
-              <svg width="60" height="60" viewBox="0 0 120 120" fill="none" stroke="white" strokeWidth="1.5">
-                <rect x="30" y="30" width="60" height="60" rx="8"/>
-                <text x="60" y="70" fontSize="28" textAnchor="middle" fill="white" fontWeight="700">TS</text>
-              </svg>
+              <img src="/logos tecnologias/node.svg" alt="Node.js" />
             </div>
             <div className={styles.techItem}>
-              <svg width="60" height="60" viewBox="0 0 120 120" fill="none" stroke="white" strokeWidth="1.5">
-                <path d="M40 60 L60 40 L80 60 L60 80 Z"/>
-                <circle cx="60" cy="60" r="8"/>
-              </svg>
+              <img src="/logos tecnologias/openai.svg" alt="OpenAI" />
             </div>
             <div className={styles.techItem}>
-              <svg width="60" height="60" viewBox="0 0 120 120" fill="none" stroke="white" strokeWidth="1.5">
-                <path d="M40 50 Q60 30, 80 50 Q60 70, 40 50"/>
-                <circle cx="50" cy="45" r="4"/>
-                <circle cx="70" cy="45" r="4"/>
-              </svg>
+              <img src="/logos tecnologias/chatgpt.svg" alt="ChatGPT" />
             </div>
             <div className={styles.techItem}>
-              <svg width="60" height="60" viewBox="0 0 120 120" fill="none" stroke="white" strokeWidth="1.5">
-                <circle cx="60" cy="60" r="35"/>
-                <path d="M40 60 L50 70 L80 40"/>
-              </svg>
+              <img src="/logos tecnologias/whatsapp.svg" alt="WhatsApp" />
             </div>
             <div className={styles.techItem}>
-              <svg width="60" height="60" viewBox="0 0 120 120" fill="none" stroke="white" strokeWidth="1.5">
-                <rect x="30" y="40" width="60" height="40" rx="4"/>
-                <line x1="40" y1="50" x2="80" y2="50"/>
-                <line x1="40" y1="60" x2="80" y2="60"/>
-                <line x1="40" y1="70" x2="70" y2="70"/>
-              </svg>
+              <img src="/logos tecnologias/meta.svg" alt="Meta" />
             </div>
             <div className={styles.techItem}>
-              <svg width="60" height="60" viewBox="0 0 120 120" fill="none" stroke="white" strokeWidth="1.5">
-                <circle cx="60" cy="60" r="35"/>
-                <path d="M60 30 L60 90 M35 50 L85 50 M35 70 L85 70"/>
-              </svg>
+              <img src="/logos tecnologias/mysql.svg" alt="MySQL" />
             </div>
             <div className={styles.techItem}>
-              <svg width="60" height="60" viewBox="0 0 120 120" fill="none" stroke="white" strokeWidth="1.5">
-                <text x="60" y="70" fontSize="32" textAnchor="middle" fill="white" fontWeight="700">N</text>
-                <circle cx="60" cy="60" r="45"/>
-              </svg>
+              <img src="/logos tecnologias/mercadopago.svg" alt="Mercado Pago" />
             </div>
             <div className={styles.techItem}>
-              <svg width="60" height="60" viewBox="0 0 120 120" fill="none" stroke="white" strokeWidth="1.5">
-                <circle cx="60" cy="60" r="30"/>
-                <circle cx="60" cy="40" r="8"/>
-                <path d="M60 48 L60 72 M48 60 L72 60"/>
-              </svg>
+              <img src="/logos tecnologias/ssl.svg" alt="SSL" />
+            </div>
+            {/* Segunda iteración para scroll infinito */}
+            <div className={styles.techItem}>
+              <img src="/logos tecnologias/react.svg" alt="React" />
             </div>
             <div className={styles.techItem}>
-              <svg width="60" height="60" viewBox="0 0 120 120" fill="none" stroke="white" strokeWidth="1.5">
-                <rect x="30" y="30" width="60" height="60" rx="8"/>
-                <text x="60" y="70" fontSize="28" textAnchor="middle" fill="white" fontWeight="700">TS</text>
-              </svg>
+              <img src="/logos tecnologias/next.svg" alt="Next.js" />
             </div>
             <div className={styles.techItem}>
-              <svg width="60" height="60" viewBox="0 0 120 120" fill="none" stroke="white" strokeWidth="1.5">
-                <path d="M40 60 L60 40 L80 60 L60 80 Z"/>
-                <circle cx="60" cy="60" r="8"/>
-              </svg>
+              <img src="/logos tecnologias/node.svg" alt="Node.js" />
+            </div>
+            <div className={styles.techItem}>
+              <img src="/logos tecnologias/openai.svg" alt="OpenAI" />
+            </div>
+            <div className={styles.techItem}>
+              <img src="/logos tecnologias/chatgpt.svg" alt="ChatGPT" />
+            </div>
+            <div className={styles.techItem}>
+              <img src="/logos tecnologias/whatsapp.svg" alt="WhatsApp" />
+            </div>
+            <div className={styles.techItem}>
+              <img src="/logos tecnologias/meta.svg" alt="Meta" />
+            </div>
+            <div className={styles.techItem}>
+              <img src="/logos tecnologias/mysql.svg" alt="MySQL" />
+            </div>
+            <div className={styles.techItem}>
+              <img src="/logos tecnologias/mercadopago.svg" alt="Mercado Pago" />
+            </div>
+            <div className={styles.techItem}>
+              <img src="/logos tecnologias/ssl.svg" alt="SSL" />
             </div>
           </div>
         </div>
@@ -252,14 +237,30 @@ export default function HomePage() {
           <h2 className={styles.sectionTitle}>Tecnologías que usamos todos los días</h2>
           
           <div className={styles.techGrid}>
-            <div className={styles.techItem}>WhatsApp Business API</div>
-            <div className={styles.techItem}>Meta / Instagram / Facebook</div>
-            <div className={styles.techItem}>OpenAI / ChatGPT</div>
-            <div className={styles.techItem}>Node.js</div>
-            <div className={styles.techItem}>React / Next.js</div>
-            <div className={styles.techItem}>MongoDB</div>
-            <div className={styles.techItem}>WooCommerce</div>
-            <div className={styles.techItem}>Mercado Pago</div>
+            {[
+              { name: 'React', logo: '/logos tecnologias/react.svg' },
+              { name: 'Next.js', logo: '/logos tecnologias/next.svg' },
+              { name: 'Node.js', logo: '/logos tecnologias/node.svg' },
+              { name: 'OpenAI', logo: '/logos tecnologias/openai.svg' },
+              { name: 'ChatGPT', logo: '/logos tecnologias/chatgpt.svg' },
+              { name: 'WhatsApp', logo: '/logos tecnologias/whatsapp.svg' },
+              { name: 'Meta', logo: '/logos tecnologias/meta.svg' },
+              { name: 'MySQL', logo: '/logos tecnologias/mysql.svg' },
+              { name: 'Mercado Pago', logo: '/logos tecnologias/mercadopago.svg' },
+              { name: 'SSL', logo: '/logos tecnologias/ssl.svg' },
+              { name: 'React', logo: '/logos tecnologias/react.svg' },
+              { name: 'Next.js', logo: '/logos tecnologias/next.svg' },
+              { name: 'Node.js', logo: '/logos tecnologias/node.svg' },
+              { name: 'OpenAI', logo: '/logos tecnologias/openai.svg' },
+              { name: 'ChatGPT', logo: '/logos tecnologias/chatgpt.svg' },
+              { name: 'WhatsApp', logo: '/logos tecnologias/whatsapp.svg' },
+              { name: 'Meta', logo: '/logos tecnologias/meta.svg' },
+              { name: 'MySQL', logo: '/logos tecnologias/mysql.svg' },
+            ].map((tech, i) => (
+              <div key={i} className={styles.techItem}>
+                <img src={tech.logo} alt={tech.name} />
+              </div>
+            ))}
           </div>
           
           <p className={styles.techNote}>

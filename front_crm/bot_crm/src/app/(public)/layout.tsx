@@ -9,7 +9,7 @@ export default function PublicLayout({
   return (
     <>
       <Header />
-      <main style={{ paddingTop: '80px' }}>
+      <main style={{ paddingTop: '80px', position: 'relative', zIndex: 2 }}>
         {children}
       </main>
       <Footer />
