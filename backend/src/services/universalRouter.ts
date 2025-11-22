@@ -276,25 +276,19 @@ export class UniversalRouter {
           );
           
           if (evaluacion.shouldTrigger) {
-            console.log(`🔄 Workflow detectado por ${evaluacion.reason}: "${wf.nombre}"`);
-            console.log(`   - Razón: ${evaluacion.reason}`);
-            console.log(`   - Horas transcurridas: ${evaluacion.hoursElapsed?.toFixed(1) || 'N/A'}`);
-            console.log(`   - Interacciones: ${evaluacion.interactionCount || 0}`);
-            console.log(`   - Última interacción: ${evaluacion.lastInteraction?.toISOString() || 'Nunca'}`);
+            console.log(`🔄 Workflow detectado por primer mensaje: "${wf.nombre}"`);
+            console.log(`   - Interacciones del contacto: ${evaluacion.interactionCount || 0}`);
             
             return {
               workflow,
               apiConfig: api,
               extractedParams: {
-                primer_mensaje_razon: evaluacion.reason,
-                horas_transcurridas: evaluacion.hoursElapsed
+                primer_mensaje_razon: evaluacion.reason
               },
               confidence: 1.0
             };
           } else {
-            console.log(`⏭️ No aplica primer mensaje/24hs para "${wf.nombre}":`);
-            console.log(`   - Horas transcurridas: ${evaluacion.hoursElapsed?.toFixed(1) || 'N/A'}`);
-            console.log(`   - Interacciones: ${evaluacion.interactionCount || 0}`);
+            console.log(`⏭️ No es primer mensaje para "${wf.nombre}" (${evaluacion.interactionCount || 0} interacciones)`);
           }
         }
       }

@@ -43,7 +43,7 @@ export class PrimerMensajeService {
         };
       }
       
-      // Verificar si es el primer mensaje
+      // Verificar si es el primer mensaje (sin timeout de 24hs)
       const esPrimerMensaje = this.esPrimerMensaje(contacto);
       
       if (esPrimerMensaje) {
@@ -55,25 +55,10 @@ export class PrimerMensajeService {
         };
       }
       
-      // Verificar timeout de 24 horas
-      const timeoutResult = this.verificarTimeout24Horas(contacto);
-      
-      if (timeoutResult.shouldTrigger) {
-        console.log(`🕐 [PrimerMensaje] Timeout de 24hs cumplido (${timeoutResult.hoursElapsed}h)`);
-        return {
-          shouldTrigger: true,
-          reason: '24h_timeout',
-          hoursElapsed: timeoutResult.hoursElapsed,
-          interactionCount: contacto.metricas.interacciones,
-          lastInteraction: contacto.metricas.ultimaInteraccion
-        };
-      }
-      
-      console.log(`⏭️ [PrimerMensaje] No aplica (${timeoutResult.hoursElapsed}h desde última interacción)`);
+      console.log(`⏭️ [PrimerMensaje] No es primer mensaje (${contacto.metricas.interacciones} interacciones)`);
       return {
         shouldTrigger: false,
         reason: 'none',
-        hoursElapsed: timeoutResult.hoursElapsed,
         interactionCount: contacto.metricas.interacciones,
         lastInteraction: contacto.metricas.ultimaInteraccion
       };
@@ -112,7 +97,7 @@ export class PrimerMensajeService {
     const horasTranscurridas = (ahora.getTime() - ultimaInteraccion.getTime()) / (1000 * 60 * 60);
     
     return {
-      shouldTrigger: horasTranscurridas >= 24,
+      shouldTrigger: horasTranscurridas >= 24, // 24 horas para producción
       hoursElapsed: horasTranscurridas
     };
   }
