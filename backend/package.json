@@ -14,7 +14,12 @@
     "tunnel": "ngrok http 3000",
     "config:plantillas-meta": "tsx src/scripts/configurarPlantillaCompleta.ts",
     "migrate:sistema": "tsx src/scripts/migrarSistemaNotificaciones.ts",
-    "verify:config": "tsx src/scripts/verificarConfiguracionNotificaciones.ts"
+    "verify:config": "tsx src/scripts/verificarConfiguracionNotificaciones.ts",
+    "analyze-database": "tsx src/scripts/analyzeDatabase.ts",
+    "clean-database": "tsx src/scripts/cleanDatabase.ts",
+    "clean-database-dry": "tsx src/scripts/cleanDatabase.ts --dry-run",
+    "create-icenter-workflow": "tsx src/scripts/createICenterWorkflow.ts",
+    "check-icenter-workflow": "tsx src/scripts/checkAndCreateICenterWorkflow.ts"
   },
   "keywords": [],
   "author": "",

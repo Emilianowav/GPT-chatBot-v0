@@ -48,6 +48,26 @@ export interface WorkflowStartMetadata {
 export class WorkflowConversationalHandler {
   
   /**
+   * Extrae opciones dinámicas de los datos de la API
+   */
+  private extraerOpcionesDinamicas(datos: any[], config: any): string[] {
+    if (!Array.isArray(datos) || !config) {
+      return [];
+    }
+    
+    try {
+      return datos.map(item => {
+        const id = item[config.idField] || item.id;
+        const display = item[config.displayField] || item.name || item.nombre;
+        return `${id}: ${display}`;
+      });
+    } catch (error) {
+      console.error('❌ Error extrayendo opciones dinámicas:', error);
+      return [];
+    }
+  }
+  
+  /**
    * Inicia un nuevo workflow
    */
   async startWorkflow(
@@ -75,25 +95,63 @@ export class WorkflowConversationalHandler {
         response += workflow.mensajeInicial + '\n\n';
       }
       
-      // Obtener primer paso
-      const primerPaso = workflow.steps.find(s => s.orden === 1);
-      if (!primerPaso) {
+      // Ejecutar pasos de tipo "ejecutar" antes del primer paso de recopilación
+      const pasosOrdenados = workflow.steps.sort((a, b) => a.orden - b.orden);
+      let datosEjecutados: Record<string, any> = {};
+      
+      console.log('🔍 Ejecutando pasos iniciales...');
+      
+      for (const paso of pasosOrdenados) {
+        if (paso.tipo === 'ejecutar' && paso.orden <= 1) {
+          console.log(`⚡ Ejecutando paso ${paso.orden}: ${paso.nombreVariable}`);
+          
+          try {
+            // Ejecutar llamada a la API
+            const resultadoAPI = await apiExecutor.ejecutar(
+              apiConfig._id.toString(),
+              paso.endpointId!,
+              {}, // Sin parámetros para el primer paso
+              { metadata: { contactoId } }
+            );
+            
+            if (resultadoAPI.success && resultadoAPI.data) {
+              datosEjecutados[paso.nombreVariable] = resultadoAPI.data;
+              console.log(`✅ Datos obtenidos para ${paso.nombreVariable}:`, resultadoAPI.data);
+            }
+          } catch (error) {
+            console.error(`❌ Error ejecutando paso ${paso.orden}:`, error);
+          }
+        }
+      }
+      
+      // Obtener primer paso de recopilación
+      const primerPasoRecopilar = pasosOrdenados.find(s => s.tipo === 'recopilar');
+      if (!primerPasoRecopilar) {
         return {
           success: false,
-          response: '❌ Error: El workflow no tiene pasos configurados',
+          response: '❌ Error: El workflow no tiene pasos de recopilación configurados',
           completed: false,
-          error: 'No hay pasos'
+          error: 'No hay pasos de recopilación'
         };
       }
       
-      // Agregar pregunta del primer paso
-      if (primerPaso.tipo === 'recopilar' && primerPaso.pregunta) {
-        response += primerPaso.pregunta;
+      // Agregar pregunta del primer paso de recopilación
+      if (primerPasoRecopilar.pregunta) {
+        response += primerPasoRecopilar.pregunta;
         
-        // Si tiene opciones, mostrarlas
-        if (primerPaso.validacion?.tipo === 'opcion' && primerPaso.validacion.opciones) {
+        // Si tiene configuración de endpoint, usar datos dinámicos
+        if (primerPasoRecopilar.endpointResponseConfig && datosEjecutados[primerPasoRecopilar.endpointResponseConfig.arrayPath]) {
+          const datos = datosEjecutados[primerPasoRecopilar.endpointResponseConfig.arrayPath];
+          const opciones = this.extraerOpcionesDinamicas(datos, primerPasoRecopilar.endpointResponseConfig);
+          
+          if (opciones.length > 0) {
+            response += '\n\n' + workflowConversationManager.formatearOpciones(opciones);
+          }
+        }
+        // Si tiene opciones estáticas, mostrarlas
+        else if (primerPasoRecopilar.validacion?.tipo === 'opcion' && primerPasoRecopilar.validacion.opciones) {
           response += '\n\n' + workflowConversationManager.formatearOpciones(
-            primerPaso.validacion.opciones
+            primerPasoRecopilar.validacion.opciones
           );
         }
       }
