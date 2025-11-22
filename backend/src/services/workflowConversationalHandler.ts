@@ -48,6 +48,26 @@ export interface WorkflowStartMetadata {
 export class WorkflowConversationalHandler {
   
   /**
+   * Obtiene datos siguiendo una ruta de propiedades (ej: "data.items" o "results")
+   */
+  private obtenerDatosPorRuta(objeto: any, ruta: string): any {
+    if (!ruta || !objeto) return objeto;
+    
+    const partes = ruta.split('.');
+    let resultado = objeto;
+    
+    for (const parte of partes) {
+      if (resultado && typeof resultado === 'object' && parte in resultado) {
+        resultado = resultado[parte];
+      } else {
+        return null;
+      }
+    }
+    
+    return resultado;
+  }
+  
+  /**
    * Extrae opciones dinámicas de los datos de la API
    */
   private extraerOpcionesDinamicas(datos: any[], config: any): string[] {
@@ -140,12 +160,31 @@ export class WorkflowConversationalHandler {
         response += primerPasoRecopilar.pregunta;
         
         // Si tiene configuración de endpoint, usar datos dinámicos
-        if (primerPasoRecopilar.endpointResponseConfig && datosEjecutados[primerPasoRecopilar.endpointResponseConfig.arrayPath]) {
-          const datos = datosEjecutados[primerPasoRecopilar.endpointResponseConfig.arrayPath];
-          const opciones = this.extraerOpcionesDinamicas(datos, primerPasoRecopilar.endpointResponseConfig);
+        if (primerPasoRecopilar.endpointResponseConfig) {
+          // Buscar datos de pasos ejecutados anteriormente
+          const datosDisponibles = Object.values(datosEjecutados);
+          let datosArray = null;
           
-          if (opciones.length > 0) {
-            response += '\n\n' + workflowConversationManager.formatearOpciones(opciones);
+          // Buscar en todos los datos ejecutados
+          for (const datos of datosDisponibles) {
+            if (datos && typeof datos === 'object') {
+              // Intentar acceder al arrayPath dentro de los datos
+              const arrayPath = primerPasoRecopilar.endpointResponseConfig.arrayPath;
+              const array = this.obtenerDatosPorRuta(datos, arrayPath);
+              
+              if (Array.isArray(array)) {
+                datosArray = array;
+                break;
+              }
+            }
+          }
+          
+          if (datosArray && datosArray.length > 0) {
+            const opciones = this.extraerOpcionesDinamicas(datosArray, primerPasoRecopilar.endpointResponseConfig);
+            
+            if (opciones.length > 0) {
+              response += '\n\n' + workflowConversationManager.formatearOpciones(opciones);
+            }
           }
         }
         // Si tiene opciones estáticas, mostrarlas
@@ -331,8 +370,38 @@ export class WorkflowConversationalHandler {
     if (siguientePaso.tipo === 'recopilar' && siguientePaso.pregunta) {
       response = siguientePaso.pregunta;
       
-      // Si tiene opciones, mostrarlas
-      if (siguientePaso.validacion?.tipo === 'opcion' && siguientePaso.validacion.opciones) {
+      // Si tiene configuración de endpoint, usar datos dinámicos
+      if (siguientePaso.endpointResponseConfig) {
+        // Obtener datos recopilados hasta ahora
+        const estadoActual = await workflowConversationManager.getWorkflowState(contactoId);
+        const datosRecopilados = estadoActual?.datosRecopilados || {};
+        
+        // Buscar datos de pasos ejecutados
+        const datosDisponibles = Object.values(datosRecopilados);
+        let datosArray = null;
+        
+        for (const datos of datosDisponibles) {
+          if (datos && typeof datos === 'object') {
+            const arrayPath = siguientePaso.endpointResponseConfig.arrayPath;
+            const array = this.obtenerDatosPorRuta(datos, arrayPath);
+            
+            if (Array.isArray(array)) {
+              datosArray = array;
+              break;
+            }
+          }
+        }
+        
+        if (datosArray && datosArray.length > 0) {
+          const opciones = this.extraerOpcionesDinamicas(datosArray, siguientePaso.endpointResponseConfig);
+          
+          if (opciones.length > 0) {
+            response += '\n\n' + workflowConversationManager.formatearOpciones(opciones);
+          }
+        }
+      }
+      // Si tiene opciones estáticas, mostrarlas
+      else if (siguientePaso.validacion?.tipo === 'opcion' && siguientePaso.validacion.opciones) {
         response += '\n\n' + workflowConversationManager.formatearOpciones(
           siguientePaso.validacion.opciones
         );
@@ -361,7 +430,7 @@ export class WorkflowConversationalHandler {
   }
   
   /**
-   * Procesa un paso de ejecución de endpoint
+   * Procesa un paso de ejecución de API
    */
   private async procesarPasoEjecucion(
     paso: IWorkflowStep,

@@ -138,9 +138,9 @@ export class UniversalRouter {
    */
   private async checkActiveWorkflow(context: MessageContext): Promise<any | null> {
     try {
-      // Buscar contacto por teléfono y empresa
+      // Buscar contacto por teléfono y empresa (usar nombre de empresa)
       const contacto = await ContactoEmpresaModel.findOne({
-        empresaId: context.empresaId,
+        empresaId: context.empresaNombre || context.empresaId,
         telefono: context.telefonoCliente
       });
       
