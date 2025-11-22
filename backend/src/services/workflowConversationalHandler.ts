@@ -506,16 +506,37 @@ export class WorkflowConversationalHandler {
       // Mapear parámetros
       const params: any = {};
       if (paso.mapeoParametros) {
+        console.log('🔍 Mapeo de parámetros configurado:', paso.mapeoParametros);
+        
         for (const [paramName, varName] of Object.entries(paso.mapeoParametros)) {
-          if (datosRecopilados[varName] !== undefined) {
+          const valorVariable = datosRecopilados[varName];
+          
+          if (valorVariable !== undefined) {
             // Determinar dónde va el parámetro
             if (!params.query) params.query = {};
-            params.query[paramName] = datosRecopilados[varName];
+            
+            // Normalizar el valor (trim y lowercase para búsquedas de texto)
+            let valorNormalizado = valorVariable;
+            if (typeof valorVariable === 'string') {
+              valorNormalizado = valorVariable.trim();
+              
+              // Si es el parámetro de búsqueda, normalizar más
+              if (paramName === 'search' || paramName === 'q' || paramName === 'query') {
+                valorNormalizado = valorNormalizado.toLowerCase();
+              }
+            }
+            
+            params.query[paramName] = valorNormalizado;
+            console.log(`   ✅ ${paramName} = "${valorNormalizado}" (desde variable: ${varName})`);
+          } else {
+            console.log(`   ⚠️ Variable "${varName}" no encontrada en datos recopilados`);
           }
         }
+      } else {
+        console.log('⚠️ No hay mapeo de parámetros configurado para este paso');
       }
       
-      console.log('📤 Parámetros mapeados:', params);
+      console.log('📤 Parámetros finales para API:', JSON.stringify(params, null, 2));
       
       // Ejecutar endpoint
       const result = await apiExecutor.ejecutar(
@@ -536,6 +557,7 @@ export class WorkflowConversationalHandler {
       }
       
       console.log('✅ Endpoint ejecutado exitosamente');
+      console.log('📊 Datos recibidos de la API:', JSON.stringify(result.data, null, 2).substring(0, 500) + '...');
       
       // Finalizar workflow
       await workflowConversationManager.finalizarWorkflow(contactoId);
@@ -543,10 +565,14 @@ export class WorkflowConversationalHandler {
       // Formatear respuesta usando template o formato por defecto
       let response = '';
       
+      console.log('🎨 Formateando respuesta...');
+      console.log('   Template configurado:', workflow.respuestaTemplate ? 'SÍ' : 'NO');
+      
       if (workflow.respuestaTemplate) {
-        // Usar template del workflow
+        console.log('   Usando template del workflow');
         response = this.aplicarTemplate(workflow.respuestaTemplate, datosRecopilados, result.data);
       } else {
+        console.log('   Usando formato por defecto');
         // Formato por defecto
         if (workflow.mensajeFinal) {
           response += workflow.mensajeFinal + '\n\n';
@@ -554,10 +580,16 @@ export class WorkflowConversationalHandler {
         response += this.formatearRespuestaProductos(result.data);
       }
       
+      console.log('📏 Longitud de respuesta antes de limitar:', response.length);
+      
       // Limitar a 4000 caracteres para WhatsApp
       if (response.length > 4000) {
+        console.log('⚠️ Respuesta demasiado larga, truncando...');
         response = response.substring(0, 3950) + '\n\n... (resultados truncados)';
       }
+      
+      console.log('📏 Longitud de respuesta final:', response.length);
+      console.log('📝 Respuesta final (primeros 500 chars):', response.substring(0, 500));
       
       return {
         success: true,
@@ -609,27 +641,38 @@ export class WorkflowConversationalHandler {
    * Formatea productos de manera concisa
    */
   private formatearRespuestaProductos(data: any): string {
+    console.log('🔍 [formatearRespuestaProductos] Iniciando formateo...');
+    console.log('   Tipo de data:', typeof data);
+    console.log('   Es array:', Array.isArray(data));
+    
     // Extraer array de productos
     let productos = data;
     
     if (data && typeof data === 'object') {
       if (data.data && Array.isArray(data.data)) {
+        console.log('   ✅ Encontrado array en data.data');
         productos = data.data;
       } else if (data.products && Array.isArray(data.products)) {
+        console.log('   ✅ Encontrado array en data.products');
         productos = data.products;
       }
     }
     
     if (!Array.isArray(productos)) {
+      console.log('   ❌ No es un array, retornando mensaje de error');
       return 'No se encontraron productos.';
     }
     
+    console.log(`   📊 Total productos: ${productos.length}`);
+    
     if (productos.length === 0) {
+      console.log('   ❌ Array vacío');
       return '❌ No se encontraron productos con esos criterios.';
     }
     
     // Limitar a 5 productos
     const productosLimitados = productos.slice(0, 5);
+    console.log(`   ✂️ Limitando a ${productosLimitados.length} productos`);
     
     // Formatear de manera concisa
     const lista = productosLimitados.map((producto: any, index: number) => {
@@ -649,7 +692,10 @@ export class WorkflowConversationalHandler {
     // Agregar nota si hay más productos
     if (productos.length > 5) {
       resultado += `\n\n_... y ${productos.length - 5} productos más_`;
+      console.log(`   ℹ️ Agregando nota de ${productos.length - 5} productos más`);
     }
+    
+    console.log(`   📏 Longitud del resultado: ${resultado.length} caracteres`);
     
     return resultado;
   }
