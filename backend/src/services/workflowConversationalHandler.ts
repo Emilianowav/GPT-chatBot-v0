@@ -115,92 +115,83 @@ export class WorkflowConversationalHandler {
         response += workflow.mensajeInicial + '\n\n';
       }
       
-      // Ejecutar pasos de tipo "ejecutar" antes del primer paso de recopilación
+      // Obtener primer paso (debe ser RECOPILAR)
       const pasosOrdenados = workflow.steps.sort((a, b) => a.orden - b.orden);
-      let datosEjecutados: Record<string, any> = {};
+      const primerPaso = pasosOrdenados[0];
       
-      console.log('🔍 Ejecutando pasos iniciales...');
+      if (!primerPaso || primerPaso.tipo !== 'recopilar') {
+        return {
+          success: false,
+          response: '❌ Error: El primer paso debe ser de tipo "recopilar"',
+          completed: false,
+          error: 'Primer paso inválido'
+        };
+      }
       
-      for (const paso of pasosOrdenados) {
-        if (paso.tipo === 'ejecutar' && paso.orden <= 1) {
-          console.log(`⚡ Ejecutando paso ${paso.orden}: ${paso.nombreVariable}`);
+      console.log('📋 Primer paso:', primerPaso.nombre);
+      
+      // RECOPILAR hace TODO: llamar API + mostrar opciones
+      if (primerPaso.pregunta) {
+        response += primerPaso.pregunta;
+        
+        // Si tiene endpoint configurado, llamar a la API
+        if (primerPaso.endpointId) {
+          console.log('🌐 Llamando a API para obtener opciones...');
           
           try {
-            // Ejecutar llamada a la API
+            // Llamar al endpoint (sin filtros en el primer paso)
             const resultadoAPI = await apiExecutor.ejecutar(
               apiConfig._id.toString(),
-              paso.endpointId!,
-              {}, // Sin parámetros para el primer paso
+              primerPaso.endpointId,
+              {}, // Sin parámetros en el primer paso
               { metadata: { contactoId } }
             );
             
             if (resultadoAPI.success && resultadoAPI.data) {
-              datosEjecutados[paso.nombreVariable] = resultadoAPI.data;
-              console.log(`✅ Datos obtenidos para ${paso.nombreVariable}:`, resultadoAPI.data);
+              console.log('✅ Datos obtenidos de la API');
+              
+              // Extraer opciones dinámicas
+              let datosArray = resultadoAPI.data;
+              
+              // Si la respuesta tiene una propiedad "data", usarla
+              if (datosArray.data && Array.isArray(datosArray.data)) {
+                datosArray = datosArray.data;
+              }
+              
+              if (Array.isArray(datosArray) && datosArray.length > 0) {
+                console.log(`✅ ${datosArray.length} opciones encontradas`);
+                
+                // Usar endpointResponseConfig si está configurado
+                if (primerPaso.endpointResponseConfig) {
+                  const opciones = this.extraerOpcionesDinamicas(
+                    datosArray, 
+                    primerPaso.endpointResponseConfig
+                  );
+                  
+                  if (opciones.length > 0) {
+                    response += '\n\n' + workflowConversationManager.formatearOpciones(opciones);
+                  }
+                } else {
+                  // Formato por defecto si no hay config
+                  const opciones = datosArray.map((item: any) => {
+                    const id = item.id || item.code;
+                    const nombre = item.name || item.nombre || item.title;
+                    return `${id}: ${nombre}`;
+                  });
+                  response += '\n\n' + workflowConversationManager.formatearOpciones(opciones);
+                }
+              }
+            } else {
+              console.log('⚠️ No se obtuvieron datos de la API');
             }
           } catch (error) {
-            console.error(`❌ Error ejecutando paso ${paso.orden}:`, error);
-          }
-        }
-      }
-      
-      // Obtener primer paso de recopilación
-      const primerPasoRecopilar = pasosOrdenados.find(s => s.tipo === 'recopilar');
-      if (!primerPasoRecopilar) {
-        return {
-          success: false,
-          response: '❌ Error: El workflow no tiene pasos de recopilación configurados',
-          completed: false,
-          error: 'No hay pasos de recopilación'
-        };
-      }
-      
-      // Agregar pregunta del primer paso de recopilación
-      if (primerPasoRecopilar.pregunta) {
-        response += primerPasoRecopilar.pregunta;
-        
-        // Si tiene configuración de endpoint, usar datos dinámicos
-        if (primerPasoRecopilar.endpointResponseConfig) {
-          const arrayPath = primerPasoRecopilar.endpointResponseConfig.arrayPath;
-          
-          console.log('🔍 Buscando datos dinámicos con arrayPath:', arrayPath);
-          console.log('📦 Datos ejecutados disponibles:', Object.keys(datosEjecutados));
-          
-          // El arrayPath es el nombre de la variable donde se guardaron los datos
-          let datosArray = datosEjecutados[arrayPath];
-          
-          // Si no es un array directamente, intentar buscar dentro del objeto
-          if (datosArray && !Array.isArray(datosArray) && typeof datosArray === 'object') {
-            // Buscar arrays dentro del objeto
-            for (const key of Object.keys(datosArray)) {
-              if (Array.isArray(datosArray[key])) {
-                console.log(`📋 Array encontrado en: ${arrayPath}.${key}`);
-                datosArray = datosArray[key];
-                break;
-              }
-            }
-          }
-          
-          if (Array.isArray(datosArray) && datosArray.length > 0) {
-            console.log(`✅ Datos encontrados: ${datosArray.length} items`);
-            const opciones = this.extraerOpcionesDinamicas(datosArray, primerPasoRecopilar.endpointResponseConfig);
-            
-            if (opciones.length > 0) {
-              console.log(`✅ Opciones generadas: ${opciones.length}`);
-              response += '\n\n' + workflowConversationManager.formatearOpciones(opciones);
-            } else {
-              console.log('⚠️ No se pudieron generar opciones');
-            }
-          } else {
-            console.log('⚠️ No se encontraron datos en formato array');
-            console.log('📦 Tipo de datos:', typeof datosArray);
-            console.log('📦 Datos:', datosArray);
+            console.error('❌ Error llamando a la API:', error);
           }
         }
         // Si tiene opciones estáticas, mostrarlas
-        else if (primerPasoRecopilar.validacion?.tipo === 'opcion' && primerPasoRecopilar.validacion.opciones) {
+        else if (primerPaso.validacion?.tipo === 'opcion' && primerPaso.validacion.opciones) {
           response += '\n\n' + workflowConversationManager.formatearOpciones(
-            primerPasoRecopilar.validacion.opciones
+            primerPaso.validacion.opciones
           );
         }
       }
@@ -380,40 +371,71 @@ export class WorkflowConversationalHandler {
     if (siguientePaso.tipo === 'recopilar' && siguientePaso.pregunta) {
       response = siguientePaso.pregunta;
       
-      // Si tiene configuración de endpoint, usar datos dinámicos
-      if (siguientePaso.endpointResponseConfig) {
-        // Obtener datos recopilados hasta ahora
-        const estadoActual = await workflowConversationManager.getWorkflowState(contactoId);
-        const datosRecopilados = estadoActual?.datosRecopilados || {};
+      // RECOPILAR llama a la API si tiene endpoint configurado
+      if (siguientePaso.endpointId) {
+        console.log('🌐 Llamando a API para siguiente paso...');
         
-        const arrayPath = siguientePaso.endpointResponseConfig.arrayPath;
-        console.log('🔍 Buscando datos para siguiente paso con arrayPath:', arrayPath);
-        console.log('📦 Datos recopilados disponibles:', Object.keys(datosRecopilados));
-        
-        // El arrayPath es el nombre de la variable
-        let datosArray = datosRecopilados[arrayPath];
-        
-        // Si no es array, buscar dentro del objeto
-        if (datosArray && !Array.isArray(datosArray) && typeof datosArray === 'object') {
-          for (const key of Object.keys(datosArray)) {
-            if (Array.isArray(datosArray[key])) {
-              console.log(`📋 Array encontrado en: ${arrayPath}.${key}`);
-              datosArray = datosArray[key];
-              break;
+        try {
+          // Obtener datos recopilados para usar como filtros
+          const estadoActual = await workflowConversationManager.getWorkflowState(contactoId);
+          const datosRecopilados = estadoActual?.datosRecopilados || {};
+          
+          // Mapear parámetros desde variables recopiladas
+          const params: any = {};
+          if (siguientePaso.mapeoParametros) {
+            for (const [paramName, varName] of Object.entries(siguientePaso.mapeoParametros)) {
+              if (datosRecopilados[varName] !== undefined) {
+                if (!params.query) params.query = {};
+                params.query[paramName] = datosRecopilados[varName];
+                console.log(`📋 Filtro: ${paramName} = ${datosRecopilados[varName]}`);
+              }
             }
           }
-        }
-        
-        if (Array.isArray(datosArray) && datosArray.length > 0) {
-          console.log(`✅ Datos encontrados: ${datosArray.length} items`);
-          const opciones = this.extraerOpcionesDinamicas(datosArray, siguientePaso.endpointResponseConfig);
           
-          if (opciones.length > 0) {
-            console.log(`✅ Opciones generadas: ${opciones.length}`);
-            response += '\n\n' + workflowConversationManager.formatearOpciones(opciones);
+          // Llamar al endpoint con filtros
+          const resultadoAPI = await apiExecutor.ejecutar(
+            apiConfig._id.toString(),
+            siguientePaso.endpointId,
+            params,
+            { metadata: { contactoId } }
+          );
+          
+          if (resultadoAPI.success && resultadoAPI.data) {
+            console.log('✅ Datos obtenidos de la API');
+            
+            let datosArray = resultadoAPI.data;
+            
+            // Si la respuesta tiene una propiedad "data", usarla
+            if (datosArray.data && Array.isArray(datosArray.data)) {
+              datosArray = datosArray.data;
+            }
+            
+            if (Array.isArray(datosArray) && datosArray.length > 0) {
+              console.log(`✅ ${datosArray.length} opciones encontradas`);
+              
+              // Usar endpointResponseConfig si está configurado
+              if (siguientePaso.endpointResponseConfig) {
+                const opciones = this.extraerOpcionesDinamicas(
+                  datosArray,
+                  siguientePaso.endpointResponseConfig
+                );
+                
+                if (opciones.length > 0) {
+                  response += '\n\n' + workflowConversationManager.formatearOpciones(opciones);
+                }
+              } else {
+                // Formato por defecto
+                const opciones = datosArray.map((item: any) => {
+                  const id = item.id || item.code;
+                  const nombre = item.name || item.nombre || item.title;
+                  return `${id}: ${nombre}`;
+                });
+                response += '\n\n' + workflowConversationManager.formatearOpciones(opciones);
+              }
+            }
           }
-        } else {
-          console.log('⚠️ No se encontraron datos array para siguiente paso');
+        } catch (error) {
+          console.error('❌ Error llamando a la API:', error);
         }
       }
       // Si tiene opciones estáticas, mostrarlas
