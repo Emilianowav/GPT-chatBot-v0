@@ -37,6 +37,7 @@ export interface MessageContext {
   mensaje: string;
   telefonoCliente: string;
   empresaId: string;
+  empresaNombre?: string; // Nombre de la empresa para buscar contactos
   chatbotId?: string;
   currentFlow?: string;
   currentStep?: number;
@@ -270,7 +271,7 @@ export class UniversalRouter {
           
           // Usar el servicio especializado para evaluar primer mensaje
           const evaluacion = await primerMensajeService.evaluatePrimerMensaje(
-            context.empresaId,
+            context.empresaNombre || context.empresaId, // Usar nombre de empresa para buscar contacto
             context.telefonoCliente
           );
           

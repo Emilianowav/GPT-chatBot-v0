@@ -117,7 +117,8 @@ export const recibirMensaje = async (req: Request, res: Response, next: NextFunc
     const routerDecision = await universalRouter.route({
       mensaje,
       telefonoCliente,
-      empresaId: empresaMongoId || empresa.nombre, // Usar MongoDB ID si está disponible
+      empresaId: empresaMongoId || empresa.nombre, // ObjectId para buscar workflows
+      empresaNombre: empresa.nombre, // Nombre para buscar contactos
       currentFlow: undefined // TODO: obtener flujo actual del contexto
     });
     
