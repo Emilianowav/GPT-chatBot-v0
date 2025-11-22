@@ -251,7 +251,7 @@ export class UniversalRouter {
         }
         
         // Trigger tipo "primer_mensaje"
-        if (wf.trigger.tipo === 'primer_mensaje' && wf.trigger.primeraRespuesta) {
+        if (wf.trigger.tipo === 'primer_mensaje') {
           // Verificar si es el primer mensaje del contacto
           const contacto = await ContactoEmpresaModel.findOne({
             empresaId: context.empresaId,

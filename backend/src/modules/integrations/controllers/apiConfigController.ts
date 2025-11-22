@@ -3,6 +3,7 @@ import { Request, Response } from 'express';
 import { ApiConfigurationModel, ApiRequestLogModel } from '../models/index.js';
 import { encrypt, decrypt, generateSecureToken } from '../utils/encryption.js';
 import { apiExecutor } from '../services/apiExecutor.js';
+import { EmpresaModel } from '../../../models/Empresa.js';
 import type { IEndpoint } from '../types/api.types.js';
 
 /**
@@ -13,7 +14,16 @@ export const obtenerApis = async (req: Request, res: Response) => {
     const { empresaId } = req.params;
     const { estado } = req.query;
     
-    const filtro: any = { empresaId };
+    // Convertir nombre de empresa a ObjectId
+    const empresa = await EmpresaModel.findOne({ nombre: empresaId });
+    if (!empresa) {
+      return res.status(404).json({
+        success: false,
+        message: 'Empresa no encontrada'
+      });
+    }
+    
+    const filtro: any = { empresaId: empresa._id };
     if (estado) {
       filtro.estado = estado;
     }
@@ -92,6 +102,15 @@ export const crearApi = async (req: Request, res: Response) => {
     console.log('🔵 [INTEGRATIONS] Crear API - empresaId:', empresaId);
     console.log('🔵 [INTEGRATIONS] Crear API - body:', JSON.stringify(req.body, null, 2));
     
+    // Convertir nombre de empresa a ObjectId
+    const empresa = await EmpresaModel.findOne({ nombre: empresaId });
+    if (!empresa) {
+      return res.status(404).json({
+        success: false,
+        message: 'Empresa no encontrada'
+      });
+    }
+    
     const {
       nombre,
       descripcion,
@@ -129,7 +148,7 @@ export const crearApi = async (req: Request, res: Response) => {
     }
     
     const nuevaApi = await ApiConfigurationModel.create({
-      empresaId,
+      empresaId: empresa._id,
       nombre,
       descripcion,
       tipo: tipo || 'rest',

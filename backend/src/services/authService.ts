@@ -196,3 +196,105 @@ export async function createAdminUser(
     };
   }
 }
+
+/**
+ * Genera un token de recuperación de contraseña
+ */
+export async function generatePasswordResetToken(email: string): Promise<{ success: boolean; message: string; resetToken?: string }> {
+  try {
+    // Buscar usuario por email
+    const user = await AdminUserModel.findOne({ 
+      email: email.toLowerCase(),
+      activo: true 
+    });
+
+    if (!user) {
+      // Por seguridad, no revelamos si el email existe o no
+      return {
+        success: true,
+        message: 'Si el email existe en nuestro sistema, recibirás un enlace de recuperación'
+      };
+    }
+
+    // Generar token temporal (válido por 1 hora)
+    const resetToken = jwt.sign(
+      { 
+        userId: user._id.toString(),
+        type: 'password_reset',
+        timestamp: Date.now()
+      },
+      JWT_SECRET,
+      { expiresIn: '1h' }
+    );
+
+    console.log('🔑 Token de recuperación generado para:', { email, username: user.username });
+
+    return {
+      success: true,
+      message: 'Token de recuperación generado',
+      resetToken
+    };
+  } catch (error) {
+    console.error('❌ Error al generar token de recuperación:', error);
+    return {
+      success: false,
+      message: 'Error en el servidor'
+    };
+  }
+}
+
+/**
+ * Resetea la contraseña usando un token de recuperación
+ */
+export async function resetPasswordWithToken(
+  resetToken: string, 
+  newPassword: string
+): Promise<{ success: boolean; message: string }> {
+  try {
+    // Verificar token
+    const decoded = jwt.verify(resetToken, JWT_SECRET) as any;
+    
+    if (decoded.type !== 'password_reset') {
+      return {
+        success: false,
+        message: 'Token inválido'
+      };
+    }
+
+    // Verificar que el token no sea muy antiguo (máximo 1 hora)
+    const tokenAge = Date.now() - decoded.timestamp;
+    if (tokenAge > 3600000) { // 1 hora en milisegundos
+      return {
+        success: false,
+        message: 'Token expirado'
+      };
+    }
+
+    // Buscar usuario
+    const user = await AdminUserModel.findById(decoded.userId);
+    if (!user || !user.activo) {
+      return {
+        success: false,
+        message: 'Usuario no encontrado'
+      };
+    }
+
+    // Actualizar contraseña
+    user.password = newPassword; // El pre-save hook se encargará del hash
+    user.updatedAt = new Date();
+    await user.save();
+
+    console.log('✅ Contraseña reseteada para:', { username: user.username, email: user.email });
+
+    return {
+      success: true,
+      message: 'Contraseña actualizada exitosamente'
+    };
+  } catch (error) {
+    console.error('❌ Error al resetear contraseña:', error);
+    return {
+      success: false,
+      message: 'Token inválido o expirado'
+    };
+  }
+}
