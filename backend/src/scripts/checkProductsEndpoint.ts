@@ -68,7 +68,7 @@ async function checkProductsEndpoint() {
       }
       
       console.log('\n🔹 Body params:');
-      if (endpointProductos.parametros.body && endpointProductos.parametros.body.length > 0) {
+      if (endpointProductos.parametros.body && Array.isArray(endpointProductos.parametros.body) && endpointProductos.parametros.body.length > 0) {
         endpointProductos.parametros.body.forEach((param: any) => {
           console.log(`   - ${param.nombre} (${param.tipo}) ${param.requerido ? '(requerido)' : ''}`);
           if (param.descripcion) console.log(`     ${param.descripcion}`);
