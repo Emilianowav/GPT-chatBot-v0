@@ -161,30 +161,40 @@ export class WorkflowConversationalHandler {
         
         // Si tiene configuración de endpoint, usar datos dinámicos
         if (primerPasoRecopilar.endpointResponseConfig) {
-          // Buscar datos de pasos ejecutados anteriormente
-          const datosDisponibles = Object.values(datosEjecutados);
-          let datosArray = null;
+          const arrayPath = primerPasoRecopilar.endpointResponseConfig.arrayPath;
           
-          // Buscar en todos los datos ejecutados
-          for (const datos of datosDisponibles) {
-            if (datos && typeof datos === 'object') {
-              // Intentar acceder al arrayPath dentro de los datos
-              const arrayPath = primerPasoRecopilar.endpointResponseConfig.arrayPath;
-              const array = this.obtenerDatosPorRuta(datos, arrayPath);
-              
-              if (Array.isArray(array)) {
-                datosArray = array;
+          console.log('🔍 Buscando datos dinámicos con arrayPath:', arrayPath);
+          console.log('📦 Datos ejecutados disponibles:', Object.keys(datosEjecutados));
+          
+          // El arrayPath es el nombre de la variable donde se guardaron los datos
+          let datosArray = datosEjecutados[arrayPath];
+          
+          // Si no es un array directamente, intentar buscar dentro del objeto
+          if (datosArray && !Array.isArray(datosArray) && typeof datosArray === 'object') {
+            // Buscar arrays dentro del objeto
+            for (const key of Object.keys(datosArray)) {
+              if (Array.isArray(datosArray[key])) {
+                console.log(`📋 Array encontrado en: ${arrayPath}.${key}`);
+                datosArray = datosArray[key];
                 break;
               }
             }
           }
           
-          if (datosArray && datosArray.length > 0) {
+          if (Array.isArray(datosArray) && datosArray.length > 0) {
+            console.log(`✅ Datos encontrados: ${datosArray.length} items`);
             const opciones = this.extraerOpcionesDinamicas(datosArray, primerPasoRecopilar.endpointResponseConfig);
             
             if (opciones.length > 0) {
+              console.log(`✅ Opciones generadas: ${opciones.length}`);
               response += '\n\n' + workflowConversationManager.formatearOpciones(opciones);
+            } else {
+              console.log('⚠️ No se pudieron generar opciones');
             }
+          } else {
+            console.log('⚠️ No se encontraron datos en formato array');
+            console.log('📦 Tipo de datos:', typeof datosArray);
+            console.log('📦 Datos:', datosArray);
           }
         }
         // Si tiene opciones estáticas, mostrarlas
@@ -376,28 +386,34 @@ export class WorkflowConversationalHandler {
         const estadoActual = await workflowConversationManager.getWorkflowState(contactoId);
         const datosRecopilados = estadoActual?.datosRecopilados || {};
         
-        // Buscar datos de pasos ejecutados
-        const datosDisponibles = Object.values(datosRecopilados);
-        let datosArray = null;
+        const arrayPath = siguientePaso.endpointResponseConfig.arrayPath;
+        console.log('🔍 Buscando datos para siguiente paso con arrayPath:', arrayPath);
+        console.log('📦 Datos recopilados disponibles:', Object.keys(datosRecopilados));
         
-        for (const datos of datosDisponibles) {
-          if (datos && typeof datos === 'object') {
-            const arrayPath = siguientePaso.endpointResponseConfig.arrayPath;
-            const array = this.obtenerDatosPorRuta(datos, arrayPath);
-            
-            if (Array.isArray(array)) {
-              datosArray = array;
+        // El arrayPath es el nombre de la variable
+        let datosArray = datosRecopilados[arrayPath];
+        
+        // Si no es array, buscar dentro del objeto
+        if (datosArray && !Array.isArray(datosArray) && typeof datosArray === 'object') {
+          for (const key of Object.keys(datosArray)) {
+            if (Array.isArray(datosArray[key])) {
+              console.log(`📋 Array encontrado en: ${arrayPath}.${key}`);
+              datosArray = datosArray[key];
               break;
             }
           }
         }
         
-        if (datosArray && datosArray.length > 0) {
+        if (Array.isArray(datosArray) && datosArray.length > 0) {
+          console.log(`✅ Datos encontrados: ${datosArray.length} items`);
           const opciones = this.extraerOpcionesDinamicas(datosArray, siguientePaso.endpointResponseConfig);
           
           if (opciones.length > 0) {
+            console.log(`✅ Opciones generadas: ${opciones.length}`);
             response += '\n\n' + workflowConversationManager.formatearOpciones(opciones);
           }
+        } else {
+          console.log('⚠️ No se encontraron datos array para siguiente paso');
         }
       }
       // Si tiene opciones estáticas, mostrarlas
