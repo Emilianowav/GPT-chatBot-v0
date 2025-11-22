@@ -242,8 +242,9 @@ export class UniversalRouter {
           continue;
         }
         
-        // Trigger tipo "keyword"
-        if (wf.trigger.tipo === 'keyword' && wf.trigger.keywords) {
+        // Verificar keywords primero (aplica a todos los tipos de trigger)
+        let keywordMatch = false;
+        if (wf.trigger.keywords && wf.trigger.keywords.length > 0) {
           console.log(`   🔍 Buscando keywords en mensaje: "${mensajeNormalizado}"`);
           
           for (const keyword of wf.trigger.keywords) {
@@ -251,27 +252,46 @@ export class UniversalRouter {
             console.log(`   🔍 Comparando keyword: "${keywordNormalizado}"`);
             
             if (mensajeNormalizado.includes(keywordNormalizado)) {
-              console.log(`🔄 Workflow detectado por keyword: "${keyword}" en "${wf.nombre}"`);
-              
-              return {
-                workflow,
-                apiConfig: api,
-                extractedParams: {},
-                confidence: 1.0
-              };
-            } else {
-              console.log(`   ❌ No coincide: "${keywordNormalizado}" no está en "${mensajeNormalizado}"`);
+              console.log(`   ✅ Keyword encontrada: "${keyword}"`);
+              keywordMatch = true;
+              break;
             }
           }
         }
         
-        // Trigger tipo "primer_mensaje"
+        // Trigger tipo "keyword" - solo keywords
+        if (wf.trigger.tipo === 'keyword') {
+          if (keywordMatch) {
+            console.log(`🔄 Workflow detectado por keyword en "${wf.nombre}"`);
+            
+            return {
+              workflow,
+              apiConfig: api,
+              extractedParams: {},
+              confidence: 1.0
+            };
+          }
+        }
+        
+        // Trigger tipo "primer_mensaje" - primer mensaje O keywords
         if (wf.trigger.tipo === 'primer_mensaje') {
           console.log(`   🕐 Evaluando trigger de primer mensaje para: "${wf.nombre}"`);
           
-          // Usar el servicio especializado para evaluar primer mensaje
+          // Si hay keyword match, activar inmediatamente
+          if (keywordMatch) {
+            console.log(`🔄 Workflow detectado por keyword (primer_mensaje): "${wf.nombre}"`);
+            
+            return {
+              workflow,
+              apiConfig: api,
+              extractedParams: {},
+              confidence: 1.0
+            };
+          }
+          
+          // Si no hay keyword, evaluar si es primer mensaje
           const evaluacion = await primerMensajeService.evaluatePrimerMensaje(
-            context.empresaNombre || context.empresaId, // Usar nombre de empresa para buscar contacto
+            context.empresaNombre || context.empresaId,
             context.telefonoCliente
           );
           

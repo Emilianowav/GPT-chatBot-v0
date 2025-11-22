@@ -94,6 +94,66 @@ export class WorkflowConversationManager {
   }
   
   /**
+   * Retrocede a un paso específico del workflow
+   */
+  async retrocederAPaso(contactoId: string, numeroPaso: number, limpiarVariable?: string): Promise<void> {
+    try {
+      const contacto = await ContactoEmpresaModel.findById(contactoId);
+      if (!contacto || !contacto.workflowState) {
+        throw new Error('No hay workflow activo');
+      }
+      
+      const estado = contacto.workflowState as WorkflowState;
+      estado.pasoActual = numeroPaso;
+      estado.ultimaActividad = new Date();
+      estado.intentosFallidos = 0;
+      
+      // Limpiar variable si se especifica
+      if (limpiarVariable && estado.datosRecopilados) {
+        delete estado.datosRecopilados[limpiarVariable];
+        console.log(`🗑️ [WORKFLOW] Variable limpiada: ${limpiarVariable}`);
+      }
+      
+      await ContactoEmpresaModel.findByIdAndUpdate(contactoId, {
+        workflowState: estado
+      });
+      
+      console.log('⬅️ [WORKFLOW] Retrocediendo al paso:', numeroPaso);
+    } catch (error) {
+      console.error('❌ Error retrocediendo paso:', error);
+      throw error;
+    }
+  }
+  
+  /**
+   * Actualiza un dato específico sin avanzar de paso
+   */
+  async actualizarDato(contactoId: string, variable: string, valor: any): Promise<void> {
+    try {
+      const contacto = await ContactoEmpresaModel.findById(contactoId);
+      if (!contacto || !contacto.workflowState) {
+        throw new Error('No hay workflow activo');
+      }
+      
+      const estado = contacto.workflowState as WorkflowState;
+      estado.datosRecopilados = {
+        ...estado.datosRecopilados,
+        [variable]: valor
+      };
+      estado.ultimaActividad = new Date();
+      
+      await ContactoEmpresaModel.findByIdAndUpdate(contactoId, {
+        workflowState: estado
+      });
+      
+      console.log(`✏️ [WORKFLOW] Dato actualizado: ${variable} = ${valor}`);
+    } catch (error) {
+      console.error('❌ Error actualizando dato:', error);
+      throw error;
+    }
+  }
+  
+  /**
    * Registra un intento fallido de validación
    */
   async registrarIntentoFallido(contactoId: string): Promise<number> {
