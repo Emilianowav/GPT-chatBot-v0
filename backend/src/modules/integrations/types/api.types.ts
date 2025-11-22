@@ -181,6 +181,15 @@ export interface IStepValidation {
 }
 
 /**
+ * Configuración de respuesta del endpoint para pasos de recopilación
+ */
+export interface IEndpointResponseConfig {
+  arrayPath: string;              // Ruta al array en la respuesta (ej: "data", "results")
+  idField: string;                // Campo que contiene el ID (ej: "id", "codigo")
+  displayField: string;           // Campo que se muestra al usuario (ej: "name", "descripcion")
+}
+
+/**
  * Paso de workflow conversacional
  */
 export interface IWorkflowStep {
@@ -191,6 +200,7 @@ export interface IWorkflowStep {
   pregunta?: string;              // Pregunta a hacer al usuario
   nombreVariable: string;         // Nombre de la variable a guardar
   validacion?: IStepValidation;   // Validación del input
+  endpointResponseConfig?: IEndpointResponseConfig;  // Configuración de respuesta del endpoint
   
   // Para pasos de ejecución
   endpointId?: string;            // ID del endpoint a ejecutar
@@ -232,6 +242,7 @@ export interface IWorkflow {
   mensajeInicial?: string;        // Mensaje al iniciar el workflow
   mensajeFinal?: string;          // Mensaje al completar el workflow
   mensajeAbandonar?: string;      // Mensaje si el usuario abandona
+  respuestaTemplate?: string;     // Template para formatear respuesta final con variables
   
   // Configuración
   permitirAbandonar?: boolean;    // Si el usuario puede salir con "cancelar"

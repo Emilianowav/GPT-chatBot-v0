@@ -255,6 +255,15 @@ const StepValidationSchema = new Schema(
   { _id: false }
 );
 
+const EndpointResponseConfigSchema = new Schema(
+  {
+    arrayPath: { type: String, required: true, default: 'data' },
+    idField: { type: String, required: true, default: 'id' },
+    displayField: { type: String, required: true, default: 'name' }
+  },
+  { _id: false }
+);
+
 const WorkflowStepSchema = new Schema(
   {
     orden: { type: Number, required: true },
@@ -268,6 +277,7 @@ const WorkflowStepSchema = new Schema(
     pregunta: String,
     nombreVariable: { type: String, required: true },
     validacion: StepValidationSchema,
+    endpointResponseConfig: EndpointResponseConfigSchema,
     
     // Para pasos de ejecución
     endpointId: String,
@@ -313,6 +323,7 @@ const WorkflowSchema = new Schema(
     mensajeInicial: String,
     mensajeFinal: String,
     mensajeAbandonar: String,
+    respuestaTemplate: String,
     
     // Configuración
     permitirAbandonar: { type: Boolean, default: true },
