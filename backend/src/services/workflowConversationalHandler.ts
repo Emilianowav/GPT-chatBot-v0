@@ -670,19 +670,34 @@ export class WorkflowConversationalHandler {
       return '❌ No se encontraron productos con esos criterios.';
     }
     
-    // Limitar a 5 productos
-    const productosLimitados = productos.slice(0, 5);
+    // Limitar a 10 productos
+    const productosLimitados = productos.slice(0, 10);
     console.log(`   ✂️ Limitando a ${productosLimitados.length} productos`);
     
     // Formatear de manera concisa
     const lista = productosLimitados.map((producto: any, index: number) => {
       const nombre = producto.name || producto.nombre || producto.title || 'Sin nombre';
       const precio = producto.price || producto.precio || '';
-      const stock = producto.stock || producto.stock_quantity || '';
+      
+      // Formatear stock correctamente
+      let stockTexto = '';
+      const stock = producto.stock || producto.stock_quantity;
+      
+      if (stock !== undefined && stock !== null) {
+        // Si stock es un objeto, extraer la cantidad
+        if (typeof stock === 'object') {
+          const cantidad = stock.quantity || stock.amount || stock.available || stock.stock;
+          if (cantidad !== undefined) {
+            stockTexto = String(cantidad);
+          }
+        } else {
+          stockTexto = String(stock);
+        }
+      }
       
       let linea = `${index + 1}. *${nombre}*`;
       if (precio) linea += `\n   💰 $${precio}`;
-      if (stock) linea += `\n   📦 Stock: ${stock}`;
+      if (stockTexto) linea += `\n   📦 Stock: ${stockTexto}`;
       
       return linea;
     }).join('\n\n');
@@ -690,9 +705,9 @@ export class WorkflowConversationalHandler {
     let resultado = lista;
     
     // Agregar nota si hay más productos
-    if (productos.length > 5) {
-      resultado += `\n\n_... y ${productos.length - 5} productos más_`;
-      console.log(`   ℹ️ Agregando nota de ${productos.length - 5} productos más`);
+    if (productos.length > 10) {
+      resultado += `\n\n_... y ${productos.length - 10} productos más_`;
+      console.log(`   ℹ️ Agregando nota de ${productos.length - 10} productos más`);
     }
     
     console.log(`   📏 Longitud del resultado: ${resultado.length} caracteres`);
