@@ -540,14 +540,24 @@ export class WorkflowConversationalHandler {
       // Finalizar workflow
       await workflowConversationManager.finalizarWorkflow(contactoId);
       
-      // Formatear respuesta
+      // Formatear respuesta usando template o formato por defecto
       let response = '';
-      if (workflow.mensajeFinal) {
-        response += workflow.mensajeFinal + '\n\n';
+      
+      if (workflow.respuestaTemplate) {
+        // Usar template del workflow
+        response = this.aplicarTemplate(workflow.respuestaTemplate, datosRecopilados, result.data);
+      } else {
+        // Formato por defecto
+        if (workflow.mensajeFinal) {
+          response += workflow.mensajeFinal + '\n\n';
+        }
+        response += this.formatearRespuestaProductos(result.data);
       }
       
-      // Agregar datos de la respuesta
-      response += this.formatearRespuesta(result.data);
+      // Limitar a 4000 caracteres para WhatsApp
+      if (response.length > 4000) {
+        response = response.substring(0, 3950) + '\n\n... (resultados truncados)';
+      }
       
       return {
         success: true,
@@ -574,32 +584,81 @@ export class WorkflowConversationalHandler {
   }
   
   /**
-   * Formatea la respuesta de la API para el usuario
+   * Aplica un template reemplazando variables
+   */
+  private aplicarTemplate(template: string, datosRecopilados: any, resultadoAPI: any): string {
+    let resultado = template;
+    
+    // Reemplazar variables recopiladas
+    for (const [key, value] of Object.entries(datosRecopilados)) {
+      const regex = new RegExp(`{{${key}}}`, 'g');
+      resultado = resultado.replace(regex, String(value));
+    }
+    
+    // Reemplazar resultado de API
+    if (resultadoAPI) {
+      const formatoProductos = this.formatearRespuestaProductos(resultadoAPI);
+      resultado = resultado.replace(/{{resultados}}/g, formatoProductos);
+      resultado = resultado.replace(/{{resultado}}/g, formatoProductos);
+    }
+    
+    return resultado;
+  }
+  
+  /**
+   * Formatea productos de manera concisa
+   */
+  private formatearRespuestaProductos(data: any): string {
+    // Extraer array de productos
+    let productos = data;
+    
+    if (data && typeof data === 'object') {
+      if (data.data && Array.isArray(data.data)) {
+        productos = data.data;
+      } else if (data.products && Array.isArray(data.products)) {
+        productos = data.products;
+      }
+    }
+    
+    if (!Array.isArray(productos)) {
+      return 'No se encontraron productos.';
+    }
+    
+    if (productos.length === 0) {
+      return '❌ No se encontraron productos con esos criterios.';
+    }
+    
+    // Limitar a 5 productos
+    const productosLimitados = productos.slice(0, 5);
+    
+    // Formatear de manera concisa
+    const lista = productosLimitados.map((producto: any, index: number) => {
+      const nombre = producto.name || producto.nombre || producto.title || 'Sin nombre';
+      const precio = producto.price || producto.precio || '';
+      const stock = producto.stock || producto.stock_quantity || '';
+      
+      let linea = `${index + 1}. *${nombre}*`;
+      if (precio) linea += `\n   💰 $${precio}`;
+      if (stock) linea += `\n   📦 Stock: ${stock}`;
+      
+      return linea;
+    }).join('\n\n');
+    
+    let resultado = lista;
+    
+    // Agregar nota si hay más productos
+    if (productos.length > 5) {
+      resultado += `\n\n_... y ${productos.length - 5} productos más_`;
+    }
+    
+    return resultado;
+  }
+  
+  /**
+   * Formatea la respuesta de la API para el usuario (método legacy)
    */
   private formatearRespuesta(data: any): string {
-    if (typeof data === 'string') {
-      return data;
-    }
-    
-    if (Array.isArray(data)) {
-      if (data.length === 0) {
-        return 'No se encontraron resultados.';
-      }
-      
-      // Formatear array como lista
-      return data.map((item, index) => {
-        if (typeof item === 'object') {
-          return `${index + 1}. ${JSON.stringify(item, null, 2)}`;
-        }
-        return `${index + 1}. ${item}`;
-      }).join('\n\n');
-    }
-    
-    if (typeof data === 'object') {
-      return JSON.stringify(data, null, 2);
-    }
-    
-    return String(data);
+    return this.formatearRespuestaProductos(data);
   }
 }
 
