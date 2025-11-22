@@ -4,6 +4,7 @@
 import { ApiConfigurationModel } from '../modules/integrations/models/ApiConfiguration.js';
 import { ChatbotModel } from '../models/Chatbot.js';
 import { ContactoEmpresaModel } from '../models/ContactoEmpresa.js';
+import { primerMensajeService } from './primerMensajeService.js';
 import type { IApiConfiguracion, IKeywordConfig } from '../modules/integrations/types/api.types.js';
 
 /**
@@ -229,13 +230,24 @@ export class UniversalRouter {
       for (const { workflow, api } of allWorkflows) {
         const wf = workflow as any;
         
+        console.log(`🔍 Evaluando workflow: "${wf.nombre}"`);
+        console.log(`   - Activo: ${wf.activo}`);
+        console.log(`   - Trigger tipo: ${wf.trigger?.tipo}`);
+        console.log(`   - Keywords: ${JSON.stringify(wf.trigger?.keywords)}`);
+        
         // Verificar trigger
-        if (!wf.trigger) continue;
+        if (!wf.trigger) {
+          console.log(`   ❌ Sin trigger configurado`);
+          continue;
+        }
         
         // Trigger tipo "keyword"
         if (wf.trigger.tipo === 'keyword' && wf.trigger.keywords) {
+          console.log(`   🔍 Buscando keywords en mensaje: "${mensajeNormalizado}"`);
+          
           for (const keyword of wf.trigger.keywords) {
             const keywordNormalizado = keyword.toLowerCase();
+            console.log(`   🔍 Comparando keyword: "${keywordNormalizado}"`);
             
             if (mensajeNormalizado.includes(keywordNormalizado)) {
               console.log(`🔄 Workflow detectado por keyword: "${keyword}" en "${wf.nombre}"`);
@@ -246,44 +258,42 @@ export class UniversalRouter {
                 extractedParams: {},
                 confidence: 1.0
               };
+            } else {
+              console.log(`   ❌ No coincide: "${keywordNormalizado}" no está en "${mensajeNormalizado}"`);
             }
           }
         }
         
         // Trigger tipo "primer_mensaje"
         if (wf.trigger.tipo === 'primer_mensaje') {
-          // Verificar si es el primer mensaje del contacto
-          const contacto = await ContactoEmpresaModel.findOne({
-            empresaId: context.empresaId,
-            telefono: context.telefonoCliente
-          });
+          console.log(`   🕐 Evaluando trigger de primer mensaje para: "${wf.nombre}"`);
           
-          if (!contacto) {
-            console.log('⚠️ Contacto no encontrado para verificar primer mensaje');
-            continue;
-          }
+          // Usar el servicio especializado para evaluar primer mensaje
+          const evaluacion = await primerMensajeService.evaluatePrimerMensaje(
+            context.empresaId,
+            context.telefonoCliente
+          );
           
-          // Verificar si es el primer mensaje:
-          // 1. interacciones === 0 (aún no se ha procesado ningún mensaje)
-          // 2. O el historial está vacío (contacto recién creado)
-          const esPrimerMensaje = 
-            contacto.metricas.interacciones === 0 || 
-            !contacto.conversaciones?.historial || 
-            contacto.conversaciones.historial.length === 0;
-          
-          if (esPrimerMensaje) {
-            console.log(`🔄 Workflow detectado por primer mensaje: "${wf.nombre}"`);
-            console.log(`   - Interacciones: ${contacto.metricas.interacciones}`);
-            console.log(`   - Historial: ${contacto.conversaciones?.historial?.length || 0} mensajes`);
+          if (evaluacion.shouldTrigger) {
+            console.log(`🔄 Workflow detectado por ${evaluacion.reason}: "${wf.nombre}"`);
+            console.log(`   - Razón: ${evaluacion.reason}`);
+            console.log(`   - Horas transcurridas: ${evaluacion.hoursElapsed?.toFixed(1) || 'N/A'}`);
+            console.log(`   - Interacciones: ${evaluacion.interactionCount || 0}`);
+            console.log(`   - Última interacción: ${evaluacion.lastInteraction?.toISOString() || 'Nunca'}`);
             
             return {
               workflow,
               apiConfig: api,
-              extractedParams: {},
+              extractedParams: {
+                primer_mensaje_razon: evaluacion.reason,
+                horas_transcurridas: evaluacion.hoursElapsed
+              },
               confidence: 1.0
             };
           } else {
-            console.log(`⏭️ No es primer mensaje (interacciones: ${contacto.metricas.interacciones}, historial: ${contacto.conversaciones?.historial?.length || 0})`);
+            console.log(`⏭️ No aplica primer mensaje/24hs para "${wf.nombre}":`);
+            console.log(`   - Horas transcurridas: ${evaluacion.hoursElapsed?.toFixed(1) || 'N/A'}`);
+            console.log(`   - Interacciones: ${evaluacion.interactionCount || 0}`);
           }
         }
       }

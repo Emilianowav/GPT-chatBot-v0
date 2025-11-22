@@ -21,6 +21,7 @@ import integrationsRoutes from "./modules/integrations/routes/index.js";
 import usuarioEmpresaRoutes from "./routes/usuarioEmpresaRoutes.js";
 import flowRoutes from "./routes/flowRoutes.js";
 import chatbotRoutes from "./routes/chatbotRoutes.js";
+// import primerMensajeRoutes from "./routes/primerMensajeRoutes.js";
 import { errorHandler } from "./middlewares/errorHandler.js";
 import { connectDB } from "./config/database.js";
 import { loggers } from "./utils/logger.js";
@@ -113,6 +114,7 @@ app.use("/api/modules/integrations", integrationsRoutes);
 app.use("/api/flujos", flujosRoutes);
 app.use("/api/flows", flowRoutes);
 app.use("/api/chatbots", chatbotRoutes);
+// app.use("/api/primer-mensaje", primerMensajeRoutes);
 app.use("/api", statusRoutes);
 app.use(errorHandler);
 
