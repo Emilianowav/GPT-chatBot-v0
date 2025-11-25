@@ -36,6 +36,7 @@ interface FlowStep {
   mapeoParametros?: Record<string, string>;
   plantillaOpciones?: string;
   plantillaRespuesta?: string;
+  camposRelacionados?: string[];
   nombre?: string;
   descripcion?: string;
   mensajeError?: string;

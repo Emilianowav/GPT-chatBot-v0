@@ -34,6 +34,7 @@ interface FlowStep {
   endpointResponseConfig?: EndpointResponseConfig;
   endpointId?: string;
   mapeoParametros?: Record<string, string>;
+  camposRelacionados?: string[];
   nombre?: string;
   descripcion?: string;
   mensajeError?: string;
@@ -539,6 +540,56 @@ export default function WorkflowStepEditor({ step, index, onChange, onRemove, en
                     </div>
                   ))}
                 </div>
+              </div>
+
+              <div className={styles.formGroup}>
+                <label>Campos Relacionados a Mostrar (opcional)</label>
+                <p className={styles.helpText}>
+                  Especifica campos adicionales del resultado que quieres incluir en la plantilla de respuesta
+                </p>
+                <div className={styles.opcionesList}>
+                  {(step.camposRelacionados || []).map((campo, i) => (
+                    <div key={i} className={styles.opcionItem}>
+                      <span className={styles.opcionNumero}>{i + 1}</span>
+                      <input
+                        type="text"
+                        value={campo}
+                        onChange={(e) => {
+                          const nuevosCampos = [...(step.camposRelacionados || [])];
+                          nuevosCampos[i] = e.target.value;
+                          handleChange('camposRelacionados', nuevosCampos);
+                        }}
+                        placeholder="link_compra"
+                        className={styles.input}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const nuevosCampos = (step.camposRelacionados || []).filter((_, idx) => idx !== i);
+                          handleChange('camposRelacionados', nuevosCampos);
+                        }}
+                        className={styles.removeButton}
+                      >
+                        ✕
+                      </button>
+                    </div>
+                  ))}
+                </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    const nuevosCampos = [...(step.camposRelacionados || []), ''];
+                    handleChange('camposRelacionados', nuevosCampos);
+                  }}
+                  className={styles.addButton}
+                  style={{marginTop: '0.5rem'}}
+                >
+                  + Agregar Campo
+                </button>
+                <small>
+                  💡 Ejemplo: Si agregas "link_compra", podrás usar {'{{link_compra}}'} en la plantilla de respuesta.<br/>
+                  Los campos deben existir en la respuesta de la API.
+                </small>
               </div>
             </>
           )}

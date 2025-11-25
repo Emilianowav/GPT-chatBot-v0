@@ -284,6 +284,7 @@ const WorkflowStepSchema = new Schema(
     endpointId: String,
     mapeoParametros: Schema.Types.Mixed,
     plantillaRespuesta: String,
+    camposRelacionados: [String],
     
     // Opcionales
     nombre: String,

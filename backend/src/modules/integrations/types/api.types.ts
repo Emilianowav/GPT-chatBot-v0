@@ -207,6 +207,7 @@ export interface IWorkflowStep {
   endpointId?: string;            // ID del endpoint a ejecutar
   mapeoParametros?: Record<string, string>;  // Mapeo de variables a parámetros
   plantillaRespuesta?: string;    // Plantilla para formatear respuesta del endpoint
+  camposRelacionados?: string[];  // Campos adicionales a incluir en la respuesta (ej: ['link_compra', 'stock'])
   
   // Opcionales
   nombre?: string;
