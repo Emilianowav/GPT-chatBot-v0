@@ -23,7 +23,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     // Verificar si hay sesión guardada
     const token = localStorage.getItem('auth_token');
     const empresaId = localStorage.getItem('empresa_id');
-    const empresaMongoId = localStorage.getItem('empresa_mongo_id');
     const empresaNombre = localStorage.getItem('empresa_nombre');
     const role = localStorage.getItem('user_role');
     const username = localStorage.getItem('username');
@@ -31,7 +30,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (token && empresaId && empresaNombre) {
       setEmpresa({ 
         empresaId, 
-        empresaMongoId: empresaMongoId || undefined,
         empresaNombre, 
         token, 
         role: role || undefined, 
@@ -52,7 +50,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       const authData: EmpresaAuth = {
         empresaId: response.user.empresaId,
-        empresaMongoId: response.user.empresaNombre,
         empresaNombre: response.user.empresaNombre,
         token: response.token,
         role: response.user.role,
@@ -64,7 +61,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       
       localStorage.setItem('auth_token', response.token);
       localStorage.setItem('empresa_id', response.user.empresaId);
-      localStorage.setItem('empresa_mongo_id', response.user.empresaNombre || '');
       localStorage.setItem('empresa_nombre', response.user.empresaNombre);
       localStorage.setItem('user_role', response.user.role || '');
       localStorage.setItem('username', response.user.username || '');
