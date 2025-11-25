@@ -1334,3 +1334,327 @@
   color: #FF6B4A;
   font-family: 'Consolas', monospace;
 }
+
+/* ============================================ */
+/* NUEVOS COMPONENTES - CONSULTA FILTRADA */
+/* ============================================ */
+
+/* Variable Selector */
+.variableSelector {
+  position: relative;
+}
+
+.variablePreview {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  margin-top: 0.25rem;
+  padding: 0.5rem;
+  background: rgba(102, 126, 234, 0.1);
+  border: 1px solid rgba(102, 126, 234, 0.3);
+  border-radius: 4px;
+  font-size: 0.75rem;
+  color: rgba(255, 255, 255, 0.8);
+  z-index: 10;
+}
+
+/* Path Builder */
+.pathBuilder {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.pathLevels {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.pathLevel {
+  display: grid;
+  grid-template-columns: auto 1fr auto auto;
+  gap: 0.75rem;
+  align-items: center;
+  padding: 0.75rem;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 6px;
+}
+
+.levelNumber {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.5);
+  min-width: 60px;
+}
+
+.checkboxLabel {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.875rem;
+  color: rgba(255, 255, 255, 0.7);
+  cursor: pointer;
+  user-select: none;
+}
+
+.checkboxLabel input[type="checkbox"] {
+  cursor: pointer;
+}
+
+.pathPreview {
+  padding: 0.75rem;
+  background: rgba(0, 0, 0, 0.3);
+  border: 1px solid rgba(102, 126, 234, 0.2);
+  border-radius: 4px;
+  font-size: 0.875rem;
+}
+
+.pathPreview code {
+  color: #FF6B4A;
+  font-family: 'Consolas', monospace;
+  font-weight: 600;
+}
+
+/* Parameter Mapper */
+.parameterMapper {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.mapperHeader {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.mappingsList {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.mappingItem {
+  padding: 1rem;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 8px;
+}
+
+.mappingRow {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr auto;
+  gap: 1rem;
+  align-items: start;
+}
+
+.mappingField {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.mappingField label {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.mappingArrow {
+  font-size: 1.5rem;
+  color: rgba(255, 255, 255, 0.3);
+  align-self: center;
+  margin-top: 1.5rem;
+}
+
+.valuePreview {
+  font-size: 0.75rem;
+  color: rgba(102, 126, 234, 0.8);
+}
+
+.valuePreview strong {
+  color: rgba(102, 126, 234, 1);
+}
+
+.emptyState {
+  padding: 2rem;
+  text-align: center;
+  background: rgba(255, 255, 255, 0.02);
+  border: 2px dashed rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+}
+
+.emptyState p {
+  margin: 0 0 0.5rem 0;
+  color: rgba(255, 255, 255, 0.6);
+  font-weight: 500;
+}
+
+.emptyState small {
+  color: rgba(255, 255, 255, 0.4);
+}
+
+/* Response Field Selector */
+.responseFieldSelector {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.selectorHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.helperButton {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  background: linear-gradient(135deg, rgba(102, 126, 234, 0.2) 0%, rgba(118, 142, 250, 0.2) 100%);
+  border: 1px solid rgba(102, 126, 234, 0.3);
+  border-radius: 6px;
+  color: rgba(255, 255, 255, 0.9);
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.helperButton:hover {
+  background: linear-gradient(135deg, rgba(102, 126, 234, 0.3) 0%, rgba(118, 142, 250, 0.3) 100%);
+  border-color: rgba(102, 126, 234, 0.5);
+}
+
+.helpersPanel {
+  padding: 1rem;
+  background: rgba(102, 126, 234, 0.05);
+  border: 1px solid rgba(102, 126, 234, 0.2);
+  border-radius: 8px;
+}
+
+.helpersPanel h4 {
+  margin: 0 0 0.5rem 0;
+  color: rgba(255, 255, 255, 0.9);
+  font-size: 1rem;
+}
+
+.helpersPanel p {
+  margin: 0 0 1rem 0;
+  font-size: 0.875rem;
+  color: rgba(255, 255, 255, 0.6);
+}
+
+.helpersList {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 0.75rem;
+}
+
+.helperItem {
+  padding: 0.75rem 1rem;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 6px;
+  color: rgba(255, 255, 255, 0.9);
+  font-size: 0.875rem;
+  text-align: left;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.helperItem:hover {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(102, 126, 234, 0.3);
+  transform: translateY(-2px);
+}
+
+.fieldsList {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.fieldItem {
+  padding: 1rem;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 8px;
+}
+
+.fieldConfig {
+  display: grid;
+  grid-template-columns: 1fr 1fr auto;
+  gap: 1rem;
+  align-items: start;
+}
+
+.fieldPath,
+.fieldAlias {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.fieldPath label,
+.fieldAlias label {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.fieldAlias small {
+  font-size: 0.75rem;
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.fieldAlias code {
+  color: #FF6B4A;
+  font-family: 'Consolas', monospace;
+}
+
+.helperBadge {
+  margin-top: 0.75rem;
+  padding: 0.5rem;
+  background: rgba(102, 126, 234, 0.1);
+  border: 1px solid rgba(102, 126, 234, 0.2);
+  border-radius: 4px;
+  font-size: 0.75rem;
+  color: rgba(102, 126, 234, 0.9);
+}
+
+.sampleDataViewer {
+  margin-top: 1rem;
+  padding: 1rem;
+  background: rgba(0, 0, 0, 0.3);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 6px;
+}
+
+.sampleDataViewer summary {
+  cursor: pointer;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.7);
+  user-select: none;
+}
+
+.sampleDataViewer summary:hover {
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.sampleDataViewer pre {
+  margin-top: 1rem;
+  padding: 1rem;
+  background: rgba(0, 0, 0, 0.5);
+  border-radius: 4px;
+  overflow-x: auto;
+  font-family: 'Consolas', monospace;
+  font-size: 0.75rem;
+  color: rgba(255, 255, 255, 0.8);
+  line-height: 1.5;
+}
