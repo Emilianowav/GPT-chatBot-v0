@@ -339,9 +339,40 @@ export class WorkflowConversationalHandler {
     console.log('✅ Input válido:', validacion.valor);
     
     // Guardar dato recopilado
-    const datosNuevos = {
+    const datosNuevos: Record<string, any> = {
       [paso.nombreVariable]: validacion.valor
     };
+    
+    // Si el paso tiene endpoint configurado, intentar extraer el nombre de la opción seleccionada
+    if (paso.endpointId && paso.endpointResponseConfig) {
+      const estadoActual = await workflowConversationManager.getWorkflowState(contactoId);
+      
+      // Buscar en datosEjecutados si hay datos de este endpoint
+      if (estadoActual?.datosEjecutados && estadoActual.datosEjecutados[paso.endpointId]) {
+        const datosAPI = estadoActual.datosEjecutados[paso.endpointId];
+        let datosArray = datosAPI;
+        
+        if (datosArray.data && Array.isArray(datosArray.data)) {
+          datosArray = datosArray.data;
+        }
+        
+        if (Array.isArray(datosArray)) {
+          const idField = paso.endpointResponseConfig.idField || 'id';
+          const displayField = paso.endpointResponseConfig.displayField || 'name';
+          
+          // Buscar el item que coincida con el ID seleccionado
+          const itemSeleccionado = datosArray.find((item: any) => 
+            String(item[idField]) === String(validacion.valor)
+          );
+          
+          if (itemSeleccionado && itemSeleccionado[displayField]) {
+            // Guardar también el nombre con sufijo _nombre
+            datosNuevos[`${paso.nombreVariable}_nombre`] = itemSeleccionado[displayField];
+            console.log(`✅ Guardando nombre: ${paso.nombreVariable}_nombre = "${itemSeleccionado[displayField]}"`);
+          }
+        }
+      }
+    }
     
     await workflowConversationManager.avanzarPaso(contactoId, datosNuevos);
     
@@ -369,7 +400,11 @@ export class WorkflowConversationalHandler {
     let response = '';
     
     if (siguientePaso.tipo === 'recopilar' && siguientePaso.pregunta) {
-      response = siguientePaso.pregunta;
+      // Reemplazar variables en la pregunta
+      const estadoActual = await workflowConversationManager.getWorkflowState(contactoId);
+      const datosRecopilados = estadoActual?.datosRecopilados || {};
+      
+      response = this.reemplazarVariables(siguientePaso.pregunta, datosRecopilados);
       
       // RECOPILAR llama a la API si tiene endpoint configurado
       if (siguientePaso.endpointId) {
@@ -402,6 +437,13 @@ export class WorkflowConversationalHandler {
           
           if (resultadoAPI.success && resultadoAPI.data) {
             console.log('✅ Datos obtenidos de la API');
+            
+            // Guardar datos de la API para uso posterior
+            await workflowConversationManager.guardarDatosEjecutados(
+              contactoId,
+              siguientePaso.endpointId,
+              resultadoAPI.data
+            );
             
             let datosArray = resultadoAPI.data;
             
@@ -720,6 +762,32 @@ export class WorkflowConversationalHandler {
    */
   private formatearRespuesta(data: any): string {
     return this.formatearRespuestaProductos(data);
+  }
+  
+  /**
+   * Reemplaza variables en un texto con formato {{variable}}
+   */
+  private reemplazarVariables(texto: string, datos: Record<string, any>): string {
+    let resultado = texto;
+    
+    // Buscar todas las variables en formato {{variable}}
+    const regex = /\{\{([^}]+)\}\}/g;
+    const matches = texto.matchAll(regex);
+    
+    for (const match of matches) {
+      const nombreVariable = match[1].trim();
+      const valor = datos[nombreVariable];
+      
+      if (valor !== undefined && valor !== null) {
+        resultado = resultado.replace(match[0], String(valor));
+        console.log(`🔄 Variable reemplazada: {{${nombreVariable}}} → "${valor}"`);
+      } else {
+        console.log(`⚠️ Variable no encontrada: {{${nombreVariable}}}`);
+        // Dejar la variable sin reemplazar si no existe
+      }
+    }
+    
+    return resultado;
   }
 }
 

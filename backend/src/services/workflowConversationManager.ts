@@ -154,6 +154,35 @@ export class WorkflowConversationManager {
   }
   
   /**
+   * Guarda datos ejecutados de una API
+   */
+  async guardarDatosEjecutados(contactoId: string, endpointId: string, datos: any): Promise<void> {
+    try {
+      const contacto = await ContactoEmpresaModel.findById(contactoId);
+      if (!contacto || !contacto.workflowState) {
+        throw new Error('No hay workflow activo');
+      }
+      
+      const estado = contacto.workflowState as WorkflowState;
+      if (!estado.datosEjecutados) {
+        estado.datosEjecutados = {};
+      }
+      
+      estado.datosEjecutados[endpointId] = datos;
+      estado.ultimaActividad = new Date();
+      
+      await ContactoEmpresaModel.findByIdAndUpdate(contactoId, {
+        workflowState: estado
+      });
+      
+      console.log(`💾 [WORKFLOW] Datos de API guardados: ${endpointId}`);
+    } catch (error) {
+      console.error('❌ Error guardando datos ejecutados:', error);
+      throw error;
+    }
+  }
+  
+  /**
    * Registra un intento fallido de validación
    */
   async registrarIntentoFallido(contactoId: string): Promise<number> {

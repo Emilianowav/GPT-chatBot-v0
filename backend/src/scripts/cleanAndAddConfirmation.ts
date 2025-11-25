@@ -1,4 +1,4 @@
-// ✅ SCRIPT PARA AGREGAR PASO DE CONFIRMACIÓN AL WORKFLOW
+// 🔧 SCRIPT PARA LIMPIAR Y AGREGAR PASO DE CONFIRMACIÓN
 
 import dotenv from 'dotenv';
 import mongoose from 'mongoose';
@@ -7,14 +7,12 @@ import { ApiConfigurationModel } from '../modules/integrations/models/ApiConfigu
 
 dotenv.config();
 
-async function addConfirmationStep() {
+async function cleanAndAddConfirmation() {
   try {
     console.log('🔍 Conectando a MongoDB...');
     await connectDB();
     
-    console.log('📋 Buscando API de iCenter...');
     const apis = await ApiConfigurationModel.find({});
-    
     let apiICenter = apis.find(api => 
       (api.empresaId && api.empresaId.toString().toLowerCase().includes('icenter')) || 
       (api.nombre && api.nombre.toLowerCase().includes('icenter'))
@@ -25,9 +23,6 @@ async function addConfirmationStep() {
       return;
     }
     
-    console.log(`🎯 API encontrada: ${apiICenter.nombre}`);
-    
-    // Buscar el workflow
     const workflow = apiICenter.workflows?.find((w: any) => 
       w.id === 'workflow-icenter-correcto'
     );
@@ -37,26 +32,28 @@ async function addConfirmationStep() {
       return;
     }
     
-    console.log(`📋 Workflow encontrado: ${workflow.nombre}`);
-    console.log(`📊 Pasos actuales: ${workflow.steps.length}`);
+    console.log(`📋 Workflow: ${workflow.nombre}`);
+    console.log(`📊 Pasos antes: ${workflow.steps.length}`);
     
-    // Reordenar pasos: insertar confirmación antes del paso final
-    const pasos = workflow.steps;
+    // ELIMINAR TODOS los pasos de confirmación
+    workflow.steps = workflow.steps.filter((p: any) => 
+      p.id !== 'confirmar-datos' && p.nombre !== 'Confirmar Datos'
+    );
     
-    // Encontrar el paso final (EJECUTAR)
-    const pasoFinalIndex = pasos.findIndex((p: any) => p.tipo === 'ejecutar');
+    console.log(`📊 Pasos después de limpiar: ${workflow.steps.length}`);
     
-    if (pasoFinalIndex === -1) {
-      console.log('❌ No se encontró paso final');
+    // Encontrar el paso EJECUTAR
+    const pasoEjecutarIndex = workflow.steps.findIndex((p: any) => p.tipo === 'ejecutar');
+    
+    if (pasoEjecutarIndex === -1) {
+      console.log('❌ No se encontró paso EJECUTAR');
       return;
     }
     
-    console.log(`\n🔍 Paso final encontrado en posición: ${pasoFinalIndex + 1}`);
-    
-    // Crear paso de confirmación
+    // Crear NUEVO paso de confirmación
     const pasoConfirmacion = {
       id: 'confirmar-datos',
-      orden: pasos[pasoFinalIndex].orden, // Toma el orden del paso final
+      orden: pasoEjecutarIndex + 1,
       tipo: 'recopilar' as 'recopilar',
       nombre: 'Confirmar Datos',
       descripcion: 'Usuario confirma los datos ingresados',
@@ -75,7 +72,7 @@ async function addConfirmationStep() {
 5️⃣ Cancelar búsqueda`,
       nombreVariable: 'confirmacion',
       validacion: {
-        tipo: 'opcion',
+        tipo: 'opcion' as 'opcion',
         requerido: true,
         opciones: [
           '1: Confirmar y buscar',
@@ -88,35 +85,22 @@ async function addConfirmationStep() {
       }
     };
     
-    // Actualizar orden del paso final
-    pasos[pasoFinalIndex].orden = pasos[pasoFinalIndex].orden + 1;
+    // Insertar antes del paso EJECUTAR
+    workflow.steps.splice(pasoEjecutarIndex, 0, pasoConfirmacion as any);
     
-    // Insertar paso de confirmación
-    pasos.splice(pasoFinalIndex, 0, pasoConfirmacion as any);
-    
-    // Reordenar todos los pasos
-    pasos.forEach((paso: any, index: number) => {
+    // Reordenar
+    workflow.steps.forEach((paso: any, index: number) => {
       paso.orden = index + 1;
     });
     
-    console.log('\n💾 Guardando cambios...');
+    console.log('\n💾 Guardando...');
     await apiICenter.save();
     
-    console.log('\n✅ PASO DE CONFIRMACIÓN AGREGADO!');
-    console.log('\n📋 NUEVO FLUJO:');
-    pasos.forEach((paso: any) => {
+    console.log('\n✅ COMPLETADO!');
+    console.log('\n📋 FLUJO FINAL:');
+    workflow.steps.forEach((paso: any) => {
       console.log(`   ${paso.orden}. ${paso.nombre} (${paso.tipo})`);
     });
-    
-    console.log('\n🎯 FLUJO DE CONFIRMACIÓN:');
-    console.log('   Usuario elige opción 1 → Continúa a búsqueda');
-    console.log('   Usuario elige opción 2-4 → Vuelve al paso correspondiente');
-    console.log('   Usuario elige opción 5 → Cancela workflow');
-    
-    console.log('\n⚠️ NOTA: Se necesita implementar la lógica de navegación');
-    console.log('   en workflowConversationalHandler.ts');
-    
-    console.log('\n🚀 PRÓXIMO PASO: Implementar lógica de confirmación');
     
   } catch (error) {
     console.error('❌ Error:', error);
@@ -126,4 +110,4 @@ async function addConfirmationStep() {
   }
 }
 
-addConfirmationStep();
+cleanAndAddConfirmation();
