@@ -9,7 +9,7 @@ import TemplateBuilder from './TemplateBuilder';
 import styles from './ModalWorkflow.module.css';
 
 type ValidationType = 'texto' | 'numero' | 'opcion' | 'regex';
-type StepType = 'recopilar' | 'ejecutar' | 'validar' | 'confirmacion';
+type StepType = 'recopilar' | 'input' | 'confirmacion' | 'ejecutar' | 'validar';
 type TriggerType = 'keyword' | 'primer_mensaje' | 'manual';
 
 interface StepValidation {
@@ -603,20 +603,9 @@ export default function ModalWorkflow({ isOpen, onClose, onSubmit, workflowInici
                   <h3>📝 Pasos del Workflow</h3>
                   <p className={styles.pasoDes}>Recopila información consultando endpoints y guarda las selecciones del usuario</p>
                 </div>
-                <div style={{ display: 'flex', gap: '0.5rem' }}>
-                  <button 
-                    type="button" 
-                    className={styles.addButton} 
-                    onClick={handleAddConfirmacionStep}
-                    title="Agrega un paso de confirmación automático con todas las variables recopiladas"
-                    style={{ background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)' }}
-                  >
-                    ✓ Agregar Confirmación
-                  </button>
-                  <button type="button" className={styles.addButton} onClick={handleAddStep}>
-                    + Agregar Paso
-                  </button>
-                </div>
+                <button type="button" className={styles.addButton} onClick={handleAddStep}>
+                  + Agregar Paso
+                </button>
               </div>
 
               {formData.steps.length === 0 ? (

@@ -269,8 +269,9 @@ export class WorkflowConversationalHandler {
       console.log('📍 Procesando paso:', pasoActual.nombre || `Paso ${pasoActual.orden}`);
       
       // Procesar según tipo de paso
+      // Input se procesa como recopilación simple (sin endpoint)
       // Confirmacion se procesa como recopilar (es un tipo especial de recopilación)
-      if (pasoActual.tipo === 'recopilar' || pasoActual.tipo === 'confirmacion') {
+      if (pasoActual.tipo === 'recopilar' || pasoActual.tipo === 'input' || pasoActual.tipo === 'confirmacion') {
         return await this.procesarPasoRecopilacion(
           mensaje,
           pasoActual,
@@ -419,7 +420,7 @@ export class WorkflowConversationalHandler {
     // Construir respuesta con siguiente pregunta
     let response = '';
     
-    if (siguientePaso.tipo === 'recopilar' && siguientePaso.pregunta) {
+    if ((siguientePaso.tipo === 'recopilar' || siguientePaso.tipo === 'input' || siguientePaso.tipo === 'confirmacion') && siguientePaso.pregunta) {
       // Reemplazar variables en la pregunta
       const estadoActual = await workflowConversationManager.getWorkflowState(contactoId);
       const datosRecopilados = estadoActual?.datosRecopilados || {};
