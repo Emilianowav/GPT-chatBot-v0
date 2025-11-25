@@ -273,23 +273,11 @@ export class UniversalRouter {
           }
         }
         
-        // Trigger tipo "primer_mensaje" - primer mensaje O keywords
+        // Trigger tipo "primer_mensaje" - SOLO primer mensaje (sin keywords)
         if (wf.trigger.tipo === 'primer_mensaje') {
           console.log(`   🕐 Evaluando trigger de primer mensaje para: "${wf.nombre}"`);
           
-          // Si hay keyword match, activar inmediatamente
-          if (keywordMatch) {
-            console.log(`🔄 Workflow detectado por keyword (primer_mensaje): "${wf.nombre}"`);
-            
-            return {
-              workflow,
-              apiConfig: api,
-              extractedParams: {},
-              confidence: 1.0
-            };
-          }
-          
-          // Si no hay keyword, evaluar si es primer mensaje
+          // Evaluar si es primer mensaje
           const evaluacion = await primerMensajeService.evaluatePrimerMensaje(
             context.empresaNombre || context.empresaId,
             context.telefonoCliente

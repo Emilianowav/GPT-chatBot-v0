@@ -171,6 +171,39 @@ export default function WorkflowManager({ apiId, endpoints, apiBaseUrl, apiAuth,
     }
   };
 
+  const handleDuplicate = async (workflow: Workflow) => {
+    try {
+      // Crear copia del workflow sin IDs
+      const workflowCopy: Workflow = {
+        nombre: `${workflow.nombre} (Copia)`,
+        descripcion: workflow.descripcion,
+        activo: false, // Crear desactivado por defecto
+        trigger: {
+          tipo: 'keyword', // Cambiar a keyword por defecto
+          keywords: [] // Sin keywords inicialmente
+        },
+        prioridad: workflow.prioridad,
+        steps: workflow.steps.map(step => ({
+          ...step,
+          // Mantener toda la configuración del paso
+        })),
+        mensajeInicial: workflow.mensajeInicial,
+        mensajeFinal: workflow.mensajeFinal,
+        mensajeAbandonar: workflow.mensajeAbandonar,
+        respuestaTemplate: workflow.respuestaTemplate,
+        permitirAbandonar: workflow.permitirAbandonar,
+        timeoutMinutos: workflow.timeoutMinutos
+      };
+
+      // Abrir modal con el workflow duplicado
+      setEditingWorkflow(workflowCopy);
+      setShowForm(true);
+    } catch (error) {
+      console.error('Error al duplicar workflow:', error);
+      alert('Error al duplicar el workflow');
+    }
+  };
+
   // Si está mostrando el formulario, renderizar solo el formulario
   if (showForm) {
     return (
@@ -241,6 +274,13 @@ export default function WorkflowManager({ apiId, endpoints, apiBaseUrl, apiAuth,
                     title={workflow.activo ? 'Desactivar' : 'Activar'}
                   >
                     {workflow.activo ? '⏸️' : '▶️'}
+                  </button>
+                  <button
+                    className={styles.iconButton}
+                    onClick={() => handleDuplicate(workflow)}
+                    title="Duplicar workflow"
+                  >
+                    📋
                   </button>
                   <button
                     className={styles.iconButton}
