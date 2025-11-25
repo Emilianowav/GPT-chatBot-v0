@@ -280,7 +280,7 @@ export class WorkflowConversationalHandler {
           workflowState,
           apiConfig
         );
-      } else if (pasoActual.tipo === 'ejecutar') {
+      } else if (pasoActual.tipo === 'consulta_filtrada') {
         return await this.procesarPasoEjecucion(
           pasoActual,
           contactoId,
@@ -517,8 +517,8 @@ export class WorkflowConversationalHandler {
           siguientePaso.validacion.opciones
         );
       }
-    } else if (siguientePaso.tipo === 'ejecutar') {
-      // El siguiente paso es ejecutar, hacerlo ahora
+    } else if (siguientePaso.tipo === 'consulta_filtrada') {
+      // El siguiente paso es consulta filtrada, hacerlo ahora
       return await this.procesarPasoEjecucion(
         siguientePaso,
         contactoId,
@@ -943,7 +943,7 @@ export class WorkflowConversationalHandler {
       
       const siguientePaso = workflow.steps.find(s => s.orden === paso.orden + 1);
       
-      if (siguientePaso && siguientePaso.tipo === 'ejecutar') {
+      if (siguientePaso && siguientePaso.tipo === 'consulta_filtrada') {
         return await this.procesarPasoEjecucion(
           siguientePaso,
           contactoId,

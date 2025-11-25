@@ -9,7 +9,7 @@ import TemplateBuilder from './TemplateBuilder';
 import styles from './ModalWorkflow.module.css';
 
 type ValidationType = 'texto' | 'numero' | 'opcion' | 'regex';
-type StepType = 'recopilar' | 'input' | 'confirmacion' | 'ejecutar' | 'validar';
+type StepType = 'recopilar' | 'input' | 'confirmacion' | 'consulta_filtrada' | 'validar';
 type TriggerType = 'keyword' | 'primer_mensaje' | 'manual';
 
 interface StepValidation {
@@ -682,7 +682,7 @@ export default function ModalWorkflow({ isOpen, onClose, onSubmit, workflowInici
                   value={formData.respuestaTemplate || ''}
                   onChange={(value) => handleChange('respuestaTemplate', value)}
                   variables={formData.steps
-                    .filter(s => s.tipo === 'recopilar' || s.tipo === 'ejecutar')
+                    .filter(s => s.tipo === 'recopilar' || s.tipo === 'consulta_filtrada')
                     .map(s => s.nombreVariable)
                     .filter(v => v && v.trim() !== '')}
                   endpoints={endpoints}
@@ -868,7 +868,7 @@ export default function ModalWorkflow({ isOpen, onClose, onSubmit, workflowInici
                       <div>
                         <strong>
                           {step.tipo === 'recopilar' && '📝 Recopilar: '}
-                          {step.tipo === 'ejecutar' && '⚡ Ejecutar: '}
+                          {step.tipo === 'consulta_filtrada' && '🔍 Consulta Filtrada: '}
                           {step.nombre || step.nombreVariable}
                         </strong>
                         {step.pregunta && <p>{step.pregunta}</p>}

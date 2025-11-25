@@ -280,7 +280,7 @@ const WorkflowStepSchema = new Schema(
     orden: { type: Number, required: true },
     tipo: { 
       type: String, 
-      enum: ['recopilar', 'input', 'confirmacion', 'ejecutar', 'validar'],
+      enum: ['recopilar', 'input', 'confirmacion', 'consulta_filtrada', 'validar'],
       required: true 
     },
     

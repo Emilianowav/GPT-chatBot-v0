@@ -10,7 +10,7 @@ import EndpointFieldSelector from './EndpointFieldSelector';
 import styles from './WorkflowManager.module.css';
 
 type ValidationType = 'texto' | 'numero' | 'opcion' | 'regex';
-type StepType = 'recopilar' | 'input' | 'confirmacion' | 'ejecutar' | 'validar';
+type StepType = 'recopilar' | 'input' | 'confirmacion' | 'consulta_filtrada' | 'validar';
 
 interface StepValidation {
   tipo: ValidationType;
@@ -146,7 +146,7 @@ export default function WorkflowStepEditor({ step, index, onChange, onRemove, en
             {step.tipo === 'recopilar' && '📝 Recopilar'}
             {step.tipo === 'input' && '✍️ Input'}
             {step.tipo === 'confirmacion' && '✓ Confirmación'}
-            {step.tipo === 'ejecutar' && '⚡ Ejecutar'}
+            {step.tipo === 'consulta_filtrada' && '🔍 Consulta Filtrada'}
             {step.tipo === 'validar' && '✅ Validar'}
           </span>
           <span className={styles.stepName}>
@@ -190,13 +190,13 @@ export default function WorkflowStepEditor({ step, index, onChange, onRemove, en
               <option value="recopilar">📝 Recopilar - Consultar API y mostrar opciones</option>
               <option value="input">✍️ Input - Capturar texto libre del usuario</option>
               <option value="confirmacion">✓ Confirmación - Confirmar datos antes de continuar</option>
-              <option value="ejecutar">⚡ Ejecutar - Llamada final a la API</option>
+              <option value="consulta_filtrada">🔍 Consulta Filtrada - Búsqueda final con filtros</option>
             </select>
             <small style={{marginTop: '0.5rem', display: 'block', color: 'rgba(255, 255, 255, 0.5)'}}>
               {step.tipo === 'recopilar' && 'Consulta un endpoint, muestra opciones numeradas y guarda la selección'}
               {step.tipo === 'input' && 'Captura texto libre del usuario (nombre, búsqueda, comentario, etc.)'}
               {step.tipo === 'confirmacion' && 'Muestra resumen de datos y permite confirmar o modificar'}
-              {step.tipo === 'ejecutar' && 'Ejecuta el endpoint final usando todas las variables recopiladas'}
+              {step.tipo === 'consulta_filtrada' && 'Búsqueda final usando todos los datos recopilados como filtros'}
             </small>
           </div>
 
@@ -509,8 +509,8 @@ export default function WorkflowStepEditor({ step, index, onChange, onRemove, en
             </>
           )}
 
-          {/* Campos para Ejecutar */}
-          {step.tipo === 'ejecutar' && (
+          {/* Campos para Consulta Filtrada */}
+          {step.tipo === 'consulta_filtrada' && (
             <>
               <div className={styles.formGroup}>
                 <label>Endpoint a Ejecutar *</label>
