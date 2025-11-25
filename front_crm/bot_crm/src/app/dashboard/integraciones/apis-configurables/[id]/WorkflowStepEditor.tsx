@@ -7,6 +7,8 @@ import { Database, Zap, Code2, Hash, Type } from 'lucide-react';
 import CodeInput from './CodeInput';
 import Tooltip from './Tooltip';
 import EndpointFieldSelector from './EndpointFieldSelector';
+import ParameterMapper from './ParameterMapper';
+import ResponseFieldSelector from './ResponseFieldSelector';
 import styles from './WorkflowManager.module.css';
 
 type ValidationType = 'texto' | 'numero' | 'opcion' | 'regex';
@@ -70,6 +72,13 @@ interface Props {
 export default function WorkflowStepEditor({ step, index, onChange, onRemove, endpoints, variables, apiBaseUrl, apiAuth }: Props) {
   const [expanded, setExpanded] = useState(false);
 
+  // Convertir variables a formato para ParameterMapper
+  const variablesConTipo = variables.map(nombre => ({
+    nombre,
+    tipo: 'recopilar' as const, // Por ahora asumimos recopilar, idealmente vendría del paso
+    valor: undefined
+  }));
+
   // Migración automática de datos antiguos al cargar
   useEffect(() => {
     if (step.tipo === 'recopilar' && step.validacion?.tipo === 'opcion' && !step.endpointResponseConfig) {
@@ -110,14 +119,6 @@ export default function WorkflowStepEditor({ step, index, onChange, onRemove, en
   const handleRemoveOption = (optionIndex: number) => {
     const opciones = step.validacion?.opciones || [];
     handleValidationChange('opciones', opciones.filter((_, i) => i !== optionIndex));
-  };
-
-  const handleMapeoChange = (paramName: string, varName: string) => {
-    const mapeo = step.mapeoParametros || {};
-    onChange(index, {
-      ...step,
-      mapeoParametros: { ...mapeo, [paramName]: varName }
-    });
   };
 
   const handleEndpointConfigChange = (field: string, value: string) => {
@@ -238,22 +239,12 @@ export default function WorkflowStepEditor({ step, index, onChange, onRemove, en
                   <p className={styles.helpText}>
                     Usa las variables recopiladas en pasos anteriores para filtrar este endpoint
                   </p>
-                  <div className={styles.mapeoList}>
-                    {variables.map((variable) => (
-                      <div key={variable} className={styles.mapeoItem}>
-                        <span className={styles.variableName}>{variable}</span>
-                        <span>→</span>
-                        <input
-                          type="text"
-                          placeholder="nombre_parametro"
-                          value={step.mapeoParametros?.[variable] || ''}
-                          onChange={(e) => handleMapeoChange(variable, e.target.value)}
-                          className={styles.input}
-                        />
-                      </div>
-                    ))}
-                  </div>
-                  <small>Ejemplo: Si la variable es "sucursal_id", el parámetro podría ser "sucursal"</small>
+                  <ParameterMapper
+                    variables={variablesConTipo}
+                    mappings={step.mapeoParametros || {}}
+                    onChange={(mappings) => handleChange('mapeoParametros', mappings)}
+                    endpointParams={[]}
+                  />
                 </div>
               )}
 
@@ -528,27 +519,12 @@ export default function WorkflowStepEditor({ step, index, onChange, onRemove, en
                 </select>
               </div>
 
-              <div className={styles.formGroup}>
-                <label>Mapeo de Parámetros</label>
-                <p className={styles.helpText}>
-                  Mapea las variables recopiladas a los parámetros del endpoint
-                </p>
-                <div className={styles.mapeoList}>
-                  {variables.map((variable) => (
-                    <div key={variable} className={styles.mapeoItem}>
-                      <span className={styles.variableName}>{variable}</span>
-                      <span>→</span>
-                      <input
-                        type="text"
-                        placeholder="nombre_parametro"
-                        value={step.mapeoParametros?.[variable] || ''}
-                        onChange={(e) => handleMapeoChange(variable, e.target.value)}
-                        className={styles.input}
-                      />
-                    </div>
-                  ))}
-                </div>
-              </div>
+              <ParameterMapper
+                variables={variablesConTipo}
+                mappings={step.mapeoParametros || {}}
+                onChange={(mappings) => handleChange('mapeoParametros', mappings)}
+                endpointParams={[]} // TODO: Extraer parámetros del endpoint seleccionado
+              />
 
               <div className={styles.formGroup}>
                 <label>Endpoints Relacionados (opcional)</label>
