@@ -10,7 +10,7 @@ import EndpointFieldSelector from './EndpointFieldSelector';
 import styles from './WorkflowManager.module.css';
 
 type ValidationType = 'texto' | 'numero' | 'opcion' | 'regex';
-type StepType = 'recopilar' | 'ejecutar' | 'validar';
+type StepType = 'recopilar' | 'ejecutar' | 'validar' | 'confirmacion';
 
 interface StepValidation {
   tipo: ValidationType;
@@ -137,6 +137,7 @@ export default function WorkflowStepEditor({ step, index, onChange, onRemove, en
             {step.tipo === 'recopilar' && '📝 Recopilar'}
             {step.tipo === 'ejecutar' && '⚡ Ejecutar'}
             {step.tipo === 'validar' && '✅ Validar'}
+            {step.tipo === 'confirmacion' && '✓ Confirmación'}
           </span>
           <span className={styles.stepName}>
             {step.nombre || step.pregunta || step.nombreVariable}
@@ -177,10 +178,12 @@ export default function WorkflowStepEditor({ step, index, onChange, onRemove, en
               className={styles.select}
             >
               <option value="recopilar">📝 Recopilar - Consultar endpoint y mostrar opciones</option>
+              <option value="confirmacion">✓ Confirmación - Confirmar datos antes de continuar</option>
               <option value="ejecutar">⚡ Ejecutar - Endpoint final con todas las variables</option>
             </select>
             <small style={{marginTop: '0.5rem', display: 'block', color: 'rgba(255, 255, 255, 0.5)'}}>
               {step.tipo === 'recopilar' && 'Consulta un endpoint, muestra las opciones al usuario y guarda su selección'}
+              {step.tipo === 'confirmacion' && 'Muestra un resumen de los datos recopilados y permite confirmar o modificar'}
               {step.tipo === 'ejecutar' && 'Ejecuta el endpoint final usando todas las variables recopiladas'}
             </small>
           </div>
@@ -322,6 +325,103 @@ export default function WorkflowStepEditor({ step, index, onChange, onRemove, en
                   • <strong>Campo ID:</strong> <code>id</code><br/>
                   • <strong>Campo a Mostrar:</strong> <code>name</code><br/>
                   • <strong>Se mostrará:</strong> "1. Buenos Aires, 2. Corrientes"
+                </p>
+              </div>
+            </>
+          )}
+
+          {/* Campos para Confirmación */}
+          {step.tipo === 'confirmacion' && (
+            <>
+              <div className={styles.formGroup}>
+                <label>Mensaje de Confirmación *</label>
+                <textarea
+                  value={step.pregunta || ''}
+                  onChange={(e) => handleChange('pregunta', e.target.value)}
+                  placeholder="📋 CONFIRMA TUS DATOS&#10;&#10;📍 Sucursal: {{sucursal_id_nombre}}&#10;📂 Categoría: {{categoria_id_nombre}}&#10;&#10;¿Los datos son correctos?"
+                  rows={8}
+                  className={styles.textarea}
+                  style={{ fontFamily: 'monospace', fontSize: '0.875rem' }}
+                />
+                <small>
+                  💡 Usa variables con formato {'{{variable}}'} para mostrar los datos recopilados.
+                  Para mostrar nombres legibles, usa {'{{variable_nombre}}'} (ej: {'{{sucursal_id_nombre}}'})
+                </small>
+              </div>
+
+              <CodeInput
+                label="Nombre de Variable"
+                value={step.nombreVariable}
+                onChange={(value) => handleChange('nombreVariable', value)}
+                placeholder="confirmacion"
+                tooltip="Variable donde se guardará la opción seleccionada"
+                required
+                icon="🔤"
+                monospace
+              />
+
+              <div className={styles.formGroup}>
+                <label>Opciones de Confirmación *</label>
+                <p className={styles.helpText}>
+                  Define las opciones que el usuario puede seleccionar
+                </p>
+                <div className={styles.opcionesList}>
+                  {(step.validacion?.opciones || []).map((opcion, i) => (
+                    <div key={i} className={styles.opcionItem}>
+                      <span className={styles.opcionNumero}>{i + 1}</span>
+                      <input
+                        type="text"
+                        value={opcion}
+                        onChange={(e) => {
+                          const nuevasOpciones = [...(step.validacion?.opciones || [])];
+                          nuevasOpciones[i] = e.target.value;
+                          handleValidationChange('opciones', nuevasOpciones);
+                        }}
+                        className={styles.input}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const nuevasOpciones = (step.validacion?.opciones || []).filter((_, idx) => idx !== i);
+                          handleValidationChange('opciones', nuevasOpciones);
+                        }}
+                        className={styles.removeButton}
+                      >
+                        ✕
+                      </button>
+                    </div>
+                  ))}
+                </div>
+                <div className={styles.addOption}>
+                  <input
+                    type="text"
+                    value={newOption}
+                    onChange={(e) => setNewOption(e.target.value)}
+                    placeholder="1: Confirmar y continuar"
+                    className={styles.input}
+                    onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), handleAddOption())}
+                  />
+                  <button
+                    type="button"
+                    onClick={handleAddOption}
+                    className={styles.addButton}
+                  >
+                    + Agregar
+                  </button>
+                </div>
+                <small>Ejemplo: "1: Confirmar y continuar", "2: Cambiar sucursal", "3: Cancelar"</small>
+              </div>
+
+              <div className={styles.ejemploBox} style={{marginTop: '1rem', background: 'rgba(102, 126, 234, 0.1)', borderLeft: '3px solid #667eea'}}>
+                <strong>💡 Cómo funciona la confirmación:</strong>
+                <ol style={{fontSize: '0.875rem', margin: '0.5rem 0', paddingLeft: '1.5rem'}}>
+                  <li>El usuario ve un resumen de sus datos recopilados</li>
+                  <li>Si elige "Confirmar" (opción 1), continúa al siguiente paso</li>
+                  <li>Si elige "Cambiar X" (opciones 2-N), vuelve al paso correspondiente</li>
+                  <li>Si elige "Cancelar" (última opción), abandona el workflow</li>
+                </ol>
+                <p style={{fontSize: '0.875rem', margin: '0.5rem 0 0', color: 'rgba(255, 255, 255, 0.7)'}}>
+                  ⚠️ El backend detecta automáticamente la opción seleccionada por la variable <code>confirmacion</code>
                 </p>
               </div>
             </>

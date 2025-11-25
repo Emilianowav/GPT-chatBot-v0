@@ -168,7 +168,7 @@ export interface IChatbotIntegration {
 /**
  * Tipo de paso en el workflow
  */
-export type WorkflowStepType = 'recopilar' | 'ejecutar' | 'validar';
+export type WorkflowStepType = 'recopilar' | 'ejecutar' | 'validar' | 'confirmacion';
 
 /**
  * Tipo de validación para datos recopilados

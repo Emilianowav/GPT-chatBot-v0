@@ -262,7 +262,8 @@ export class WorkflowConversationalHandler {
       console.log('📍 Procesando paso:', pasoActual.nombre || `Paso ${pasoActual.orden}`);
       
       // Procesar según tipo de paso
-      if (pasoActual.tipo === 'recopilar') {
+      // Confirmacion se procesa como recopilar (es un tipo especial de recopilación)
+      if (pasoActual.tipo === 'recopilar' || pasoActual.tipo === 'confirmacion') {
         return await this.procesarPasoRecopilacion(
           mensaje,
           pasoActual,

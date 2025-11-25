@@ -9,7 +9,7 @@ import TemplateBuilder from './TemplateBuilder';
 import styles from './ModalWorkflow.module.css';
 
 type ValidationType = 'texto' | 'numero' | 'opcion' | 'regex';
-type StepType = 'recopilar' | 'ejecutar' | 'validar';
+type StepType = 'recopilar' | 'ejecutar' | 'validar' | 'confirmacion';
 type TriggerType = 'keyword' | 'primer_mensaje' | 'manual';
 
 interface StepValidation {
@@ -190,6 +190,86 @@ export default function ModalWorkflow({ isOpen, onClose, onSubmit, workflowInici
       intentosMaximos: 3
     };
     handleChange('steps', [...formData.steps, newStep]);
+  };
+
+  const handleAddConfirmacionStep = () => {
+    // Detectar variables disponibles para confirmar
+    const variablesRecopiladas = formData.steps
+      .filter(s => s.tipo === 'recopilar' && s.nombreVariable)
+      .map(s => ({
+        variable: s.nombreVariable,
+        nombre: s.nombre || s.nombreVariable,
+        tieneNombre: s.endpointId && s.endpointResponseConfig?.displayField
+      }));
+
+    if (variablesRecopiladas.length === 0) {
+      alert('⚠️ Agrega al menos un paso de recopilación antes de crear la confirmación');
+      return;
+    }
+
+    // Construir pregunta de confirmación con variables
+    let preguntaConfirmacion = '📋 *CONFIRMA TUS DATOS*\n\n';
+    
+    variablesRecopiladas.forEach((v, idx) => {
+      const emoji = idx === 0 ? '📍' : idx === 1 ? '📂' : '🔍';
+      const nombreMostrar = v.nombre.replace(/^(Paso \d+|variable_\d+)$/i, `Campo ${idx + 1}`);
+      // Si tiene nombre asociado (de API), usar variable_nombre, sino usar la variable directa
+      const variableAMostrar = v.tieneNombre ? `${v.variable}_nombre` : v.variable;
+      preguntaConfirmacion += `${emoji} *${nombreMostrar}:* {{${variableAMostrar}}}\n`;
+    });
+
+    preguntaConfirmacion += '\n¿Los datos son correctos?\n\n';
+    preguntaConfirmacion += '1️⃣ Confirmar y continuar\n';
+    
+    // Agregar opciones para cambiar cada variable
+    variablesRecopiladas.forEach((v, idx) => {
+      const nombreMostrar = v.nombre.replace(/^(Paso \d+|variable_\d+)$/i, `campo ${idx + 1}`);
+      preguntaConfirmacion += `${idx + 2}️⃣ Cambiar ${nombreMostrar.toLowerCase()}\n`;
+    });
+    
+    preguntaConfirmacion += `${variablesRecopiladas.length + 2}️⃣ Cancelar`;
+
+    // Crear opciones de validación
+    const opciones = ['1: Confirmar y continuar'];
+    variablesRecopiladas.forEach((v, idx) => {
+      const nombreMostrar = v.nombre.replace(/^(Paso \d+|variable_\d+)$/i, `campo ${idx + 1}`);
+      opciones.push(`${idx + 2}: Cambiar ${nombreMostrar.toLowerCase()}`);
+    });
+    opciones.push(`${variablesRecopiladas.length + 2}: Cancelar`);
+
+    // Buscar si ya existe un paso de confirmación
+    const confirmacionExistente = formData.steps.findIndex(s => s.nombreVariable === 'confirmacion');
+    
+    const pasoConfirmacion: FlowStep = {
+      orden: formData.steps.length + 1,
+      tipo: 'confirmacion',
+      nombreVariable: 'confirmacion',
+      nombre: 'Confirmar Datos',
+      descripcion: 'Usuario confirma los datos ingresados antes de continuar',
+      pregunta: preguntaConfirmacion,
+      validacion: {
+        tipo: 'opcion',
+        opciones: opciones,
+        mensajeError: `Por favor selecciona una opción válida (1-${variablesRecopiladas.length + 2})`
+      },
+      intentosMaximos: 3
+    };
+
+    if (confirmacionExistente >= 0) {
+      // Actualizar el existente
+      const newSteps = [...formData.steps];
+      newSteps[confirmacionExistente] = {
+        ...newSteps[confirmacionExistente],
+        ...pasoConfirmacion,
+        orden: newSteps[confirmacionExistente].orden
+      };
+      handleChange('steps', newSteps);
+      alert('✅ Paso de confirmación actualizado con las variables actuales');
+    } else {
+      // Agregar nuevo
+      handleChange('steps', [...formData.steps, pasoConfirmacion]);
+      alert('✅ Paso de confirmación agregado. Recuerda agregar un paso EJECUTAR después.');
+    }
   };
 
   const handleRemoveStep = (index: number) => {
@@ -504,9 +584,20 @@ export default function ModalWorkflow({ isOpen, onClose, onSubmit, workflowInici
                   <h3>📝 Pasos del Workflow</h3>
                   <p className={styles.pasoDes}>Recopila información consultando endpoints y guarda las selecciones del usuario</p>
                 </div>
-                <button type="button" className={styles.addButton} onClick={handleAddStep}>
-                  + Agregar Paso
-                </button>
+                <div style={{ display: 'flex', gap: '0.5rem' }}>
+                  <button 
+                    type="button" 
+                    className={styles.addButton} 
+                    onClick={handleAddConfirmacionStep}
+                    title="Agrega un paso de confirmación automático con todas las variables recopiladas"
+                    style={{ background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)' }}
+                  >
+                    ✓ Agregar Confirmación
+                  </button>
+                  <button type="button" className={styles.addButton} onClick={handleAddStep}>
+                    + Agregar Paso
+                  </button>
+                </div>
               </div>
 
               {formData.steps.length === 0 ? (
