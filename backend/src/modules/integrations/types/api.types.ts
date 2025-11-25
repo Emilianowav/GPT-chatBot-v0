@@ -190,6 +190,18 @@ export interface IEndpointResponseConfig {
 }
 
 /**
+ * Configuración de endpoint relacionado para enriquecer resultados
+ * Ejemplo: Para cada producto, llamar a un endpoint de detalles
+ */
+export interface IEndpointRelacionado {
+  endpointId: string;             // ID del endpoint a llamar
+  campoIdOrigen: string;          // Campo del resultado principal que contiene el ID (ej: "id", "product_id")
+  parametroDestino: string;       // Parámetro del endpoint relacionado (ej: "id", "product_id")
+  campos: string[];               // Campos a extraer de la respuesta (ej: ["link_compra", "stock"])
+  prefijo?: string;               // Prefijo para las variables (ej: "detalle_" → {{detalle_link_compra}})
+}
+
+/**
  * Paso de workflow conversacional
  */
 export interface IWorkflowStep {
@@ -207,7 +219,7 @@ export interface IWorkflowStep {
   endpointId?: string;            // ID del endpoint a ejecutar
   mapeoParametros?: Record<string, string>;  // Mapeo de variables a parámetros
   plantillaRespuesta?: string;    // Plantilla para formatear respuesta del endpoint
-  camposRelacionados?: string[];  // Campos adicionales a incluir en la respuesta (ej: ['link_compra', 'stock'])
+  endpointsRelacionados?: IEndpointRelacionado[];  // Endpoints para enriquecer cada resultado
   
   // Opcionales
   nombre?: string;

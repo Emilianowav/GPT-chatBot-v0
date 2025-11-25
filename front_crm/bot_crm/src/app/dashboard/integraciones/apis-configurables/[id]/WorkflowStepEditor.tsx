@@ -25,6 +25,14 @@ interface EndpointResponseConfig {
   displayField?: string;
 }
 
+interface EndpointRelacionado {
+  endpointId: string;
+  campoIdOrigen: string;
+  parametroDestino: string;
+  campos: string[];
+  prefijo?: string;
+}
+
 interface FlowStep {
   orden: number;
   tipo: StepType;
@@ -34,7 +42,7 @@ interface FlowStep {
   endpointResponseConfig?: EndpointResponseConfig;
   endpointId?: string;
   mapeoParametros?: Record<string, string>;
-  camposRelacionados?: string[];
+  endpointsRelacionados?: EndpointRelacionado[];
   nombre?: string;
   descripcion?: string;
   mensajeError?: string;
@@ -543,53 +551,195 @@ export default function WorkflowStepEditor({ step, index, onChange, onRemove, en
               </div>
 
               <div className={styles.formGroup}>
-                <label>Campos Relacionados a Mostrar (opcional)</label>
+                <label>Endpoints Relacionados (opcional)</label>
                 <p className={styles.helpText}>
-                  Especifica campos adicionales del resultado que quieres incluir en la plantilla de respuesta
+                  Para cada resultado, llama a otro endpoint para obtener datos adicionales (ej: detalles del producto, stock, etc.)
                 </p>
-                <div className={styles.opcionesList}>
-                  {(step.camposRelacionados || []).map((campo, i) => (
-                    <div key={i} className={styles.opcionItem}>
-                      <span className={styles.opcionNumero}>{i + 1}</span>
-                      <input
-                        type="text"
-                        value={campo}
-                        onChange={(e) => {
-                          const nuevosCampos = [...(step.camposRelacionados || [])];
-                          nuevosCampos[i] = e.target.value;
-                          handleChange('camposRelacionados', nuevosCampos);
-                        }}
-                        placeholder="link_compra"
-                        className={styles.input}
-                      />
+                
+                {(step.endpointsRelacionados || []).map((endpointRel, i) => (
+                  <div key={i} className={styles.endpointRelCard} style={{
+                    background: 'rgba(102, 126, 234, 0.05)',
+                    border: '1px solid rgba(102, 126, 234, 0.2)',
+                    borderRadius: '8px',
+                    padding: '1rem',
+                    marginBottom: '1rem'
+                  }}>
+                    <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem'}}>
+                      <strong>Endpoint Relacionado #{i + 1}</strong>
                       <button
                         type="button"
                         onClick={() => {
-                          const nuevosCampos = (step.camposRelacionados || []).filter((_, idx) => idx !== i);
-                          handleChange('camposRelacionados', nuevosCampos);
+                          const nuevos = (step.endpointsRelacionados || []).filter((_, idx) => idx !== i);
+                          handleChange('endpointsRelacionados', nuevos);
                         }}
                         className={styles.removeButton}
                       >
-                        ✕
+                        ✕ Eliminar
                       </button>
                     </div>
-                  ))}
-                </div>
+
+                    <div className={styles.formGroup}>
+                      <label>Endpoint a Llamar *</label>
+                      <select
+                        value={endpointRel.endpointId || ''}
+                        onChange={(e) => {
+                          const nuevos = [...(step.endpointsRelacionados || [])];
+                          nuevos[i] = { ...nuevos[i], endpointId: e.target.value };
+                          handleChange('endpointsRelacionados', nuevos);
+                        }}
+                        className={styles.select}
+                      >
+                        <option value="">Seleccionar endpoint</option>
+                        {endpoints.map((endpoint) => (
+                          <option key={endpoint.id || endpoint._id} value={endpoint.id || endpoint._id}>
+                            {endpoint.metodo} {endpoint.nombre}
+                          </option>
+                        ))}
+                      </select>
+                      <small>Endpoint que se llamará para cada resultado</small>
+                    </div>
+
+                    <div style={{display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem'}}>
+                      <div className={styles.formGroup}>
+                        <label>Campo ID del Resultado *</label>
+                        <input
+                          type="text"
+                          value={endpointRel.campoIdOrigen || ''}
+                          onChange={(e) => {
+                            const nuevos = [...(step.endpointsRelacionados || [])];
+                            nuevos[i] = { ...nuevos[i], campoIdOrigen: e.target.value };
+                            handleChange('endpointsRelacionados', nuevos);
+                          }}
+                          placeholder="id"
+                          className={styles.input}
+                        />
+                        <small>Campo del resultado que contiene el ID</small>
+                      </div>
+
+                      <div className={styles.formGroup}>
+                        <label>Parámetro del Endpoint *</label>
+                        <input
+                          type="text"
+                          value={endpointRel.parametroDestino || ''}
+                          onChange={(e) => {
+                            const nuevos = [...(step.endpointsRelacionados || [])];
+                            nuevos[i] = { ...nuevos[i], parametroDestino: e.target.value };
+                            handleChange('endpointsRelacionados', nuevos);
+                          }}
+                          placeholder="product_id"
+                          className={styles.input}
+                        />
+                        <small>Parámetro donde se enviará el ID</small>
+                      </div>
+                    </div>
+
+                    <div className={styles.formGroup}>
+                      <label>Campos a Extraer *</label>
+                      <div style={{display: 'flex', gap: '0.5rem', flexWrap: 'wrap', marginBottom: '0.5rem'}}>
+                        {(endpointRel.campos || []).map((campo, campoIdx) => (
+                          <div key={campoIdx} style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '0.5rem',
+                            background: 'rgba(255, 255, 255, 0.05)',
+                            padding: '0.5rem',
+                            borderRadius: '4px'
+                          }}>
+                            <input
+                              type="text"
+                              value={campo}
+                              onChange={(e) => {
+                                const nuevos = [...(step.endpointsRelacionados || [])];
+                                const nuevosCampos = [...(nuevos[i].campos || [])];
+                                nuevosCampos[campoIdx] = e.target.value;
+                                nuevos[i] = { ...nuevos[i], campos: nuevosCampos };
+                                handleChange('endpointsRelacionados', nuevos);
+                              }}
+                              placeholder="link_compra"
+                              className={styles.input}
+                              style={{minWidth: '150px'}}
+                            />
+                            <button
+                              type="button"
+                              onClick={() => {
+                                const nuevos = [...(step.endpointsRelacionados || [])];
+                                const nuevosCampos = (nuevos[i].campos || []).filter((_, idx) => idx !== campoIdx);
+                                nuevos[i] = { ...nuevos[i], campos: nuevosCampos };
+                                handleChange('endpointsRelacionados', nuevos);
+                              }}
+                              className={styles.removeButton}
+                              style={{padding: '0.25rem 0.5rem'}}
+                            >
+                              ✕
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const nuevos = [...(step.endpointsRelacionados || [])];
+                          const nuevosCampos = [...(nuevos[i].campos || []), ''];
+                          nuevos[i] = { ...nuevos[i], campos: nuevosCampos };
+                          handleChange('endpointsRelacionados', nuevos);
+                        }}
+                        className={styles.addButton}
+                        style={{fontSize: '0.875rem'}}
+                      >
+                        + Agregar Campo
+                      </button>
+                      <small>Campos de la respuesta que quieres usar en la plantilla</small>
+                    </div>
+
+                    <div className={styles.formGroup}>
+                      <label>Prefijo para Variables (opcional)</label>
+                      <input
+                        type="text"
+                        value={endpointRel.prefijo || ''}
+                        onChange={(e) => {
+                          const nuevos = [...(step.endpointsRelacionados || [])];
+                          nuevos[i] = { ...nuevos[i], prefijo: e.target.value };
+                          handleChange('endpointsRelacionados', nuevos);
+                        }}
+                        placeholder="detalle_"
+                        className={styles.input}
+                      />
+                      <small>
+                        {endpointRel.prefijo 
+                          ? `Usarás: ${endpointRel.campos?.map(c => `{{${endpointRel.prefijo}${c}}}`).join(', ') || ''}`
+                          : `Usarás: ${endpointRel.campos?.map(c => `{{${c}}}`).join(', ') || ''}`
+                        }
+                      </small>
+                    </div>
+                  </div>
+                ))}
+
                 <button
                   type="button"
                   onClick={() => {
-                    const nuevosCampos = [...(step.camposRelacionados || []), ''];
-                    handleChange('camposRelacionados', nuevosCampos);
+                    const nuevos = [...(step.endpointsRelacionados || []), {
+                      endpointId: '',
+                      campoIdOrigen: 'id',
+                      parametroDestino: 'id',
+                      campos: [],
+                      prefijo: ''
+                    }];
+                    handleChange('endpointsRelacionados', nuevos);
                   }}
                   className={styles.addButton}
-                  style={{marginTop: '0.5rem'}}
                 >
-                  + Agregar Campo
+                  + Agregar Endpoint Relacionado
                 </button>
-                <small>
-                  💡 Ejemplo: Si agregas "link_compra", podrás usar {'{{link_compra}}'} en la plantilla de respuesta.<br/>
-                  Los campos deben existir en la respuesta de la API.
-                </small>
+
+                <div className={styles.ejemploBox} style={{marginTop: '1rem'}}>
+                  <strong>💡 Ejemplo de uso:</strong>
+                  <p style={{fontSize: '0.875rem', margin: '0.5rem 0'}}>
+                    <strong>Resultado principal:</strong> Lista de productos con <code>id</code>, <code>nombre</code>, <code>precio</code><br/>
+                    <strong>Endpoint relacionado:</strong> GET /products/details?product_id=<code>{'{{id}}'}</code><br/>
+                    <strong>Respuesta:</strong> <code>{`{ "link_compra": "...", "stock": 15 }`}</code><br/>
+                    <strong>En plantilla usas:</strong> <code>{'{{link_compra}}'}</code>, <code>{'{{stock}}'}</code>
+                  </p>
+                </div>
               </div>
             </>
           )}

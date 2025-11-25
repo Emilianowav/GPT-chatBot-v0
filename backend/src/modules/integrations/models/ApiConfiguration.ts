@@ -264,6 +264,17 @@ const EndpointResponseConfigSchema = new Schema(
   { _id: false }
 );
 
+const EndpointRelacionadoSchema = new Schema(
+  {
+    endpointId: { type: String, required: true },
+    campoIdOrigen: { type: String, required: true },
+    parametroDestino: { type: String, required: true },
+    campos: [String],
+    prefijo: String
+  },
+  { _id: false }
+);
+
 const WorkflowStepSchema = new Schema(
   {
     orden: { type: Number, required: true },
@@ -284,7 +295,7 @@ const WorkflowStepSchema = new Schema(
     endpointId: String,
     mapeoParametros: Schema.Types.Mixed,
     plantillaRespuesta: String,
-    camposRelacionados: [String],
+    endpointsRelacionados: [EndpointRelacionadoSchema],
     
     // Opcionales
     nombre: String,

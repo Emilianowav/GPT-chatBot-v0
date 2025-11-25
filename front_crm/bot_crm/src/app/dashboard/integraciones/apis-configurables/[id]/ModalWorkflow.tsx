@@ -25,6 +25,14 @@ interface EndpointResponseConfig {
   displayField?: string;
 }
 
+interface EndpointRelacionado {
+  endpointId: string;
+  campoIdOrigen: string;
+  parametroDestino: string;
+  campos: string[];
+  prefijo?: string;
+}
+
 interface FlowStep {
   orden: number;
   tipo: StepType;
@@ -36,7 +44,7 @@ interface FlowStep {
   mapeoParametros?: Record<string, string>;
   plantillaOpciones?: string;
   plantillaRespuesta?: string;
-  camposRelacionados?: string[];
+  endpointsRelacionados?: EndpointRelacionado[];
   nombre?: string;
   descripcion?: string;
   mensajeError?: string;
