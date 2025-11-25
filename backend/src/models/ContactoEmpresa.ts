@@ -41,7 +41,7 @@ export interface WorkflowState {
   apiId: string;
   pasoActual: number;
   datosRecopilados: Record<string, any>;
-  datosEjecutados?: Record<string, any>; // Datos de APIs ejecutadas (por endpointId)
+  datosEjecutados?: Record<string, any>;
   intentosFallidos: number;
   iniciadoEn: Date;
   ultimaActividad: Date;

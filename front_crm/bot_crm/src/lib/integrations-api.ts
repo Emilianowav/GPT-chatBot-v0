@@ -5,16 +5,15 @@ const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';
 
 /**
  * Obtiene el ID correcto de empresa para usar en las APIs
- * Usa empresaId (nombre de empresa) porque el backend lo convierte a ObjectId
+ * Prioriza empresaMongoId sobre empresaId
  */
 export function getEmpresaIdForApi(empresa: EmpresaAuth | null): string {
   if (!empresa) {
     throw new Error('No hay empresa autenticada');
   }
   
-  // IMPORTANTE: Usar empresaId (nombre de empresa), NO empresaMongoId
-  // El backend convierte el nombre a ObjectId internamente
-  return empresa.empresaId;
+  // Usar empresaMongoId si está disponible, sino usar empresaId
+  return empresa.empresaMongoId || empresa.empresaId;
 }
 
 /**
