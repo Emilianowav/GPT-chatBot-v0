@@ -20,9 +20,9 @@ interface StepValidation {
 }
 
 interface EndpointResponseConfig {
-  arrayPath: string;
-  idField: string;
-  displayField: string;
+  arrayPath?: string;
+  idField?: string;
+  displayField?: string;
 }
 
 interface FlowStep {
@@ -34,6 +34,8 @@ interface FlowStep {
   endpointResponseConfig?: EndpointResponseConfig;
   endpointId?: string;
   mapeoParametros?: Record<string, string>;
+  plantillaOpciones?: string;
+  plantillaRespuesta?: string;
   nombre?: string;
   descripcion?: string;
   mensajeError?: string;

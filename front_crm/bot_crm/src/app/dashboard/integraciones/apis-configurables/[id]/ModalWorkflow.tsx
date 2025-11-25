@@ -19,12 +19,19 @@ interface StepValidation {
   mensajeError?: string;
 }
 
+interface EndpointResponseConfig {
+  arrayPath?: string;
+  idField?: string;
+  displayField?: string;
+}
+
 interface FlowStep {
   orden: number;
   tipo: StepType;
   pregunta?: string;
   nombreVariable: string;
   validacion?: StepValidation;
+  endpointResponseConfig?: EndpointResponseConfig;
   endpointId?: string;
   mapeoParametros?: Record<string, string>;
   plantillaOpciones?: string;
@@ -80,6 +87,7 @@ interface Props {
   onSubmit: (data: Workflow) => Promise<void>;
   workflowInicial?: Workflow | null;
   endpoints: Endpoint[];
+  workflows: Workflow[];
   apiBaseUrl?: string;
   apiAuth?: any;
 }
@@ -92,7 +100,7 @@ const PASOS_WIZARD = [
   { numero: 5, titulo: 'Revisión', icono: Eye, descripcion: 'Confirmar y guardar' }
 ];
 
-export default function ModalWorkflow({ isOpen, onClose, onSubmit, workflowInicial, endpoints, apiBaseUrl, apiAuth }: Props) {
+export default function ModalWorkflow({ isOpen, onClose, onSubmit, workflowInicial, endpoints, workflows, apiBaseUrl, apiAuth }: Props) {
   const [paso, setPaso] = useState(1);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -728,8 +736,7 @@ export default function ModalWorkflow({ isOpen, onClose, onSubmit, workflowInici
                         className={styles.input}
                         style={{flex: 1}}
                       />
-                      <input
-                        type="text"
+                      <select
                         value={wf.workflowId}
                         onChange={(e) => {
                           const nuevosWorkflows = [...(formData.workflowsSiguientes?.workflows || [])];
@@ -740,10 +747,21 @@ export default function ModalWorkflow({ isOpen, onClose, onSubmit, workflowInici
                             workflows: nuevosWorkflows
                           });
                         }}
-                        placeholder="ID del workflow"
-                        className={styles.input}
+                        className={styles.select}
                         style={{flex: 1}}
-                      />
+                      >
+                        <option value="">Seleccionar workflow</option>
+                        {workflows.map((workflow) => (
+                          <option key={workflow._id || workflow.id} value={workflow._id || workflow.id}>
+                            {workflow.nombre}
+                          </option>
+                        ))}
+                        {formData._id && (
+                          <option value={formData._id}>
+                            {formData.nombre} (este workflow)
+                          </option>
+                        )}
+                      </select>
                       <button
                         type="button"
                         onClick={() => {
@@ -776,7 +794,7 @@ export default function ModalWorkflow({ isOpen, onClose, onSubmit, workflowInici
                 >
                   + Agregar Workflow
                 </button>
-                <small>Ejemplo: "Consultar otro producto" → ID del workflow de búsqueda</small>
+                <small>💡 Puedes encadenar workflows existentes o incluso este mismo workflow para permitir consultas repetidas</small>
               </div>
 
               <div className={styles.formGroup}>

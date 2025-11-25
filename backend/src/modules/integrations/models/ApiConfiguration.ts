@@ -269,7 +269,7 @@ const WorkflowStepSchema = new Schema(
     orden: { type: Number, required: true },
     tipo: { 
       type: String, 
-      enum: ['recopilar', 'ejecutar', 'validar'],
+      enum: ['recopilar', 'ejecutar', 'validar', 'confirmacion'],
       required: true 
     },
     
@@ -278,10 +278,12 @@ const WorkflowStepSchema = new Schema(
     nombreVariable: { type: String, required: true },
     validacion: StepValidationSchema,
     endpointResponseConfig: EndpointResponseConfigSchema,
+    plantillaOpciones: String,
     
     // Para pasos de ejecución
     endpointId: String,
     mapeoParametros: Schema.Types.Mixed,
+    plantillaRespuesta: String,
     
     // Opcionales
     nombre: String,
@@ -324,6 +326,15 @@ const WorkflowSchema = new Schema(
     mensajeFinal: String,
     mensajeAbandonar: String,
     respuestaTemplate: String,
+    
+    // Workflows encadenados
+    workflowsSiguientes: {
+      pregunta: String,
+      workflows: [{
+        workflowId: String,
+        opcion: String
+      }]
+    },
     
     // Configuración
     permitirAbandonar: { type: Boolean, default: true },

@@ -214,6 +214,7 @@ export default function WorkflowManager({ apiId, endpoints, apiBaseUrl, apiAuth,
           onSubmit={handleSubmit}
           workflowInicial={editingWorkflow}
           endpoints={endpoints}
+          workflows={workflows}
           apiBaseUrl={apiBaseUrl}
           apiAuth={apiAuth}
         />
