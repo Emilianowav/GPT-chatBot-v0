@@ -52,7 +52,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       const authData: EmpresaAuth = {
         empresaId: response.user.empresaId,
-        empresaMongoId: response.user.empresaMongoId,
+        empresaMongoId: response.user.empresaNombre,
         empresaNombre: response.user.empresaNombre,
         token: response.token,
         role: response.user.role,
@@ -64,7 +64,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       
       localStorage.setItem('auth_token', response.token);
       localStorage.setItem('empresa_id', response.user.empresaId);
-      localStorage.setItem('empresa_mongo_id', response.user.empresaMongoId || '');
+      localStorage.setItem('empresa_mongo_id', response.user.empresaNombre || '');
       localStorage.setItem('empresa_nombre', response.user.empresaNombre);
       localStorage.setItem('user_role', response.user.role || '');
       localStorage.setItem('username', response.user.username || '');

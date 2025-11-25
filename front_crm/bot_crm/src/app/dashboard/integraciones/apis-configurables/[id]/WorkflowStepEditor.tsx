@@ -2,7 +2,7 @@
 
 // 📝 Editor de Pasos de Workflow Conversacional
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Database, Zap, Code2, Hash, Type } from 'lucide-react';
 import CodeInput from './CodeInput';
 import Tooltip from './Tooltip';
@@ -19,12 +19,19 @@ interface StepValidation {
   mensajeError?: string;
 }
 
+interface EndpointResponseConfig {
+  arrayPath: string;
+  idField: string;
+  displayField: string;
+}
+
 interface FlowStep {
   orden: number;
   tipo: StepType;
   pregunta?: string;
   nombreVariable: string;
   validacion?: StepValidation;
+  endpointResponseConfig?: EndpointResponseConfig;
   endpointId?: string;
   mapeoParametros?: Record<string, string>;
   nombre?: string;
@@ -51,8 +58,26 @@ interface Props {
   onRemove: (index: number) => void;
 }
 
-export default function WorkflowStepEditor({ step, index, endpoints, apiBaseUrl, apiAuth, variables, onChange, onRemove }: Props) {
+export default function WorkflowStepEditor({ step, index, onChange, onRemove, endpoints, variables, apiBaseUrl, apiAuth }: Props) {
   const [expanded, setExpanded] = useState(false);
+
+  // Migración automática de datos antiguos al cargar
+  useEffect(() => {
+    if (step.tipo === 'recopilar' && step.validacion?.tipo === 'opcion' && !step.endpointResponseConfig) {
+      // Migrar automáticamente datos del formato antiguo al nuevo
+      const config = {
+        arrayPath: step.validacion?.regex || 'data',
+        idField: step.validacion?.opciones?.[0] || 'id',
+        displayField: step.validacion?.opciones?.[1] || 'name'
+      };
+      
+      onChange(index, {
+        ...step,
+        endpointResponseConfig: config
+      });
+    }
+  }, [step, index, onChange]);
+
   const [newOption, setNewOption] = useState('');
 
   const handleChange = (field: string, value: any) => {
@@ -83,6 +108,23 @@ export default function WorkflowStepEditor({ step, index, endpoints, apiBaseUrl,
     onChange(index, {
       ...step,
       mapeoParametros: { ...mapeo, [paramName]: varName }
+    });
+  };
+
+  const handleEndpointConfigChange = (field: string, value: string) => {
+    // Migrar datos antiguos si existen
+    let config = step.endpointResponseConfig;
+    if (!config) {
+      config = {
+        arrayPath: step.validacion?.regex || 'data',
+        idField: step.validacion?.opciones?.[0] || 'id',
+        displayField: step.validacion?.opciones?.[1] || 'name'
+      };
+    }
+    
+    onChange(index, {
+      ...step,
+      endpointResponseConfig: { ...config, [field]: value }
     });
   };
 
@@ -228,8 +270,8 @@ export default function WorkflowStepEditor({ step, index, endpoints, apiBaseUrl,
 
               <CodeInput
                 label="Ruta al Array"
-                value={step.validacion?.regex || 'data'}
-                onChange={(value) => handleValidationChange('regex', value)}
+                value={step.endpointResponseConfig?.arrayPath || 'data'}
+                onChange={(value) => handleEndpointConfigChange('arrayPath', value)}
                 placeholder="data"
                 tooltip="Ruta donde está el array en la respuesta JSON. Ej: data, results, items"
                 suggestions={['data', 'results', 'items', 'list', 'records']}
@@ -244,11 +286,8 @@ export default function WorkflowStepEditor({ step, index, endpoints, apiBaseUrl,
                     endpoints={endpoints}
                     apiBaseUrl={apiBaseUrl}
                     apiAuth={apiAuth}
-                    selectedField={step.validacion?.opciones?.[0]}
-                    onFieldSelect={(field) => {
-                      const opciones = step.validacion?.opciones || [];
-                      handleValidationChange('opciones', [field, opciones[1] || 'name']);
-                    }}
+                    selectedField={step.endpointResponseConfig?.idField}
+                    onFieldSelect={(field) => handleEndpointConfigChange('idField', field)}
                     label="🔑 Campo ID - Selecciona el identificador único"
                   />
 
@@ -257,11 +296,8 @@ export default function WorkflowStepEditor({ step, index, endpoints, apiBaseUrl,
                     endpoints={endpoints}
                     apiBaseUrl={apiBaseUrl}
                     apiAuth={apiAuth}
-                    selectedField={step.validacion?.opciones?.[1]}
-                    onFieldSelect={(field) => {
-                      const opciones = step.validacion?.opciones || [];
-                      handleValidationChange('opciones', [opciones[0] || 'id', field]);
-                    }}
+                    selectedField={step.endpointResponseConfig?.displayField}
+                    onFieldSelect={(field) => handleEndpointConfigChange('displayField', field)}
                     label="👁️ Campo a Mostrar - Selecciona qué mostrar al usuario"
                   />
                 </>

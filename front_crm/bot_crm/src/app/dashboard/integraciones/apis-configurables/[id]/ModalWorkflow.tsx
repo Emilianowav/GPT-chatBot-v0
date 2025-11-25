@@ -575,7 +575,8 @@ export default function ModalWorkflow({ isOpen, onClose, onSubmit, workflowInici
                   onChange={(value) => handleChange('respuestaTemplate', value)}
                   variables={formData.steps
                     .filter(s => s.tipo === 'recopilar' || s.tipo === 'ejecutar')
-                    .map(s => s.nombreVariable)}
+                    .map(s => s.nombreVariable)
+                    .filter(v => v && v.trim() !== '')}
                   endpoints={endpoints}
                 />
               </div>
