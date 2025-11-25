@@ -18,6 +18,13 @@ export interface WorkflowConversationalResult {
     pasoActual: number;
     totalPasos: number;
     datosRecopilados?: Record<string, any>;
+    workflowsSiguientes?: {
+      pregunta?: string;
+      workflows: Array<{
+        workflowId: string;
+        opcion: string;
+      }>;
+    };
   };
 }
 
@@ -476,7 +483,17 @@ export class WorkflowConversationalHandler {
                 );
                 
                 if (opciones.length > 0) {
-                  response += '\n\n' + workflowConversationManager.formatearOpciones(opciones);
+                  // Si hay plantilla personalizada, usarla
+                  if (siguientePaso.plantillaOpciones) {
+                    const opcionesFormateadas = this.formatearOpcionesConPlantilla(
+                      datosArray,
+                      siguientePaso.plantillaOpciones,
+                      siguientePaso.endpointResponseConfig
+                    );
+                    response += '\n\n' + opcionesFormateadas;
+                  } else {
+                    response += '\n\n' + workflowConversationManager.formatearOpciones(opciones);
+                  }
                 }
               } else {
                 // Formato por defecto
@@ -621,9 +638,14 @@ export class WorkflowConversationalHandler {
       let response = '';
       
       console.log('🎨 Formateando respuesta...');
-      console.log('   Template configurado:', workflow.respuestaTemplate ? 'SÍ' : 'NO');
+      console.log('   Template del paso:', paso.plantillaRespuesta ? 'SÍ' : 'NO');
+      console.log('   Template del workflow:', workflow.respuestaTemplate ? 'SÍ' : 'NO');
       
-      if (workflow.respuestaTemplate) {
+      // Prioridad: plantilla del paso > plantilla del workflow > formato por defecto
+      if (paso.plantillaRespuesta) {
+        console.log('   Usando plantilla del paso');
+        response = this.formatearRespuestaConPlantilla(result.data, paso.plantillaRespuesta, datosRecopilados);
+      } else if (workflow.respuestaTemplate) {
         console.log('   Usando template del workflow');
         response = this.aplicarTemplate(workflow.respuestaTemplate, datosRecopilados, result.data);
       } else {
@@ -636,6 +658,21 @@ export class WorkflowConversationalHandler {
       }
       
       console.log('📏 Longitud de respuesta antes de limitar:', response.length);
+      
+      // Agregar workflows siguientes si están configurados
+      if (workflow.workflowsSiguientes && workflow.workflowsSiguientes.workflows.length > 0) {
+        console.log('🔗 Workflows encadenados configurados');
+        response += '\n\n';
+        if (workflow.workflowsSiguientes.pregunta) {
+          response += workflow.workflowsSiguientes.pregunta + '\n\n';
+        } else {
+          response += '¿Qué te gustaría hacer?\n\n';
+        }
+        
+        workflow.workflowsSiguientes.workflows.forEach((wf, index) => {
+          response += `${index + 1}: ${wf.opcion}\n`;
+        });
+      }
       
       // Limitar a 4000 caracteres para WhatsApp
       if (response.length > 4000) {
@@ -654,7 +691,8 @@ export class WorkflowConversationalHandler {
           workflowName: workflow.nombre,
           pasoActual: paso.orden,
           totalPasos: workflow.steps.length,
-          datosRecopilados
+          datosRecopilados,
+          workflowsSiguientes: workflow.workflowsSiguientes
         }
       };
       
@@ -775,6 +813,95 @@ export class WorkflowConversationalHandler {
    */
   private formatearRespuesta(data: any): string {
     return this.formatearRespuestaProductos(data);
+  }
+  
+  /**
+   * Formatea opciones usando una plantilla personalizada
+   * Plantilla ejemplo: "{{numero}}: {{nombre}} - {{descripcion}}"
+   */
+  private formatearOpcionesConPlantilla(
+    datos: any[],
+    plantilla: string,
+    config: any
+  ): string {
+    const opciones = datos.map((item, index) => {
+      let linea = plantilla;
+      
+      // Reemplazar {{numero}} con el índice
+      linea = linea.replace(/\{\{numero\}\}/g, (index + 1).toString());
+      linea = linea.replace(/\{\{index\}\}/g, index.toString());
+      
+      // Reemplazar {{id}} con el campo ID configurado
+      if (config.idField && item[config.idField]) {
+        linea = linea.replace(/\{\{id\}\}/g, item[config.idField]);
+      }
+      
+      // Reemplazar {{nombre}} o {{displayField}} con el campo display configurado
+      if (config.displayField && item[config.displayField]) {
+        linea = linea.replace(/\{\{nombre\}\}/g, item[config.displayField]);
+        linea = linea.replace(/\{\{displayField\}\}/g, item[config.displayField]);
+      }
+      
+      // Reemplazar cualquier otro campo del objeto
+      Object.keys(item).forEach(key => {
+        const regex = new RegExp(`\\{\\{${key}\\}\\}`, 'g');
+        linea = linea.replace(regex, item[key] || '');
+      });
+      
+      return linea;
+    });
+    
+    return opciones.join('\n');
+  }
+  
+  /**
+   * Formatea respuesta de ejecución usando plantilla personalizada
+   */
+  private formatearRespuestaConPlantilla(
+    datos: any,
+    plantilla: string,
+    variables: Record<string, any>
+  ): string {
+    let resultado = plantilla;
+    
+    // Reemplazar variables del workflow
+    Object.keys(variables).forEach(key => {
+      const regex = new RegExp(`\\{\\{${key}\\}\\}`, 'g');
+      resultado = resultado.replace(regex, variables[key] || '');
+    });
+    
+    // Si datos es un array, formatear cada item
+    if (Array.isArray(datos)) {
+      // Buscar sección de loop {{#items}}...{{/items}}
+      const loopMatch = resultado.match(/\{\{#items\}\}([\s\S]*?)\{\{\/items\}\}/);
+      if (loopMatch) {
+        const itemTemplate = loopMatch[1];
+        const itemsFormateados = datos.map((item, index) => {
+          let itemTexto = itemTemplate;
+          itemTexto = itemTexto.replace(/\{\{numero\}\}/g, (index + 1).toString());
+          
+          Object.keys(item).forEach(key => {
+            const regex = new RegExp(`\\{\\{${key}\\}\\}`, 'g');
+            itemTexto = itemTexto.replace(regex, item[key] || '');
+          });
+          
+          return itemTexto;
+        }).join('');
+        
+        resultado = resultado.replace(/\{\{#items\}\}[\s\S]*?\{\{\/items\}\}/, itemsFormateados);
+      }
+      
+      // Reemplazar {{count}} con el número de items
+      resultado = resultado.replace(/\{\{count\}\}/g, datos.length.toString());
+    } else if (typeof datos === 'object') {
+      // Si es un objeto, reemplazar sus propiedades
+      Object.keys(datos).forEach(key => {
+        const regex = new RegExp(`\\{\\{${key}\\}\\}`, 'g');
+        resultado = resultado.replace(regex, datos[key] || '');
+      });
+    }
+    
+    return resultado;
   }
   
   /**

@@ -306,6 +306,16 @@ export default function WorkflowStepEditor({ step, index, onChange, onRemove, en
                 </>
               )}
 
+              <CodeInput
+                label="Plantilla de Opciones (Opcional)"
+                value={step.plantillaOpciones || ''}
+                onChange={(value) => handleChange('plantillaOpciones', value)}
+                placeholder="{{numero}}: {{nombre}}"
+                tooltip="Personaliza cómo se muestran las opciones. Variables: {{numero}}, {{id}}, {{nombre}}, o cualquier campo del objeto"
+                icon="🎨"
+                monospace
+              />
+
               <div className={styles.ejemploBox} style={{marginTop: '1rem'}}>
                 <strong>💡 Ejemplo de configuración:</strong>
                 <p style={{fontSize: '0.875rem', margin: '0.5rem 0'}}>
@@ -466,6 +476,22 @@ export default function WorkflowStepEditor({ step, index, onChange, onRemove, en
                     </div>
                   ))}
                 </div>
+              </div>
+
+              <div className={styles.formGroup}>
+                <label>Plantilla de Respuesta (Opcional)</label>
+                <textarea
+                  value={step.plantillaRespuesta || ''}
+                  onChange={(e) => handleChange('plantillaRespuesta', e.target.value)}
+                  placeholder="🎫 BÚSQUEDA COMPLETADA&#10;&#10;📍 Sucursal: {{sucursal_id}}&#10;📂 Categoría: {{categoria_id}}&#10;&#10;📦 Productos encontrados:&#10;&#10;{{#items}}&#10;{{numero}}. {{nombre}} - ${{precio}}&#10;{{/items}}&#10;&#10;Total: {{count}} productos"
+                  rows={10}
+                  className={styles.textarea}
+                  style={{ fontFamily: 'monospace', fontSize: '0.875rem' }}
+                />
+                <small>
+                  💡 Variables disponibles: {'{{variable}}'}, {'{{count}}'}<br/>
+                  📋 Para listas usa: {'{{#items}}'}...{'{{numero}}'}, {'{{campo}}'}...{'{{/items}}'}
+                </small>
               </div>
             </>
           )}

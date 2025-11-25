@@ -201,10 +201,12 @@ export interface IWorkflowStep {
   nombreVariable: string;         // Nombre de la variable a guardar
   validacion?: IStepValidation;   // Validación del input
   endpointResponseConfig?: IEndpointResponseConfig;  // Configuración de respuesta del endpoint
+  plantillaOpciones?: string;     // Plantilla para formatear opciones (ej: "{{numero}}: {{nombre}}")
   
   // Para pasos de ejecución
   endpointId?: string;            // ID del endpoint a ejecutar
   mapeoParametros?: Record<string, string>;  // Mapeo de variables a parámetros
+  plantillaRespuesta?: string;    // Plantilla para formatear respuesta del endpoint
   
   // Opcionales
   nombre?: string;
@@ -243,6 +245,15 @@ export interface IWorkflow {
   mensajeFinal?: string;          // Mensaje al completar el workflow
   mensajeAbandonar?: string;      // Mensaje si el usuario abandona
   respuestaTemplate?: string;     // Template para formatear respuesta final con variables
+  
+  // Workflows encadenados
+  workflowsSiguientes?: {
+    pregunta?: string;            // Pregunta para mostrar opciones de workflows
+    workflows: Array<{
+      workflowId: string;         // ID del workflow a ejecutar
+      opcion: string;             // Texto de la opción (ej: "Consultar otro producto")
+    }>;
+  };
   
   // Configuración
   permitirAbandonar?: boolean;    // Si el usuario puede salir con "cancelar"

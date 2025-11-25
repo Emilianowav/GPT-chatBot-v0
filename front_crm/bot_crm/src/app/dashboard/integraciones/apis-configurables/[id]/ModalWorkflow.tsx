@@ -27,6 +27,8 @@ interface FlowStep {
   validacion?: StepValidation;
   endpointId?: string;
   mapeoParametros?: Record<string, string>;
+  plantillaOpciones?: string;
+  plantillaRespuesta?: string;
   nombre?: string;
   descripcion?: string;
   mensajeError?: string;
@@ -37,6 +39,11 @@ interface WorkflowTrigger {
   tipo: TriggerType;
   keywords?: string[];
   primeraRespuesta?: boolean;
+}
+
+interface WorkflowSiguiente {
+  workflowId: string;
+  opcion: string;
 }
 
 interface Workflow {
@@ -52,6 +59,10 @@ interface Workflow {
   mensajeFinal?: string;
   mensajeAbandonar?: string;
   respuestaTemplate?: string;
+  workflowsSiguientes?: {
+    pregunta?: string;
+    workflows: WorkflowSiguiente[];
+  };
   permitirAbandonar?: boolean;
   timeoutMinutos?: number;
 }
@@ -670,6 +681,102 @@ export default function ModalWorkflow({ isOpen, onClose, onSubmit, workflowInici
                     .filter(v => v && v.trim() !== '')}
                   endpoints={endpoints}
                 />
+              </div>
+
+              <div className={styles.divider} style={{margin: '2rem 0 1.5rem'}}>
+                <span>🔗 Workflows Encadenados (Opcional)</span>
+              </div>
+
+              <div className={styles.formGroup}>
+                <label>Pregunta para Workflows Siguientes</label>
+                <input
+                  type="text"
+                  value={formData.workflowsSiguientes?.pregunta || ''}
+                  onChange={(e) => handleChange('workflowsSiguientes', {
+                    ...formData.workflowsSiguientes,
+                    pregunta: e.target.value,
+                    workflows: formData.workflowsSiguientes?.workflows || []
+                  })}
+                  placeholder="¿Qué te gustaría hacer?"
+                  className={styles.input}
+                />
+                <small>Pregunta que se mostrará al finalizar el workflow para ofrecer otras opciones</small>
+              </div>
+
+              <div className={styles.formGroup}>
+                <label>Opciones de Workflows</label>
+                <p className={styles.helpText}>
+                  Define qué workflows se pueden ejecutar después de este
+                </p>
+                <div className={styles.opcionesList}>
+                  {(formData.workflowsSiguientes?.workflows || []).map((wf, i) => (
+                    <div key={i} className={styles.opcionItem}>
+                      <span className={styles.opcionNumero}>{i + 1}</span>
+                      <input
+                        type="text"
+                        value={wf.opcion}
+                        onChange={(e) => {
+                          const nuevosWorkflows = [...(formData.workflowsSiguientes?.workflows || [])];
+                          nuevosWorkflows[i] = { ...nuevosWorkflows[i], opcion: e.target.value };
+                          handleChange('workflowsSiguientes', {
+                            ...formData.workflowsSiguientes,
+                            pregunta: formData.workflowsSiguientes?.pregunta || '',
+                            workflows: nuevosWorkflows
+                          });
+                        }}
+                        placeholder="Consultar otro producto"
+                        className={styles.input}
+                        style={{flex: 1}}
+                      />
+                      <input
+                        type="text"
+                        value={wf.workflowId}
+                        onChange={(e) => {
+                          const nuevosWorkflows = [...(formData.workflowsSiguientes?.workflows || [])];
+                          nuevosWorkflows[i] = { ...nuevosWorkflows[i], workflowId: e.target.value };
+                          handleChange('workflowsSiguientes', {
+                            ...formData.workflowsSiguientes,
+                            pregunta: formData.workflowsSiguientes?.pregunta || '',
+                            workflows: nuevosWorkflows
+                          });
+                        }}
+                        placeholder="ID del workflow"
+                        className={styles.input}
+                        style={{flex: 1}}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const nuevosWorkflows = (formData.workflowsSiguientes?.workflows || []).filter((_, idx) => idx !== i);
+                          handleChange('workflowsSiguientes', {
+                            ...formData.workflowsSiguientes,
+                            pregunta: formData.workflowsSiguientes?.pregunta || '',
+                            workflows: nuevosWorkflows
+                          });
+                        }}
+                        className={styles.removeButton}
+                      >
+                        ✕
+                      </button>
+                    </div>
+                  ))}
+                </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    const nuevosWorkflows = [...(formData.workflowsSiguientes?.workflows || []), { workflowId: '', opcion: '' }];
+                    handleChange('workflowsSiguientes', {
+                      ...formData.workflowsSiguientes,
+                      pregunta: formData.workflowsSiguientes?.pregunta || '',
+                      workflows: nuevosWorkflows
+                    });
+                  }}
+                  className={styles.addButton}
+                  style={{marginTop: '0.5rem'}}
+                >
+                  + Agregar Workflow
+                </button>
+                <small>Ejemplo: "Consultar otro producto" → ID del workflow de búsqueda</small>
               </div>
 
               <div className={styles.formGroup}>
