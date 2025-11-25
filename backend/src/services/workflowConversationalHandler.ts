@@ -310,6 +310,18 @@ export class WorkflowConversationalHandler {
     workflowState: any,
     apiConfig: any
   ): Promise<WorkflowConversationalResult> {
+    // CASO ESPECIAL: Paso de confirmación
+    if (paso.nombreVariable === 'confirmacion') {
+      return await this.procesarConfirmacion(
+        mensaje,
+        paso,
+        contactoId,
+        workflow,
+        workflowState,
+        apiConfig
+      );
+    }
+    
     // Validar input
     const validacion = workflowConversationManager.validarInput(mensaje, paso);
     
@@ -762,6 +774,202 @@ export class WorkflowConversationalHandler {
    */
   private formatearRespuesta(data: any): string {
     return this.formatearRespuestaProductos(data);
+  }
+  
+  /**
+   * Procesa el paso de confirmación
+   */
+  private async procesarConfirmacion(
+    mensaje: string,
+    paso: IWorkflowStep,
+    contactoId: string,
+    workflow: IWorkflow,
+    workflowState: any,
+    apiConfig: any
+  ): Promise<WorkflowConversationalResult> {
+    console.log('📋 Procesando confirmación...');
+    
+    // Validar que sea una opción válida (1-5)
+    const opcion = mensaje.trim();
+    
+    if (!['1', '2', '3', '4', '5'].includes(opcion)) {
+      return {
+        success: false,
+        response: '❌ Opción inválida. Por favor selecciona un número del 1 al 5.',
+        completed: false,
+        error: 'Opción inválida'
+      };
+    }
+    
+    console.log(`✅ Opción seleccionada: ${opcion}`);
+    
+    // Opción 1: Confirmar y continuar
+    if (opcion === '1') {
+      console.log('✅ Usuario confirmó, continuando al paso final...');
+      
+      // Avanzar al siguiente paso (que debería ser EJECUTAR)
+      await workflowConversationManager.avanzarPaso(contactoId, {
+        [paso.nombreVariable]: opcion
+      });
+      
+      const siguientePaso = workflow.steps.find(s => s.orden === paso.orden + 1);
+      
+      if (siguientePaso && siguientePaso.tipo === 'ejecutar') {
+        return await this.procesarPasoEjecucion(
+          siguientePaso,
+          contactoId,
+          workflow,
+          { ...workflowState, pasoActual: paso.orden },
+          apiConfig
+        );
+      }
+      
+      return {
+        success: false,
+        response: '❌ Error: No se encontró el paso de ejecución',
+        completed: true,
+        error: 'Paso de ejecución no encontrado'
+      };
+    }
+    
+    // Opción 5: Cancelar
+    if (opcion === '5') {
+      console.log('🚫 Usuario canceló el flujo');
+      await workflowConversationManager.abandonarWorkflow(contactoId);
+      
+      return {
+        success: true,
+        response: '🚫 Búsqueda cancelada. Si necesitas ayuda, escribe "productos" o "buscar".',
+        completed: true
+      };
+    }
+    
+    // Opciones 2-4: Cambiar un dato
+    const cambios: Record<string, { paso: number; variable: string; nombre: string }> = {
+      '2': { paso: 0, variable: 'sucursal_id', nombre: 'sucursal' },
+      '3': { paso: 1, variable: 'categoria_id', nombre: 'categoría' },
+      '4': { paso: 2, variable: 'nombre_producto', nombre: 'producto' }
+    };
+    
+    const cambio = cambios[opcion];
+    
+    if (cambio) {
+      console.log(`🔄 Usuario quiere cambiar: ${cambio.nombre}`);
+      
+      // Retroceder al paso correspondiente y limpiar la variable
+      await workflowConversationManager.retrocederAPaso(
+        contactoId,
+        cambio.paso,
+        cambio.variable
+      );
+      
+      // También limpiar la variable _nombre si existe
+      const estadoActual = await workflowConversationManager.getWorkflowState(contactoId);
+      if (estadoActual?.datosRecopilados) {
+        const variableNombre = `${cambio.variable}_nombre`;
+        if (estadoActual.datosRecopilados[variableNombre]) {
+          await workflowConversationManager.actualizarDato(contactoId, variableNombre, undefined);
+        }
+      }
+      
+      // Obtener el paso al que retrocedimos
+      const pasoRetroceso = workflow.steps.find(s => s.orden === cambio.paso + 1);
+      
+      if (!pasoRetroceso) {
+        return {
+          success: false,
+          response: '❌ Error al retroceder',
+          completed: true,
+          error: 'Paso no encontrado'
+        };
+      }
+      
+      // Construir respuesta con la pregunta del paso
+      let response = `🔄 Cambiando ${cambio.nombre}...\n\n`;
+      
+      if (pasoRetroceso.pregunta) {
+        const estadoActualizado = await workflowConversationManager.getWorkflowState(contactoId);
+        const datosRecopilados = estadoActualizado?.datosRecopilados || {};
+        response += this.reemplazarVariables(pasoRetroceso.pregunta, datosRecopilados);
+        
+        // Si el paso tiene endpoint, llamar a la API
+        if (pasoRetroceso.endpointId) {
+          try {
+            // Mapear parámetros
+            const params: any = {};
+            if (pasoRetroceso.mapeoParametros) {
+              for (const [paramName, varName] of Object.entries(pasoRetroceso.mapeoParametros)) {
+                if (datosRecopilados[varName] !== undefined) {
+                  if (!params.query) params.query = {};
+                  params.query[paramName] = datosRecopilados[varName];
+                }
+              }
+            }
+            
+            // Llamar al endpoint
+            const resultadoAPI = await apiExecutor.ejecutar(
+              apiConfig._id.toString(),
+              pasoRetroceso.endpointId,
+              params,
+              { metadata: { contactoId } }
+            );
+            
+            if (resultadoAPI.success && resultadoAPI.data) {
+              // Guardar datos
+              await workflowConversationManager.guardarDatosEjecutados(
+                contactoId,
+                pasoRetroceso.endpointId,
+                resultadoAPI.data
+              );
+              
+              let datosArray = resultadoAPI.data;
+              if (datosArray.data && Array.isArray(datosArray.data)) {
+                datosArray = datosArray.data;
+              }
+              
+              if (Array.isArray(datosArray) && datosArray.length > 0) {
+                if (pasoRetroceso.endpointResponseConfig) {
+                  const opciones = this.extraerOpcionesDinamicas(
+                    datosArray,
+                    pasoRetroceso.endpointResponseConfig
+                  );
+                  
+                  if (opciones.length > 0) {
+                    response += '\n\n' + workflowConversationManager.formatearOpciones(opciones);
+                  }
+                }
+              }
+            }
+          } catch (error) {
+            console.error('❌ Error llamando a la API:', error);
+          }
+        }
+        // Si tiene opciones estáticas
+        else if (pasoRetroceso.validacion?.tipo === 'opcion' && pasoRetroceso.validacion.opciones) {
+          response += '\n\n' + workflowConversationManager.formatearOpciones(
+            pasoRetroceso.validacion.opciones
+          );
+        }
+      }
+      
+      return {
+        success: true,
+        response,
+        completed: false,
+        metadata: {
+          workflowName: workflow.nombre,
+          pasoActual: cambio.paso,
+          totalPasos: workflow.steps.length
+        }
+      };
+    }
+    
+    return {
+      success: false,
+      response: '❌ Opción no reconocida',
+      completed: false,
+      error: 'Opción no reconocida'
+    };
   }
   
   /**
