@@ -19,7 +19,11 @@
     "clean-database": "tsx src/scripts/cleanDatabase.ts",
     "clean-database-dry": "tsx src/scripts/cleanDatabase.ts --dry-run",
     "create-icenter-workflow": "tsx src/scripts/createICenterWorkflow.ts",
-    "check-icenter-workflow": "tsx src/scripts/checkAndCreateICenterWorkflow.ts"
+    "check-icenter-workflow": "tsx src/scripts/checkAndCreateICenterWorkflow.ts",
+    "migrate:ejecutar-to-consulta": "tsx src/scripts/migrateEjecutarToConsultaFiltrada.ts",
+    "force-update-workflows": "tsx src/scripts/forceUpdateWorkflows.ts",
+    "inspect-db": "tsx src/scripts/inspectDatabase.ts",
+    "find-doc": "tsx src/scripts/findDocument.ts"
   },
   "keywords": [],
   "author": "",
