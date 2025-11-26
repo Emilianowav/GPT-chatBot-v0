@@ -1,3 +1,4 @@
+import Image from 'next/image';
 import styles from './page.module.css';
 
 export default function InmoDashPage() {
@@ -9,6 +10,16 @@ export default function InmoDashPage() {
       <section className={styles.hero}>
         <div className={styles.container}>
           <div className={styles.heroContent}>
+            <div className={styles.logoContainer}>
+              <Image 
+                src="/logos productos/inmodash.svg" 
+                alt="InmoDash" 
+                width={360}
+                height={360}
+                className={styles.productLogo}
+                priority
+              />
+            </div>
             <h1 className={styles.heroTitle}>
               InmoDash: el tablero de control<br />
               <span className={styles.gradient}>para tu inmobiliaria</span>

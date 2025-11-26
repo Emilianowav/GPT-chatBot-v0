@@ -5,15 +5,41 @@ export default function SobreNosotrosPage() {
 
   return (
     <div className={styles.page}>
-      {/* Hero */}
+      {/* Hero - Centered with Animated Loader */}
       <section className={styles.hero}>
         <div className={styles.container}>
           <div className={styles.heroContent}>
+            {/* Animated Loader */}
+            <div className={styles.loaderContainer}>
+              <svg className={styles.loaderSvg} viewBox="0 0 200 200">
+                <defs>
+                  <linearGradient id="gradient" x1="0%" y1="0%" x2="0%" y2="100%">
+                    <stop offset="0%" style={{ stopColor: '#00D4FF', stopOpacity: 1 }} />
+                    <stop offset="100%" style={{ stopColor: '#0047FF', stopOpacity: 1 }} />
+                  </linearGradient>
+                  <filter id="gooey">
+                    <feGaussianBlur in="SourceGraphic" stdDeviation="20" result="blur" />
+                    <feColorMatrix in="blur" mode="matrix" values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 22 -10" result="gooey" />
+                    <feComposite in="SourceGraphic" in2="gooey" operator="atop" />
+                  </filter>
+                </defs>
+                <g filter="url(#gooey)">
+                  <circle className={styles.blob} cx="100" cy="100" r="30" />
+                  <circle className={styles.blob} cx="100" cy="100" r="30" />
+                  <circle className={styles.blob} cx="100" cy="100" r="30" />
+                  <circle className={styles.blob} cx="100" cy="100" r="30" />
+                  <circle className={styles.blob} cx="100" cy="100" r="30" />
+                  <circle className={styles.blob} cx="100" cy="100" r="30" />
+                </g>
+              </svg>
+              <div className={styles.loaderGlow}></div>
+            </div>
+            
             <h1 className={styles.heroTitle}>
               Sobre <span className={styles.gradient}>Momento IA</span>
             </h1>
             <p className={styles.heroSubtitle}>
-              Un equipo chico, obsesionado con hacer que la tecnología trabaje para vos.
+              Un equipo obsesionado con hacer que la tecnología trabaje para vos.
             </p>
           </div>
         </div>

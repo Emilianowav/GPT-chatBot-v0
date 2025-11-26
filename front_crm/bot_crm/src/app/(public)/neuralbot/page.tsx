@@ -1,3 +1,4 @@
+import Image from 'next/image';
 import styles from './page.module.css';
 
 export default function NeuralBotPage() {
@@ -10,8 +11,18 @@ export default function NeuralBotPage() {
       <section className={styles.hero}>
         <div className={styles.container}>
           <div className={styles.heroContent}>
+            <div className={styles.logoContainer}>
+              <Image 
+                src="/logos productos/neuralbot.svg" 
+                alt="NeuralBot" 
+                width={240}
+                height={240}
+                className={styles.productLogo}
+                priority
+              />
+            </div>
             <h1 className={styles.heroTitle}>
-              NeuralBot: tu nuevo equipo de<br />
+              Tu nuevo equipo de<br />
               <span className={styles.gradient}>atención, ventas y soporte</span>
             </h1>
             <p className={styles.heroSubtitle}>

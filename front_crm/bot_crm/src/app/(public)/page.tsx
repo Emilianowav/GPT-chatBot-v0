@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import Image from 'next/image';
 import styles from './page.module.css';
 
 export default function HomePage() {
@@ -26,6 +27,7 @@ export default function HomePage() {
                 className={styles.ctaPrimary}
               >
                 <span>Quiero hablar con un asesor</span>
+                <span>Quiero hablar con un asesor</span>
               </a>
               <a 
                 href={demoBotLink}
@@ -33,7 +35,8 @@ export default function HomePage() {
                 rel="noopener noreferrer"
                 className={styles.ctaSecondary}
               >
-                Ver demo de NeuralBot
+                <span>Ver demo de NeuralBot</span>
+                <span>Ver demo de NeuralBot</span>
               </a>
             </div>
           </div>
@@ -201,13 +204,13 @@ export default function HomePage() {
                 <p className={styles.productSubtitle}>Chatbot inteligente para atención y ventas</p>
               </div>
               <span className={styles.productIcon}>
-                <svg width="120" height="120" viewBox="0 0 120 120" fill="none" stroke="white" strokeWidth="1.5">
-                  <circle cx="60" cy="45" r="20"/>
-                  <path d="M40 65 Q40 85, 60 85 Q80 85, 80 65"/>
-                  <circle cx="50" cy="40" r="3"/>
-                  <circle cx="70" cy="40" r="3"/>
-                  <path d="M50 50 Q60 55, 70 50"/>
-                </svg>
+                <Image 
+                  src="/logos productos/neuralbot.svg" 
+                  alt="NeuralBot" 
+                  width={120}
+                  height={120}
+                  className={styles.productLogoIcon}
+                />
               </span>
             </div>
 
@@ -218,13 +221,13 @@ export default function HomePage() {
                 <p className={styles.productSubtitle}>Tablero de gestión para inmobiliarias</p>
               </div>
               <span className={styles.productIcon}>
-                <svg width="120" height="120" viewBox="0 0 120 120" fill="none" stroke="white" strokeWidth="1.5">
-                  <rect x="30" y="30" width="60" height="60"/>
-                  <line x1="30" y1="50" x2="90" y2="50"/>
-                  <line x1="30" y1="70" x2="90" y2="70"/>
-                  <line x1="50" y1="30" x2="50" y2="90"/>
-                  <line x1="70" y1="30" x2="70" y2="90"/>
-                </svg>
+                <Image 
+                  src="/logos productos/inmodash.svg" 
+                  alt="InmoDash" 
+                  width={360}
+                  height={360}
+                  className={styles.productLogoIcon}
+                />
               </span>
             </div>
           </div>

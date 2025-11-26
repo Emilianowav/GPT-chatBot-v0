@@ -33,11 +33,18 @@ export default function Header() {
           </div>
           <Link href="/sobre-nosotros" className={styles.navLink}>Sobre nosotros</Link>
         </nav>
+      </div>
+      
+      <div className={styles.rightButtons}>
+        <Link href="/login" className={styles.loginButton}>
+          <span>Log in</span>
+          <span>Log in</span>
+        </Link>
         <a 
           href={`https://wa.me/${whatsappNumber}?text=${encodeURIComponent('Hola, quiero más información sobre Momento IA')}`}
           target="_blank"
           rel="noopener noreferrer"
-          className={styles.ctaButton}
+          className={styles.contactButton}
         >
           Contactarnos
         </a>

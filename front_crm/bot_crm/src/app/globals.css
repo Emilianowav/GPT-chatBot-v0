@@ -51,16 +51,16 @@
   --shadow-hover: rgba(0, 0, 0, 0.4);
 }
 
-html,
-body {
+html {
   overflow-x: hidden;
-  overflow-y: auto;
-  background: var(--bg-primary) !important;
   scroll-behavior: smooth;
-  height: 100%;
 }
 
 body {
+  overflow-x: hidden;
+  overflow-y: auto;
+  margin: 0;
+  padding: 0;
   color: var(--text-primary);
   background: var(--bg-base);
   font-family: var(--font-manrope), -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
@@ -68,18 +68,16 @@ body {
   letter-spacing: 0.01em;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  position: relative;
-  min-height: 100vh;
 }
 
 /* Gradientes como gotas fundidas - Optimizado SIN scroll doble */
 body::before {
   content: '';
-  position: absolute;
+  position: fixed;
   top: 0;
   left: 0;
   right: 0;
-  height: 100%;
+  bottom: 0;
   pointer-events: none;
   z-index: 0;
   background-image: url('/final backg.png');
