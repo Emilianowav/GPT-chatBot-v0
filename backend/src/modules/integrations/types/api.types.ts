@@ -195,7 +195,9 @@ export interface IEndpointResponseConfig {
  */
 export interface IEndpointRelacionado {
   endpointId: string;             // ID del endpoint a llamar
-  campoIdOrigen: string;          // Campo del resultado principal que contiene el ID (ej: "id", "product_id")
+  origenDatos: 'resultado' | 'variable';  // De dónde tomar el ID: del resultado actual o de una variable
+  campoIdOrigen?: string;         // Si origenDatos='resultado': campo del resultado (ej: "id", "product_id")
+  variableOrigen?: string;        // Si origenDatos='variable': nombre de la variable (ej: "sucursal_id")
   parametroDestino: string;       // Parámetro del endpoint relacionado (ej: "id", "product_id")
   campos: string[];               // Campos a extraer de la respuesta (ej: ["link_compra", "stock"])
   prefijo?: string;               // Prefijo para las variables (ej: "detalle_" → {{detalle_link_compra}})

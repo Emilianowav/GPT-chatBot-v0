@@ -267,7 +267,9 @@ const EndpointResponseConfigSchema = new Schema(
 const EndpointRelacionadoSchema = new Schema(
   {
     endpointId: { type: String, required: true },
-    campoIdOrigen: { type: String, required: true },
+    origenDatos: { type: String, enum: ['resultado', 'variable'], default: 'resultado' },
+    campoIdOrigen: String,
+    variableOrigen: String,
     parametroDestino: { type: String, required: true },
     campos: [String],
     prefijo: String

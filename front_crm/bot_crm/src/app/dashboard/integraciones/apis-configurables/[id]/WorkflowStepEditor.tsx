@@ -9,6 +9,7 @@ import Tooltip from './Tooltip';
 import EndpointFieldSelector from './EndpointFieldSelector';
 import ParameterMapper from './ParameterMapper';
 import ResponseFieldSelector from './ResponseFieldSelector';
+import { extractEndpointParams, getEndpointById } from './utils/extractEndpointParams';
 import styles from './WorkflowManager.module.css';
 
 type ValidationType = 'texto' | 'numero' | 'opcion' | 'regex';
@@ -29,7 +30,9 @@ interface EndpointResponseConfig {
 
 interface EndpointRelacionado {
   endpointId: string;
-  campoIdOrigen: string;
+  origenDatos: 'resultado' | 'variable';
+  campoIdOrigen?: string;
+  variableOrigen?: string;
   parametroDestino: string;
   campos: string[];
   prefijo?: string;
@@ -243,7 +246,7 @@ export default function WorkflowStepEditor({ step, index, onChange, onRemove, en
                     variables={variablesConTipo}
                     mappings={step.mapeoParametros || {}}
                     onChange={(mappings) => handleChange('mapeoParametros', mappings)}
-                    endpointParams={[]}
+                    endpointParams={extractEndpointParams(getEndpointById(endpoints, step.endpointId || ''))}
                   />
                 </div>
               )}
@@ -523,7 +526,7 @@ export default function WorkflowStepEditor({ step, index, onChange, onRemove, en
                 variables={variablesConTipo}
                 mappings={step.mapeoParametros || {}}
                 onChange={(mappings) => handleChange('mapeoParametros', mappings)}
-                endpointParams={[]} // TODO: Extraer parámetros del endpoint seleccionado
+                endpointParams={extractEndpointParams(getEndpointById(endpoints, step.endpointId || ''))}
               />
 
               <div className={styles.formGroup}>
@@ -575,8 +578,36 @@ export default function WorkflowStepEditor({ step, index, onChange, onRemove, en
                       <small>Endpoint que se llamará para cada resultado</small>
                     </div>
 
-                    {/* Selector de campo ID del resultado principal */}
-                    {step.endpointId && (
+                    {/* Selector de origen de datos */}
+                    <div className={styles.formGroup}>
+                      <label>Origen del ID *</label>
+                      <select
+                        value={endpointRel.origenDatos || 'resultado'}
+                        onChange={(e) => {
+                          const nuevos = [...(step.endpointsRelacionados || [])];
+                          nuevos[i] = { 
+                            ...nuevos[i], 
+                            origenDatos: e.target.value as 'resultado' | 'variable',
+                            // Limpiar campos no usados
+                            campoIdOrigen: e.target.value === 'resultado' ? nuevos[i].campoIdOrigen : undefined,
+                            variableOrigen: e.target.value === 'variable' ? nuevos[i].variableOrigen : undefined
+                          };
+                          handleChange('endpointsRelacionados', nuevos);
+                        }}
+                        className={styles.select}
+                      >
+                        <option value="resultado">Del resultado de la consulta principal</option>
+                        <option value="variable">De una variable recopilada anteriormente</option>
+                      </select>
+                      <small>
+                        {endpointRel.origenDatos === 'resultado' 
+                          ? 'Usa un campo del resultado de la consulta principal (ej: id del producto)'
+                          : 'Usa una variable recopilada en pasos anteriores (ej: sucursal_id)'}
+                      </small>
+                    </div>
+
+                    {/* Si origen es resultado: selector de campo */}
+                    {endpointRel.origenDatos === 'resultado' && step.endpointId && (
                       <EndpointFieldSelector
                         endpointId={step.endpointId}
                         endpoints={endpoints}
@@ -588,24 +619,63 @@ export default function WorkflowStepEditor({ step, index, onChange, onRemove, en
                           nuevos[i] = { ...nuevos[i], campoIdOrigen: field };
                           handleChange('endpointsRelacionados', nuevos);
                         }}
-                        label="🔑 Campo ID del Resultado Principal - Selecciona el campo que contiene el ID"
+                        label="🔑 Campo ID del Resultado - Selecciona el campo que contiene el ID"
                       />
+                    )}
+
+                    {/* Si origen es variable: selector de variable */}
+                    {endpointRel.origenDatos === 'variable' && (
+                      <div className={styles.formGroup}>
+                        <label>Variable a Usar *</label>
+                        <select
+                          value={endpointRel.variableOrigen || ''}
+                          onChange={(e) => {
+                            const nuevos = [...(step.endpointsRelacionados || [])];
+                            nuevos[i] = { ...nuevos[i], variableOrigen: e.target.value };
+                            handleChange('endpointsRelacionados', nuevos);
+                          }}
+                          className={styles.select}
+                        >
+                          <option value="">Seleccionar variable</option>
+                          {variables.map(variable => (
+                            <option key={variable} value={variable}>{variable}</option>
+                          ))}
+                        </select>
+                        <small>Variable recopilada en pasos anteriores que contiene el ID</small>
+                      </div>
                     )}
 
                     <div className={styles.formGroup}>
                       <label>Parámetro del Endpoint Relacionado *</label>
-                      <input
-                        type="text"
-                        value={endpointRel.parametroDestino || ''}
-                        onChange={(e) => {
-                          const nuevos = [...(step.endpointsRelacionados || [])];
-                          nuevos[i] = { ...nuevos[i], parametroDestino: e.target.value };
-                          handleChange('endpointsRelacionados', nuevos);
-                        }}
-                        placeholder="product_id"
-                        className={styles.input}
-                      />
-                      <small>Nombre del parámetro que espera el endpoint relacionado (ej: id, product_id, item_id)</small>
+                      {endpointRel.endpointId ? (
+                        <select
+                          value={endpointRel.parametroDestino || ''}
+                          onChange={(e) => {
+                            const nuevos = [...(step.endpointsRelacionados || [])];
+                            nuevos[i] = { ...nuevos[i], parametroDestino: e.target.value };
+                            handleChange('endpointsRelacionados', nuevos);
+                          }}
+                          className={styles.select}
+                        >
+                          <option value="">Seleccionar parámetro</option>
+                          {extractEndpointParams(getEndpointById(endpoints, endpointRel.endpointId)).map(param => (
+                            <option key={param} value={param}>{param}</option>
+                          ))}
+                        </select>
+                      ) : (
+                        <input
+                          type="text"
+                          value={endpointRel.parametroDestino || ''}
+                          onChange={(e) => {
+                            const nuevos = [...(step.endpointsRelacionados || [])];
+                            nuevos[i] = { ...nuevos[i], parametroDestino: e.target.value };
+                            handleChange('endpointsRelacionados', nuevos);
+                          }}
+                          placeholder="product_id"
+                          className={styles.input}
+                        />
+                      )}
+                      <small>Parámetro que espera el endpoint relacionado para recibir el ID</small>
                     </div>
 
                     {/* Selector de campos a extraer del endpoint relacionado */}
@@ -724,6 +794,7 @@ export default function WorkflowStepEditor({ step, index, onChange, onRemove, en
                   onClick={() => {
                     const nuevos = [...(step.endpointsRelacionados || []), {
                       endpointId: '',
+                      origenDatos: 'resultado' as const,
                       campoIdOrigen: 'id',
                       parametroDestino: 'id',
                       campos: [],

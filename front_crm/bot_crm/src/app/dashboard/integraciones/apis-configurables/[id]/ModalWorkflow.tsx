@@ -27,7 +27,9 @@ interface EndpointResponseConfig {
 
 interface EndpointRelacionado {
   endpointId: string;
-  campoIdOrigen: string;
+  origenDatos: 'resultado' | 'variable';
+  campoIdOrigen?: string;
+  variableOrigen?: string;
   parametroDestino: string;
   campos: string[];
   prefijo?: string;
