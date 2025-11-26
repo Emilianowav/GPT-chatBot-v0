@@ -4,14 +4,13 @@
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
   gap: 1.5rem;
-  margin-top: 1.5rem;
+  margin: 2rem;
 }
 
 .card {
   background: var(--momento-black, #1A1A1A);
   border: 2px solid rgba(255, 107, 74, 0.3);
-  border-radius: 16px;
-  box-shadow: 0 4px 12px rgba(255, 107, 74, 0.2);
+  border-radius: 2px;
   overflow: hidden;
   transition: all 0.3s;
   display: flex;
@@ -20,8 +19,6 @@
 }
 
 .card:hover {
-  box-shadow: 0 8px 24px rgba(255, 107, 74, 0.4);
-  transform: translateY(-4px);
   border-color: var(--momento-orange-light, #FF8A6E);
 }
 

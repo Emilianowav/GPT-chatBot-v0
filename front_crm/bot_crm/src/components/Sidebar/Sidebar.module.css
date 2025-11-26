@@ -19,7 +19,6 @@
   width: 280px;
   background: var(--momento-black, #1A1A1A);
   border-right: 2px solid var(--momento-orange, #FF6B4A);
-  box-shadow: 4px 0 12px rgba(255, 107, 74, 0.2);
   display: flex;
   flex-direction: column;
   z-index: 999;

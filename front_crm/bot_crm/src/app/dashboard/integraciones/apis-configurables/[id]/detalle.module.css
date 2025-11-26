@@ -118,7 +118,7 @@
   background: rgba(255, 255, 255, 0.1);
   color: rgba(255, 255, 255, 0.9);
   border: 1px solid rgba(255, 255, 255, 0.2);
-  border-radius: 8px;
+  border-radius: 2px;
   font-size: 0.9rem;
   font-weight: 600;
   cursor: pointer;
@@ -138,7 +138,7 @@
   background: linear-gradient(135deg, #FF6B4A 0%, #FF8A6E 100%);
   color: white;
   border: none;
-  border-radius: 8px;
+  border-radius: 2px;
   font-size: 0.9rem;
   font-weight: 600;
   cursor: pointer;
@@ -147,7 +147,6 @@
 }
 
 .editButton:hover {
-  transform: translateY(-2px);
   box-shadow: 0 6px 20px rgba(255, 107, 74, 0.4);
 }
 
@@ -173,7 +172,7 @@
   width: 48px;
   height: 48px;
   background: linear-gradient(135deg, #FF6B4A 0%, #FF8A6E 100%);
-  border-radius: 10px;
+  border-radius: 2px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -235,7 +234,6 @@
 
 /* Tab Content */
 .tabContent {
-  margin: 2rem;
   padding: 2rem;
   min-height: 400px;
   border-radius: 2px;
@@ -269,7 +267,7 @@
   background: linear-gradient(135deg, #FF6B4A 0%, #FF8A6E 100%);
   color: white;
   border: none;
-  border-radius: 8px;
+  border-radius: 2px;
   font-size: 0.95rem;
   font-weight: 600;
   cursor: pointer;
@@ -278,7 +276,6 @@
 }
 
 .primaryButton:hover {
-  transform: translateY(-2px);
   box-shadow: 0 6px 20px rgba(255, 107, 74, 0.4);
 }
 
@@ -313,7 +310,7 @@
 .endpointCard {
   background: rgba(255, 255, 255, 0.05);
   border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 8px;
+  border-radius: 2px;
   padding: 1.25rem;
   transition: all 0.2s;
 }

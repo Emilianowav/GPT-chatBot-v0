@@ -575,82 +575,113 @@ export default function WorkflowStepEditor({ step, index, onChange, onRemove, en
                       <small>Endpoint que se llamará para cada resultado</small>
                     </div>
 
-                    <div style={{display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem'}}>
-                      <div className={styles.formGroup}>
-                        <label>Campo ID del Resultado *</label>
-                        <input
-                          type="text"
-                          value={endpointRel.campoIdOrigen || ''}
-                          onChange={(e) => {
-                            const nuevos = [...(step.endpointsRelacionados || [])];
-                            nuevos[i] = { ...nuevos[i], campoIdOrigen: e.target.value };
-                            handleChange('endpointsRelacionados', nuevos);
-                          }}
-                          placeholder="id"
-                          className={styles.input}
-                        />
-                        <small>Campo del resultado que contiene el ID</small>
-                      </div>
-
-                      <div className={styles.formGroup}>
-                        <label>Parámetro del Endpoint *</label>
-                        <input
-                          type="text"
-                          value={endpointRel.parametroDestino || ''}
-                          onChange={(e) => {
-                            const nuevos = [...(step.endpointsRelacionados || [])];
-                            nuevos[i] = { ...nuevos[i], parametroDestino: e.target.value };
-                            handleChange('endpointsRelacionados', nuevos);
-                          }}
-                          placeholder="product_id"
-                          className={styles.input}
-                        />
-                        <small>Parámetro donde se enviará el ID</small>
-                      </div>
-                    </div>
+                    {/* Selector de campo ID del resultado principal */}
+                    {step.endpointId && (
+                      <EndpointFieldSelector
+                        endpointId={step.endpointId}
+                        endpoints={endpoints}
+                        apiBaseUrl={apiBaseUrl}
+                        apiAuth={apiAuth}
+                        selectedField={endpointRel.campoIdOrigen}
+                        onFieldSelect={(field) => {
+                          const nuevos = [...(step.endpointsRelacionados || [])];
+                          nuevos[i] = { ...nuevos[i], campoIdOrigen: field };
+                          handleChange('endpointsRelacionados', nuevos);
+                        }}
+                        label="🔑 Campo ID del Resultado Principal - Selecciona el campo que contiene el ID"
+                      />
+                    )}
 
                     <div className={styles.formGroup}>
-                      <label>Campos a Extraer *</label>
-                      <div style={{display: 'flex', gap: '0.5rem', flexWrap: 'wrap', marginBottom: '0.5rem'}}>
-                        {(endpointRel.campos || []).map((campo, campoIdx) => (
-                          <div key={campoIdx} style={{
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: '0.5rem',
-                            background: 'rgba(255, 255, 255, 0.05)',
-                            padding: '0.5rem',
-                            borderRadius: '4px'
-                          }}>
-                            <input
-                              type="text"
-                              value={campo}
-                              onChange={(e) => {
-                                const nuevos = [...(step.endpointsRelacionados || [])];
-                                const nuevosCampos = [...(nuevos[i].campos || [])];
-                                nuevosCampos[campoIdx] = e.target.value;
-                                nuevos[i] = { ...nuevos[i], campos: nuevosCampos };
-                                handleChange('endpointsRelacionados', nuevos);
-                              }}
-                              placeholder="link_compra"
-                              className={styles.input}
-                              style={{minWidth: '150px'}}
-                            />
-                            <button
-                              type="button"
-                              onClick={() => {
-                                const nuevos = [...(step.endpointsRelacionados || [])];
-                                const nuevosCampos = (nuevos[i].campos || []).filter((_, idx) => idx !== campoIdx);
-                                nuevos[i] = { ...nuevos[i], campos: nuevosCampos };
-                                handleChange('endpointsRelacionados', nuevos);
-                              }}
-                              className={styles.removeButton}
-                              style={{padding: '0.25rem 0.5rem'}}
-                            >
-                              ✕
-                            </button>
-                          </div>
-                        ))}
-                      </div>
+                      <label>Parámetro del Endpoint Relacionado *</label>
+                      <input
+                        type="text"
+                        value={endpointRel.parametroDestino || ''}
+                        onChange={(e) => {
+                          const nuevos = [...(step.endpointsRelacionados || [])];
+                          nuevos[i] = { ...nuevos[i], parametroDestino: e.target.value };
+                          handleChange('endpointsRelacionados', nuevos);
+                        }}
+                        placeholder="product_id"
+                        className={styles.input}
+                      />
+                      <small>Nombre del parámetro que espera el endpoint relacionado (ej: id, product_id, item_id)</small>
+                    </div>
+
+                    {/* Selector de campos a extraer del endpoint relacionado */}
+                    <div className={styles.formGroup}>
+                      <label>Campos a Extraer del Endpoint Relacionado *</label>
+                      <p className={styles.helpText}>
+                        Selecciona los campos de la respuesta del endpoint relacionado que quieres mostrar
+                      </p>
+                      
+                      {(endpointRel.campos || []).map((campo, campoIdx) => (
+                        <div key={campoIdx} style={{marginBottom: '1rem'}}>
+                          {endpointRel.endpointId ? (
+                            <div style={{display: 'flex', gap: '0.5rem', alignItems: 'flex-start'}}>
+                              <div style={{flex: 1}}>
+                                <EndpointFieldSelector
+                                  endpointId={endpointRel.endpointId}
+                                  endpoints={endpoints}
+                                  apiBaseUrl={apiBaseUrl}
+                                  apiAuth={apiAuth}
+                                  selectedField={campo}
+                                  onFieldSelect={(field) => {
+                                    const nuevos = [...(step.endpointsRelacionados || [])];
+                                    const nuevosCampos = [...(nuevos[i].campos || [])];
+                                    nuevosCampos[campoIdx] = field;
+                                    nuevos[i] = { ...nuevos[i], campos: nuevosCampos };
+                                    handleChange('endpointsRelacionados', nuevos);
+                                  }}
+                                  label={`Campo #${campoIdx + 1}`}
+                                />
+                              </div>
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  const nuevos = [...(step.endpointsRelacionados || [])];
+                                  const nuevosCampos = (nuevos[i].campos || []).filter((_, idx) => idx !== campoIdx);
+                                  nuevos[i] = { ...nuevos[i], campos: nuevosCampos };
+                                  handleChange('endpointsRelacionados', nuevos);
+                                }}
+                                className={styles.removeButton}
+                                style={{marginTop: '1.75rem'}}
+                              >
+                                ✕
+                              </button>
+                            </div>
+                          ) : (
+                            <div style={{display: 'flex', gap: '0.5rem', alignItems: 'center'}}>
+                              <input
+                                type="text"
+                                value={campo}
+                                onChange={(e) => {
+                                  const nuevos = [...(step.endpointsRelacionados || [])];
+                                  const nuevosCampos = [...(nuevos[i].campos || [])];
+                                  nuevosCampos[campoIdx] = e.target.value;
+                                  nuevos[i] = { ...nuevos[i], campos: nuevosCampos };
+                                  handleChange('endpointsRelacionados', nuevos);
+                                }}
+                                placeholder="nombre_campo"
+                                className={styles.input}
+                              />
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  const nuevos = [...(step.endpointsRelacionados || [])];
+                                  const nuevosCampos = (nuevos[i].campos || []).filter((_, idx) => idx !== campoIdx);
+                                  nuevos[i] = { ...nuevos[i], campos: nuevosCampos };
+                                  handleChange('endpointsRelacionados', nuevos);
+                                }}
+                                className={styles.removeButton}
+                              >
+                                ✕
+                              </button>
+                            </div>
+                          )}
+                        </div>
+                      ))}
+                      
                       <button
                         type="button"
                         onClick={() => {
@@ -660,11 +691,9 @@ export default function WorkflowStepEditor({ step, index, onChange, onRemove, en
                           handleChange('endpointsRelacionados', nuevos);
                         }}
                         className={styles.addButton}
-                        style={{fontSize: '0.875rem'}}
                       >
                         + Agregar Campo
                       </button>
-                      <small>Campos de la respuesta que quieres usar en la plantilla</small>
                     </div>
 
                     <div className={styles.formGroup}>

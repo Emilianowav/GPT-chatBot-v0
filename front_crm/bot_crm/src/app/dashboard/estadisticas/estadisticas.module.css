@@ -1,5 +1,8 @@
 /* 📈 Estilos de Estadísticas - Momento IA */
 
+.container{
+  margin: 2rem;
+}
 .loading {
   display: flex;
   flex-direction: column;
@@ -68,15 +71,12 @@
 .summaryCard {
   background: var(--gradient-orange);
   border: none;
-  border-radius: var(--radius-xl);
   padding: var(--space-6);
-  box-shadow: var(--shadow-orange);
   transition: var(--transition-all);
   color: var(--text-on-orange);
 }
 
 .summaryCard:hover {
-  transform: translateY(-4px);
   box-shadow: var(--shadow-orange-lg);
 }
 
@@ -145,11 +145,10 @@
 /* Chart Section */
 .chartSection {
   background: var(--momento-black);
-  border: 2px solid var(--momento-orange);
-  border-radius: var(--radius-xl);
+  border: 1px solid var(--momento-orange);
+  border-radius: 2px;
   padding: var(--space-6);
   margin-bottom: var(--space-8);
-  box-shadow: var(--shadow-orange);
   color: var(--text-on-dark);
 }
 
@@ -189,12 +188,10 @@
   align-items: flex-start;
   justify-content: center;
   padding-top: var(--space-1);
-  cursor: pointer;
 }
 
 .bar:hover {
   opacity: 0.8;
-  transform: translateY(-4px);
   box-shadow: var(--shadow-orange);
 }
 
@@ -214,8 +211,8 @@
 /* Top Section */
 .topSection {
   background: var(--momento-black);
-  border: 2px solid var(--momento-orange);
-  border-radius: var(--radius-xl);
+  border: 1px solid var(--momento-orange);
+  border-radius: 2px;
   padding: var(--space-6);
   box-shadow: var(--shadow-orange);
   color: var(--text-on-dark);
@@ -246,7 +243,6 @@
 
 .topItem:hover {
   background-color: rgba(255, 255, 255, 0.1);
-  transform: translateX(4px);
   box-shadow: var(--shadow-sm);
 }
 
