@@ -23,7 +23,8 @@
     "migrate:ejecutar-to-consulta": "tsx src/scripts/migrateEjecutarToConsultaFiltrada.ts",
     "force-update-workflows": "tsx src/scripts/forceUpdateWorkflows.ts",
     "inspect-db": "tsx src/scripts/inspectDatabase.ts",
-    "find-doc": "tsx src/scripts/findDocument.ts"
+    "find-doc": "tsx src/scripts/findDocument.ts",
+    "fix-workflow": "tsx src/scripts/fixSpecificWorkflow.ts"
   },
   "keywords": [],
   "author": "",

@@ -511,10 +511,34 @@ export const crearWorkflow = async (req: Request, res: Response) => {
     console.log('✅ [WORKFLOW] API encontrada:', api.nombre);
     console.log('📊 [WORKFLOW] Workflows actuales:', api.workflows?.length || 0);
     
+    // Migración automática: convertir tipo 'ejecutar' a 'consulta_filtrada'
+    const workflowData = { ...req.body };
+    if (workflowData.steps && Array.isArray(workflowData.steps)) {
+      workflowData.steps = workflowData.steps.map((step: any) => {
+        // Migrar tipo 'ejecutar' a 'consulta_filtrada'
+        if (step.tipo === 'ejecutar') {
+          console.log(`🔄 Migrando paso "${step.nombreVariable}" de 'ejecutar' a 'consulta_filtrada'`);
+          step.tipo = 'consulta_filtrada';
+        }
+        
+        // Asegurar que endpointsRelacionados tenga origenDatos
+        if (step.endpointsRelacionados && Array.isArray(step.endpointsRelacionados)) {
+          step.endpointsRelacionados = step.endpointsRelacionados.map((endpointRel: any) => {
+            if (!endpointRel.origenDatos) {
+              endpointRel.origenDatos = 'resultado';
+            }
+            return endpointRel;
+          });
+        }
+        
+        return step;
+      });
+    }
+    
     const workflow = {
       id: generateSecureToken(16),
-      ...req.body,
-      activo: req.body.activo !== undefined ? req.body.activo : true
+      ...workflowData,
+      activo: workflowData.activo !== undefined ? workflowData.activo : true
     };
     
     console.log('🆕 [WORKFLOW] Nuevo workflow:', workflow);
@@ -575,10 +599,34 @@ export const actualizarWorkflow = async (req: Request, res: Response) => {
       });
     }
     
+    // Migración automática: convertir tipo 'ejecutar' a 'consulta_filtrada'
+    const workflowData = { ...req.body };
+    if (workflowData.steps && Array.isArray(workflowData.steps)) {
+      workflowData.steps = workflowData.steps.map((step: any) => {
+        // Migrar tipo 'ejecutar' a 'consulta_filtrada'
+        if (step.tipo === 'ejecutar') {
+          console.log(`🔄 Migrando paso "${step.nombreVariable}" de 'ejecutar' a 'consulta_filtrada'`);
+          step.tipo = 'consulta_filtrada';
+        }
+        
+        // Asegurar que endpointsRelacionados tenga origenDatos
+        if (step.endpointsRelacionados && Array.isArray(step.endpointsRelacionados)) {
+          step.endpointsRelacionados = step.endpointsRelacionados.map((endpointRel: any) => {
+            if (!endpointRel.origenDatos) {
+              endpointRel.origenDatos = 'resultado';
+            }
+            return endpointRel;
+          });
+        }
+        
+        return step;
+      });
+    }
+    
     // Actualizar workflow manteniendo el ID
     api.workflows[workflowIndex] = {
       ...api.workflows[workflowIndex],
-      ...req.body,
+      ...workflowData,
       id: workflowId
     };
     
