@@ -767,14 +767,25 @@ export class WorkflowConversationalHandler {
    * Aplica un template reemplazando variables
    */
   private aplicarTemplate(template: string, datosRecopilados: any, resultadoAPI: any): string {
+    console.log('🎯 [aplicarTemplate] Iniciando');
+    console.log('   Tipo resultadoAPI:', typeof resultadoAPI);
+    console.log('   Es array resultadoAPI:', Array.isArray(resultadoAPI));
+
     // Extraer datos para el motor de plantillas avanzado
     let datosParaTemplate: any = resultadoAPI;
     if (resultadoAPI && typeof resultadoAPI === 'object') {
-      if (resultadoAPI.data && Array.isArray(resultadoAPI.data)) {
-        datosParaTemplate = resultadoAPI.data;
-      } else if (resultadoAPI.products && Array.isArray(resultadoAPI.products)) {
-        datosParaTemplate = resultadoAPI.products;
+      if ((resultadoAPI as any).data && Array.isArray((resultadoAPI as any).data)) {
+        console.log('   ✅ usando resultadoAPI.data como items para template');
+        datosParaTemplate = (resultadoAPI as any).data;
+      } else if ((resultadoAPI as any).products && Array.isArray((resultadoAPI as any).products)) {
+        console.log('   ✅ usando resultadoAPI.products como items para template');
+        datosParaTemplate = (resultadoAPI as any).products;
       }
+    }
+
+    console.log('   Es array datosParaTemplate:', Array.isArray(datosParaTemplate));
+    if (Array.isArray(datosParaTemplate)) {
+      console.log('   Cantidad items en datosParaTemplate:', datosParaTemplate.length);
     }
 
     const variables = datosRecopilados || {};
@@ -785,12 +796,16 @@ export class WorkflowConversationalHandler {
       variables
     );
 
+    console.log('   Resultado tras formatearRespuestaConPlantilla (primeros 200 chars):', resultado.substring(0, 200));
+
     // Mantener compatibilidad con templates legacy que usan {{resultados}} o {{resultado}}
     if (resultadoAPI) {
       const formatoProductos = this.formatearRespuestaProductos(resultadoAPI);
       resultado = resultado.replace(/{{resultados}}/g, formatoProductos);
       resultado = resultado.replace(/{{resultado}}/g, formatoProductos);
     }
+
+    console.log('   Resultado final aplicarTemplate (primeros 200 chars):', resultado.substring(0, 200));
 
     return resultado;
   }
