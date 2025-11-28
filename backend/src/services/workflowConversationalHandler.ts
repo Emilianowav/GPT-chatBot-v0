@@ -662,23 +662,21 @@ export class WorkflowConversationalHandler {
                 if (!nombre) return false;
                 return tokens.every(token => nombre.includes(token));
               });
-              
-              if (filtrados.length > 0) {
-                if (datosFiltrados && typeof datosFiltrados === 'object') {
-                  if (datosFiltrados.data && Array.isArray(datosFiltrados.data)) {
-                    datosFiltrados = { ...datosFiltrados, data: filtrados };
-                  } else if (datosFiltrados.products && Array.isArray(datosFiltrados.products)) {
-                    datosFiltrados = { ...datosFiltrados, products: filtrados };
-                  } else {
-                    datosFiltrados = filtrados;
-                  }
+
+              // Siempre aplicar el filtro, aunque no haya coincidencias
+              if (datosFiltrados && typeof datosFiltrados === 'object') {
+                if ((datosFiltrados as any).data && Array.isArray((datosFiltrados as any).data)) {
+                  datosFiltrados = { ...(datosFiltrados as any), data: filtrados };
+                } else if ((datosFiltrados as any).products && Array.isArray((datosFiltrados as any).products)) {
+                  datosFiltrados = { ...(datosFiltrados as any), products: filtrados };
                 } else {
                   datosFiltrados = filtrados;
                 }
-                console.log(`🔍 Filtro local aplicado por búsqueda="${searchQuery}": ${filtrados.length}/${productos.length} items`);
               } else {
-                console.log('ℹ️ Filtro local no encontró coincidencias adicionales, se mantienen resultados originales');
+                datosFiltrados = filtrados;
               }
+
+              console.log(`🔍 Filtro local aplicado por búsqueda="${searchQuery}": ${filtrados.length}/${productos.length} items`);
             }
           }
         } catch (error) {
