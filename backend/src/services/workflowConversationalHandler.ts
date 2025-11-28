@@ -157,6 +157,12 @@ export class WorkflowConversationalHandler {
             if (resultadoAPI.success && resultadoAPI.data) {
               console.log('✅ Datos obtenidos de la API');
               
+              await workflowConversationManager.guardarDatosEjecutados(
+                contactoId,
+                primerPaso.endpointId,
+                resultadoAPI.data
+              );
+              
               // Extraer opciones dinámicas
               let datosArray = resultadoAPI.data;
               
@@ -578,6 +584,7 @@ export class WorkflowConversationalHandler {
       
       // Mapear parámetros
       const params: any = {};
+      let searchQuery: string | null = null;
       if (paso.mapeoParametros) {
         console.log('🔍 Mapeo de parámetros configurado:', paso.mapeoParametros);
         
@@ -596,6 +603,7 @@ export class WorkflowConversationalHandler {
               // Si es el parámetro de búsqueda, normalizar más
               if (paramName === 'search' || paramName === 'q' || paramName === 'query') {
                 valorNormalizado = valorNormalizado.toLowerCase();
+                searchQuery = valorNormalizado;
               }
             }
             
@@ -632,6 +640,52 @@ export class WorkflowConversationalHandler {
       console.log('✅ Endpoint ejecutado exitosamente');
       console.log('📊 Datos recibidos de la API:', JSON.stringify(result.data, null, 2).substring(0, 500) + '...');
       
+      // Si hay término de búsqueda, aplicar un filtrado extra por tokens sobre el nombre
+      let datosFiltrados = result.data;
+      if (searchQuery && datosFiltrados) {
+        try {
+          let productos: any = datosFiltrados;
+          
+          if (productos && typeof productos === 'object') {
+            if (productos.data && Array.isArray(productos.data)) {
+              productos = productos.data;
+            } else if (productos.products && Array.isArray(productos.products)) {
+              productos = productos.products;
+            }
+          }
+
+          if (Array.isArray(productos)) {
+            const tokens = searchQuery.split(/\s+/).filter(Boolean);
+            if (tokens.length > 0) {
+              const filtrados = productos.filter((item: any) => {
+                const nombre = (item.name || item.nombre || item.title || '').toString().toLowerCase();
+                if (!nombre) return false;
+                return tokens.every(token => nombre.includes(token));
+              });
+              
+              if (filtrados.length > 0) {
+                if (datosFiltrados && typeof datosFiltrados === 'object') {
+                  if (datosFiltrados.data && Array.isArray(datosFiltrados.data)) {
+                    datosFiltrados = { ...datosFiltrados, data: filtrados };
+                  } else if (datosFiltrados.products && Array.isArray(datosFiltrados.products)) {
+                    datosFiltrados = { ...datosFiltrados, products: filtrados };
+                  } else {
+                    datosFiltrados = filtrados;
+                  }
+                } else {
+                  datosFiltrados = filtrados;
+                }
+                console.log(`🔍 Filtro local aplicado por búsqueda="${searchQuery}": ${filtrados.length}/${productos.length} items`);
+              } else {
+                console.log('ℹ️ Filtro local no encontró coincidencias adicionales, se mantienen resultados originales');
+              }
+            }
+          }
+        } catch (error) {
+          console.error('⚠️ Error aplicando filtro local de búsqueda:', error);
+        }
+      }
+      
       // Finalizar workflow
       await workflowConversationManager.finalizarWorkflow(contactoId);
       
@@ -645,17 +699,17 @@ export class WorkflowConversationalHandler {
       // Prioridad: plantilla del paso > plantilla del workflow > formato por defecto
       if (paso.plantillaRespuesta) {
         console.log('   Usando plantilla del paso');
-        response = this.formatearRespuestaConPlantilla(result.data, paso.plantillaRespuesta, datosRecopilados);
+        response = this.formatearRespuestaConPlantilla(datosFiltrados, paso.plantillaRespuesta, datosRecopilados);
       } else if (workflow.respuestaTemplate) {
         console.log('   Usando template del workflow');
-        response = this.aplicarTemplate(workflow.respuestaTemplate, datosRecopilados, result.data);
+        response = this.aplicarTemplate(workflow.respuestaTemplate, datosRecopilados, datosFiltrados);
       } else {
         console.log('   Usando formato por defecto');
         // Formato por defecto
         if (workflow.mensajeFinal) {
           response += workflow.mensajeFinal + '\n\n';
         }
-        response += this.formatearRespuestaProductos(result.data);
+        response += this.formatearRespuestaProductos(datosFiltrados);
       }
       
       console.log('📏 Longitud de respuesta antes de limitar:', response.length);
@@ -713,21 +767,31 @@ export class WorkflowConversationalHandler {
    * Aplica un template reemplazando variables
    */
   private aplicarTemplate(template: string, datosRecopilados: any, resultadoAPI: any): string {
-    let resultado = template;
-    
-    // Reemplazar variables recopiladas
-    for (const [key, value] of Object.entries(datosRecopilados)) {
-      const regex = new RegExp(`{{${key}}}`, 'g');
-      resultado = resultado.replace(regex, String(value));
+    // Extraer datos para el motor de plantillas avanzado
+    let datosParaTemplate: any = resultadoAPI;
+    if (resultadoAPI && typeof resultadoAPI === 'object') {
+      if (resultadoAPI.data && Array.isArray(resultadoAPI.data)) {
+        datosParaTemplate = resultadoAPI.data;
+      } else if (resultadoAPI.products && Array.isArray(resultadoAPI.products)) {
+        datosParaTemplate = resultadoAPI.products;
+      }
     }
-    
-    // Reemplazar resultado de API
+
+    const variables = datosRecopilados || {};
+
+    let resultado = this.formatearRespuestaConPlantilla(
+      datosParaTemplate,
+      template,
+      variables
+    );
+
+    // Mantener compatibilidad con templates legacy que usan {{resultados}} o {{resultado}}
     if (resultadoAPI) {
       const formatoProductos = this.formatearRespuestaProductos(resultadoAPI);
       resultado = resultado.replace(/{{resultados}}/g, formatoProductos);
       resultado = resultado.replace(/{{resultado}}/g, formatoProductos);
     }
-    
+
     return resultado;
   }
   

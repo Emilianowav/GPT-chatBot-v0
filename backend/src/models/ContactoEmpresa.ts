@@ -246,6 +246,7 @@ const ContactoEmpresaSchema = new Schema<IContactoEmpresa>({
       apiId: String,
       pasoActual: Number,
       datosRecopilados: Schema.Types.Mixed,
+      datosEjecutados: Schema.Types.Mixed,
       intentosFallidos: Number,
       iniciadoEn: Date,
       ultimaActividad: Date
