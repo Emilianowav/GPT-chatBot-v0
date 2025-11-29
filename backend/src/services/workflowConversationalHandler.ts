@@ -581,6 +581,9 @@ export class WorkflowConversationalHandler {
       
       const datosRecopilados = state.datosRecopilados;
       console.log('📦 Datos recopilados:', datosRecopilados);
+      console.log('   → sucursal_id:', datosRecopilados?.sucursal_id);
+      console.log('   → categoria_id:', datosRecopilados?.categoria_id);
+      console.log('   → nombre_producto:', datosRecopilados?.nombre_producto);
       
       // Mapear parámetros
       const params: any = {};
@@ -618,6 +621,9 @@ export class WorkflowConversationalHandler {
       }
       
       console.log('📤 Parámetros finales para API:', JSON.stringify(params, null, 2));
+      console.log('   → Query location_id:', params.query?.location_id);
+      console.log('   → Query category:', params.query?.category);
+      console.log('   → Query search:', params.query?.search);
       
       // Ejecutar endpoint
       const result = await apiExecutor.ejecutar(
@@ -644,6 +650,7 @@ export class WorkflowConversationalHandler {
       let datosFiltrados = result.data;
       if (searchQuery && datosFiltrados) {
         try {
+          console.log('🔎 searchQuery para filtro local:', searchQuery);
           let productos: any = datosFiltrados;
           
           if (productos && typeof productos === 'object') {
