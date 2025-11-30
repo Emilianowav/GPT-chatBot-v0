@@ -42,7 +42,8 @@ export class WorkflowConversationManager {
         datosRecopilados: {},
         intentosFallidos: 0,
         iniciadoEn: new Date(),
-        ultimaActividad: new Date()
+        ultimaActividad: new Date(),
+        esperandoRepeticion: false  // Inicializar explícitamente
       };
       
       await ContactoEmpresaModel.findByIdAndUpdate(contactoId, {

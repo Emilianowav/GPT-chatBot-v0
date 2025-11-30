@@ -26,7 +26,8 @@
     "find-doc": "tsx src/scripts/findDocument.ts",
     "fix-workflow": "tsx src/scripts/fixSpecificWorkflow.ts",
     "check-workflow-state": "tsx src/scripts/verificarEstadoWorkflow.ts",
-    "clean-workflow-state": "tsx src/scripts/limpiarEstadoWorkflow.ts"
+    "clean-workflow-state": "tsx src/scripts/limpiarEstadoWorkflow.ts",
+    "migrate:add-esperando-repeticion": "tsx src/scripts/agregarCampoEsperandoRepeticion.ts"
   },
   "keywords": [],
   "author": "",

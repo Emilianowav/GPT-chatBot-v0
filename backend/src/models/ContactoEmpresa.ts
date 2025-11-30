@@ -45,6 +45,7 @@ export interface WorkflowState {
   intentosFallidos: number;
   iniciadoEn: Date;
   ultimaActividad: Date;
+  esperandoRepeticion?: boolean;  // Si está esperando decisión de repetir workflow
 }
 
 export interface IContactoEmpresa extends Document {
@@ -249,7 +250,8 @@ const ContactoEmpresaSchema = new Schema<IContactoEmpresa>({
       datosEjecutados: Schema.Types.Mixed,
       intentosFallidos: Number,
       iniciadoEn: Date,
-      ultimaActividad: Date
+      ultimaActividad: Date,
+      esperandoRepeticion: Boolean  // Si está esperando decisión de repetir workflow
     },
     required: false
   },

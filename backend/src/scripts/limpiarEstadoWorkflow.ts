@@ -10,9 +10,14 @@ async function limpiarEstadoWorkflow() {
     await mongoose.connect(process.env.MONGODB_URI || '');
     console.log('✅ Conectado a MongoDB\n');
 
-    // Buscar el contacto de prueba (ajusta el teléfono según tu caso)
+    // Buscar el contacto de prueba
     const telefono = '5493794946066'; // Tu número de prueba
-    const empresaId = 'iCenter'; // Ajusta según tu empresa
+    const empresaId = 'iCenter'; // Nombre de la empresa
+
+    console.log('🔍 Buscando contacto con:');
+    console.log('   Teléfono:', telefono);
+    console.log('   Empresa:', empresaId);
+    console.log('');
 
     const contacto = await ContactoEmpresaModel.findOne({
       telefono,
