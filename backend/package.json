@@ -24,7 +24,9 @@
     "force-update-workflows": "tsx src/scripts/forceUpdateWorkflows.ts",
     "inspect-db": "tsx src/scripts/inspectDatabase.ts",
     "find-doc": "tsx src/scripts/findDocument.ts",
-    "fix-workflow": "tsx src/scripts/fixSpecificWorkflow.ts"
+    "fix-workflow": "tsx src/scripts/fixSpecificWorkflow.ts",
+    "check-workflow-state": "tsx src/scripts/verificarEstadoWorkflow.ts",
+    "clean-workflow-state": "tsx src/scripts/limpiarEstadoWorkflow.ts"
   },
   "keywords": [],
   "author": "",

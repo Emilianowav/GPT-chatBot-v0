@@ -1279,7 +1279,10 @@ export class WorkflowConversationalHandler {
     apiConfig: any
   ): Promise<WorkflowConversationalResult> {
     const opcion = mensaje.trim();
-    console.log('🔄 [REPETICION] Procesando decisión:', opcion);
+    console.log('🔄 [REPETICION] ========== PROCESANDO DECISIÓN ==========');
+    console.log('🔄 [REPETICION] Mensaje recibido:', opcion);
+    console.log('🔄 [REPETICION] WorkflowState:', JSON.stringify(workflowState));
+    console.log('🔄 [REPETICION] Configuración repetición:', JSON.stringify(workflow.repetirWorkflow));
     
     // Opción 1: Repetir
     if (opcion === '1') {
