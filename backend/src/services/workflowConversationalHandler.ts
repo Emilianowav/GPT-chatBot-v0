@@ -704,9 +704,6 @@ export class WorkflowConversationalHandler {
         }
       }
       
-      // Finalizar workflow
-      await workflowConversationManager.finalizarWorkflow(contactoId);
-      
       // Formatear respuesta usando template o formato por defecto
       let response = '';
       
@@ -743,7 +740,7 @@ export class WorkflowConversationalHandler {
         response += `1: ${config.opcionRepetir || 'Buscar otro'}\n`;
         response += `2: ${config.opcionFinalizar || 'Terminar'}\n`;
         
-        // Marcar como esperando decisión de repetición
+        // Marcar como esperando decisión de repetición (ANTES de finalizar)
         await workflowConversationManager.marcarEsperandoRepeticion(contactoId);
         
         // Limitar a 4000 caracteres para WhatsApp
@@ -767,6 +764,10 @@ export class WorkflowConversationalHandler {
           }
         };
       }
+      
+      // Finalizar workflow (solo si NO hay repetición configurada)
+      await workflowConversationManager.finalizarWorkflow(contactoId);
+      console.log('✅ Workflow finalizado (sin repetición)');
       
       // Agregar workflows siguientes si están configurados (y no hay repetición)
       if (workflow.workflowsSiguientes && workflow.workflowsSiguientes.workflows.length > 0) {
