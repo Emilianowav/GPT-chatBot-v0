@@ -263,7 +263,14 @@ export class WorkflowConversationalHandler {
       
       // Verificar si está esperando decisión de repetición
       const esperandoRepeticion = await workflowConversationManager.estaEsperandoRepeticion(contactoId);
+      console.log('🔍 [DEBUG] Estado de repetición:', {
+        esperandoRepeticion,
+        repetirWorkflowHabilitado: workflow.repetirWorkflow?.habilitado,
+        workflowStateCompleto: JSON.stringify(workflowState)
+      });
+      
       if (esperandoRepeticion && workflow.repetirWorkflow?.habilitado) {
+        console.log('✅ [DEBUG] Entrando a procesarDecisionRepeticion');
         return await this.procesarDecisionRepeticion(
           mensaje,
           contactoId,

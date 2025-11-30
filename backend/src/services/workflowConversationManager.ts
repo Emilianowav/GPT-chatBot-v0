@@ -415,6 +415,11 @@ export class WorkflowConversationManager {
   async estaEsperandoRepeticion(contactoId: string): Promise<boolean> {
     try {
       const estado = await this.getWorkflowState(contactoId);
+      console.log('🔍 [DEBUG] estaEsperandoRepeticion - estado:', {
+        existe: !!estado,
+        esperandoRepeticion: (estado as any)?.esperandoRepeticion,
+        estadoCompleto: JSON.stringify(estado)
+      });
       if (!estado) return false;
       return (estado as any).esperandoRepeticion === true;
     } catch (error) {

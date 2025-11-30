@@ -145,26 +145,36 @@ export class UniversalRouter {
       });
       
       if (!contacto || !contacto.workflowState) {
+        console.log('🔍 [ROUTER] No hay contacto o workflowState');
         return null;
       }
       
       const workflowState = contacto.workflowState;
+      console.log('🔍 [ROUTER] WorkflowState encontrado:', {
+        workflowId: workflowState.workflowId,
+        pasoActual: workflowState.pasoActual,
+        esperandoRepeticion: (workflowState as any).esperandoRepeticion,
+        workflowStateCompleto: JSON.stringify(workflowState)
+      });
       
       // Buscar la API y el workflow
       const api = await ApiConfigurationModel.findById(workflowState.apiId);
       if (!api || !api.workflows) {
+        console.log('🔍 [ROUTER] No se encontró API o workflows');
         return null;
       }
       
       const workflow = api.workflows.find((wf: any) => wf.id === workflowState.workflowId);
       if (!workflow) {
+        console.log('🔍 [ROUTER] No se encontró el workflow específico');
         return null;
       }
       
       console.log('✅ [ROUTER] Workflow activo encontrado:', {
         workflowId: workflowState.workflowId,
         pasoActual: workflowState.pasoActual,
-        totalPasos: (workflow as any).steps.length
+        totalPasos: (workflow as any).steps.length,
+        esperandoRepeticion: (workflowState as any).esperandoRepeticion
       });
       
       return {
