@@ -383,6 +383,110 @@ export class WorkflowConversationManager {
     const otrasOpciones = opciones.slice(0, -1);
     return `${otrasOpciones.join(', ')} o ${ultimaOpcion}`;
   }
+  
+  /**
+   * Marca el workflow como esperando decisión de repetición
+   */
+  async marcarEsperandoRepeticion(contactoId: string): Promise<void> {
+    try {
+      const contacto = await ContactoEmpresaModel.findById(contactoId);
+      if (!contacto || !contacto.workflowState) {
+        throw new Error('No hay workflow activo');
+      }
+      
+      const estado = contacto.workflowState as WorkflowState;
+      (estado as any).esperandoRepeticion = true;
+      estado.ultimaActividad = new Date();
+      
+      await ContactoEmpresaModel.findByIdAndUpdate(contactoId, {
+        workflowState: estado
+      });
+      
+      console.log('🔄 [WORKFLOW] Marcado como esperando repetición');
+    } catch (error) {
+      console.error('❌ Error marcando esperando repetición:', error);
+      throw error;
+    }
+  }
+  
+  /**
+   * Verifica si el workflow está esperando decisión de repetición
+   */
+  async estaEsperandoRepeticion(contactoId: string): Promise<boolean> {
+    try {
+      const estado = await this.getWorkflowState(contactoId);
+      if (!estado) return false;
+      return (estado as any).esperandoRepeticion === true;
+    } catch (error) {
+      console.error('❌ Error verificando esperando repetición:', error);
+      return false;
+    }
+  }
+  
+  /**
+   * Limpia múltiples variables y retrocede a un paso específico
+   */
+  async limpiarVariablesYRetroceder(
+    contactoId: string, 
+    variablesALimpiar: string[], 
+    numeroPaso: number
+  ): Promise<void> {
+    try {
+      const contacto = await ContactoEmpresaModel.findById(contactoId);
+      if (!contacto || !contacto.workflowState) {
+        throw new Error('No hay workflow activo');
+      }
+      
+      const estado = contacto.workflowState as WorkflowState;
+      
+      // Limpiar variables especificadas
+      for (const variable of variablesALimpiar) {
+        if (estado.datosRecopilados && estado.datosRecopilados[variable] !== undefined) {
+          delete estado.datosRecopilados[variable];
+          // También limpiar la variable _nombre asociada
+          delete estado.datosRecopilados[`${variable}_nombre`];
+          console.log(`🗑️ [WORKFLOW] Variable limpiada: ${variable}`);
+        }
+      }
+      
+      // Retroceder al paso indicado
+      estado.pasoActual = numeroPaso;
+      estado.ultimaActividad = new Date();
+      estado.intentosFallidos = 0;
+      (estado as any).esperandoRepeticion = false;
+      
+      await ContactoEmpresaModel.findByIdAndUpdate(contactoId, {
+        workflowState: estado
+      });
+      
+      console.log(`🔄 [WORKFLOW] Variables limpiadas y retrocedido al paso ${numeroPaso}`);
+    } catch (error) {
+      console.error('❌ Error limpiando variables y retrocediendo:', error);
+      throw error;
+    }
+  }
+  
+  /**
+   * Quita el estado de esperando repetición
+   */
+  async quitarEsperandoRepeticion(contactoId: string): Promise<void> {
+    try {
+      const contacto = await ContactoEmpresaModel.findById(contactoId);
+      if (!contacto || !contacto.workflowState) {
+        return;
+      }
+      
+      const estado = contacto.workflowState as WorkflowState;
+      (estado as any).esperandoRepeticion = false;
+      estado.ultimaActividad = new Date();
+      
+      await ContactoEmpresaModel.findByIdAndUpdate(contactoId, {
+        workflowState: estado
+      });
+    } catch (error) {
+      console.error('❌ Error quitando esperando repetición:', error);
+    }
+  }
 }
 
 // Singleton

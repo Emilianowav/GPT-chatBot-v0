@@ -270,6 +270,16 @@ export interface IWorkflow {
     }>;
   };
   
+  // Repetición del workflow desde un paso específico
+  repetirWorkflow?: {
+    habilitado: boolean;          // Si se permite repetir el workflow al finalizar
+    desdePaso: number;            // Orden del paso desde el cual repetir (ej: 3)
+    variablesALimpiar: string[];  // Variables a limpiar antes de repetir
+    pregunta?: string;            // Pregunta para ofrecer repetición
+    opcionRepetir?: string;       // Texto de la opción de repetir
+    opcionFinalizar?: string;     // Texto de la opción de finalizar
+  };
+  
   // Configuración
   permitirAbandonar?: boolean;    // Si el usuario puede salir con "cancelar"
   timeoutMinutos?: number;        // Timeout de inactividad

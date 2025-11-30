@@ -25,6 +25,7 @@ export interface WorkflowConversationalResult {
         opcion: string;
       }>;
     };
+    esperandoRepeticion?: boolean;  // Si está esperando decisión de repetir
   };
 }
 
@@ -258,6 +259,18 @@ export class WorkflowConversationalHandler {
           response: workflow.mensajeAbandonar || '🚫 Flujo cancelado',
           completed: true
         };
+      }
+      
+      // Verificar si está esperando decisión de repetición
+      const esperandoRepeticion = await workflowConversationManager.estaEsperandoRepeticion(contactoId);
+      if (esperandoRepeticion && workflow.repetirWorkflow?.habilitado) {
+        return await this.procesarDecisionRepeticion(
+          mensaje,
+          contactoId,
+          workflow,
+          workflowState,
+          apiConfig
+        );
       }
       
       // Obtener paso actual
@@ -719,7 +732,43 @@ export class WorkflowConversationalHandler {
       
       console.log('📏 Longitud de respuesta antes de limitar:', response.length);
       
-      // Agregar workflows siguientes si están configurados
+      // Verificar si hay repetición configurada (tiene prioridad sobre workflows siguientes)
+      if (workflow.repetirWorkflow?.habilitado) {
+        console.log('🔄 Repetición de workflow configurada');
+        const config = workflow.repetirWorkflow;
+        
+        response += '\n\n';
+        response += config.pregunta || '¿Deseas realizar otra búsqueda?';
+        response += '\n\n';
+        response += `1: ${config.opcionRepetir || 'Buscar otro'}\n`;
+        response += `2: ${config.opcionFinalizar || 'Terminar'}\n`;
+        
+        // Marcar como esperando decisión de repetición
+        await workflowConversationManager.marcarEsperandoRepeticion(contactoId);
+        
+        // Limitar a 4000 caracteres para WhatsApp
+        if (response.length > 4000) {
+          console.log('⚠️ Respuesta demasiado larga, truncando...');
+          response = response.substring(0, 3950) + '\n\n... (resultados truncados)';
+        }
+        
+        console.log('📏 Longitud de respuesta final:', response.length);
+        
+        return {
+          success: true,
+          response,
+          completed: false, // NO completar, esperamos decisión
+          metadata: {
+            workflowName: workflow.nombre,
+            pasoActual: paso.orden,
+            totalPasos: workflow.steps.length,
+            datosRecopilados,
+            esperandoRepeticion: true
+          }
+        };
+      }
+      
+      // Agregar workflows siguientes si están configurados (y no hay repetición)
       if (workflow.workflowsSiguientes && workflow.workflowsSiguientes.workflows.length > 0) {
         console.log('🔗 Workflows encadenados configurados');
         response += '\n\n';
@@ -1209,6 +1258,128 @@ export class WorkflowConversationalHandler {
     }
     
     return resultado;
+  }
+  
+  /**
+   * Procesa la decisión del usuario sobre repetir el workflow
+   */
+  private async procesarDecisionRepeticion(
+    mensaje: string,
+    contactoId: string,
+    workflow: IWorkflow,
+    workflowState: any,
+    apiConfig: any
+  ): Promise<WorkflowConversationalResult> {
+    const opcion = mensaje.trim();
+    console.log('🔄 [REPETICION] Procesando decisión:', opcion);
+    
+    // Opción 1: Repetir
+    if (opcion === '1') {
+      const config = workflow.repetirWorkflow!;
+      console.log('🔄 [REPETICION] Usuario eligió repetir desde paso', config.desdePaso);
+      
+      // Limpiar variables y retroceder
+      await workflowConversationManager.limpiarVariablesYRetroceder(
+        contactoId,
+        config.variablesALimpiar || [],
+        config.desdePaso - 1 // -1 porque pasoActual es 0-indexed
+      );
+      
+      // Obtener el paso al que volvemos
+      const pasoDestino = workflow.steps.find(s => s.orden === config.desdePaso);
+      if (!pasoDestino) {
+        return {
+          success: false,
+          response: '❌ Error: Paso de repetición no encontrado',
+          completed: true,
+          error: 'Paso no encontrado'
+        };
+      }
+      
+      // Construir respuesta con la pregunta del paso
+      let response = '';
+      if (pasoDestino.pregunta) {
+        response = pasoDestino.pregunta;
+        
+        // Si tiene endpoint, llamar para obtener opciones
+        if (pasoDestino.endpointId && pasoDestino.endpointResponseConfig) {
+          try {
+            // Obtener datos recopilados actuales
+            const estadoActual = await workflowConversationManager.getWorkflowState(contactoId);
+            const datosRecopilados = estadoActual?.datosRecopilados || {};
+            
+            // Construir parámetros si el paso tiene mapeo
+            const params: any = {};
+            if (pasoDestino.mapeoParametros) {
+              for (const [paramName, varName] of Object.entries(pasoDestino.mapeoParametros)) {
+                const valor = datosRecopilados[varName as string];
+                if (valor !== undefined) {
+                  if (!params.query) params.query = {};
+                  params.query[paramName] = valor;
+                }
+              }
+            }
+            
+            const resultadoAPI = await apiExecutor.ejecutar(
+              apiConfig._id.toString(),
+              pasoDestino.endpointId,
+              params,
+              { metadata: { contactoId } }
+            );
+            
+            if (resultadoAPI.success && resultadoAPI.data) {
+              let datosArray = resultadoAPI.data;
+              if (datosArray.data && Array.isArray(datosArray.data)) {
+                datosArray = datosArray.data;
+              }
+              
+              if (Array.isArray(datosArray) && datosArray.length > 0) {
+                const opciones = this.extraerOpcionesDinamicas(
+                  datosArray,
+                  pasoDestino.endpointResponseConfig
+                );
+                if (opciones.length > 0) {
+                  response += '\n\n' + workflowConversationManager.formatearOpciones(opciones);
+                }
+              }
+            }
+          } catch (error) {
+            console.error('❌ Error obteniendo opciones para repetición:', error);
+          }
+        }
+      }
+      
+      return {
+        success: true,
+        response,
+        completed: false,
+        metadata: {
+          workflowName: workflow.nombre,
+          pasoActual: config.desdePaso - 1,
+          totalPasos: workflow.steps.length
+        }
+      };
+    }
+    
+    // Opción 2: Finalizar
+    if (opcion === '2') {
+      console.log('🔄 [REPETICION] Usuario eligió finalizar');
+      await workflowConversationManager.finalizarWorkflow(contactoId);
+      
+      return {
+        success: true,
+        response: workflow.mensajeFinal || '✅ ¡Gracias por usar nuestro servicio!',
+        completed: true
+      };
+    }
+    
+    // Opción no válida
+    const config = workflow.repetirWorkflow!;
+    return {
+      success: true,
+      response: `Por favor selecciona una opción válida:\n\n1: ${config.opcionRepetir || 'Repetir'}\n2: ${config.opcionFinalizar || 'Finalizar'}`,
+      completed: false
+    };
   }
 }
 

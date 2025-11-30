@@ -350,6 +350,16 @@ const WorkflowSchema = new Schema(
       }]
     },
     
+    // Repetición del workflow desde un paso específico
+    repetirWorkflow: {
+      habilitado: { type: Boolean, default: false },
+      desdePaso: { type: Number, default: 1 },
+      variablesALimpiar: [String],
+      pregunta: String,
+      opcionRepetir: String,
+      opcionFinalizar: String
+    },
+    
     // Configuración
     permitirAbandonar: { type: Boolean, default: true },
     timeoutMinutos: { type: Number, default: 30 }
