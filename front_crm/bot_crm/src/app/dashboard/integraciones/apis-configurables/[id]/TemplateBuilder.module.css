@@ -78,6 +78,49 @@
   border-left: 3px solid #FF6B4A;
 }
 
+/* Loop Section */
+.loopSection {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem;
+  margin-top: 1rem;
+  padding: 0.75rem;
+  background: rgba(74, 144, 255, 0.1);
+  border: 1px solid rgba(74, 144, 255, 0.3);
+  border-radius: 6px;
+}
+
+.loopSection strong {
+  color: #4A90FF;
+  font-size: 0.875rem;
+}
+
+.loopSection small {
+  width: 100%;
+  font-size: 0.75rem;
+  color: rgba(255, 255, 255, 0.5);
+  margin-top: 0.25rem;
+}
+
+.loopButton {
+  padding: 0.5rem 1rem;
+  background: rgba(74, 144, 255, 0.2);
+  border: 1px solid rgba(74, 144, 255, 0.4);
+  border-radius: 6px;
+  color: #4A90FF;
+  font-size: 0.8125rem;
+  font-family: 'Consolas', monospace;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.loopButton:hover {
+  background: rgba(74, 144, 255, 0.3);
+  border-color: #4A90FF;
+  transform: translateY(-1px);
+}
+
 .variablesList {
   display: flex;
   flex-wrap: wrap;

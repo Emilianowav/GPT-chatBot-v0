@@ -64,6 +64,15 @@ interface WorkflowSiguiente {
   opcion: string;
 }
 
+interface RepetirWorkflow {
+  habilitado: boolean;
+  desdePaso: number;
+  variablesALimpiar: string[];
+  pregunta?: string;
+  opcionRepetir?: string;
+  opcionFinalizar?: string;
+}
+
 interface Workflow {
   id?: string;
   _id?: string;
@@ -81,6 +90,7 @@ interface Workflow {
     pregunta?: string;
     workflows: WorkflowSiguiente[];
   };
+  repetirWorkflow?: RepetirWorkflow;
   permitirAbandonar?: boolean;
   timeoutMinutos?: number;
 }
@@ -796,6 +806,123 @@ export default function ModalWorkflow({ isOpen, onClose, onSubmit, workflowInici
                 </button>
                 <small>💡 Puedes encadenar workflows existentes o incluso este mismo workflow para permitir consultas repetidas</small>
               </div>
+
+              <div className={styles.divider} style={{margin: '2rem 0 1.5rem'}}>
+                <span>🔄 Repetición del Workflow (Opcional)</span>
+              </div>
+
+              <div className={styles.formGroup}>
+                <label className={styles.checkboxLabel}>
+                  <input
+                    type="checkbox"
+                    checked={formData.repetirWorkflow?.habilitado || false}
+                    onChange={(e) => handleChange('repetirWorkflow', {
+                      habilitado: e.target.checked,
+                      desdePaso: formData.repetirWorkflow?.desdePaso || 3,
+                      variablesALimpiar: formData.repetirWorkflow?.variablesALimpiar || [],
+                      pregunta: formData.repetirWorkflow?.pregunta || '',
+                      opcionRepetir: formData.repetirWorkflow?.opcionRepetir || '',
+                      opcionFinalizar: formData.repetirWorkflow?.opcionFinalizar || ''
+                    })}
+                  />
+                  Permitir repetir el workflow desde un paso específico
+                </label>
+                <small>Al finalizar, el usuario podrá elegir repetir la búsqueda manteniendo datos anteriores</small>
+              </div>
+
+              {formData.repetirWorkflow?.habilitado && (
+                <>
+                  <div className={styles.formGroup}>
+                    <label>Repetir desde paso</label>
+                    <select
+                      value={formData.repetirWorkflow?.desdePaso || 1}
+                      onChange={(e) => handleChange('repetirWorkflow', {
+                        ...formData.repetirWorkflow,
+                        desdePaso: parseInt(e.target.value)
+                      })}
+                      className={styles.select}
+                    >
+                      {formData.steps.map((step) => (
+                        <option key={step.orden} value={step.orden}>
+                          Paso {step.orden} - {step.nombre || step.nombreVariable}
+                        </option>
+                      ))}
+                    </select>
+                    <small>Los datos de pasos anteriores se conservarán</small>
+                  </div>
+
+                  <div className={styles.formGroup}>
+                    <label>Variables a limpiar</label>
+                    <div className={styles.variablesCheckboxList}>
+                      {formData.steps
+                        .filter(s => s.orden >= (formData.repetirWorkflow?.desdePaso || 1))
+                        .map((step) => (
+                          <label key={step.nombreVariable} className={styles.checkboxLabel}>
+                            <input
+                              type="checkbox"
+                              checked={formData.repetirWorkflow?.variablesALimpiar?.includes(step.nombreVariable) || false}
+                              onChange={(e) => {
+                                const current = formData.repetirWorkflow?.variablesALimpiar || [];
+                                const updated = e.target.checked
+                                  ? [...current, step.nombreVariable]
+                                  : current.filter(v => v !== step.nombreVariable);
+                                handleChange('repetirWorkflow', {
+                                  ...formData.repetirWorkflow,
+                                  variablesALimpiar: updated
+                                });
+                              }}
+                            />
+                            {step.nombreVariable}
+                          </label>
+                        ))}
+                    </div>
+                    <small>Estas variables se borrarán al repetir</small>
+                  </div>
+
+                  <div className={styles.formGroup}>
+                    <label>Pregunta de repetición</label>
+                    <input
+                      type="text"
+                      value={formData.repetirWorkflow?.pregunta || ''}
+                      onChange={(e) => handleChange('repetirWorkflow', {
+                        ...formData.repetirWorkflow,
+                        pregunta: e.target.value
+                      })}
+                      placeholder="¿Deseas buscar otro producto?"
+                      className={styles.input}
+                    />
+                  </div>
+
+                  <div className={styles.formRow} style={{display: 'flex', gap: '1rem'}}>
+                    <div className={styles.formGroup} style={{flex: 1}}>
+                      <label>Texto opción repetir</label>
+                      <input
+                        type="text"
+                        value={formData.repetirWorkflow?.opcionRepetir || ''}
+                        onChange={(e) => handleChange('repetirWorkflow', {
+                          ...formData.repetirWorkflow,
+                          opcionRepetir: e.target.value
+                        })}
+                        placeholder="Buscar otro producto"
+                        className={styles.input}
+                      />
+                    </div>
+                    <div className={styles.formGroup} style={{flex: 1}}>
+                      <label>Texto opción finalizar</label>
+                      <input
+                        type="text"
+                        value={formData.repetirWorkflow?.opcionFinalizar || ''}
+                        onChange={(e) => handleChange('repetirWorkflow', {
+                          ...formData.repetirWorkflow,
+                          opcionFinalizar: e.target.value
+                        })}
+                        placeholder="Terminar"
+                        className={styles.input}
+                      />
+                    </div>
+                  </div>
+                </>
+              )}
 
               <div className={styles.formGroup}>
                 <label>Mensaje de Abandono</label>

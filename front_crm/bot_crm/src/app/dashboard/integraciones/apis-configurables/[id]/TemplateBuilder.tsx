@@ -53,6 +53,32 @@ export default function TemplateBuilder({ value, onChange, variables, endpoints,
     }, 0);
   };
 
+  // Función para insertar bloque de iteración
+  const insertLoopBlock = () => {
+    if (!textareaRef) return;
+    
+    const start = textareaRef.selectionStart;
+    const end = textareaRef.selectionEnd;
+    const loopTemplate = `{{#items}}
+{{numero}}. *{{name}}*
+   💰 Precio: ${{price}}
+   🔗 {{permalink}}
+
+{{/items}}`;
+    
+    const newText = templateText.substring(0, start) + loopTemplate + templateText.substring(end);
+    setTemplateText(newText);
+    onChange(newText);
+    
+    setTimeout(() => {
+      if (textareaRef) {
+        const newPosition = start + loopTemplate.length;
+        textareaRef.setSelectionRange(newPosition, newPosition);
+        textareaRef.focus();
+      }
+    }, 0);
+  };
+
 
   // Manejar posición del cursor
   const handleCursorChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
@@ -83,6 +109,19 @@ export default function TemplateBuilder({ value, onChange, variables, endpoints,
           
           <div className={styles.helpText}>
             💡 <strong>Tip:</strong> Posiciona el cursor donde quieres insertar la variable y haz click en el botón correspondiente
+          </div>
+          
+          <div className={styles.loopSection}>
+            <strong>🔁 Bloques de iteración:</strong>
+            <button
+              type="button"
+              onClick={insertLoopBlock}
+              className={styles.loopButton}
+              title="Insertar bloque para iterar sobre resultados"
+            >
+              + Insertar {'{{#items}}...{{/items}}'}
+            </button>
+            <small>Para mostrar listas de productos con nombre, precio y link</small>
           </div>
         </div>
       ) : (

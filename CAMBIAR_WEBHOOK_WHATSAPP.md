@@ -1,3 +1,0 @@
-1_ flujo de pasos con la api: ordenar flujo de consultas para acoplar informacion para filtrado y una mejor respuesta final
-2_primer mensaje obligatorio y ultimo: mensajes unicos para filtrar respuestas(sucursal,etc)
-3_flujos de pasos en base a api: ...

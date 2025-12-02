@@ -628,6 +628,23 @@
   accent-color: #FF6B4A;
 }
 
+/* Variables Checkbox List para repetirWorkflow */
+.variablesCheckboxList {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  padding: 0.75rem;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 8px;
+}
+
+.variablesCheckboxList .checkboxLabel {
+  padding: 0.5rem 0.75rem;
+  font-size: 0.875rem;
+  margin: 0;
+}
+
 /* Error */
 .error {
   display: flex;
