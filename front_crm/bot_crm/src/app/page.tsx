@@ -1,5 +1,7 @@
 import Link from 'next/link';
 import Image from 'next/image';
+import Header from '@/components/public/Header';
+import Footer from '@/components/public/Footer';
 import styles from './page.module.css';
 
 export default function HomePage() {
@@ -7,9 +9,11 @@ export default function HomePage() {
   const demoBotLink = 'https://wa.me/5493794789169?text=Hola%2C%20quiero%20ver%20una%20demo%20de%20NeuralBot';
 
   return (
-    <div className={styles.page}>
-      {/* Sección 1 - Hero */}
-      <section className={styles.hero}>
+    <>
+      <Header />
+      <div className={styles.page} style={{ paddingTop: '80px', position: 'relative', zIndex: 2 }}>
+        {/* Sección 1 - Hero */}
+        <section className={styles.hero}>
         <div className={styles.container}>
           <div className={styles.heroContent}>
             <h1 className={styles.heroTitle}>
@@ -397,6 +401,8 @@ export default function HomePage() {
           </a>
         </div>
       </section>
-    </div>
+      </div>
+      <Footer />
+    </>
   );
 }

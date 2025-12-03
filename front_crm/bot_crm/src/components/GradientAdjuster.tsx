@@ -1,9 +1,17 @@
 'use client';
 
 import { useEffect } from 'react';
+import { usePathname } from 'next/navigation';
 
 export default function GradientAdjuster() {
+  const pathname = usePathname();
+  
   useEffect(() => {
+    // No ejecutar en páginas de login o superadmin
+    if (pathname === '/login' || pathname === '/superadmin') {
+      return;
+    }
+    
     const adjustGradientHeight = () => {
       const body = document.body;
       const html = document.documentElement;
@@ -52,7 +60,7 @@ export default function GradientAdjuster() {
       window.removeEventListener('resize', adjustGradientHeight);
       clearTimeout(timer);
     };
-  }, []);
+  }, [pathname]);
   
   return null;
 }

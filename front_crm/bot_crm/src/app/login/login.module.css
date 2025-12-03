@@ -8,6 +8,8 @@
   justify-content: flex-start;
   background: linear-gradient(135deg, #FF6B4A 0%, #FF8A6E 100%);
   overflow: hidden;
+  position: relative;
+  z-index: 10;
 }
 
 .videoSection {

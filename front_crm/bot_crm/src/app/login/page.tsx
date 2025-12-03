@@ -45,7 +45,7 @@ export default function LoginPage() {
   };
 
   return (
-    <div className={styles.container}>
+    <div className={styles.container} data-page="login">
       <div className={styles.videoSection}>
         <video
           ref={videoRef}

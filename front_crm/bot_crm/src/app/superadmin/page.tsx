@@ -106,7 +106,7 @@ export default function SuperAdminDashboard() {
   }
 
   return (
-    <div className={styles.container}>
+    <div className={styles.container} data-page="superadmin">
       {/* Header */}
       <header className={styles.header}>
         <div className={styles.headerContent}>
