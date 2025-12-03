@@ -382,6 +382,9 @@ export async function obtenerEstadisticas(empresaId: string) {
  */
 function getPermisosDefault(rol: RolUsuario): string[] {
   const permisos: Record<RolUsuario, string[]> = {
+    super_admin: [
+      'all' // Super admin tiene acceso total al sistema
+    ],
     admin: [
       'usuarios.crear',
       'usuarios.editar',

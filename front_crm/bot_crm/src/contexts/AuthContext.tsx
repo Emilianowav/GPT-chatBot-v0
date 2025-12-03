@@ -44,7 +44,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const login = async (username: string, password: string) => {
     try {
+      console.log('🔐 Intentando login con:', { username });
       const response = await apiClient.login(username, password);
+      
+      console.log('📥 Respuesta del servidor:', response);
       
       if (!response.success) {
         throw new Error(response.message || 'Error al iniciar sesión');
@@ -68,9 +71,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       localStorage.setItem('empresa_nombre', response.user.empresaNombre);
       localStorage.setItem('user_role', response.user.role || '');
       localStorage.setItem('username', response.user.username || '');
+      
+      console.log('✅ Login exitoso. Rol:', response.user.role);
     } catch (error) {
-      console.error('Error en login:', error);
-      throw error;
+      console.error('❌ Error en login:', error);
+      if (error instanceof Error) {
+        throw new Error(error.message);
+      } else {
+        throw new Error('Error de conexión con el servidor');
+      }
     }
   };
 

@@ -2,7 +2,7 @@
 import mongoose, { Schema, Document } from 'mongoose';
 import bcrypt from 'bcryptjs';
 
-export type RolUsuario = 'admin' | 'manager' | 'agent' | 'viewer';
+export type RolUsuario = 'super_admin' | 'admin' | 'manager' | 'agent' | 'viewer';
 
 export interface IUsuarioEmpresa extends Document {
   _id: mongoose.Types.ObjectId;
@@ -62,7 +62,7 @@ const UsuarioEmpresaSchema = new Schema<IUsuarioEmpresa>(
     },
     rol: {
       type: String,
-      enum: ['admin', 'manager', 'agent', 'viewer'],
+      enum: ['super_admin', 'admin', 'manager', 'agent', 'viewer'],
       default: 'viewer',
       required: true
     },

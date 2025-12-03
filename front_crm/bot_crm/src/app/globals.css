@@ -1,25 +1,38 @@
 /* 🎨 Importar tema de Momento */
 @import '../styles/momento-theme.css';
+/* Helvetica como tipografía principal */
 
-/* Variables de Tema - Momento IA */
-:root[data-theme="light"] {
-  --background: var(--momento-black);
-  --foreground: var(--momento-white);
-  --card-bg: var(--momento-black-light);
-  --border-color: var(--momento-orange);
-  --hover-bg: var(--bg-orange-soft);
-  --active-bg: var(--bg-orange-medium);
-  --text-primary: var(--momento-white);
-  --text-secondary: var(--text-on-dark-secondary);
-  --text-tertiary: var(--text-on-dark-disabled);
-  --accent-color: var(--momento-orange);
-  --accent-hover: var(--momento-orange-hover);
-  --message-sent: var(--bg-orange-soft);
-  --message-received: var(--momento-black-light);
-  --shadow: rgba(255, 107, 74, 0.2);
-  --shadow-hover: rgba(255, 107, 74, 0.4);
+/* DESIGN SYSTEM - Gradientes intensos */
+:root {
+  /* Layer 0 - Base */
+  --bg-base: #000000;
+  
+  /* Gradientes intensos - Estilo Distinto */
+  --gradient-blue: #0047FF;
+  --gradient-cyan: #00D4FF;
+  --gradient-orange: #FF6B00;
+  --gradient-yellow: #FFD600;
+  
+  /* Structural Lines */
+  --line-base: rgba(255, 255, 255, 0.08);
+  --line-neon-start: #00D4FF;
+  --line-neon-end: #0047FF;
+  
+  /* Text Tokens */
+  --text-primary: #FFFFFF;
+  --text-secondary: rgba(255, 255, 255, 0.70);
+  --text-tertiary: rgba(255, 255, 255, 0.45);
+  
+  /* Card Overlay */
+  --card-overlay: rgba(0, 0, 0, 0.4);
+  --card-overlay-hover: rgba(0, 0, 0, 0.6);
+  
+  /* Grain */
+  --grain-overlay: rgba(255, 255, 255, 0.03);
 }
 
+/* Variables para CRM (mantener compatibilidad) */
+:root[data-theme="light"],
 :root[data-theme="dark"] {
   --background: var(--momento-black);
   --foreground: var(--momento-white);
@@ -38,18 +51,72 @@
   --shadow-hover: rgba(0, 0, 0, 0.4);
 }
 
-html,
-body {
+html {
   overflow-x: hidden;
-  background: var(--momento-black, #1A1A1A) !important;
+  scroll-behavior: smooth;
 }
 
 body {
-  color: var(--foreground);
-  background: var(--background);
-  font-family: Arial, Helvetica, sans-serif;
+  overflow-x: hidden;
+  overflow-y: auto;
+  margin: 0;
+  padding: 0;
+  color: var(--text-primary);
+  background: var(--bg-base);
+  font-family: var(--font-manrope), -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  font-weight: 400;
+  letter-spacing: 0.01em;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+}
+
+/* Gradientes como gotas fundidas - Optimizado SIN scroll doble */
+body::before {
+  content: '';
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  pointer-events: none;
+  z-index: 0;
+  background-image: url('/final backg.png');
+  background-size: cover;
+  background-position: center top;
+  background-repeat: no-repeat;
+  opacity: 1;
+}
+
+/* Grain texture optimizado */
+html::after {
+  content: '';
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  pointer-events: none;
+  z-index: 9999;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 400 400' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='2.5' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+  opacity: 0.05;
+  mix-blend-mode: overlay;
+}
+
+/* Capa adicional de textura simplificada */
+body::after {
+  content: '';
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  pointer-events: none;
+  z-index: 1;
+  background-image: 
+    radial-gradient(circle at 25% 35%, rgba(255, 255, 255, 0.02) 0%, transparent 2%),
+    radial-gradient(circle at 75% 65%, rgba(255, 255, 255, 0.015) 0%, transparent 2%);
+  background-size: 250px 250px;
+  opacity: 0.3;
 }
 
 * {

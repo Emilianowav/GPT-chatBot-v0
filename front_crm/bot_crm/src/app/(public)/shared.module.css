@@ -1,0 +1,212 @@
+/* SHARED CARD STYLES - Formato unificado para todas las páginas */
+
+/* Container base */
+.container {
+  width: 100%;
+  max-width: 100%;
+  margin: 0 auto;
+  padding: 0;
+  position: relative;
+  z-index: 1;
+}
+
+/* Section base */
+.section {
+  padding: 160px 0;
+  position: relative;
+  border-bottom: 1px solid var(--line-base);
+}
+
+/* Typography */
+.heroTitle {
+  font-size: 72px;
+  font-weight: 700;
+  margin: 0 0 32px;
+  line-height: 1.1;
+  letter-spacing: 0;
+  color: var(--text-primary);
+}
+
+.sectionTitle {
+  font-size: 56px;
+  font-weight: 700;
+  margin: 0 0 32px;
+  letter-spacing: 0;
+  text-align: center;
+  color: var(--text-primary);
+}
+
+.sectionIntro {
+  color: var(--text-secondary);
+  font-size: 20px;
+  line-height: 1.6;
+  margin: 0 0 64px;
+  max-width: 800px;
+  font-weight: 400;
+  text-align: center;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+/* Card Grid - 3 columnas */
+.cardGrid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  border: none;
+  border-top: 1px solid var(--line-base);
+}
+
+/* Card Grid - 2 columnas */
+.cardGrid2 {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  border: none;
+  border-top: 1px solid var(--line-base);
+}
+
+/* Card base - Formato unificado */
+.card {
+  position: relative;
+  padding: 0;
+  border-right: 1px solid var(--line-base);
+  border-bottom: 1px solid var(--line-base);
+  background: transparent;
+  transition: all 300ms cubic-bezier(0.4, 0, 0.2, 1);
+  min-height: 50vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  overflow: hidden;
+}
+
+.card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, var(--gradient-blue) 0%, var(--gradient-cyan) 100%);
+  opacity: 0;
+  transition: opacity 300ms cubic-bezier(0.4, 0, 0.2, 1);
+  pointer-events: none;
+  z-index: 0;
+}
+
+.card:hover {
+  background: var(--card-overlay-hover);
+}
+
+.card:hover::before {
+  opacity: 0.03;
+}
+
+/* Card content - Texto arriba izquierda */
+.cardContent {
+  position: relative;
+  z-index: 1;
+}
+
+.cardTitle {
+  font-size: 48px;
+  font-weight: 700;
+  margin: 0 0 24px;
+  letter-spacing: 0;
+  padding: 80px 0 0 80px;
+  text-align: left;
+  transition: all 300ms cubic-bezier(0.4, 0, 0.2, 1);
+  color: var(--text-primary);
+}
+
+.card:hover .cardTitle {
+  text-shadow: 0 0 20px rgba(255, 255, 255, 0.8),
+               0 0 40px rgba(255, 255, 255, 0.4),
+               0 0 60px rgba(255, 255, 255, 0.2);
+}
+
+.cardText {
+  color: var(--text-secondary);
+  font-size: 18px;
+  line-height: 1.65;
+  margin: 0;
+  font-weight: 400;
+  letter-spacing: 0;
+  padding: 0 80px 0 80px;
+  text-align: left;
+  max-width: 400px;
+}
+
+/* Card icon - Abajo derecha */
+.cardIcon {
+  position: relative;
+  z-index: 1;
+  padding: 0 80px 80px 0;
+  text-align: right;
+  font-size: 120px;
+  opacity: 0.15;
+  line-height: 1;
+  transition: all 300ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.card:hover .cardIcon {
+  opacity: 0.4;
+  filter: drop-shadow(0 0 20px rgba(255, 255, 255, 0.8))
+          drop-shadow(0 0 40px rgba(255, 255, 255, 0.4));
+}
+
+.card:hover .cardIcon svg {
+  filter: drop-shadow(0 0 10px rgba(255, 255, 255, 0.6));
+}
+
+/* Responsive */
+@media (max-width: 1024px) {
+  .cardGrid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  
+  .cardTitle {
+    font-size: 36px;
+    padding: 60px 0 0 60px;
+  }
+  
+  .cardText {
+    padding: 0 60px 0 60px;
+    font-size: 16px;
+  }
+  
+  .cardIcon {
+    padding: 0 60px 60px 0;
+    font-size: 100px;
+  }
+}
+
+@media (max-width: 768px) {
+  .cardGrid,
+  .cardGrid2 {
+    grid-template-columns: 1fr;
+  }
+  
+  .card {
+    min-height: 60vh;
+  }
+  
+  .heroTitle {
+    font-size: 48px;
+  }
+  
+  .sectionTitle {
+    font-size: 40px;
+  }
+  
+  .cardTitle {
+    font-size: 32px;
+    padding: 40px 0 0 40px;
+  }
+  
+  .cardText {
+    padding: 0 40px 0 40px;
+    font-size: 16px;
+  }
+  
+  .cardIcon {
+    padding: 0 40px 40px 0;
+    font-size: 80px;
+  }
+}

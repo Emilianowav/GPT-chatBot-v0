@@ -94,6 +94,29 @@ export const requireAdmin = (req: Request, res: Response, next: NextFunction): v
 };
 
 /**
+ * Middleware para verificar rol de super administrador
+ */
+export const requireSuperAdmin = (req: Request, res: Response, next: NextFunction): void => {
+  if (!req.user) {
+    res.status(401).json({ 
+      success: false,
+      message: 'No autenticado' 
+    });
+    return;
+  }
+
+  if (req.user.role !== 'super_admin') {
+    res.status(403).json({ 
+      success: false,
+      message: 'Acceso denegado. Se requiere rol de super administrador' 
+    });
+    return;
+  }
+
+  next();
+};
+
+/**
  * Middleware para verificar que el usuario pertenece a la empresa
  */
 export const requireEmpresa = (empresaId: string) => {

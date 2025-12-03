@@ -79,14 +79,23 @@ export async function login(username: string, password: string): Promise<LoginRe
       };
     }
 
-    // Buscar empresa
-    const empresa = await EmpresaModel.findOne({ nombre: user.empresaId });
-    if (!empresa) {
-      console.log('⚠️ Empresa no encontrada:', user.empresaId);
-      return {
-        success: false,
-        message: 'Empresa no encontrada'
-      };
+    // Buscar empresa (excepto para super_admin)
+    const userRole = (user as any).rol || (user as any).role;
+    let empresaNombre = user.empresaId;
+    let empresa: any = null;
+    
+    if (userRole !== 'super_admin') {
+      empresa = await EmpresaModel.findOne({ nombre: user.empresaId });
+      if (!empresa) {
+        console.log('⚠️ Empresa no encontrada:', user.empresaId);
+        return {
+          success: false,
+          message: 'Empresa no encontrada'
+        };
+      }
+      empresaNombre = empresa.nombre;
+    } else {
+      empresaNombre = 'SUPER_ADMIN';
     }
 
     // Actualizar último acceso
@@ -103,7 +112,7 @@ export async function login(username: string, password: string): Promise<LoginRe
 
     const token = jwt.sign(payload, JWT_SECRET, { expiresIn: JWT_EXPIRES_IN });
 
-    console.log('✅ Login exitoso:', { username, empresaId: user.empresaId, empresaMongoId: empresa._id.toString(), empresaNombre: empresa.nombre });
+    console.log('✅ Login exitoso:', { username, empresaId: user.empresaId, empresaMongoId: empresa?._id?.toString(), empresaNombre });
 
     return {
       success: true,
@@ -112,9 +121,9 @@ export async function login(username: string, password: string): Promise<LoginRe
         id: user._id.toString(),
         username: user.username,
         empresaId: user.empresaId, // Nombre de la empresa (para compatibilidad)
-        empresaMongoId: empresa._id.toString(), // ✅ ID de MongoDB (para módulo de integraciones)
-        empresaNombre: empresa.nombre,
-        role: (user as any).rol || (user as any).role,
+        empresaMongoId: empresa?._id?.toString(), // ✅ ID de MongoDB (para módulo de integraciones)
+        empresaNombre: empresaNombre,
+        role: userRole,
         email: user.email
       }
     };
@@ -147,17 +156,20 @@ export async function createAdminUser(
   username: string,
   password: string,
   empresaId: string,
-  role: 'admin' | 'viewer' = 'viewer',
+  role: 'admin' | 'viewer' | 'super_admin' = 'viewer',
   email?: string
 ): Promise<{ success: boolean; message: string; userId?: string }> {
   try {
-    // Verificar que la empresa existe
-    const empresa = await EmpresaModel.findOne({ nombre: empresaId });
-    if (!empresa) {
-      return {
-        success: false,
-        message: 'Empresa no encontrada'
-      };
+    // Para super_admin, no verificar empresa
+    if (role !== 'super_admin') {
+      // Verificar que la empresa existe
+      const empresa = await EmpresaModel.findOne({ nombre: empresaId });
+      if (!empresa) {
+        return {
+          success: false,
+          message: 'Empresa no encontrada'
+        };
+      }
     }
 
     // Verificar que el username no existe
@@ -170,10 +182,12 @@ export async function createAdminUser(
     }
 
     // Crear usuario
+    const finalEmpresaId = role === 'super_admin' ? 'SUPER_ADMIN' : empresaId;
+    
     const newUser = new AdminUserModel({
       username: username.toLowerCase(),
       password,
-      empresaId,
+      empresaId: finalEmpresaId,
       role,
       email,
       activo: true
@@ -181,7 +195,7 @@ export async function createAdminUser(
 
     await newUser.save();
 
-    console.log('✅ Usuario administrador creado:', { username, empresaId, role });
+    console.log('✅ Usuario administrador creado:', { username, empresaId: finalEmpresaId, role });
 
     return {
       success: true,
@@ -194,6 +208,48 @@ export async function createAdminUser(
       success: false,
       message: 'Error al crear usuario'
     };
+  }
+}
+
+/**
+ * Crea el usuario SuperAdmin inicial (solo si no existe)
+ */
+export async function createSuperAdminIfNotExists(): Promise<void> {
+  try {
+    // Verificar si ya existe un SuperAdmin válido en AdminUser
+    const existingSuperAdmin = await AdminUserModel.findOne({ 
+      username: 'superadmin',
+      role: 'super_admin'
+    });
+    
+    if (existingSuperAdmin) {
+      console.log('✅ SuperAdmin ya existe');
+      return;
+    }
+
+    // Limpiar cualquier usuario 'superadmin' en otras colecciones o con rol incorrecto
+    await AdminUserModel.deleteMany({ username: 'superadmin' });
+    await UsuarioEmpresaModel.deleteMany({ username: 'superadmin' });
+
+    // Crear SuperAdmin
+    const result = await createAdminUser(
+      'superadmin',
+      'admin123', // Contraseña por defecto
+      'SUPER_ADMIN',
+      'super_admin',
+      'superadmin@momento.com'
+    );
+
+    if (result.success) {
+      console.log('🎉 SuperAdmin creado exitosamente!');
+      console.log('   Username: superadmin');
+      console.log('   Password: admin123');
+      console.log('   ⚠️  IMPORTANTE: Cambia la contraseña después del primer login');
+    } else {
+      console.error('❌ Error al crear SuperAdmin:', result.message);
+    }
+  } catch (error) {
+    console.error('❌ Error al verificar/crear SuperAdmin:', error);
   }
 }
 

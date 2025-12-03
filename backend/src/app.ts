@@ -20,10 +20,12 @@ import mensajesFlujoRoutes from "./modules/calendar/routes/mensajesFlujoRoutes.j
 import integrationsRoutes from "./modules/integrations/routes/index.js";
 import usuarioEmpresaRoutes from "./routes/usuarioEmpresaRoutes.js";
 import flowRoutes from "./routes/flowRoutes.js";
+import superAdminRoutes from "./routes/superAdminRoutes.js";
 import chatbotRoutes from "./routes/chatbotRoutes.js";
 // import primerMensajeRoutes from "./routes/primerMensajeRoutes.js";
 import { errorHandler } from "./middlewares/errorHandler.js";
 import { connectDB } from "./config/database.js";
+import { createSuperAdminIfNotExists } from "./services/authService.js";
 import { loggers } from "./utils/logger.js";
 
 import {
@@ -99,6 +101,7 @@ app.use((req, res, next) => {
 
 // Rutas
 app.use("/api/auth", authRoutes);
+app.use("/api/sa", superAdminRoutes);
 app.use("/api/empresas", empresaRoutes);
 app.use("/api/usuarios-empresa", usuarioEmpresaRoutes);
 app.use("/api/clientes", clienteRoutes);
@@ -125,7 +128,10 @@ app.use(errorHandler);
     loggers.db('Conectando a MongoDB...');
     await connectDB();
     
-    // 1.5. Inicializar sistema de flujos dinámicos
+    // 1.5. Crear SuperAdmin si no existe
+    await createSuperAdminIfNotExists();
+    
+    // 1.6. Inicializar sistema de flujos dinámicos
     loggers.flow('Inicializando sistema de flujos...');
     initializeFlows();
     
