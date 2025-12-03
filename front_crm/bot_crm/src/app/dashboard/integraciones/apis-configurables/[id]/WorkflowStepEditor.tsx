@@ -1,0 +1,826 @@
+'use client';
+
+// 📝 Editor de Pasos de Workflow Conversacional
+
+import { useState, useEffect } from 'react';
+import { Database, Zap, Code2, Hash, Type } from 'lucide-react';
+import CodeInput from './CodeInput';
+import Tooltip from './Tooltip';
+import EndpointFieldSelector from './EndpointFieldSelector';
+import ParameterMapper from './ParameterMapper';
+import ResponseFieldSelector from './ResponseFieldSelector';
+import { extractEndpointParams, getEndpointById } from './utils/extractEndpointParams';
+import styles from './WorkflowManager.module.css';
+
+type ValidationType = 'texto' | 'numero' | 'opcion' | 'regex';
+type StepType = 'recopilar' | 'input' | 'confirmacion' | 'consulta_filtrada' | 'validar';
+
+interface StepValidation {
+  tipo: ValidationType;
+  opciones?: string[];
+  regex?: string;
+  mensajeError?: string;
+}
+
+interface EndpointResponseConfig {
+  arrayPath?: string;
+  idField?: string;
+  displayField?: string;
+}
+
+interface EndpointRelacionado {
+  endpointId: string;
+  origenDatos: 'resultado' | 'variable';
+  campoIdOrigen?: string;
+  variableOrigen?: string;
+  parametroDestino: string;
+  campos: string[];
+  prefijo?: string;
+}
+
+interface FlowStep {
+  orden: number;
+  tipo: StepType;
+  pregunta?: string;
+  nombreVariable: string;
+  validacion?: StepValidation;
+  endpointResponseConfig?: EndpointResponseConfig;
+  endpointId?: string;
+  mapeoParametros?: Record<string, string>;
+  endpointsRelacionados?: EndpointRelacionado[];
+  nombre?: string;
+  descripcion?: string;
+  mensajeError?: string;
+  intentosMaximos?: number;
+}
+
+interface Endpoint {
+  _id?: string;
+  id?: string;
+  nombre: string;
+  metodo: string;
+}
+
+interface Props {
+  step: FlowStep;
+  index: number;
+  endpoints: Endpoint[];
+  apiBaseUrl?: string;
+  apiAuth?: any;
+  variables: string[];
+  onChange: (index: number, step: FlowStep) => void;
+  onRemove: (index: number) => void;
+}
+
+export default function WorkflowStepEditor({ step, index, onChange, onRemove, endpoints, variables, apiBaseUrl, apiAuth }: Props) {
+  const [expanded, setExpanded] = useState(false);
+
+  // Convertir variables a formato para ParameterMapper
+  const variablesConTipo = variables.map(nombre => ({
+    nombre,
+    tipo: 'recopilar' as const, // Por ahora asumimos recopilar, idealmente vendría del paso
+    valor: undefined
+  }));
+
+  // Migración automática de datos antiguos al cargar
+  useEffect(() => {
+    if (step.tipo === 'recopilar' && step.validacion?.tipo === 'opcion' && !step.endpointResponseConfig) {
+      // Migrar automáticamente datos del formato antiguo al nuevo
+      const config = {
+        arrayPath: step.validacion?.regex || 'data',
+        idField: step.validacion?.opciones?.[0] || 'id',
+        displayField: step.validacion?.opciones?.[1] || 'name'
+      };
+      
+      onChange(index, {
+        ...step,
+        endpointResponseConfig: config
+      });
+    }
+  }, [step, index, onChange]);
+
+  const [newOption, setNewOption] = useState('');
+
+  const handleChange = (field: string, value: any) => {
+    onChange(index, { ...step, [field]: value });
+  };
+
+  const handleValidationChange = (field: string, value: any) => {
+    onChange(index, {
+      ...step,
+      validacion: { ...step.validacion, [field]: value } as StepValidation
+    });
+  };
+
+  const handleAddOption = () => {
+    if (!newOption.trim()) return;
+    const opciones = step.validacion?.opciones || [];
+    handleValidationChange('opciones', [...opciones, newOption.trim()]);
+    setNewOption('');
+  };
+
+  const handleRemoveOption = (optionIndex: number) => {
+    const opciones = step.validacion?.opciones || [];
+    handleValidationChange('opciones', opciones.filter((_, i) => i !== optionIndex));
+  };
+
+  const handleEndpointConfigChange = (field: string, value: string) => {
+    // Migrar datos antiguos si existen
+    let config = step.endpointResponseConfig;
+    if (!config) {
+      config = {
+        arrayPath: step.validacion?.regex || 'data',
+        idField: step.validacion?.opciones?.[0] || 'id',
+        displayField: step.validacion?.opciones?.[1] || 'name'
+      };
+    }
+    
+    onChange(index, {
+      ...step,
+      endpointResponseConfig: { ...config, [field]: value }
+    });
+  };
+
+  return (
+    <div className={styles.stepCard}>
+      <div className={styles.stepHeader} onClick={() => setExpanded(!expanded)}>
+        <div className={styles.stepInfo}>
+          <span className={styles.stepNumber}>Paso {step.orden}</span>
+          <span className={styles.stepType}>
+            {step.tipo === 'recopilar' && '📝 Recopilar'}
+            {step.tipo === 'input' && '✍️ Input'}
+            {step.tipo === 'confirmacion' && '✓ Confirmación'}
+            {step.tipo === 'consulta_filtrada' && '🔍 Consulta Filtrada'}
+            {step.tipo === 'validar' && '✅ Validar'}
+          </span>
+          <span className={styles.stepName}>
+            {step.nombre || step.pregunta || step.nombreVariable}
+          </span>
+        </div>
+        <div className={styles.stepActions}>
+          <button
+            type="button"
+            className={styles.iconButton}
+            onClick={(e) => {
+              e.stopPropagation();
+              setExpanded(!expanded);
+            }}
+          >
+            {expanded ? '▼' : '▶'}
+          </button>
+          <button
+            type="button"
+            className={styles.iconButton}
+            onClick={(e) => {
+              e.stopPropagation();
+              onRemove(index);
+            }}
+          >
+            🗑️
+          </button>
+        </div>
+      </div>
+
+      {expanded && (
+        <div className={styles.stepContent}>
+          {/* Tipo de Paso */}
+          <div className={styles.formGroup}>
+            <label>Tipo de Paso</label>
+            <select
+              value={step.tipo}
+              onChange={(e) => handleChange('tipo', e.target.value as StepType)}
+              className={styles.select}
+            >
+              <option value="recopilar">📝 Recopilar - Consultar API y mostrar opciones</option>
+              <option value="input">✍️ Input - Capturar texto libre del usuario</option>
+              <option value="confirmacion">✓ Confirmación - Confirmar datos antes de continuar</option>
+              <option value="consulta_filtrada">🔍 Consulta Filtrada - Búsqueda final con filtros</option>
+            </select>
+            <small style={{marginTop: '0.5rem', display: 'block', color: 'rgba(255, 255, 255, 0.5)'}}>
+              {step.tipo === 'recopilar' && 'Consulta un endpoint, muestra opciones numeradas y guarda la selección'}
+              {step.tipo === 'input' && 'Captura texto libre del usuario (nombre, búsqueda, comentario, etc.)'}
+              {step.tipo === 'confirmacion' && 'Muestra resumen de datos y permite confirmar o modificar'}
+              {step.tipo === 'consulta_filtrada' && 'Búsqueda final usando todos los datos recopilados como filtros'}
+            </small>
+          </div>
+
+          {/* Nombre del Paso */}
+          <div className={styles.formGroup}>
+            <label>Nombre del Paso (opcional)</label>
+            <input
+              type="text"
+              value={step.nombre || ''}
+              onChange={(e) => handleChange('nombre', e.target.value)}
+              placeholder="Ej: Seleccionar sucursal"
+              className={styles.input}
+            />
+          </div>
+
+          {/* Campos para Recopilar */}
+          {step.tipo === 'recopilar' && (
+            <>
+              <div className={styles.formGroup}>
+                <label>Endpoint a Consultar *</label>
+                <select
+                  value={step.endpointId || ''}
+                  onChange={(e) => handleChange('endpointId', e.target.value)}
+                  className={styles.select}
+                >
+                  <option value="">Seleccionar endpoint</option>
+                  {endpoints.map((endpoint) => (
+                    <option key={endpoint.id || endpoint._id} value={endpoint.id || endpoint._id}>
+                      {endpoint.metodo} {endpoint.nombre}
+                    </option>
+                  ))}
+                </select>
+                <small>Este endpoint se consultará para obtener las opciones a mostrar</small>
+              </div>
+
+              {variables.length > 0 && (
+                <div className={styles.formGroup}>
+                  <label>Filtrar con variables anteriores (opcional)</label>
+                  <p className={styles.helpText}>
+                    Usa las variables recopiladas en pasos anteriores para filtrar este endpoint
+                  </p>
+                  <ParameterMapper
+                    variables={variablesConTipo}
+                    mappings={step.mapeoParametros || {}}
+                    onChange={(mappings) => handleChange('mapeoParametros', mappings)}
+                    endpointParams={extractEndpointParams(getEndpointById(endpoints, step.endpointId || ''))}
+                  />
+                </div>
+              )}
+
+              <CodeInput
+                label="Mensaje al Usuario"
+                value={step.pregunta || ''}
+                onChange={(value) => handleChange('pregunta', value)}
+                placeholder="Elegí tu sucursal:"
+                tooltip="Este mensaje se mostrará antes de las opciones numeradas"
+                required
+                icon="💬"
+              />
+
+              <CodeInput
+                label="Nombre de Variable"
+                value={step.nombreVariable}
+                onChange={(value) => handleChange('nombreVariable', value)}
+                placeholder="sucursal_id"
+                tooltip="La selección del usuario se guardará aquí. Usa snake_case. Ej: sucursal_id, categoria_id"
+                suggestions={['sucursal_id', 'categoria_id', 'producto_id', 'user_id', 'item_id']}
+                required
+                icon="🔤"
+                monospace
+              />
+
+              <div className={styles.divider}>
+                <span>⚙️ Configuración de Respuesta del Endpoint</span>
+              </div>
+
+              <CodeInput
+                label="Ruta al Array"
+                value={step.endpointResponseConfig?.arrayPath || 'data'}
+                onChange={(value) => handleEndpointConfigChange('arrayPath', value)}
+                placeholder="data"
+                tooltip="Ruta donde está el array en la respuesta JSON. Ej: data, results, items"
+                suggestions={['data', 'results', 'items', 'list', 'records']}
+                icon="📦"
+                monospace
+              />
+
+              {step.endpointId && (
+                <>
+                  <EndpointFieldSelector
+                    endpointId={step.endpointId}
+                    endpoints={endpoints}
+                    apiBaseUrl={apiBaseUrl}
+                    apiAuth={apiAuth}
+                    selectedField={step.endpointResponseConfig?.idField}
+                    onFieldSelect={(field) => handleEndpointConfigChange('idField', field)}
+                    label="🔑 Campo ID - Selecciona el identificador único"
+                  />
+
+                  <EndpointFieldSelector
+                    endpointId={step.endpointId}
+                    endpoints={endpoints}
+                    apiBaseUrl={apiBaseUrl}
+                    apiAuth={apiAuth}
+                    selectedField={step.endpointResponseConfig?.displayField}
+                    onFieldSelect={(field) => handleEndpointConfigChange('displayField', field)}
+                    label="👁️ Campo a Mostrar - Selecciona qué mostrar al usuario"
+                  />
+                </>
+              )}
+
+              <div className={styles.ejemploBox} style={{marginTop: '1rem'}}>
+                <strong>💡 Ejemplo de configuración:</strong>
+                <p style={{fontSize: '0.875rem', margin: '0.5rem 0'}}>
+                  Si tu endpoint devuelve:
+                </p>
+                <pre style={{fontSize: '0.75rem', background: 'rgba(0,0,0,0.3)', padding: '0.75rem', borderRadius: '6px', overflow: 'auto'}}>
+{`{
+  "success": true,
+  "data": [
+    {"id": "5", "name": "Buenos Aires"},
+    {"id": "2", "name": "Corrientes"}
+  ]
+}`}
+                </pre>
+                <p style={{fontSize: '0.875rem', margin: '0.5rem 0 0'}}>
+                  • <strong>Ruta al Array:</strong> <code>data</code><br/>
+                  • <strong>Campo ID:</strong> <code>id</code><br/>
+                  • <strong>Campo a Mostrar:</strong> <code>name</code><br/>
+                  • <strong>Se mostrará:</strong> "1. Buenos Aires, 2. Corrientes"
+                </p>
+              </div>
+            </>
+          )}
+
+          {/* Campos para Input (Texto Libre) */}
+          {step.tipo === 'input' && (
+            <>
+              <CodeInput
+                label="Mensaje al Usuario"
+                value={step.pregunta || ''}
+                onChange={(value) => handleChange('pregunta', value)}
+                placeholder="Escribe el nombre del producto que buscas:"
+                tooltip="Pregunta que se mostrará al usuario"
+                required
+                icon="💬"
+              />
+
+              <CodeInput
+                label="Nombre de Variable"
+                value={step.nombreVariable}
+                onChange={(value) => handleChange('nombreVariable', value)}
+                placeholder="nombre_producto"
+                tooltip="Nombre de la variable donde se guardará el texto ingresado"
+                required
+                icon="🔤"
+                monospace
+              />
+
+              <div className={styles.formGroup}>
+                <label>Validación (opcional)</label>
+                <select
+                  value={step.validacion?.tipo || 'texto'}
+                  onChange={(e) => handleValidationChange('tipo', e.target.value)}
+                  className={styles.select}
+                >
+                  <option value="texto">Texto - Cualquier texto</option>
+                  <option value="numero">Número - Solo números</option>
+                  <option value="regex">Regex - Patrón personalizado</option>
+                </select>
+              </div>
+
+              {step.validacion?.tipo === 'regex' && (
+                <CodeInput
+                  label="Expresión Regular"
+                  value={step.validacion?.regex || ''}
+                  onChange={(value) => handleValidationChange('regex', value)}
+                  placeholder="^[a-zA-Z0-9\s]+$"
+                  tooltip="Patrón regex para validar el input"
+                  icon="🔍"
+                  monospace
+                />
+              )}
+
+              <CodeInput
+                label="Mensaje de Error (opcional)"
+                value={step.mensajeError || ''}
+                onChange={(value) => handleChange('mensajeError', value)}
+                placeholder="Por favor ingresa al menos 2 caracteres"
+                tooltip="Mensaje a mostrar si la validación falla"
+                icon="⚠️"
+              />
+
+              <div className={styles.ejemploBox} style={{marginTop: '1rem'}}>
+                <strong>💡 Ejemplo de uso:</strong>
+                <p style={{fontSize: '0.875rem', margin: '0.5rem 0'}}>
+                  • Capturar nombre de producto para búsqueda<br/>
+                  • Solicitar comentarios o feedback<br/>
+                  • Pedir nombre, email, teléfono, etc.<br/>
+                  • Cualquier dato que no venga de un endpoint
+                </p>
+              </div>
+            </>
+          )}
+
+          {/* Campos para Confirmación */}
+          {step.tipo === 'confirmacion' && (
+            <>
+              <div className={styles.formGroup}>
+                <label>Mensaje de Confirmación *</label>
+                <textarea
+                  value={step.pregunta || ''}
+                  onChange={(e) => handleChange('pregunta', e.target.value)}
+                  placeholder="📋 CONFIRMA TUS DATOS&#10;&#10;📍 Sucursal: {{sucursal_id_nombre}}&#10;📂 Categoría: {{categoria_id_nombre}}&#10;🔍 Producto: {{nombre_producto}}&#10;&#10;¿Los datos son correctos?"
+                  rows={8}
+                  className={styles.textarea}
+                  style={{ fontFamily: 'monospace', fontSize: '0.875rem' }}
+                />
+                <small>
+                  💡 Usa variables con formato {'{{variable}}'} para mostrar los datos recopilados.
+                  Para nombres legibles, usa {'{{variable_nombre}}'} (ej: {'{{sucursal_id_nombre}}'})
+                </small>
+              </div>
+
+              <CodeInput
+                label="Nombre de Variable"
+                value={step.nombreVariable}
+                onChange={(value) => handleChange('nombreVariable', value)}
+                placeholder="confirmacion"
+                tooltip="Variable donde se guardará la opción seleccionada"
+                required
+                icon="🔤"
+                monospace
+              />
+
+              <div className={styles.formGroup}>
+                <label>Opciones de Confirmación *</label>
+                <p className={styles.helpText}>
+                  Define las opciones que el usuario puede seleccionar
+                </p>
+                <div className={styles.opcionesList}>
+                  {(step.validacion?.opciones || []).map((opcion, i) => (
+                    <div key={i} className={styles.opcionItem}>
+                      <span className={styles.opcionNumero}>{i + 1}</span>
+                      <input
+                        type="text"
+                        value={opcion}
+                        onChange={(e) => {
+                          const nuevasOpciones = [...(step.validacion?.opciones || [])];
+                          nuevasOpciones[i] = e.target.value;
+                          handleValidationChange('opciones', nuevasOpciones);
+                        }}
+                        className={styles.input}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const nuevasOpciones = (step.validacion?.opciones || []).filter((_, idx) => idx !== i);
+                          handleValidationChange('opciones', nuevasOpciones);
+                        }}
+                        className={styles.removeButton}
+                      >
+                        ✕
+                      </button>
+                    </div>
+                  ))}
+                </div>
+                <div className={styles.addOption}>
+                  <input
+                    type="text"
+                    value={newOption}
+                    onChange={(e) => setNewOption(e.target.value)}
+                    placeholder="1: Confirmar y continuar"
+                    className={styles.input}
+                    onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), handleAddOption())}
+                  />
+                  <button
+                    type="button"
+                    onClick={handleAddOption}
+                    className={styles.addButton}
+                  >
+                    + Agregar
+                  </button>
+                </div>
+                <small>Ejemplo: "1: Confirmar y continuar", "2: Cambiar sucursal", "3: Cancelar"</small>
+              </div>
+
+              <div className={styles.ejemploBox} style={{marginTop: '1rem', background: 'rgba(102, 126, 234, 0.1)', borderLeft: '3px solid #667eea'}}>
+                <strong>💡 Cómo funciona la confirmación:</strong>
+                <ol style={{fontSize: '0.875rem', margin: '0.5rem 0', paddingLeft: '1.5rem'}}>
+                  <li>El usuario ve un resumen de sus datos recopilados</li>
+                  <li>Si elige "Confirmar" (opción 1), continúa al siguiente paso</li>
+                  <li>Si elige "Cambiar X" (opciones 2-N), vuelve al paso correspondiente</li>
+                  <li>Si elige "Cancelar" (última opción), abandona el workflow</li>
+                </ol>
+                <p style={{fontSize: '0.875rem', margin: '0.5rem 0 0', color: 'rgba(255, 255, 255, 0.7)'}}>
+                  ⚠️ El backend detecta automáticamente la opción seleccionada por la variable <code>confirmacion</code>
+                </p>
+              </div>
+            </>
+          )}
+
+          {/* Campos para Consulta Filtrada */}
+          {step.tipo === 'consulta_filtrada' && (
+            <>
+              <div className={styles.formGroup}>
+                <label>Endpoint a Ejecutar *</label>
+                <select
+                  value={step.endpointId || ''}
+                  onChange={(e) => handleChange('endpointId', e.target.value)}
+                  className={styles.select}
+                >
+                  <option value="">Seleccionar endpoint</option>
+                  {endpoints.map((endpoint) => (
+                    <option key={endpoint.id || endpoint._id} value={endpoint.id || endpoint._id}>
+                      {endpoint.metodo} {endpoint.nombre}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <ParameterMapper
+                variables={variablesConTipo}
+                mappings={step.mapeoParametros || {}}
+                onChange={(mappings) => handleChange('mapeoParametros', mappings)}
+                endpointParams={extractEndpointParams(getEndpointById(endpoints, step.endpointId || ''))}
+              />
+
+              <div className={styles.formGroup}>
+                <label>Endpoints Relacionados (opcional)</label>
+                <p className={styles.helpText}>
+                  Para cada resultado, llama a otro endpoint para obtener datos adicionales (ej: detalles del producto, stock, etc.)
+                </p>
+                
+                {(step.endpointsRelacionados || []).map((endpointRel, i) => (
+                  <div key={i} className={styles.endpointRelCard} style={{
+                    background: 'rgba(102, 126, 234, 0.05)',
+                    border: '1px solid rgba(102, 126, 234, 0.2)',
+                    borderRadius: '8px',
+                    padding: '1rem',
+                    marginBottom: '1rem'
+                  }}>
+                    <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem'}}>
+                      <strong>Endpoint Relacionado #{i + 1}</strong>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const nuevos = (step.endpointsRelacionados || []).filter((_, idx) => idx !== i);
+                          handleChange('endpointsRelacionados', nuevos);
+                        }}
+                        className={styles.removeButton}
+                      >
+                        ✕ Eliminar
+                      </button>
+                    </div>
+
+                    <div className={styles.formGroup}>
+                      <label>Endpoint a Llamar *</label>
+                      <select
+                        value={endpointRel.endpointId || ''}
+                        onChange={(e) => {
+                          const nuevos = [...(step.endpointsRelacionados || [])];
+                          nuevos[i] = { ...nuevos[i], endpointId: e.target.value };
+                          handleChange('endpointsRelacionados', nuevos);
+                        }}
+                        className={styles.select}
+                      >
+                        <option value="">Seleccionar endpoint</option>
+                        {endpoints.map((endpoint) => (
+                          <option key={endpoint.id || endpoint._id} value={endpoint.id || endpoint._id}>
+                            {endpoint.metodo} {endpoint.nombre}
+                          </option>
+                        ))}
+                      </select>
+                      <small>Endpoint que se llamará para cada resultado</small>
+                    </div>
+
+                    {/* Selector de origen de datos */}
+                    <div className={styles.formGroup}>
+                      <label>Origen del ID *</label>
+                      <select
+                        value={endpointRel.origenDatos || 'resultado'}
+                        onChange={(e) => {
+                          const nuevos = [...(step.endpointsRelacionados || [])];
+                          nuevos[i] = { 
+                            ...nuevos[i], 
+                            origenDatos: e.target.value as 'resultado' | 'variable',
+                            // Limpiar campos no usados
+                            campoIdOrigen: e.target.value === 'resultado' ? nuevos[i].campoIdOrigen : undefined,
+                            variableOrigen: e.target.value === 'variable' ? nuevos[i].variableOrigen : undefined
+                          };
+                          handleChange('endpointsRelacionados', nuevos);
+                        }}
+                        className={styles.select}
+                      >
+                        <option value="resultado">Del resultado de la consulta principal</option>
+                        <option value="variable">De una variable recopilada anteriormente</option>
+                      </select>
+                      <small>
+                        {endpointRel.origenDatos === 'resultado' 
+                          ? 'Usa un campo del resultado de la consulta principal (ej: id del producto)'
+                          : 'Usa una variable recopilada en pasos anteriores (ej: sucursal_id)'}
+                      </small>
+                    </div>
+
+                    {/* Si origen es resultado: selector de campo */}
+                    {endpointRel.origenDatos === 'resultado' && step.endpointId && (
+                      <EndpointFieldSelector
+                        endpointId={step.endpointId}
+                        endpoints={endpoints}
+                        apiBaseUrl={apiBaseUrl}
+                        apiAuth={apiAuth}
+                        selectedField={endpointRel.campoIdOrigen}
+                        onFieldSelect={(field) => {
+                          const nuevos = [...(step.endpointsRelacionados || [])];
+                          nuevos[i] = { ...nuevos[i], campoIdOrigen: field };
+                          handleChange('endpointsRelacionados', nuevos);
+                        }}
+                        label="🔑 Campo ID del Resultado - Selecciona el campo que contiene el ID"
+                      />
+                    )}
+
+                    {/* Si origen es variable: selector de variable */}
+                    {endpointRel.origenDatos === 'variable' && (
+                      <div className={styles.formGroup}>
+                        <label>Variable a Usar *</label>
+                        <select
+                          value={endpointRel.variableOrigen || ''}
+                          onChange={(e) => {
+                            const nuevos = [...(step.endpointsRelacionados || [])];
+                            nuevos[i] = { ...nuevos[i], variableOrigen: e.target.value };
+                            handleChange('endpointsRelacionados', nuevos);
+                          }}
+                          className={styles.select}
+                        >
+                          <option value="">Seleccionar variable</option>
+                          {variables.map(variable => (
+                            <option key={variable} value={variable}>{variable}</option>
+                          ))}
+                        </select>
+                        <small>Variable recopilada en pasos anteriores que contiene el ID</small>
+                      </div>
+                    )}
+
+                    <div className={styles.formGroup}>
+                      <label>Parámetro del Endpoint Relacionado *</label>
+                      {endpointRel.endpointId ? (
+                        <select
+                          value={endpointRel.parametroDestino || ''}
+                          onChange={(e) => {
+                            const nuevos = [...(step.endpointsRelacionados || [])];
+                            nuevos[i] = { ...nuevos[i], parametroDestino: e.target.value };
+                            handleChange('endpointsRelacionados', nuevos);
+                          }}
+                          className={styles.select}
+                        >
+                          <option value="">Seleccionar parámetro</option>
+                          {extractEndpointParams(getEndpointById(endpoints, endpointRel.endpointId)).map(param => (
+                            <option key={param} value={param}>{param}</option>
+                          ))}
+                        </select>
+                      ) : (
+                        <input
+                          type="text"
+                          value={endpointRel.parametroDestino || ''}
+                          onChange={(e) => {
+                            const nuevos = [...(step.endpointsRelacionados || [])];
+                            nuevos[i] = { ...nuevos[i], parametroDestino: e.target.value };
+                            handleChange('endpointsRelacionados', nuevos);
+                          }}
+                          placeholder="product_id"
+                          className={styles.input}
+                        />
+                      )}
+                      <small>Parámetro que espera el endpoint relacionado para recibir el ID</small>
+                    </div>
+
+                    {/* Selector de campos a extraer del endpoint relacionado */}
+                    <div className={styles.formGroup}>
+                      <label>Campos a Extraer del Endpoint Relacionado *</label>
+                      <p className={styles.helpText}>
+                        Selecciona los campos de la respuesta del endpoint relacionado que quieres mostrar
+                      </p>
+                      
+                      {(endpointRel.campos || []).map((campo, campoIdx) => (
+                        <div key={campoIdx} style={{marginBottom: '1rem'}}>
+                          {endpointRel.endpointId ? (
+                            <div style={{display: 'flex', gap: '0.5rem', alignItems: 'flex-start'}}>
+                              <div style={{flex: 1}}>
+                                <EndpointFieldSelector
+                                  endpointId={endpointRel.endpointId}
+                                  endpoints={endpoints}
+                                  apiBaseUrl={apiBaseUrl}
+                                  apiAuth={apiAuth}
+                                  selectedField={campo}
+                                  onFieldSelect={(field) => {
+                                    const nuevos = [...(step.endpointsRelacionados || [])];
+                                    const nuevosCampos = [...(nuevos[i].campos || [])];
+                                    nuevosCampos[campoIdx] = field;
+                                    nuevos[i] = { ...nuevos[i], campos: nuevosCampos };
+                                    handleChange('endpointsRelacionados', nuevos);
+                                  }}
+                                  label={`Campo #${campoIdx + 1}`}
+                                />
+                              </div>
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  const nuevos = [...(step.endpointsRelacionados || [])];
+                                  const nuevosCampos = (nuevos[i].campos || []).filter((_, idx) => idx !== campoIdx);
+                                  nuevos[i] = { ...nuevos[i], campos: nuevosCampos };
+                                  handleChange('endpointsRelacionados', nuevos);
+                                }}
+                                className={styles.removeButton}
+                                style={{marginTop: '1.75rem'}}
+                              >
+                                ✕
+                              </button>
+                            </div>
+                          ) : (
+                            <div style={{display: 'flex', gap: '0.5rem', alignItems: 'center'}}>
+                              <input
+                                type="text"
+                                value={campo}
+                                onChange={(e) => {
+                                  const nuevos = [...(step.endpointsRelacionados || [])];
+                                  const nuevosCampos = [...(nuevos[i].campos || [])];
+                                  nuevosCampos[campoIdx] = e.target.value;
+                                  nuevos[i] = { ...nuevos[i], campos: nuevosCampos };
+                                  handleChange('endpointsRelacionados', nuevos);
+                                }}
+                                placeholder="nombre_campo"
+                                className={styles.input}
+                              />
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  const nuevos = [...(step.endpointsRelacionados || [])];
+                                  const nuevosCampos = (nuevos[i].campos || []).filter((_, idx) => idx !== campoIdx);
+                                  nuevos[i] = { ...nuevos[i], campos: nuevosCampos };
+                                  handleChange('endpointsRelacionados', nuevos);
+                                }}
+                                className={styles.removeButton}
+                              >
+                                ✕
+                              </button>
+                            </div>
+                          )}
+                        </div>
+                      ))}
+                      
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const nuevos = [...(step.endpointsRelacionados || [])];
+                          const nuevosCampos = [...(nuevos[i].campos || []), ''];
+                          nuevos[i] = { ...nuevos[i], campos: nuevosCampos };
+                          handleChange('endpointsRelacionados', nuevos);
+                        }}
+                        className={styles.addButton}
+                      >
+                        + Agregar Campo
+                      </button>
+                    </div>
+
+                    <div className={styles.formGroup}>
+                      <label>Prefijo para Variables (opcional)</label>
+                      <input
+                        type="text"
+                        value={endpointRel.prefijo || ''}
+                        onChange={(e) => {
+                          const nuevos = [...(step.endpointsRelacionados || [])];
+                          nuevos[i] = { ...nuevos[i], prefijo: e.target.value };
+                          handleChange('endpointsRelacionados', nuevos);
+                        }}
+                        placeholder="detalle_"
+                        className={styles.input}
+                      />
+                      <small>
+                        {endpointRel.prefijo 
+                          ? `Usarás: ${endpointRel.campos?.map(c => `{{${endpointRel.prefijo}${c}}}`).join(', ') || ''}`
+                          : `Usarás: ${endpointRel.campos?.map(c => `{{${c}}}`).join(', ') || ''}`
+                        }
+                      </small>
+                    </div>
+                  </div>
+                ))}
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    const nuevos = [...(step.endpointsRelacionados || []), {
+                      endpointId: '',
+                      origenDatos: 'resultado' as const,
+                      campoIdOrigen: 'id',
+                      parametroDestino: 'id',
+                      campos: [],
+                      prefijo: ''
+                    }];
+                    handleChange('endpointsRelacionados', nuevos);
+                  }}
+                  className={styles.addButton}
+                >
+                  + Agregar Endpoint Relacionado
+                </button>
+
+                <div className={styles.ejemploBox} style={{marginTop: '1rem'}}>
+                  <strong>💡 Ejemplo de uso:</strong>
+                  <p style={{fontSize: '0.875rem', margin: '0.5rem 0'}}>
+                    <strong>Resultado principal:</strong> Lista de productos con <code>id</code>, <code>nombre</code>, <code>precio</code><br/>
+                    <strong>Endpoint relacionado:</strong> GET /products/details?product_id=<code>{'{{id}}'}</code><br/>
+                    <strong>Respuesta:</strong> <code>{`{ "link_compra": "...", "stock": 15 }`}</code><br/>
+                    <strong>En plantilla usas:</strong> <code>{'{{link_compra}}'}</code>, <code>{'{{stock}}'}</code>
+                  </p>
+                </div>
+              </div>
+            </>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}

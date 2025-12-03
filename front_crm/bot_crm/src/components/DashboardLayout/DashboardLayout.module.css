@@ -78,7 +78,6 @@
 /* Contenido */
 .content {
   flex: 1;
-  padding: 24px;
   overflow-y: auto;
 }
 
@@ -102,9 +101,6 @@
     display: none;
   }
 
-  .content {
-    padding: 16px;
-  }
 }
 
 @media (max-width: 480px) {

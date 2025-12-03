@@ -38,7 +38,7 @@ export interface Estadisticas {
 }
 
 export interface EmpresaAuth {
-  empresaId: string;
+  empresaId: string; // Nombre de la empresa (usado en todas las APIs)
   empresaNombre: string;
   token: string;
   role?: string;

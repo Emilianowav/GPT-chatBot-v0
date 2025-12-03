@@ -55,6 +55,8 @@ export default function EstadisticasPage() {
   return (
     <DashboardLayout title="Estadísticas Detalladas">
       {/* Selector de Rango */}
+      <div className={styles.container}>
+
       <div className={styles.rangeSelector}>
         <button 
           className={`${styles.rangeButton} ${timeRange === '7d' ? styles.active : ''}`}
@@ -234,6 +236,7 @@ export default function EstadisticasPage() {
           </div>
         </>
       )}
+      </div>
     </DashboardLayout>
   );
 }

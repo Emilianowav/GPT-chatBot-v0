@@ -43,6 +43,12 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
       path: '/dashboard/estadisticas' 
     },
     { 
+      icon: <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="M12 8v4"/><path d="M12 16h.01"/></svg>, 
+      label: 'Integraciones', 
+      path: '/dashboard/integraciones',
+      badge: 'Nuevo'
+    },
+    { 
       icon: <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="3"/><path d="M12 1v6m0 6v6m5.2-13.2l-4.2 4.2m0 6l4.2 4.2M23 12h-6m-6 0H1m18.2 5.2l-4.2-4.2m0-6l4.2-4.2"/></svg>, 
       label: 'Configuración', 
       path: '/dashboard/configuracion' 
@@ -109,6 +115,9 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
             >
               <span className={styles.navIcon}>{item.icon}</span>
               <span className={styles.navLabel}>{item.label}</span>
+              {item.badge && (
+                <span className={styles.badge}>{item.badge}</span>
+              )}
             </button>
           ))}
         </nav>

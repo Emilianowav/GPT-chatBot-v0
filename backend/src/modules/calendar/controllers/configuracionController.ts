@@ -350,98 +350,13 @@ async function crearConfiguracionPorDefecto(empresaId: string) {
 }
 
 /**
- * Enviar notificación de prueba
+ * ⚠️ DEPRECADO: Este endpoint ya no se usa
+ * Usar en su lugar: POST /api/modules/calendar/notificaciones-meta/test
  */
 export const enviarNotificacionPrueba = async (req: Request, res: Response): Promise<void> => {
-  try {
-    const { empresaId, notificacion } = req.body;
-
-    if (!empresaId || !notificacion) {
-      res.status(400).json({
-        success: false,
-        message: 'Faltan datos requeridos: empresaId y notificacion'
-      });
-      return;
-    }
-
-    // Validar que se envió el teléfono
-    if (!notificacion.telefono) {
-      res.status(400).json({
-        success: false,
-        message: 'Falta el teléfono del destinatario en notificacion.telefono'
-      });
-      return;
-    }
-
-    // Importar servicios necesarios
-    const { ClienteModel } = await import('../../../models/Cliente.js');
-    const { EmpresaModel } = await import('../../../models/Empresa.js');
-    const { enviarNotificacionConfirmacionViajes } = await import('../../../services/notificacionesViajesService.js');
-    const { normalizarTelefono } = await import('../../../utils/telefonoUtils.js');
-
-    // Normalizar el teléfono recibido
-    const telefonoNormalizado = normalizarTelefono(notificacion.telefono);
-    
-    console.log(`📨 Enviando notificación de prueba a ${telefonoNormalizado}`);
-
-    // Buscar cliente por teléfono (opcional, para mostrar nombre)
-    const cliente = await ClienteModel.findOne({ 
-      telefono: telefonoNormalizado,
-      empresaId 
-    });
-
-    // Buscar empresa por nombre o ID
-    let empresa;
-    
-    // Intentar buscar por ObjectId primero
-    if (empresaId.match(/^[0-9a-fA-F]{24}$/)) {
-      empresa = await EmpresaModel.findById(empresaId);
-    }
-    
-    // Si no se encontró o no es un ObjectId válido, buscar por nombre
-    if (!empresa) {
-      empresa = await EmpresaModel.findOne({ nombre: empresaId });
-    }
-    
-    if (!empresa || !empresa.telefono) {
-      res.status(404).json({
-        success: false,
-        message: 'No se encontró la empresa o no tiene teléfono configurado'
-      });
-      return;
-    }
-
-    console.log(`   Empresa: ${empresa.nombre} (${empresa.telefono})`);
-    if (cliente) {
-      console.log(`   Cliente encontrado: ${cliente.nombre} ${cliente.apellido}`);
-    } else {
-      console.log(`   ⚠️ Cliente no encontrado en BD, enviando igualmente`);
-    }
-
-    // Enviar notificación usando el nuevo sistema de flujos (modo prueba)
-    await enviarNotificacionConfirmacionViajes(
-      telefonoNormalizado,
-      empresa.telefono,
-      true // modoPrueba: busca turnos en los próximos 7 días
-    );
-
-    const nombreDestinatario = cliente 
-      ? `${cliente.nombre} ${cliente.apellido}`.trim() 
-      : telefonoNormalizado;
-
-    res.json({
-      success: true,
-      message: `Notificación de prueba enviada a ${nombreDestinatario}`,
-      telefono: telefonoNormalizado,
-      clienteEncontrado: !!cliente
-    });
-
-  } catch (error: any) {
-    console.error('Error al enviar notificación de prueba:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Error al enviar notificación de prueba',
-      error: error.message
-    });
-  }
+  res.status(410).json({
+    success: false,
+    message: 'Este endpoint está deprecado. Usar: POST /api/modules/calendar/notificaciones-meta/test',
+    endpoint_correcto: '/api/modules/calendar/notificaciones-meta/test'
+  });
 };

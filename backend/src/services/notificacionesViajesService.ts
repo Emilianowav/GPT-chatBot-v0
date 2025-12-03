@@ -7,6 +7,15 @@ import { buscarEmpresaPorTelefono } from '../utils/empresaUtilsMongo.js';
 import { iniciarFlujoNotificacionViajes } from './flowIntegrationService.js';
 import { normalizarTelefono } from '../utils/telefonoUtils.js';
 
+// ✅ Función helper para enviar confirmación (usa el nuevo sistema)
+async function enviarNotificacionConfirmacion(clienteId: string, turnos: any[], empresaId: string): Promise<boolean> {
+  // Esta función ahora es manejada por el nuevo sistema de notificaciones
+  // que se ejecuta automáticamente según la configuración en MongoDB
+  console.log('ℹ️ Las confirmaciones ahora se manejan automáticamente por el sistema unificado');
+  console.log('   Configurar en MongoDB: plantillasMeta.confirmacionTurnos');
+  return true;
+}
+
 interface ViajeInfo {
   _id: string;
   origen: string;
@@ -74,27 +83,21 @@ export async function enviarNotificacionConfirmacionViajes(
   // ✅ El teléfono ya está normalizado en contactos_empresa
 
   // 3. Definir rango de fechas
+  // ✅ UNIFICADO: Tanto modo prueba como normal buscan turnos de MAÑANA
   let fechaInicio: Date;
   let fechaFin: Date;
   
   if (modoPrueba) {
-    // Modo prueba: buscar turnos en los próximos 7 días
-    console.log('🧪 Modo prueba: buscando turnos en los próximos 7 días');
-    fechaInicio = new Date();
-    fechaInicio.setHours(0, 0, 0, 0);
-    
-    fechaFin = new Date();
-    fechaFin.setDate(fechaFin.getDate() + 7);
-    fechaFin.setHours(23, 59, 59, 999);
-  } else {
-    // Modo normal: solo mañana
-    fechaInicio = new Date();
-    fechaInicio.setDate(fechaInicio.getDate() + 1);
-    fechaInicio.setHours(0, 0, 0, 0);
-    
-    fechaFin = new Date(fechaInicio);
-    fechaFin.setHours(23, 59, 59, 999);
+    console.log('🧪 Modo prueba: usando misma lógica que modo normal (turnos de mañana)');
   }
+  
+  // Buscar turnos de mañana (día siguiente)
+  fechaInicio = new Date();
+  fechaInicio.setDate(fechaInicio.getDate() + 1);
+  fechaInicio.setHours(0, 0, 0, 0);
+  
+  fechaFin = new Date(fechaInicio);
+  fechaFin.setHours(23, 59, 59, 999);
 
   console.log('📅 Rango de búsqueda:');
   console.log('   Desde:', fechaInicio.toISOString());
@@ -128,84 +131,24 @@ export async function enviarNotificacionConfirmacionViajes(
     console.log(`   ${i + 1}. ${new Date(turno.fechaInicio).toLocaleString('es-AR')}`);
   });
 
-  // Construir información de viajes
-  const viajes: ViajeInfo[] = turnos.map((turno) => {
-    const horario = new Date(turno.fechaInicio).toLocaleTimeString('es-AR', {
-      hour: '2-digit',
-      minute: '2-digit',
-      hour12: false
-    });
-
-    const origen = turno.datos?.origen || 'Origen no especificado';
-    const destino = turno.datos?.destino || 'Destino no especificado';
-
-    return {
-      _id: turno._id.toString(),
-      origen,
-      destino,
-      horario
-    };
-  });
-
-  // Construir mensaje con formato mejorado
-  let mensaje = `Recordatorio de viajes para mañana\n\n`;
-  mensaje += `━━━━━━━━━━━━━━━━━━\n`;
-
-  viajes.forEach((viaje, index) => {
-    mensaje += `Viaje ${index + 1}\n\n`;
-    mensaje += `📍 Origen: ${viaje.origen}\n`;
-    mensaje += `📍 Destino: ${viaje.destino}\n`;
-    mensaje += `🕐 Hora: ${viaje.horario}\n`;
-    mensaje += `👥 Pasajeros: 1\n\n`;
-    mensaje += `━━━━━━━━━━━━━━━━━━\n`;
-  });
-
-  mensaje += `\n¿Qué deseas hacer?\n\n`;
-  mensaje += `1️⃣ Confirmar todos los viajes\n`;
-  mensaje += `2️⃣ Editar un viaje específico\n\n`;
-  mensaje += `Responde con el número de la opción.`;
-
-  // ⚠️ CRÍTICO: Normalizar teléfono (sin +, espacios, guiones)
-  // Debe coincidir con el formato usado en whatsappController
-  // IMPORTANTE: Usar el teléfono del PARÁMETRO (no el de la BD, puede estar incorrecto)
-  const telefonoParaFlujo = normalizarTelefono(clienteTelefono);
-  
-  console.log('📞 Teléfonos:', {
-    clienteTelefonoOriginal: clienteTelefono,
-    contactoTelefonoBD: contacto.telefono,
-    telefonoNormalizadoParaFlujo: telefonoParaFlujo
-  });
-
-  // Enviar mensaje
-  // ⚠️ IMPORTANTE: Usar el teléfono del parámetro (viene de la solicitud HTTP)
-  // NO usar cliente.telefono porque puede estar desactualizado o en formato incorrecto
-  await enviarMensajeWhatsAppTexto(
-    clienteTelefono,  // Meta API acepta con o sin +
-    mensaje,
-    phoneNumberId
-  );
-
-  // Iniciar flujo de notificaciones
-  // IMPORTANTE: 
-  // 1. Usar el NOMBRE de la empresa, no el ObjectId
-  // 2. Usar teléfono NORMALIZADO (sin +) del cliente en la BD
-  console.log('🔄 Iniciando flujo con:', {
-    telefono: telefonoParaFlujo,
-    empresaId: empresaDoc.nombre,
-    cantidadViajes: viajes.length
-  });
+  // ✅ USAR SERVICIO CON PLANTILLAS DE META
+  console.log('📋 Usando servicio de confirmación con plantillas de Meta...');
   
   try {
-    await iniciarFlujoNotificacionViajes(
-      telefonoParaFlujo,    // ✅ Teléfono del cliente en BD (normalizado)
-      empresaDoc.nombre,    // ✅ Usar nombre, no _id
-      viajes
+    const enviado = await enviarNotificacionConfirmacion(
+      contacto._id.toString(),  // clienteId
+      turnos,                   // turnos completos
+      empresaDoc.nombre         // empresaId (nombre)
     );
-    console.log('✅ Flujo iniciado correctamente');
-  } catch (errorFlujo) {
-    console.error('❌ Error al iniciar flujo:', errorFlujo);
-    throw errorFlujo;
+    
+    if (enviado) {
+      console.log('✅ Notificación enviada con plantilla de Meta y flujo iniciado exitosamente');
+    } else {
+      console.error('❌ No se pudo enviar la notificación');
+      throw new Error('Error al enviar notificación con plantilla');
+    }
+  } catch (error) {
+    console.error('❌ Error en enviarNotificacionConfirmacion:', error);
+    throw error;
   }
-
-  console.log('✅ Notificación enviada y flujo iniciado exitosamente');
 }

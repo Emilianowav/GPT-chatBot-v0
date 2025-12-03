@@ -1,0 +1,1398 @@
+// 🔄 WORKFLOW CONVERSATIONAL HANDLER
+// Maneja workflows conversacionales paso a paso
+
+import { workflowConversationManager } from './workflowConversationManager.js';
+import { apiExecutor } from '../modules/integrations/services/apiExecutor.js';
+import type { IWorkflow, IWorkflowStep } from '../modules/integrations/types/api.types.js';
+
+/**
+ * Resultado de procesamiento de workflow conversacional
+ */
+export interface WorkflowConversationalResult {
+  success: boolean;
+  response: string;
+  completed: boolean;  // Si el workflow se completó
+  error?: string;
+  metadata?: {
+    workflowName: string;
+    pasoActual: number;
+    totalPasos: number;
+    datosRecopilados?: Record<string, any>;
+    workflowsSiguientes?: {
+      pregunta?: string;
+      workflows: Array<{
+        workflowId: string;
+        opcion: string;
+      }>;
+    };
+    esperandoRepeticion?: boolean;  // Si está esperando decisión de repetir
+  };
+}
+
+/**
+ * Metadata del workflow activo
+ */
+export interface WorkflowActiveMetadata {
+  contactoId: string;
+  workflowState: any;
+  workflow: IWorkflow;
+  apiConfig: any;
+}
+
+/**
+ * Metadata para iniciar workflow
+ */
+export interface WorkflowStartMetadata {
+  workflow: IWorkflow;
+  apiConfig: any;
+  extractedParams: Record<string, any>;
+  confidence: number;
+}
+
+/**
+ * 🔄 HANDLER DE WORKFLOWS CONVERSACIONALES
+ * Gestiona la conversación paso a paso con el usuario
+ */
+export class WorkflowConversationalHandler {
+  
+  /**
+   * Obtiene datos siguiendo una ruta de propiedades (ej: "data.items" o "results")
+   */
+  private obtenerDatosPorRuta(objeto: any, ruta: string): any {
+    if (!ruta || !objeto) return objeto;
+    
+    const partes = ruta.split('.');
+    let resultado = objeto;
+    
+    for (const parte of partes) {
+      if (resultado && typeof resultado === 'object' && parte in resultado) {
+        resultado = resultado[parte];
+      } else {
+        return null;
+      }
+    }
+    
+    return resultado;
+  }
+  
+  /**
+   * Extrae opciones dinámicas de los datos de la API
+   */
+  private extraerOpcionesDinamicas(datos: any[], config: any): string[] {
+    if (!Array.isArray(datos) || !config) {
+      return [];
+    }
+    
+    try {
+      return datos.map(item => {
+        const id = item[config.idField] || item.id;
+        const display = item[config.displayField] || item.name || item.nombre;
+        return `${id}: ${display}`;
+      });
+    } catch (error) {
+      console.error('❌ Error extrayendo opciones dinámicas:', error);
+      return [];
+    }
+  }
+  
+  /**
+   * Inicia un nuevo workflow
+   */
+  async startWorkflow(
+    contactoId: string,
+    metadata: WorkflowStartMetadata
+  ): Promise<WorkflowConversationalResult> {
+    try {
+      const { workflow, apiConfig } = metadata;
+      
+      console.log('\n🔄 ========== INICIANDO WORKFLOW ==========');
+      console.log('📋 Workflow:', workflow.nombre);
+      console.log('👤 Contacto:', contactoId);
+      console.log('📊 Total pasos:', workflow.steps.length);
+      
+      // Iniciar workflow
+      await workflowConversationManager.startWorkflow(
+        contactoId,
+        workflow.id!,
+        apiConfig._id.toString()
+      );
+      
+      // Construir mensaje inicial
+      let response = '';
+      if (workflow.mensajeInicial) {
+        response += workflow.mensajeInicial + '\n\n';
+      }
+      
+      // Obtener primer paso (debe ser RECOPILAR)
+      const pasosOrdenados = workflow.steps.sort((a, b) => a.orden - b.orden);
+      const primerPaso = pasosOrdenados[0];
+      
+      if (!primerPaso || primerPaso.tipo !== 'recopilar') {
+        return {
+          success: false,
+          response: '❌ Error: El primer paso debe ser de tipo "recopilar"',
+          completed: false,
+          error: 'Primer paso inválido'
+        };
+      }
+      
+      console.log('📋 Primer paso:', primerPaso.nombre);
+      
+      // RECOPILAR hace TODO: llamar API + mostrar opciones
+      if (primerPaso.pregunta) {
+        response += primerPaso.pregunta;
+        
+        // Si tiene endpoint configurado, llamar a la API
+        if (primerPaso.endpointId) {
+          console.log('🌐 Llamando a API para obtener opciones...');
+          
+          try {
+            // Llamar al endpoint (sin filtros en el primer paso)
+            const resultadoAPI = await apiExecutor.ejecutar(
+              apiConfig._id.toString(),
+              primerPaso.endpointId,
+              {}, // Sin parámetros en el primer paso
+              { metadata: { contactoId } }
+            );
+            
+            if (resultadoAPI.success && resultadoAPI.data) {
+              console.log('✅ Datos obtenidos de la API');
+              
+              await workflowConversationManager.guardarDatosEjecutados(
+                contactoId,
+                primerPaso.endpointId,
+                resultadoAPI.data
+              );
+              
+              // Extraer opciones dinámicas
+              let datosArray = resultadoAPI.data;
+              
+              // Si la respuesta tiene una propiedad "data", usarla
+              if (datosArray.data && Array.isArray(datosArray.data)) {
+                datosArray = datosArray.data;
+              }
+              
+              if (Array.isArray(datosArray) && datosArray.length > 0) {
+                console.log(`✅ ${datosArray.length} opciones encontradas`);
+                
+                // Usar endpointResponseConfig si está configurado
+                if (primerPaso.endpointResponseConfig) {
+                  const opciones = this.extraerOpcionesDinamicas(
+                    datosArray, 
+                    primerPaso.endpointResponseConfig
+                  );
+                  
+                  if (opciones.length > 0) {
+                    response += '\n\n' + workflowConversationManager.formatearOpciones(opciones);
+                  }
+                } else {
+                  // Formato por defecto si no hay config
+                  const opciones = datosArray.map((item: any) => {
+                    const id = item.id || item.code;
+                    const nombre = item.name || item.nombre || item.title;
+                    return `${id}: ${nombre}`;
+                  });
+                  response += '\n\n' + workflowConversationManager.formatearOpciones(opciones);
+                }
+              }
+            } else {
+              console.log('⚠️ No se obtuvieron datos de la API');
+            }
+          } catch (error) {
+            console.error('❌ Error llamando a la API:', error);
+          }
+        }
+        // Si tiene opciones estáticas, mostrarlas
+        else if (primerPaso.validacion?.tipo === 'opcion' && primerPaso.validacion.opciones) {
+          response += '\n\n' + workflowConversationManager.formatearOpciones(
+            primerPaso.validacion.opciones
+          );
+        }
+      }
+      
+      return {
+        success: true,
+        response,
+        completed: false,
+        metadata: {
+          workflowName: workflow.nombre,
+          pasoActual: 0,
+          totalPasos: workflow.steps.length
+        }
+      };
+      
+    } catch (error: any) {
+      console.error('❌ Error iniciando workflow:', error);
+      return {
+        success: false,
+        response: '❌ Ocurrió un error al iniciar el flujo. Por favor intentá de nuevo.',
+        completed: false,
+        error: error.message
+      };
+    }
+  }
+  
+  /**
+   * Continúa un workflow activo procesando la respuesta del usuario
+   */
+  async continueWorkflow(
+    mensaje: string,
+    metadata: WorkflowActiveMetadata
+  ): Promise<WorkflowConversationalResult> {
+    try {
+      const { contactoId, workflowState, workflow, apiConfig } = metadata;
+      
+      console.log('\n🔄 ========== CONTINUANDO WORKFLOW ==========');
+      console.log('📋 Workflow:', workflow.nombre);
+      console.log('📍 Paso actual:', workflowState.pasoActual);
+      console.log('💬 Mensaje usuario:', mensaje);
+      
+      // Verificar si el usuario quiere cancelar
+      const mensajeNormalizado = mensaje.toLowerCase().trim();
+      if (workflow.permitirAbandonar && 
+          (mensajeNormalizado === 'cancelar' || 
+           mensajeNormalizado === 'salir' ||
+           mensajeNormalizado === 'stop')) {
+        await workflowConversationManager.abandonarWorkflow(contactoId);
+        return {
+          success: true,
+          response: workflow.mensajeAbandonar || '🚫 Flujo cancelado',
+          completed: true
+        };
+      }
+      
+      // Verificar si está esperando decisión de repetición
+      const esperandoRepeticion = await workflowConversationManager.estaEsperandoRepeticion(contactoId);
+      console.log('🔍 [DEBUG] Estado de repetición:', {
+        esperandoRepeticion,
+        repetirWorkflowHabilitado: workflow.repetirWorkflow?.habilitado,
+        workflowStateCompleto: JSON.stringify(workflowState)
+      });
+      
+      if (esperandoRepeticion && workflow.repetirWorkflow?.habilitado) {
+        console.log('✅ [DEBUG] Entrando a procesarDecisionRepeticion');
+        return await this.procesarDecisionRepeticion(
+          mensaje,
+          contactoId,
+          workflow,
+          workflowState,
+          apiConfig
+        );
+      }
+      
+      // Obtener paso actual
+      const pasoActual = workflow.steps.find(s => s.orden === workflowState.pasoActual + 1);
+      if (!pasoActual) {
+        await workflowConversationManager.abandonarWorkflow(contactoId);
+        return {
+          success: false,
+          response: '❌ Error: Paso no encontrado',
+          completed: true,
+          error: 'Paso no encontrado'
+        };
+      }
+      
+      console.log('📍 Procesando paso:', pasoActual.nombre || `Paso ${pasoActual.orden}`);
+      
+      // Procesar según tipo de paso
+      // Input se procesa como recopilación simple (sin endpoint)
+      // Confirmacion se procesa como recopilar (es un tipo especial de recopilación)
+      if (pasoActual.tipo === 'recopilar' || pasoActual.tipo === 'input' || pasoActual.tipo === 'confirmacion') {
+        return await this.procesarPasoRecopilacion(
+          mensaje,
+          pasoActual,
+          contactoId,
+          workflow,
+          workflowState,
+          apiConfig
+        );
+      } else if (pasoActual.tipo === 'consulta_filtrada') {
+        return await this.procesarPasoEjecucion(
+          pasoActual,
+          contactoId,
+          workflow,
+          workflowState,
+          apiConfig
+        );
+      }
+      
+      return {
+        success: false,
+        response: '❌ Tipo de paso no soportado',
+        completed: false,
+        error: 'Tipo de paso inválido'
+      };
+      
+    } catch (error: any) {
+      console.error('❌ Error continuando workflow:', error);
+      return {
+        success: false,
+        response: '❌ Ocurrió un error. Por favor intentá de nuevo.',
+        completed: false,
+        error: error.message
+      };
+    }
+  }
+  
+  /**
+   * Procesa un paso de recopilación de datos
+   */
+  private async procesarPasoRecopilacion(
+    mensaje: string,
+    paso: IWorkflowStep,
+    contactoId: string,
+    workflow: IWorkflow,
+    workflowState: any,
+    apiConfig: any
+  ): Promise<WorkflowConversationalResult> {
+    // CASO ESPECIAL: Paso de confirmación
+    if (paso.nombreVariable === 'confirmacion') {
+      return await this.procesarConfirmacion(
+        mensaje,
+        paso,
+        contactoId,
+        workflow,
+        workflowState,
+        apiConfig
+      );
+    }
+    
+    // Validar input
+    const validacion = workflowConversationManager.validarInput(mensaje, paso);
+    
+    if (!validacion.valido) {
+      // Registrar intento fallido
+      const intentos = await workflowConversationManager.registrarIntentoFallido(contactoId);
+      
+      const intentosMaximos = paso.intentosMaximos || 3;
+      if (intentos >= intentosMaximos) {
+        await workflowConversationManager.abandonarWorkflow(contactoId);
+        return {
+          success: false,
+          response: `❌ Demasiados intentos fallidos. ${workflow.mensajeAbandonar || 'Flujo cancelado'}`,
+          completed: true,
+          error: 'Demasiados intentos'
+        };
+      }
+      
+      return {
+        success: false,
+        response: `${validacion.mensaje}\n\n(Intento ${intentos}/${intentosMaximos})`,
+        completed: false,
+        error: 'Validación fallida'
+      };
+    }
+    
+    console.log('✅ Input válido:', validacion.valor);
+    
+    // Guardar dato recopilado
+    const datosNuevos: Record<string, any> = {
+      [paso.nombreVariable]: validacion.valor
+    };
+    
+    // Si el paso tiene endpoint configurado, intentar extraer el nombre de la opción seleccionada
+    if (paso.endpointId && paso.endpointResponseConfig) {
+      const estadoActual = await workflowConversationManager.getWorkflowState(contactoId);
+      
+      // Buscar en datosEjecutados si hay datos de este endpoint
+      if (estadoActual?.datosEjecutados && estadoActual.datosEjecutados[paso.endpointId]) {
+        const datosAPI = estadoActual.datosEjecutados[paso.endpointId];
+        let datosArray = datosAPI;
+        
+        if (datosArray.data && Array.isArray(datosArray.data)) {
+          datosArray = datosArray.data;
+        }
+        
+        if (Array.isArray(datosArray)) {
+          const idField = paso.endpointResponseConfig.idField || 'id';
+          const displayField = paso.endpointResponseConfig.displayField || 'name';
+          
+          // Buscar el item que coincida con el ID seleccionado
+          const itemSeleccionado = datosArray.find((item: any) => 
+            String(item[idField]) === String(validacion.valor)
+          );
+          
+          if (itemSeleccionado && itemSeleccionado[displayField]) {
+            // Guardar también el nombre con sufijo _nombre
+            datosNuevos[`${paso.nombreVariable}_nombre`] = itemSeleccionado[displayField];
+            console.log(`✅ Guardando nombre: ${paso.nombreVariable}_nombre = "${itemSeleccionado[displayField]}"`);
+          }
+        }
+      }
+    }
+    
+    await workflowConversationManager.avanzarPaso(contactoId, datosNuevos);
+    
+    // Verificar si hay más pasos
+    const siguientePaso = workflow.steps.find(s => s.orden === paso.orden + 1);
+    
+    if (!siguientePaso) {
+      // No hay más pasos, finalizar
+      const datosRecopilados = await workflowConversationManager.finalizarWorkflow(contactoId);
+      
+      return {
+        success: true,
+        response: workflow.mensajeFinal || '✅ Flujo completado',
+        completed: true,
+        metadata: {
+          workflowName: workflow.nombre,
+          pasoActual: paso.orden,
+          totalPasos: workflow.steps.length,
+          datosRecopilados
+        }
+      };
+    }
+    
+    // Construir respuesta con siguiente pregunta
+    let response = '';
+    
+    if ((siguientePaso.tipo === 'recopilar' || siguientePaso.tipo === 'input' || siguientePaso.tipo === 'confirmacion') && siguientePaso.pregunta) {
+      // Reemplazar variables en la pregunta
+      const estadoActual = await workflowConversationManager.getWorkflowState(contactoId);
+      const datosRecopilados = estadoActual?.datosRecopilados || {};
+      
+      response = this.reemplazarVariables(siguientePaso.pregunta, datosRecopilados);
+      
+      // RECOPILAR llama a la API si tiene endpoint configurado
+      if (siguientePaso.endpointId) {
+        console.log('🌐 Llamando a API para siguiente paso...');
+        
+        try {
+          // Obtener datos recopilados para usar como filtros
+          const estadoActual = await workflowConversationManager.getWorkflowState(contactoId);
+          const datosRecopilados = estadoActual?.datosRecopilados || {};
+          
+          // Mapear parámetros desde variables recopiladas
+          const params: any = {};
+          if (siguientePaso.mapeoParametros) {
+            for (const [paramName, varName] of Object.entries(siguientePaso.mapeoParametros)) {
+              if (datosRecopilados[varName] !== undefined) {
+                if (!params.query) params.query = {};
+                params.query[paramName] = datosRecopilados[varName];
+                console.log(`📋 Filtro: ${paramName} = ${datosRecopilados[varName]}`);
+              }
+            }
+          }
+          
+          // Llamar al endpoint con filtros
+          const resultadoAPI = await apiExecutor.ejecutar(
+            apiConfig._id.toString(),
+            siguientePaso.endpointId,
+            params,
+            { metadata: { contactoId } }
+          );
+          
+          if (resultadoAPI.success && resultadoAPI.data) {
+            console.log('✅ Datos obtenidos de la API');
+            
+            // Guardar datos de la API para uso posterior
+            await workflowConversationManager.guardarDatosEjecutados(
+              contactoId,
+              siguientePaso.endpointId,
+              resultadoAPI.data
+            );
+            
+            let datosArray = resultadoAPI.data;
+            
+            // Si la respuesta tiene una propiedad "data", usarla
+            if (datosArray.data && Array.isArray(datosArray.data)) {
+              datosArray = datosArray.data;
+            }
+            
+            if (Array.isArray(datosArray) && datosArray.length > 0) {
+              console.log(`✅ ${datosArray.length} opciones encontradas`);
+              
+              // Usar endpointResponseConfig si está configurado
+              if (siguientePaso.endpointResponseConfig) {
+                const opciones = this.extraerOpcionesDinamicas(
+                  datosArray,
+                  siguientePaso.endpointResponseConfig
+                );
+                
+                if (opciones.length > 0) {
+                  // Si hay plantilla personalizada, usarla
+                  if (siguientePaso.plantillaOpciones) {
+                    const opcionesFormateadas = this.formatearOpcionesConPlantilla(
+                      datosArray,
+                      siguientePaso.plantillaOpciones,
+                      siguientePaso.endpointResponseConfig
+                    );
+                    response += '\n\n' + opcionesFormateadas;
+                  } else {
+                    response += '\n\n' + workflowConversationManager.formatearOpciones(opciones);
+                  }
+                }
+              } else {
+                // Formato por defecto
+                const opciones = datosArray.map((item: any) => {
+                  const id = item.id || item.code;
+                  const nombre = item.name || item.nombre || item.title;
+                  return `${id}: ${nombre}`;
+                });
+                response += '\n\n' + workflowConversationManager.formatearOpciones(opciones);
+              }
+            }
+          }
+        } catch (error) {
+          console.error('❌ Error llamando a la API:', error);
+        }
+      }
+      // Si tiene opciones estáticas, mostrarlas
+      else if (siguientePaso.validacion?.tipo === 'opcion' && siguientePaso.validacion.opciones) {
+        response += '\n\n' + workflowConversationManager.formatearOpciones(
+          siguientePaso.validacion.opciones
+        );
+      }
+    } else if (siguientePaso.tipo === 'consulta_filtrada') {
+      // El siguiente paso es consulta filtrada, hacerlo ahora
+      return await this.procesarPasoEjecucion(
+        siguientePaso,
+        contactoId,
+        workflow,
+        { ...workflowState, pasoActual: paso.orden },
+        apiConfig
+      );
+    }
+    
+    return {
+      success: true,
+      response,
+      completed: false,
+      metadata: {
+        workflowName: workflow.nombre,
+        pasoActual: paso.orden,
+        totalPasos: workflow.steps.length
+      }
+    };
+  }
+  
+  /**
+   * Procesa un paso de ejecución de API
+   */
+  private async procesarPasoEjecucion(
+    paso: IWorkflowStep,
+    contactoId: string,
+    workflow: IWorkflow,
+    workflowState: any,
+    apiConfig: any
+  ): Promise<WorkflowConversationalResult> {
+    try {
+      console.log('⚡ Ejecutando endpoint:', paso.endpointId);
+      
+      if (!paso.endpointId) {
+        return {
+          success: false,
+          response: '❌ Error: Endpoint no configurado',
+          completed: false,
+          error: 'Endpoint no configurado'
+        };
+      }
+      
+      // Obtener datos recopilados
+      const state = await workflowConversationManager.getWorkflowState(contactoId);
+      if (!state) {
+        return {
+          success: false,
+          response: '❌ Error: Estado no encontrado',
+          completed: false,
+          error: 'Estado no encontrado'
+        };
+      }
+      
+      const datosRecopilados = state.datosRecopilados;
+      console.log('📦 Datos recopilados:', datosRecopilados);
+      console.log('   → sucursal_id:', datosRecopilados?.sucursal_id);
+      console.log('   → categoria_id:', datosRecopilados?.categoria_id);
+      console.log('   → nombre_producto:', datosRecopilados?.nombre_producto);
+      
+      // Mapear parámetros
+      const params: any = {};
+      let searchQuery: string | null = null;
+      if (paso.mapeoParametros) {
+        console.log('🔍 Mapeo de parámetros configurado:', paso.mapeoParametros);
+        
+        for (const [paramName, varName] of Object.entries(paso.mapeoParametros)) {
+          const valorVariable = datosRecopilados[varName];
+          
+          if (valorVariable !== undefined) {
+            // Determinar dónde va el parámetro
+            if (!params.query) params.query = {};
+            
+            // Normalizar el valor (trim y lowercase para búsquedas de texto)
+            let valorNormalizado = valorVariable;
+            if (typeof valorVariable === 'string') {
+              valorNormalizado = valorVariable.trim();
+              
+              // Si es el parámetro de búsqueda, normalizar más
+              if (paramName === 'search' || paramName === 'q' || paramName === 'query') {
+                valorNormalizado = valorNormalizado.toLowerCase();
+                searchQuery = valorNormalizado;
+              }
+            }
+            
+            params.query[paramName] = valorNormalizado;
+            console.log(`   ✅ ${paramName} = "${valorNormalizado}" (desde variable: ${varName})`);
+          } else {
+            console.log(`   ⚠️ Variable "${varName}" no encontrada en datos recopilados`);
+          }
+        }
+      } else {
+        console.log('⚠️ No hay mapeo de parámetros configurado para este paso');
+      }
+      
+      console.log('📤 Parámetros finales para API:', JSON.stringify(params, null, 2));
+      console.log('   → Query location_id:', params.query?.location_id);
+      console.log('   → Query category:', params.query?.category);
+      console.log('   → Query search:', params.query?.search);
+      
+      // Ejecutar endpoint
+      const result = await apiExecutor.ejecutar(
+        apiConfig._id.toString(),
+        paso.endpointId,
+        params
+      );
+      
+      if (!result.success) {
+        console.error('❌ Error ejecutando endpoint:', result.error);
+        await workflowConversationManager.abandonarWorkflow(contactoId);
+        return {
+          success: false,
+          response: '❌ No pude completar la consulta. Por favor intentá de nuevo más tarde.',
+          completed: true,
+          error: typeof result.error === 'string' ? result.error : (result.error as any)?.mensaje
+        };
+      }
+      
+      console.log('✅ Endpoint ejecutado exitosamente');
+      console.log('📊 Datos recibidos de la API:', JSON.stringify(result.data, null, 2).substring(0, 500) + '...');
+      
+      // Si hay término de búsqueda, aplicar un filtrado extra por tokens sobre el nombre
+      let datosFiltrados = result.data;
+      if (searchQuery && datosFiltrados) {
+        try {
+          console.log('🔎 searchQuery para filtro local:', searchQuery);
+          let productos: any = datosFiltrados;
+          
+          if (productos && typeof productos === 'object') {
+            if (productos.data && Array.isArray(productos.data)) {
+              productos = productos.data;
+            } else if (productos.products && Array.isArray(productos.products)) {
+              productos = productos.products;
+            }
+          }
+
+          if (Array.isArray(productos)) {
+            const tokens = searchQuery.split(/\s+/).filter(Boolean);
+            if (tokens.length > 0) {
+              const filtrados = productos.filter((item: any) => {
+                const nombre = (item.name || item.nombre || item.title || '').toString().toLowerCase();
+                if (!nombre) return false;
+                return tokens.every(token => nombre.includes(token));
+              });
+
+              // Siempre aplicar el filtro, aunque no haya coincidencias
+              if (datosFiltrados && typeof datosFiltrados === 'object') {
+                if ((datosFiltrados as any).data && Array.isArray((datosFiltrados as any).data)) {
+                  datosFiltrados = { ...(datosFiltrados as any), data: filtrados };
+                } else if ((datosFiltrados as any).products && Array.isArray((datosFiltrados as any).products)) {
+                  datosFiltrados = { ...(datosFiltrados as any), products: filtrados };
+                } else {
+                  datosFiltrados = filtrados;
+                }
+              } else {
+                datosFiltrados = filtrados;
+              }
+
+              console.log(`🔍 Filtro local aplicado por búsqueda="${searchQuery}": ${filtrados.length}/${productos.length} items`);
+            }
+          }
+        } catch (error) {
+          console.error('⚠️ Error aplicando filtro local de búsqueda:', error);
+        }
+      }
+      
+      // Formatear respuesta usando template o formato por defecto
+      let response = '';
+      
+      console.log('🎨 Formateando respuesta...');
+      console.log('   Template del paso:', paso.plantillaRespuesta ? 'SÍ' : 'NO');
+      console.log('   Template del workflow:', workflow.respuestaTemplate ? 'SÍ' : 'NO');
+      
+      // Prioridad: plantilla del paso > plantilla del workflow > formato por defecto
+      if (paso.plantillaRespuesta) {
+        console.log('   Usando plantilla del paso');
+        response = this.formatearRespuestaConPlantilla(datosFiltrados, paso.plantillaRespuesta, datosRecopilados);
+      } else if (workflow.respuestaTemplate) {
+        console.log('   Usando template del workflow');
+        response = this.aplicarTemplate(workflow.respuestaTemplate, datosRecopilados, datosFiltrados);
+      } else {
+        console.log('   Usando formato por defecto');
+        // Formato por defecto
+        if (workflow.mensajeFinal) {
+          response += workflow.mensajeFinal + '\n\n';
+        }
+        response += this.formatearRespuestaProductos(datosFiltrados);
+      }
+      
+      console.log('📏 Longitud de respuesta antes de limitar:', response.length);
+      
+      // Verificar si hay repetición configurada (tiene prioridad sobre workflows siguientes)
+      if (workflow.repetirWorkflow?.habilitado) {
+        console.log('🔄 Repetición de workflow configurada');
+        const config = workflow.repetirWorkflow;
+        
+        response += '\n\n';
+        response += config.pregunta || '¿Deseas realizar otra búsqueda?';
+        response += '\n\n';
+        response += `1: ${config.opcionRepetir || 'Buscar otro'}\n`;
+        response += `2: ${config.opcionFinalizar || 'Terminar'}\n`;
+        
+        // Marcar como esperando decisión de repetición (ANTES de finalizar)
+        await workflowConversationManager.marcarEsperandoRepeticion(contactoId);
+        
+        // Limitar a 4000 caracteres para WhatsApp
+        if (response.length > 4000) {
+          console.log('⚠️ Respuesta demasiado larga, truncando...');
+          response = response.substring(0, 3950) + '\n\n... (resultados truncados)';
+        }
+        
+        console.log('📏 Longitud de respuesta final:', response.length);
+        
+        return {
+          success: true,
+          response,
+          completed: false, // NO completar, esperamos decisión
+          metadata: {
+            workflowName: workflow.nombre,
+            pasoActual: paso.orden,
+            totalPasos: workflow.steps.length,
+            datosRecopilados,
+            esperandoRepeticion: true
+          }
+        };
+      }
+      
+      // Finalizar workflow (solo si NO hay repetición configurada)
+      await workflowConversationManager.finalizarWorkflow(contactoId);
+      console.log('✅ Workflow finalizado (sin repetición)');
+      
+      // Agregar workflows siguientes si están configurados (y no hay repetición)
+      if (workflow.workflowsSiguientes && workflow.workflowsSiguientes.workflows.length > 0) {
+        console.log('🔗 Workflows encadenados configurados');
+        response += '\n\n';
+        if (workflow.workflowsSiguientes.pregunta) {
+          response += workflow.workflowsSiguientes.pregunta + '\n\n';
+        } else {
+          response += '¿Qué te gustaría hacer?\n\n';
+        }
+        
+        workflow.workflowsSiguientes.workflows.forEach((wf, index) => {
+          response += `${index + 1}: ${wf.opcion}\n`;
+        });
+      }
+      
+      // Limitar a 4000 caracteres para WhatsApp
+      if (response.length > 4000) {
+        console.log('⚠️ Respuesta demasiado larga, truncando...');
+        response = response.substring(0, 3950) + '\n\n... (resultados truncados)';
+      }
+      
+      console.log('📏 Longitud de respuesta final:', response.length);
+      console.log('📝 Respuesta final (primeros 500 chars):', response.substring(0, 500));
+      
+      return {
+        success: true,
+        response,
+        completed: true,
+        metadata: {
+          workflowName: workflow.nombre,
+          pasoActual: paso.orden,
+          totalPasos: workflow.steps.length,
+          datosRecopilados,
+          workflowsSiguientes: workflow.workflowsSiguientes
+        }
+      };
+      
+    } catch (error: any) {
+      console.error('❌ Error ejecutando paso:', error);
+      await workflowConversationManager.abandonarWorkflow(contactoId);
+      return {
+        success: false,
+        response: '❌ Ocurrió un error ejecutando la consulta.',
+        completed: true,
+        error: error.message
+      };
+    }
+  }
+  
+  /**
+   * Aplica un template reemplazando variables
+   */
+  private aplicarTemplate(template: string, datosRecopilados: any, resultadoAPI: any): string {
+    console.log('🎯 [aplicarTemplate] Iniciando');
+    console.log('   Tipo resultadoAPI:', typeof resultadoAPI);
+    console.log('   Es array resultadoAPI:', Array.isArray(resultadoAPI));
+
+    // Extraer datos para el motor de plantillas avanzado
+    let datosParaTemplate: any = resultadoAPI;
+    if (resultadoAPI && typeof resultadoAPI === 'object') {
+      if ((resultadoAPI as any).data && Array.isArray((resultadoAPI as any).data)) {
+        console.log('   ✅ usando resultadoAPI.data como items para template');
+        datosParaTemplate = (resultadoAPI as any).data;
+      } else if ((resultadoAPI as any).products && Array.isArray((resultadoAPI as any).products)) {
+        console.log('   ✅ usando resultadoAPI.products como items para template');
+        datosParaTemplate = (resultadoAPI as any).products;
+      }
+    }
+
+    console.log('   Es array datosParaTemplate:', Array.isArray(datosParaTemplate));
+    if (Array.isArray(datosParaTemplate)) {
+      console.log('   Cantidad items en datosParaTemplate:', datosParaTemplate.length);
+    }
+
+    const variables = datosRecopilados || {};
+
+    let resultado = this.formatearRespuestaConPlantilla(
+      datosParaTemplate,
+      template,
+      variables
+    );
+
+    console.log('   Resultado tras formatearRespuestaConPlantilla (primeros 200 chars):', resultado.substring(0, 200));
+
+    // Mantener compatibilidad con templates legacy que usan {{resultados}} o {{resultado}}
+    if (resultadoAPI) {
+      const formatoProductos = this.formatearRespuestaProductos(resultadoAPI);
+      resultado = resultado.replace(/{{resultados}}/g, formatoProductos);
+      resultado = resultado.replace(/{{resultado}}/g, formatoProductos);
+    }
+
+    console.log('   Resultado final aplicarTemplate (primeros 200 chars):', resultado.substring(0, 200));
+
+    return resultado;
+  }
+  
+  /**
+   * Formatea productos de manera concisa
+   */
+  private formatearRespuestaProductos(data: any): string {
+    console.log('🔍 [formatearRespuestaProductos] Iniciando formateo...');
+    console.log('   Tipo de data:', typeof data);
+    console.log('   Es array:', Array.isArray(data));
+    
+    // Extraer array de productos
+    let productos = data;
+    
+    if (data && typeof data === 'object') {
+      if (data.data && Array.isArray(data.data)) {
+        console.log('   ✅ Encontrado array en data.data');
+        productos = data.data;
+      } else if (data.products && Array.isArray(data.products)) {
+        console.log('   ✅ Encontrado array en data.products');
+        productos = data.products;
+      }
+    }
+    
+    if (!Array.isArray(productos)) {
+      console.log('   ❌ No es un array, retornando mensaje de error');
+      return 'No se encontraron productos.';
+    }
+    
+    console.log(`   📊 Total productos: ${productos.length}`);
+    
+    if (productos.length === 0) {
+      console.log('   ❌ Array vacío');
+      return '❌ No se encontraron productos con esos criterios.';
+    }
+    
+    // Limitar a 10 productos
+    const productosLimitados = productos.slice(0, 10);
+    console.log(`   ✂️ Limitando a ${productosLimitados.length} productos`);
+    
+    // Formatear de manera concisa
+    const lista = productosLimitados.map((producto: any, index: number) => {
+      const nombre = producto.name || producto.nombre || producto.title || 'Sin nombre';
+      const precio = producto.price || producto.precio || '';
+      
+      // Formatear stock correctamente
+      let stockTexto = '';
+      const stock = producto.stock || producto.stock_quantity;
+      
+      if (stock !== undefined && stock !== null) {
+        // Si stock es un objeto, extraer la cantidad
+        if (typeof stock === 'object') {
+          const cantidad = stock.quantity || stock.amount || stock.available || stock.stock;
+          if (cantidad !== undefined) {
+            stockTexto = String(cantidad);
+          }
+        } else {
+          stockTexto = String(stock);
+        }
+      }
+      
+      let linea = `${index + 1}. *${nombre}*`;
+      if (precio) linea += `\n   💰 $${precio}`;
+      if (stockTexto) linea += `\n   📦 Stock: ${stockTexto}`;
+      
+      return linea;
+    }).join('\n\n');
+    
+    let resultado = lista;
+    
+    // Agregar nota si hay más productos
+    if (productos.length > 10) {
+      resultado += `\n\n_... y ${productos.length - 10} productos más_`;
+      console.log(`   ℹ️ Agregando nota de ${productos.length - 10} productos más`);
+    }
+    
+    console.log(`   📏 Longitud del resultado: ${resultado.length} caracteres`);
+    
+    return resultado;
+  }
+  
+  /**
+   * Formatea la respuesta de la API para el usuario (método legacy)
+   */
+  private formatearRespuesta(data: any): string {
+    return this.formatearRespuestaProductos(data);
+  }
+  
+  /**
+   * Formatea opciones usando una plantilla personalizada
+   * Plantilla ejemplo: "{{numero}}: {{nombre}} - {{descripcion}}"
+   */
+  private formatearOpcionesConPlantilla(
+    datos: any[],
+    plantilla: string,
+    config: any
+  ): string {
+    const opciones = datos.map((item, index) => {
+      let linea = plantilla;
+      
+      // Reemplazar {{numero}} con el índice
+      linea = linea.replace(/\{\{numero\}\}/g, (index + 1).toString());
+      linea = linea.replace(/\{\{index\}\}/g, index.toString());
+      
+      // Reemplazar {{id}} con el campo ID configurado
+      if (config.idField && item[config.idField]) {
+        linea = linea.replace(/\{\{id\}\}/g, item[config.idField]);
+      }
+      
+      // Reemplazar {{nombre}} o {{displayField}} con el campo display configurado
+      if (config.displayField && item[config.displayField]) {
+        linea = linea.replace(/\{\{nombre\}\}/g, item[config.displayField]);
+        linea = linea.replace(/\{\{displayField\}\}/g, item[config.displayField]);
+      }
+      
+      // Reemplazar cualquier otro campo del objeto
+      Object.keys(item).forEach(key => {
+        const regex = new RegExp(`\\{\\{${key}\\}\\}`, 'g');
+        linea = linea.replace(regex, item[key] || '');
+      });
+      
+      return linea;
+    });
+    
+    return opciones.join('\n');
+  }
+  
+  /**
+   * Formatea respuesta de ejecución usando plantilla personalizada
+   */
+  private formatearRespuestaConPlantilla(
+    datos: any,
+    plantilla: string,
+    variables: Record<string, any>
+  ): string {
+    let resultado = plantilla;
+    
+    // Reemplazar variables del workflow
+    Object.keys(variables).forEach(key => {
+      const regex = new RegExp(`\\{\\{${key}\\}\\}`, 'g');
+      resultado = resultado.replace(regex, variables[key] || '');
+    });
+    
+    // Si datos es un array, formatear cada item
+    if (Array.isArray(datos)) {
+      // Buscar sección de loop {{#items}}...{{/items}}
+      const loopMatch = resultado.match(/\{\{#items\}\}([\s\S]*?)\{\{\/items\}\}/);
+      if (loopMatch) {
+        const itemTemplate = loopMatch[1];
+        const itemsFormateados = datos.map((item, index) => {
+          let itemTexto = itemTemplate;
+          itemTexto = itemTexto.replace(/\{\{numero\}\}/g, (index + 1).toString());
+          
+          Object.keys(item).forEach(key => {
+            const regex = new RegExp(`\\{\\{${key}\\}\\}`, 'g');
+            itemTexto = itemTexto.replace(regex, item[key] || '');
+          });
+          
+          return itemTexto;
+        }).join('');
+        
+        resultado = resultado.replace(/\{\{#items\}\}[\s\S]*?\{\{\/items\}\}/, itemsFormateados);
+      }
+      
+      // Reemplazar {{count}} con el número de items
+      resultado = resultado.replace(/\{\{count\}\}/g, datos.length.toString());
+    } else if (typeof datos === 'object') {
+      // Si es un objeto, reemplazar sus propiedades
+      Object.keys(datos).forEach(key => {
+        const regex = new RegExp(`\\{\\{${key}\\}\\}`, 'g');
+        resultado = resultado.replace(regex, datos[key] || '');
+      });
+    }
+    
+    return resultado;
+  }
+  
+  /**
+   * Procesa el paso de confirmación
+   */
+  private async procesarConfirmacion(
+    mensaje: string,
+    paso: IWorkflowStep,
+    contactoId: string,
+    workflow: IWorkflow,
+    workflowState: any,
+    apiConfig: any
+  ): Promise<WorkflowConversationalResult> {
+    console.log('📋 Procesando confirmación...');
+    
+    // Validar que sea una opción válida (1-5)
+    const opcion = mensaje.trim();
+    
+    if (!['1', '2', '3', '4', '5'].includes(opcion)) {
+      return {
+        success: false,
+        response: '❌ Opción inválida. Por favor selecciona un número del 1 al 5.',
+        completed: false,
+        error: 'Opción inválida'
+      };
+    }
+    
+    console.log(`✅ Opción seleccionada: ${opcion}`);
+    
+    // Opción 1: Confirmar y continuar
+    if (opcion === '1') {
+      console.log('✅ Usuario confirmó, continuando al paso final...');
+      
+      // Avanzar al siguiente paso (que debería ser EJECUTAR)
+      await workflowConversationManager.avanzarPaso(contactoId, {
+        [paso.nombreVariable]: opcion
+      });
+      
+      const siguientePaso = workflow.steps.find(s => s.orden === paso.orden + 1);
+      
+      if (siguientePaso && siguientePaso.tipo === 'consulta_filtrada') {
+        return await this.procesarPasoEjecucion(
+          siguientePaso,
+          contactoId,
+          workflow,
+          { ...workflowState, pasoActual: paso.orden },
+          apiConfig
+        );
+      }
+      
+      return {
+        success: false,
+        response: '❌ Error: No se encontró el paso de ejecución',
+        completed: true,
+        error: 'Paso de ejecución no encontrado'
+      };
+    }
+    
+    // Opción 5: Cancelar
+    if (opcion === '5') {
+      console.log('🚫 Usuario canceló el flujo');
+      await workflowConversationManager.abandonarWorkflow(contactoId);
+      
+      return {
+        success: true,
+        response: '🚫 Búsqueda cancelada. Si necesitas ayuda, escribe "productos" o "buscar".',
+        completed: true
+      };
+    }
+    
+    // Opciones 2-4: Cambiar un dato
+    const cambios: Record<string, { paso: number; variable: string; nombre: string }> = {
+      '2': { paso: 0, variable: 'sucursal_id', nombre: 'sucursal' },
+      '3': { paso: 1, variable: 'categoria_id', nombre: 'categoría' },
+      '4': { paso: 2, variable: 'nombre_producto', nombre: 'producto' }
+    };
+    
+    const cambio = cambios[opcion];
+    
+    if (cambio) {
+      console.log(`🔄 Usuario quiere cambiar: ${cambio.nombre}`);
+      
+      // Retroceder al paso correspondiente y limpiar la variable
+      await workflowConversationManager.retrocederAPaso(
+        contactoId,
+        cambio.paso,
+        cambio.variable
+      );
+      
+      // También limpiar la variable _nombre si existe
+      const estadoActual = await workflowConversationManager.getWorkflowState(contactoId);
+      if (estadoActual?.datosRecopilados) {
+        const variableNombre = `${cambio.variable}_nombre`;
+        if (estadoActual.datosRecopilados[variableNombre]) {
+          await workflowConversationManager.actualizarDato(contactoId, variableNombre, undefined);
+        }
+      }
+      
+      // Obtener el paso al que retrocedimos
+      const pasoRetroceso = workflow.steps.find(s => s.orden === cambio.paso + 1);
+      
+      if (!pasoRetroceso) {
+        return {
+          success: false,
+          response: '❌ Error al retroceder',
+          completed: true,
+          error: 'Paso no encontrado'
+        };
+      }
+      
+      // Construir respuesta con la pregunta del paso
+      let response = `🔄 Cambiando ${cambio.nombre}...\n\n`;
+      
+      if (pasoRetroceso.pregunta) {
+        const estadoActualizado = await workflowConversationManager.getWorkflowState(contactoId);
+        const datosRecopilados = estadoActualizado?.datosRecopilados || {};
+        response += this.reemplazarVariables(pasoRetroceso.pregunta, datosRecopilados);
+        
+        // Si el paso tiene endpoint, llamar a la API
+        if (pasoRetroceso.endpointId) {
+          try {
+            // Mapear parámetros
+            const params: any = {};
+            if (pasoRetroceso.mapeoParametros) {
+              for (const [paramName, varName] of Object.entries(pasoRetroceso.mapeoParametros)) {
+                if (datosRecopilados[varName] !== undefined) {
+                  if (!params.query) params.query = {};
+                  params.query[paramName] = datosRecopilados[varName];
+                }
+              }
+            }
+            
+            // Llamar al endpoint
+            const resultadoAPI = await apiExecutor.ejecutar(
+              apiConfig._id.toString(),
+              pasoRetroceso.endpointId,
+              params,
+              { metadata: { contactoId } }
+            );
+            
+            if (resultadoAPI.success && resultadoAPI.data) {
+              // Guardar datos
+              await workflowConversationManager.guardarDatosEjecutados(
+                contactoId,
+                pasoRetroceso.endpointId,
+                resultadoAPI.data
+              );
+              
+              let datosArray = resultadoAPI.data;
+              if (datosArray.data && Array.isArray(datosArray.data)) {
+                datosArray = datosArray.data;
+              }
+              
+              if (Array.isArray(datosArray) && datosArray.length > 0) {
+                if (pasoRetroceso.endpointResponseConfig) {
+                  const opciones = this.extraerOpcionesDinamicas(
+                    datosArray,
+                    pasoRetroceso.endpointResponseConfig
+                  );
+                  
+                  if (opciones.length > 0) {
+                    response += '\n\n' + workflowConversationManager.formatearOpciones(opciones);
+                  }
+                }
+              }
+            }
+          } catch (error) {
+            console.error('❌ Error llamando a la API:', error);
+          }
+        }
+        // Si tiene opciones estáticas
+        else if (pasoRetroceso.validacion?.tipo === 'opcion' && pasoRetroceso.validacion.opciones) {
+          response += '\n\n' + workflowConversationManager.formatearOpciones(
+            pasoRetroceso.validacion.opciones
+          );
+        }
+      }
+      
+      return {
+        success: true,
+        response,
+        completed: false,
+        metadata: {
+          workflowName: workflow.nombre,
+          pasoActual: cambio.paso,
+          totalPasos: workflow.steps.length
+        }
+      };
+    }
+    
+    return {
+      success: false,
+      response: '❌ Opción no reconocida',
+      completed: false,
+      error: 'Opción no reconocida'
+    };
+  }
+  
+  /**
+   * Reemplaza variables en un texto con formato {{variable}}
+   */
+  private reemplazarVariables(texto: string, datos: Record<string, any>): string {
+    let resultado = texto;
+    
+    // Buscar todas las variables en formato {{variable}}
+    const regex = /\{\{([^}]+)\}\}/g;
+    const matches = texto.matchAll(regex);
+    
+    for (const match of matches) {
+      const nombreVariable = match[1].trim();
+      const valor = datos[nombreVariable];
+      
+      if (valor !== undefined && valor !== null) {
+        resultado = resultado.replace(match[0], String(valor));
+        console.log(`🔄 Variable reemplazada: {{${nombreVariable}}} → "${valor}"`);
+      } else {
+        console.log(`⚠️ Variable no encontrada: {{${nombreVariable}}}`);
+        // Dejar la variable sin reemplazar si no existe
+      }
+    }
+    
+    return resultado;
+  }
+  
+  /**
+   * Procesa la decisión del usuario sobre repetir el workflow
+   */
+  private async procesarDecisionRepeticion(
+    mensaje: string,
+    contactoId: string,
+    workflow: IWorkflow,
+    workflowState: any,
+    apiConfig: any
+  ): Promise<WorkflowConversationalResult> {
+    const opcion = mensaje.trim();
+    console.log('🔄 [REPETICION] ========== PROCESANDO DECISIÓN ==========');
+    console.log('🔄 [REPETICION] Mensaje recibido:', opcion);
+    console.log('🔄 [REPETICION] WorkflowState:', JSON.stringify(workflowState));
+    console.log('🔄 [REPETICION] Configuración repetición:', JSON.stringify(workflow.repetirWorkflow));
+    
+    // Opción 1: Repetir
+    if (opcion === '1') {
+      const config = workflow.repetirWorkflow!;
+      console.log('🔄 [REPETICION] Usuario eligió repetir desde paso', config.desdePaso);
+      
+      // Limpiar variables y retroceder
+      await workflowConversationManager.limpiarVariablesYRetroceder(
+        contactoId,
+        config.variablesALimpiar || [],
+        config.desdePaso - 1 // -1 porque pasoActual es 0-indexed
+      );
+      
+      // Obtener el paso al que volvemos
+      const pasoDestino = workflow.steps.find(s => s.orden === config.desdePaso);
+      if (!pasoDestino) {
+        return {
+          success: false,
+          response: '❌ Error: Paso de repetición no encontrado',
+          completed: true,
+          error: 'Paso no encontrado'
+        };
+      }
+      
+      // Construir respuesta con la pregunta del paso
+      let response = '';
+      if (pasoDestino.pregunta) {
+        response = pasoDestino.pregunta;
+        
+        // Si tiene endpoint, llamar para obtener opciones
+        if (pasoDestino.endpointId && pasoDestino.endpointResponseConfig) {
+          try {
+            // Obtener datos recopilados actuales
+            const estadoActual = await workflowConversationManager.getWorkflowState(contactoId);
+            const datosRecopilados = estadoActual?.datosRecopilados || {};
+            
+            // Construir parámetros si el paso tiene mapeo
+            const params: any = {};
+            if (pasoDestino.mapeoParametros) {
+              for (const [paramName, varName] of Object.entries(pasoDestino.mapeoParametros)) {
+                const valor = datosRecopilados[varName as string];
+                if (valor !== undefined) {
+                  if (!params.query) params.query = {};
+                  params.query[paramName] = valor;
+                }
+              }
+            }
+            
+            const resultadoAPI = await apiExecutor.ejecutar(
+              apiConfig._id.toString(),
+              pasoDestino.endpointId,
+              params,
+              { metadata: { contactoId } }
+            );
+            
+            if (resultadoAPI.success && resultadoAPI.data) {
+              let datosArray = resultadoAPI.data;
+              if (datosArray.data && Array.isArray(datosArray.data)) {
+                datosArray = datosArray.data;
+              }
+              
+              if (Array.isArray(datosArray) && datosArray.length > 0) {
+                const opciones = this.extraerOpcionesDinamicas(
+                  datosArray,
+                  pasoDestino.endpointResponseConfig
+                );
+                if (opciones.length > 0) {
+                  response += '\n\n' + workflowConversationManager.formatearOpciones(opciones);
+                }
+              }
+            }
+          } catch (error) {
+            console.error('❌ Error obteniendo opciones para repetición:', error);
+          }
+        }
+      }
+      
+      return {
+        success: true,
+        response,
+        completed: false,
+        metadata: {
+          workflowName: workflow.nombre,
+          pasoActual: config.desdePaso - 1,
+          totalPasos: workflow.steps.length
+        }
+      };
+    }
+    
+    // Opción 2: Finalizar
+    if (opcion === '2') {
+      console.log('🔄 [REPETICION] Usuario eligió finalizar');
+      await workflowConversationManager.finalizarWorkflow(contactoId);
+      
+      return {
+        success: true,
+        response: workflow.mensajeFinal || '✅ ¡Gracias por usar nuestro servicio!',
+        completed: true
+      };
+    }
+    
+    // Opción no válida
+    const config = workflow.repetirWorkflow!;
+    return {
+      success: true,
+      response: `Por favor selecciona una opción válida:\n\n1: ${config.opcionRepetir || 'Repetir'}\n2: ${config.opcionFinalizar || 'Finalizar'}`,
+      completed: false
+    };
+  }
+}
+
+// Singleton
+export const workflowConversationalHandler = new WorkflowConversationalHandler();

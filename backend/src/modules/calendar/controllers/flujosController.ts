@@ -96,6 +96,72 @@ export const obtenerTodosLosFlujos = async (req: Request, res: Response): Promis
         } : null
       })),
 
+      // FLUJO DE NOTIFICACIÓN DIARIA PARA AGENTES
+      notificacionDiariaAgentes: configModulo.notificacionDiariaAgentes ? {
+        id: 'notificacion_diaria_agentes',
+        nombre: 'Recordatorio Diario de Reservas para Agentes',
+        descripcion: 'Envía un resumen diario a los agentes con todas sus reservas del día',
+        activa: configModulo.notificacionDiariaAgentes.activa,
+        
+        // Configuración de envío
+        envio: {
+          horaEnvio: configModulo.notificacionDiariaAgentes.horaEnvio,
+          frecuencia: configModulo.notificacionDiariaAgentes.frecuencia,
+          enviarATodos: configModulo.notificacionDiariaAgentes.enviarATodos,
+          agentesEspecificos: configModulo.notificacionDiariaAgentes.agentesEspecificos || []
+        },
+
+        // Filtros
+        filtros: {
+          rangoHorario: configModulo.notificacionDiariaAgentes.rangoHorario,
+          filtroHorario: configModulo.notificacionDiariaAgentes.filtroHorario,
+          filtroEstado: configModulo.notificacionDiariaAgentes.filtroEstado,
+          filtroTipo: configModulo.notificacionDiariaAgentes.filtroTipo
+        },
+
+        // Detalles incluidos
+        incluirDetalles: configModulo.notificacionDiariaAgentes.incluirDetalles,
+
+        // Plantilla de mensaje
+        plantillaMensaje: configModulo.notificacionDiariaAgentes.plantillaMensaje,
+
+        // Flujo de ejecución
+        flujoEjecucion: {
+          pasos: [
+            {
+              numero: 1,
+              nombre: 'Verificar Frecuencia',
+              descripcion: 'Verifica si hoy corresponde enviar según la frecuencia configurada',
+              editable: false
+            },
+            {
+              numero: 2,
+              nombre: 'Buscar Agentes',
+              descripcion: 'Busca los agentes que deben recibir la notificación (todos o específicos)',
+              editable: false
+            },
+            {
+              numero: 3,
+              nombre: 'Obtener Reservas',
+              descripcion: 'Obtiene las reservas del día para cada agente según filtros',
+              editable: false
+            },
+            {
+              numero: 4,
+              nombre: 'Generar Mensaje',
+              descripcion: 'Genera el mensaje personalizado con la lista de reservas',
+              editable: true
+            },
+            {
+              numero: 5,
+              nombre: 'Enviar Notificación',
+              descripcion: 'Envía el mensaje vía WhatsApp al inicio del horario de trabajo',
+              editable: false
+            }
+          ]
+        }
+      } : null,
+
       // FLUJOS ESPECIALES
       especiales: [
         {
@@ -116,6 +182,8 @@ export const obtenerTodosLosFlujos = async (req: Request, res: Response): Promis
       estadisticas: {
         totalNotificaciones: configModulo.notificaciones.length,
         notificacionesActivas: configModulo.notificaciones.filter(n => n.activa).length,
+        notificacionDiariaAgentesActiva: configModulo.notificacionDiariaAgentes?.activa || false,
+        totalFlujos: configModulo.notificaciones.length + (configModulo.notificacionDiariaAgentes ? 1 : 0) + 1, // +1 por GPT fallback
         ultimaActualizacion: (configModulo as any).updatedAt || new Date()
       }
     };
@@ -170,6 +238,27 @@ export const actualizarFlujo = async (req: Request, res: Response): Promise<void
         flujo: configModulo.notificaciones[notifIndex]
       });
 
+    } else if (tipo === 'notificacion_diaria_agentes') {
+      // Actualizar notificación diaria de agentes
+      const configModulo = await ConfiguracionModuloModel.findOne({ empresaId });
+      if (!configModulo) {
+        res.status(404).json({ success: false, message: 'Configuración no encontrada' });
+        return;
+      }
+
+      configModulo.notificacionDiariaAgentes = {
+        ...configModulo.notificacionDiariaAgentes,
+        ...configuracion
+      } as any;
+
+      await configModulo.save();
+
+      res.json({
+        success: true,
+        message: 'Notificación diaria de agentes actualizada',
+        flujo: configModulo.notificacionDiariaAgentes
+      });
+
     } else {
       res.status(400).json({ success: false, message: 'Tipo de flujo inválido' });
     }
@@ -206,6 +295,19 @@ export const toggleFlujo = async (req: Request, res: Response): Promise<void> =>
       }
 
       res.json({ success: true, message: `Notificación ${activo ? 'activada' : 'desactivada'}` });
+    } else if (tipo === 'notificacion_diaria_agentes') {
+      const configModulo = await ConfiguracionModuloModel.findOne({ empresaId });
+      if (!configModulo) {
+        res.status(404).json({ success: false, message: 'Configuración no encontrada' });
+        return;
+      }
+
+      if (configModulo.notificacionDiariaAgentes) {
+        configModulo.notificacionDiariaAgentes.activa = activo;
+        await configModulo.save();
+      }
+
+      res.json({ success: true, message: `Notificación diaria de agentes ${activo ? 'activada' : 'desactivada'}` });
     }
 
   } catch (error: any) {

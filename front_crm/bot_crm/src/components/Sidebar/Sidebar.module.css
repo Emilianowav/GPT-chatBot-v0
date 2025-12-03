@@ -19,7 +19,6 @@
   width: 280px;
   background: var(--momento-black, #1A1A1A);
   border-right: 2px solid var(--momento-orange, #FF6B4A);
-  box-shadow: 4px 0 12px rgba(255, 107, 74, 0.2);
   display: flex;
   flex-direction: column;
   z-index: 999;
@@ -113,7 +112,7 @@
 /* Navegación */
 .nav {
   flex: 1;
-  padding: 20px 12px;
+  padding: 20px 0px;
   overflow-y: auto;
 }
 
@@ -122,13 +121,11 @@
   display: flex;
   align-items: center;
   gap: 12px;
-  padding: 12px 16px;
+  padding: 16px 16px;
   border: none;
   background: none;
-  border-radius: 8px;
   cursor: pointer;
   transition: all 0.3s ease;
-  margin-bottom: 4px;
   text-align: left;
   color: rgba(255, 255, 255, 0.8);
 }
@@ -139,8 +136,8 @@
 }
 
 .navItem.active {
-  background: linear-gradient(135deg, #FF6B4A 0%, #FF8A6E 100%);
-  color: white;
+  background: var(--momento-black-light, #2a2a2a);
+  color: var(--momento-orange, #FF6B4A);
 }
 
 .navIcon {

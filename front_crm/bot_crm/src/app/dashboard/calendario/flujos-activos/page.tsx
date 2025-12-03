@@ -8,6 +8,7 @@ import { useConfiguracionBot } from '@/hooks/useConfiguracionBot';
 import { useConfiguracion } from '@/hooks/useConfiguracion';
 import ConfiguracionBot from '@/components/calendar/ConfiguracionBot';
 import ModalConfiguracionFlujo from '@/components/flujos/ModalConfiguracionFlujo';
+import ModalConfiguracionAgentes from '@/components/flujos/ModalConfiguracionAgentes';
 import { Power, Settings, Send, Eye, EyeOff, Plus, Edit2, Trash2 } from 'lucide-react';
 import styles from './flujos.module.css';
 
@@ -88,52 +89,85 @@ export default function AdministradorFlujosPage() {
     ]
   };
 
-  // Flujos automáticos - Cargar desde configuración
-  const notificacionConfirmacion = configModulo?.notificaciones?.find(n => n.tipo === 'confirmacion');
+  // ✅ NUEVA ESTRUCTURA: plantillasMeta
+  const confirmacionTurnos = configModulo?.plantillasMeta?.confirmacionTurnos;
+  const notificacionDiariaAgentes = configModulo?.plantillasMeta?.notificacionDiariaAgentes;
   
   const flujosAutomaticos = [
     {
       id: 'confirmacion_turnos',
       nombre: 'Confirmación de Turnos',
-      descripcion: 'Envía recordatorios automáticos antes del turno',
+      descripcion: 'Envía recordatorios automáticos antes del turno (Plantilla Meta)',
       tipo: 'automatico',
-      activo: notificacionConfirmacion?.activa ?? false,
+      activo: confirmacionTurnos?.activa ?? false,
       icono: '⏰',
       trigger: (() => {
-        const momento = notificacionConfirmacion?.momento;
-        const horasAntes = (notificacionConfirmacion as any)?.horasAntesTurno;
-        const diasAntes = notificacionConfirmacion?.diasAntes;
-        const horaEnvio = (notificacionConfirmacion as any)?.horaEnvioDiaAntes;
+        const programacion = confirmacionTurnos?.programacion;
         
-        // Debug: Ver qué valores llegan
-        console.log('🔍 Debug notificación:', {
-          momento,
-          horasAntes,
-          diasAntes,
-          horaEnvio
-        });
-        
-        if (momento === 'horas_antes_turno' && horasAntes) {
-          return `${horasAntes} horas antes del turno`;
-        } else if (momento === 'dia_antes_turno' && diasAntes && horaEnvio) {
-          return `${diasAntes} día${diasAntes > 1 ? 's' : ''} antes a las ${horaEnvio}`;
-        } else if (momento === 'noche_anterior') {
-          return 'Noche anterior';
+        if (!programacion) {
+          return 'Configuración pendiente';
         }
         
-        // Fallback: intentar mostrar lo que tengamos
+        const diasAntes = programacion.diasAntes;
+        const horaEnvio = programacion.horaEnvio;
+        
         if (diasAntes && horaEnvio) {
           return `${diasAntes} día${diasAntes > 1 ? 's' : ''} antes a las ${horaEnvio}`;
         }
+        
         return 'Configuración pendiente';
       })(),
       config: {
-        anticipacion: notificacionConfirmacion?.diasAntes || 1,
-        horaEnvio: (notificacionConfirmacion as any)?.horaEnvioDiaAntes || '22:00',
-        estados: (notificacionConfirmacion as any)?.filtros?.estados || ['pendiente', 'no_confirmado'],
-        mensaje: notificacionConfirmacion?.plantillaMensaje || '¡Hola! 👋 Te recordamos que tenés un turno agendado para mañana.\n\n📅 Fecha: {fecha}\n🕐 Hora: {hora}\n📍 Destino: {destino}\n\n¿Confirmás tu asistencia? Respondé SÍ o NO',
-        mensajeConfirmacion: notificacionConfirmacion?.mensajeConfirmacion || '✅ ¡Perfecto! Todos tus viajes han sido confirmados.\n\n¡Nos vemos pronto! 🚗',
-        solicitarConfirmacion: notificacionConfirmacion?.requiereConfirmacion ?? true
+        plantilla: confirmacionTurnos?.nombre || 'clientes_sanjose',
+        idioma: confirmacionTurnos?.idioma || 'es',
+        anticipacion: confirmacionTurnos?.programacion?.diasAntes || 1,
+        horaEnvio: confirmacionTurnos?.programacion?.horaEnvio || '21:00',
+        estados: confirmacionTurnos?.programacion?.filtroEstado || ['pendiente', 'no_confirmado'],
+        metaApiUrl: confirmacionTurnos?.metaApiUrl || '',
+        variables: confirmacionTurnos?.variables || {}
+      }
+    },
+    {
+      id: 'notificacion_diaria_agentes',
+      nombre: 'Recordatorio Diario para Agentes',
+      descripcion: 'Envía un resumen diario a los agentes con todas sus reservas del día (Plantilla Meta)',
+      tipo: 'automatico',
+      activo: notificacionDiariaAgentes?.activa ?? false,
+      icono: '📅',
+      trigger: (() => {
+        const programacion = notificacionDiariaAgentes?.programacion;
+        
+        if (!programacion) {
+          return 'Configuración pendiente';
+        }
+        
+        const horaEnvio = programacion.horaEnvio || '06:00';
+        const frecuencia = programacion.frecuencia || 'diaria';
+        
+        if (frecuencia === 'diaria') {
+          return `Todos los días a las ${horaEnvio}`;
+        }
+        
+        return `Frecuencia ${frecuencia} a las ${horaEnvio}`;
+      })(),
+      config: {
+        plantilla: notificacionDiariaAgentes?.nombre || 'chofer_sanjose',
+        idioma: notificacionDiariaAgentes?.idioma || 'es',
+        horaEnvio: notificacionDiariaAgentes?.programacion?.horaEnvio || '06:00',
+        frecuencia: notificacionDiariaAgentes?.programacion?.frecuencia || 'diaria',
+        rangoHorario: notificacionDiariaAgentes?.programacion?.rangoHorario || 'hoy',
+        estados: notificacionDiariaAgentes?.programacion?.filtroEstado || ['pendiente', 'confirmado'],
+        incluirDetalles: notificacionDiariaAgentes?.programacion?.incluirDetalles || {
+          origen: true,
+          destino: true,
+          nombreCliente: true,
+          telefonoCliente: false,
+          horaReserva: true,
+          notasInternas: false
+        },
+        metaApiUrl: notificacionDiariaAgentes?.metaApiUrl || '',
+        variables: notificacionDiariaAgentes?.variables || {},
+        ultimoEnvio: notificacionDiariaAgentes?.ultimoEnvio || null
       }
     },
     {
@@ -167,6 +201,111 @@ export default function AdministradorFlujosPage() {
     }
   };
 
+  const handleToggleFlujo = async (flujoId: string, nuevoEstado: boolean) => {
+    try {
+      const token = localStorage.getItem('auth_token');
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';
+      
+      // Obtener configuración actual
+      const getResponse = await fetch(`${apiUrl}/api/modules/calendar/configuracion/${empresaId}`, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      
+      if (!getResponse.ok) throw new Error('Error al obtener configuración');
+      
+      const configActual = await getResponse.json();
+      
+      // Actualizar según el flujo
+      let configActualizada = { ...configActual };
+      
+      // ✅ NUEVO SISTEMA: Actualizar en plantillasMeta
+      if (flujoId === 'notificacion_diaria_agentes') {
+        // Inicializar plantillasMeta si no existe
+        if (!configActual.plantillasMeta) {
+          configActual.plantillasMeta = {};
+        }
+        
+        configActualizada.plantillasMeta = {
+          ...configActual.plantillasMeta,
+          notificacionDiariaAgentes: {
+            ...configActual.plantillasMeta?.notificacionDiariaAgentes,
+            activa: nuevoEstado,
+            // Valores por defecto si no existen
+            nombre: configActual.plantillasMeta?.notificacionDiariaAgentes?.nombre || 'chofer_sanjose',
+            idioma: configActual.plantillasMeta?.notificacionDiariaAgentes?.idioma || 'es',
+            programacion: configActual.plantillasMeta?.notificacionDiariaAgentes?.programacion || {
+              metodoVerificacion: 'hora_fija',
+              horaEnvio: '06:00',
+              frecuencia: 'diaria',
+              rangoHorario: 'hoy',
+              filtroEstado: ['pendiente', 'confirmado'],
+              incluirDetalles: {
+                origen: true,
+                destino: true,
+                nombreCliente: true,
+                telefonoCliente: false,
+                horaReserva: true,
+                notasInternas: false
+              }
+            }
+          }
+        };
+      } else if (flujoId === 'confirmacion_turnos') {
+        // Inicializar plantillasMeta si no existe
+        if (!configActual.plantillasMeta) {
+          configActual.plantillasMeta = {};
+        }
+        
+        configActualizada.plantillasMeta = {
+          ...configActual.plantillasMeta,
+          confirmacionTurnos: {
+            ...configActual.plantillasMeta?.confirmacionTurnos,
+            activa: nuevoEstado,
+            // Valores por defecto si no existen
+            nombre: configActual.plantillasMeta?.confirmacionTurnos?.nombre || 'clientes_sanjose',
+            idioma: configActual.plantillasMeta?.confirmacionTurnos?.idioma || 'es',
+            programacion: configActual.plantillasMeta?.confirmacionTurnos?.programacion || {
+              metodoVerificacion: 'hora_fija',
+              horaEnvio: '22:00',
+              diasAntes: 1,
+              filtroEstado: ['no_confirmado', 'pendiente']
+            }
+          }
+        };
+      }
+      
+      // Guardar
+      const response = await fetch(`${apiUrl}/api/modules/calendar/configuracion/${empresaId}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify(configActualizada)
+      });
+      
+      if (!response.ok) throw new Error('Error al guardar configuración');
+      
+      setMensaje({
+        tipo: 'success',
+        texto: nuevoEstado ? '✅ Flujo activado' : '⏸️ Flujo desactivado'
+      });
+      
+      // Recargar después de un breve delay para mostrar el mensaje
+      setTimeout(() => {
+        window.location.reload();
+      }, 800);
+    } catch (err: any) {
+      setMensaje({
+        tipo: 'error',
+        texto: err.message || 'Error al cambiar estado del flujo'
+      });
+      setTimeout(() => setMensaje(null), 3000);
+    }
+  };
+
   const handleEnviarPrueba = async (flujoId: string, telefono: string) => {
     setEnviandoPrueba(flujoId);
     
@@ -174,19 +313,64 @@ export default function AdministradorFlujosPage() {
       const token = localStorage.getItem('auth_token');
       const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';
       
-      // Usar el endpoint existente de notificaciones
-      const response = await fetch(`${apiUrl}/api/modules/calendar/configuracion/notificaciones/enviar-prueba`, {
+      console.log('🧪 [Prueba] Enviando notificación:', { flujoId, telefono });
+      
+      // ✅ NUEVO SISTEMA UNIFICADO: Determinar tipo según flujoId
+      let tipo: 'agente' | 'cliente';
+      
+      if (flujoId === 'notificacion_diaria_agentes') {
+        tipo = 'agente';
+        console.log('   📅 Tipo: Notificación diaria de agente');
+      } else if (flujoId === 'confirmacion_turnos') {
+        tipo = 'cliente';
+        console.log('   ✅ Tipo: Confirmación de turno');
+      } else {
+        // Fallback para otros flujos (usar endpoint antiguo)
+        console.log('   ⚠️ Flujo no reconocido, usando endpoint antiguo');
+        const response = await fetch(`${apiUrl}/api/modules/calendar/configuracion/notificaciones/enviar-prueba`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+        },
+          body: JSON.stringify({
+            empresaId,
+            notificacion: {
+              tipo: flujoId === 'confirmacion_turnos' ? 'confirmacion' : 'estado',
+              telefono
+            }
+          })
+        });
+
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(errorData.message || 'Error al enviar mensaje de prueba');
+        }
+
+        const data = await response.json();
+        
+        setMensaje({
+          tipo: 'success',
+          texto: `✅ ${data.message || 'Mensaje de prueba enviado'}`
+        });
+        setModalPrueba(null);
+        setEnviandoPrueba(null);
+        setTimeout(() => setMensaje(null), 8000);
+        return;
+      }
+      
+      // ✅ USAR NUEVO ENDPOINT UNIFICADO para agentes y clientes
+      console.log(`   🎯 Usando endpoint unificado: /notificaciones-meta/test`);
+      const response = await fetch(`${apiUrl}/api/modules/calendar/notificaciones-meta/test`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`
         },
         body: JSON.stringify({
+          tipo,
           empresaId,
-          notificacion: {
-            tipo: flujoId === 'confirmacion_turnos' ? 'confirmacion' : 'estado',
-            telefono
-          }
+          telefono
         })
       });
 
@@ -234,7 +418,144 @@ export default function AdministradorFlujosPage() {
       const token = localStorage.getItem('auth_token');
       const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';
       
-      // Primero obtener la configuración actual
+      // ✅ NUEVO: Si es el flujo de notificación diaria de agentes
+      if (modalConfigFlujo.id === 'notificacion_diaria_agentes') {
+        // Primero obtener la configuración actual
+        const getResponse = await fetch(`${apiUrl}/api/modules/calendar/configuracion/${empresaId}`, {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+        
+        if (!getResponse.ok) {
+          throw new Error('Error al obtener configuración actual');
+        }
+        
+        const { configuracion: configActual } = await getResponse.json();
+        
+        // ✅ Actualizar en plantillasMeta (NUEVO SISTEMA UNIFICADO)
+        const configActualizada = {
+          ...configActual,
+          plantillasMeta: {
+            ...configActual.plantillasMeta,
+            notificacionDiariaAgentes: {
+              ...configActual.plantillasMeta?.notificacionDiariaAgentes,
+              activa: config.activo,
+              programacion: {
+                ...configActual.plantillasMeta?.notificacionDiariaAgentes?.programacion,
+                metodoVerificacion: 'hora_fija',
+                horaEnvio: config.horaEnvio,
+                frecuencia: 'diaria',
+                rangoHorario: 'hoy',
+                filtroEstado: ['pendiente', 'confirmado']
+              },
+              incluirDetalles: config.incluirDetalles || {
+                origen: true,
+                destino: true,
+                pasajeros: true,
+                hora: true
+              }
+            }
+          }
+        };
+        
+        console.log('💾 [Agentes] Guardando en plantillasMeta:', configActualizada.plantillasMeta.notificacionDiariaAgentes);
+        
+        // Guardar configuración actualizada
+        const response = await fetch(`${apiUrl}/api/modules/calendar/configuracion/${empresaId}`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
+          body: JSON.stringify(configActualizada)
+        });
+
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(errorData.message || 'Error al guardar configuración');
+        }
+
+        setMensaje({
+          tipo: 'success',
+          texto: '✅ Configuración de recordatorio diario guardada correctamente'
+        });
+        setModalConfigFlujo(null);
+        setConfigEditada(null);
+        
+        // Recargar después de un breve delay
+        setTimeout(() => {
+          window.location.reload();
+        }, 800);
+        return;
+      }
+      
+      // ✅ NUEVO: Para confirmación de turnos
+      if (modalConfigFlujo.id === 'confirmacion_turnos') {
+        // Primero obtener la configuración actual
+        const getResponse = await fetch(`${apiUrl}/api/modules/calendar/configuracion/${empresaId}`, {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+        
+        if (!getResponse.ok) {
+          throw new Error('Error al obtener configuración actual');
+        }
+        
+        const { configuracion: configActual } = await getResponse.json();
+        
+        // ✅ Actualizar en plantillasMeta (NUEVO SISTEMA UNIFICADO)
+        const configActualizada = {
+          ...configActual,
+          plantillasMeta: {
+            ...configActual.plantillasMeta,
+            confirmacionTurnos: {
+              ...configActual.plantillasMeta?.confirmacionTurnos,
+              activa: config.activo,
+              programacion: {
+                ...configActual.plantillasMeta?.confirmacionTurnos?.programacion,
+                metodoVerificacion: 'hora_fija',
+                horaEnvio: config.horaEnvio || '22:00',
+                diasAntes: config.anticipacion || 1,
+                filtroEstado: config.estados || ['no_confirmado', 'pendiente']
+              }
+            }
+          }
+        };
+        
+        console.log('💾 [Clientes] Guardando en plantillasMeta:', configActualizada.plantillasMeta.confirmacionTurnos);
+        
+        // Guardar configuración actualizada
+        const response = await fetch(`${apiUrl}/api/modules/calendar/configuracion/${empresaId}`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
+          body: JSON.stringify(configActualizada)
+        });
+
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(errorData.message || 'Error al guardar configuración');
+        }
+
+        setMensaje({
+          tipo: 'success',
+          texto: '✅ Configuración de confirmación guardada correctamente'
+        });
+        setModalConfigFlujo(null);
+        setConfigEditada(null);
+        
+        // Recargar después de un breve delay
+        setTimeout(() => {
+          window.location.reload();
+        }, 800);
+        return;
+      }
+      
+      // ⚠️ FALLBACK: Para otros flujos antiguos (mantener compatibilidad)
       const getResponse = await fetch(`${apiUrl}/api/modules/calendar/configuracion/${empresaId}`, {
         headers: {
           'Authorization': `Bearer ${token}`
@@ -249,7 +570,7 @@ export default function AdministradorFlujosPage() {
       
       // Actualizar la notificación específica
       const notificacionesActualizadas = configActual.notificaciones.map((notif: any) => {
-        if (notif.tipo === (modalConfigFlujo.id === 'confirmacion_turnos' ? 'confirmacion' : 'estado')) {
+        if (notif.tipo === 'confirmacion') {
           const notifActualizada = {
             ...notif,
             activa: config.activo,
@@ -264,13 +585,13 @@ export default function AdministradorFlujosPage() {
               estados: config.estados || notif.filtros?.estados || ['no_confirmado', 'pendiente']
             }
           };
-          console.log('📝 Notificación actualizada:', notifActualizada);
+          console.log('📝 Notificación actualizada (fallback):', notifActualizada);
           return notifActualizada;
         }
         return notif;
       });
       
-      console.log('💾 Enviando al backend:', { notificaciones: notificacionesActualizadas });
+      console.log('💾 Enviando al backend (fallback):', { notificaciones: notificacionesActualizadas });
       
       // Guardar configuración actualizada
       const response = await fetch(`${apiUrl}/api/modules/calendar/configuracion/${empresaId}`, {
@@ -297,8 +618,10 @@ export default function AdministradorFlujosPage() {
       setModalConfigFlujo(null);
       setConfigEditada(null);
       
-      // Recargar configuración
-      window.location.reload();
+      // Recargar después de un breve delay
+      setTimeout(() => {
+        window.location.reload();
+      }, 800);
     } catch (err: any) {
       setMensaje({
         tipo: 'error',
@@ -316,7 +639,7 @@ export default function AdministradorFlujosPage() {
         {/* Header */}
         <div className={styles.header}>
           <div className={styles.headerContent}>
-            <h1>🤖 Administrador de Flujos</h1>
+            <h1>Administrador de Flujos</h1>
             <p>Gestiona, configura y prueba los flujos del chatbot</p>
           </div>
           
@@ -459,7 +782,7 @@ export default function AdministradorFlujosPage() {
                           <input
                             type="checkbox"
                             checked={flujo.activo}
-                            onChange={() => {/* TODO: toggle flujo */}}
+                            onChange={() => handleToggleFlujo(flujo.id, !flujo.activo)}
                           />
                           <span className={styles.slider}></span>
                         </label>
@@ -470,6 +793,28 @@ export default function AdministradorFlujosPage() {
                       <span className={styles.triggerLabel}>Se activa:</span>
                       <span className={styles.triggerValue}>{flujo.trigger}</span>
                     </div>
+
+                    {/* ✅ Información de Plantilla Meta */}
+                    {flujo.config.plantilla && (
+                      <div className={styles.flujoMeta}>
+                        <div className={styles.metaInfo}>
+                          <span className={styles.metaLabel}>📋 Plantilla:</span>
+                          <span className={styles.metaValue}>{flujo.config.plantilla}</span>
+                        </div>
+                        <div className={styles.metaInfo}>
+                          <span className={styles.metaLabel}>🌐 Idioma:</span>
+                          <span className={styles.metaValue}>{flujo.config.idioma}</span>
+                        </div>
+                        {flujo.config.ultimoEnvio && (
+                          <div className={styles.metaInfo}>
+                            <span className={styles.metaLabel}>⏰ Último envío:</span>
+                            <span className={styles.metaValue}>
+                              {new Date(flujo.config.ultimoEnvio).toLocaleString('es-AR')}
+                            </span>
+                          </div>
+                        )}
+                      </div>
+                    )}
 
                     <div className={styles.flujoAcciones}>
                       <button
@@ -655,15 +1000,27 @@ export default function AdministradorFlujosPage() {
         )}
 
         {/* Modal: Configurar Flujo Automático */}
-        <ModalConfiguracionFlujo
-          isOpen={!!modalConfigFlujo}
-          onClose={() => {
-            setModalConfigFlujo(null);
-            setConfigEditada(null);
-          }}
-          flujo={modalConfigFlujo}
-          onGuardar={handleGuardarConfigFlujo}
-        />
+        {modalConfigFlujo?.id === 'notificacion_diaria_agentes' ? (
+          <ModalConfiguracionAgentes
+            isOpen={!!modalConfigFlujo}
+            onClose={() => {
+              setModalConfigFlujo(null);
+              setConfigEditada(null);
+            }}
+            flujo={modalConfigFlujo}
+            onGuardar={handleGuardarConfigFlujo}
+          />
+        ) : (
+          <ModalConfiguracionFlujo
+            isOpen={!!modalConfigFlujo}
+            onClose={() => {
+              setModalConfigFlujo(null);
+              setConfigEditada(null);
+            }}
+            flujo={modalConfigFlujo}
+            onGuardar={handleGuardarConfigFlujo}
+          />
+        )}
     </div>
   );
 }

@@ -21,6 +21,9 @@ export default function ModalConfiguracionFlujo({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   
+  // ✅ Detectar si usa plantillas de Meta
+  const usaPlantillaMeta = flujo?.config?.plantilla || flujo?.id === 'confirmacion_turnos' || flujo?.id === 'notificacion_diaria_agentes';
+  
   const [config, setConfig] = useState({
     activo: true,
     anticipacion: 24,
@@ -80,6 +83,11 @@ export default function ModalConfiguracionFlujo({
   };
 
   const validarPaso2 = () => {
+    // ✅ Si usa plantilla de Meta, no validar mensaje
+    if (usaPlantillaMeta) {
+      return true;
+    }
+    
     if (!config.mensaje.trim()) {
       setError('El mensaje inicial es requerido');
       return false;
@@ -88,6 +96,11 @@ export default function ModalConfiguracionFlujo({
   };
 
   const validarPaso3 = () => {
+    // ✅ Si usa plantilla de Meta, no validar mensajes
+    if (usaPlantillaMeta) {
+      return true;
+    }
+    
     if (!config.mensajeConfirmacion.trim()) {
       setError('El mensaje de confirmación es requerido');
       return false;
@@ -299,16 +312,75 @@ export default function ModalConfiguracionFlujo({
             </div>
           )}
 
-          {/* PASO 2: Mensaje Inicial */}
+          {/* PASO 2: Mensaje Inicial o Plantilla Meta */}
           {paso === 2 && (
             <div className={styles.paso}>
-              <div className={styles.infoCard}>
-                <MessageSquare size={20} />
+              {usaPlantillaMeta ? (
+                // ✅ Configuración de Plantilla de Meta
                 <div>
-                  <strong>Mensaje Inicial</strong>
-                  <p>Este es el primer mensaje que recibirá el cliente con la información de sus viajes</p>
+                  <div className={styles.infoCard} style={{
+                    backgroundColor: 'rgba(37, 211, 102, 0.1)',
+                    border: '2px solid rgba(37, 211, 102, 0.3)'
+                  }}>
+                    <CheckCircle size={24} style={{ color: '#25D366' }} />
+                    <div>
+                      <strong>✅ Plantilla de Meta WhatsApp</strong>
+                      <p>Este flujo utiliza una plantilla aprobada de Meta. No requiere configuración de mensajes.</p>
+                    </div>
+                  </div>
+
+                  <div className={styles.field}>
+                    <label>Plantilla Configurada</label>
+                    <input
+                      type="text"
+                      value={flujo?.config?.plantilla || 'No especificada'}
+                      disabled
+                      style={{
+                        backgroundColor: 'rgba(255, 255, 255, 0.05)',
+                        cursor: 'not-allowed',
+                        opacity: 0.7
+                      }}
+                    />
+                    <small>Nombre de la plantilla en Meta Business Manager</small>
+                  </div>
+
+                  <div className={styles.field}>
+                    <label>Idioma</label>
+                    <input
+                      type="text"
+                      value={flujo?.config?.idioma || 'es'}
+                      disabled
+                      style={{
+                        backgroundColor: 'rgba(255, 255, 255, 0.05)',
+                        cursor: 'not-allowed',
+                        opacity: 0.7
+                      }}
+                    />
+                    <small>Código de idioma de la plantilla</small>
+                  </div>
+
+                  <div className={styles.infoBox} style={{
+                    backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                    border: '1px solid rgba(59, 130, 246, 0.3)',
+                    borderRadius: '8px',
+                    padding: '1rem'
+                  }}>
+                    <p style={{ margin: 0, fontSize: '0.9rem' }}>
+                      ℹ️ <strong>Nota:</strong> Las plantillas de Meta se configuran en el backend y deben estar aprobadas en Meta Business Manager.
+                      Los mensajes se envían automáticamente según la configuración del paso 1.
+                    </p>
+                  </div>
                 </div>
-              </div>
+              ) : (
+                // Configuración de mensaje personalizado (sistema antiguo)
+                <div>
+                  <div className={styles.infoCard}>
+                    <MessageSquare size={20} />
+                    <div>
+                      <strong>Mensaje Inicial</strong>
+                      <p>Este es el primer mensaje que recibirá el cliente con la información de sus viajes</p>
+                    </div>
+                  </div>
 
               <div className={styles.field}>
                 <label>Mensaje de Recordatorio *</label>
@@ -322,22 +394,80 @@ export default function ModalConfiguracionFlujo({
                 <small>Variables disponibles: {'{origen}'}, {'{destino}'}, {'{hora}'}, {'{pasajeros}'}</small>
               </div>
 
-              <div className={styles.previewCard}>
-                <strong>Vista Previa:</strong>
-                <div className={styles.previewMessage}>
-                  {config.mensaje || 'Escribe un mensaje para ver la vista previa...'}
+                  <div className={styles.previewCard}>
+                    <strong>Vista Previa:</strong>
+                    <div className={styles.previewMessage}>
+                      {config.mensaje || 'Escribe un mensaje para ver la vista previa...'}
+                    </div>
+                  </div>
                 </div>
-              </div>
+              )}
             </div>
           )}
 
-          {/* PASO 3: Mensajes de Respuesta */}
+          {/* PASO 3: Mensajes de Respuesta o Resumen */}
           {paso === 3 && (
             <div className={styles.paso}>
-              <h3 className={styles.sectionTitle}>
-                <MessageSquare size={18} />
-                Mensajes de Respuesta
-              </h3>
+              {usaPlantillaMeta ? (
+                // ✅ Resumen de configuración para plantillas Meta
+                <div>
+                  <h3 className={styles.sectionTitle}>
+                    <CheckCircle size={18} style={{ color: '#25D366' }} />
+                    Resumen de Configuración
+                  </h3>
+
+                  <div className={styles.infoCard} style={{
+                    backgroundColor: 'rgba(37, 211, 102, 0.1)',
+                    border: '2px solid rgba(37, 211, 102, 0.3)'
+                  }}>
+                    <CheckCircle size={24} style={{ color: '#25D366' }} />
+                    <div>
+                      <strong>✅ Configuración Lista</strong>
+                      <p>Este flujo está configurado para usar plantillas de Meta WhatsApp.</p>
+                    </div>
+                  </div>
+
+                  <div style={{ marginTop: '1.5rem' }}>
+                    <h4 style={{ marginBottom: '1rem', color: 'var(--momento-white)' }}>Configuración Actual:</h4>
+                    <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
+                      <li style={{ padding: '0.75rem', backgroundColor: 'rgba(255, 255, 255, 0.05)', borderRadius: '6px', marginBottom: '0.5rem' }}>
+                        <strong>Estado:</strong> {config.activo ? '🟢 Activo' : '🔴 Inactivo'}
+                      </li>
+                      <li style={{ padding: '0.75rem', backgroundColor: 'rgba(255, 255, 255, 0.05)', borderRadius: '6px', marginBottom: '0.5rem' }}>
+                        <strong>Anticipación:</strong> {config.anticipacion} día(s) antes
+                      </li>
+                      <li style={{ padding: '0.75rem', backgroundColor: 'rgba(255, 255, 255, 0.05)', borderRadius: '6px', marginBottom: '0.5rem' }}>
+                        <strong>Hora de envío:</strong> {config.horaEnvio}
+                      </li>
+                      <li style={{ padding: '0.75rem', backgroundColor: 'rgba(255, 255, 255, 0.05)', borderRadius: '6px', marginBottom: '0.5rem' }}>
+                        <strong>Plantilla:</strong> {flujo?.config?.plantilla || 'No especificada'}
+                      </li>
+                      <li style={{ padding: '0.75rem', backgroundColor: 'rgba(255, 255, 255, 0.05)', borderRadius: '6px' }}>
+                        <strong>Estados notificados:</strong> {config.estados.join(', ')}
+                      </li>
+                    </ul>
+                  </div>
+
+                  <div className={styles.infoBox} style={{
+                    backgroundColor: 'rgba(255, 107, 74, 0.1)',
+                    border: '1px solid rgba(255, 107, 74, 0.3)',
+                    borderRadius: '8px',
+                    padding: '1rem',
+                    marginTop: '1.5rem'
+                  }}>
+                    <p style={{ margin: 0, fontSize: '0.9rem' }}>
+                      📱 <strong>Importante:</strong> Las notificaciones se enviarán automáticamente según esta configuración.
+                      Los mensajes son gestionados por las plantillas de Meta aprobadas.
+                    </p>
+                  </div>
+                </div>
+              ) : (
+                // Configuración de mensajes personalizados (sistema antiguo)
+                <div>
+                  <h3 className={styles.sectionTitle}>
+                    <MessageSquare size={18} />
+                    Mensajes de Respuesta
+                  </h3>
 
               <div className={styles.field}>
                 <label>Mensaje al Confirmar Todos los Viajes *</label>
@@ -374,7 +504,9 @@ export default function ModalConfiguracionFlujo({
                     <li>Confirmación de cambios</li>
                   </ul>
                 </div>
-              </div>
+                  </div>
+                </div>
+              )}
             </div>
           )}
         </div>

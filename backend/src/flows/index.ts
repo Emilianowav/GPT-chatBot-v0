@@ -1,7 +1,7 @@
 // 🔄 Registro central de flujos (SOLO PARA BOT DE PASOS)
 import { flowManager } from './FlowManager.js';
 import { confirmacionTurnosFlow } from './confirmacionTurnosFlow.js';
-import { notificacionViajesFlow } from './notificacionViajesFlow.js';
+import { notificacionViajesFlow } from './legacy/notificacionViajesFlow.js';
 import { menuPrincipalFlow } from './menuPrincipalFlow.js';
 
 /**
