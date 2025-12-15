@@ -8,6 +8,7 @@ export enum TipoNegocio {
   PELUQUERIA = 'peluqueria',
   EVENTOS = 'eventos',
   GIMNASIO = 'gimnasio',
+  CANCHAS = 'canchas',
   PERSONALIZADO = 'personalizado'
 }
 
@@ -270,6 +271,25 @@ export interface IFlujoNotificacion {
   cancelado?: IMensajeFlujo;
 }
 
+// ✨ NUEVO: Interfaz para flujo de reserva de canchas deportivas
+export interface IFlujoReservaCanchas {
+  bienvenida?: IMensajeFlujo;
+  solicitar_fecha?: IMensajeFlujo;
+  fecha_confirmada?: IMensajeFlujo;
+  solicitar_hora?: IMensajeFlujo;
+  solicitar_duracion?: IMensajeFlujoConOpciones;
+  sin_disponibilidad?: IMensajeFlujoConOpciones;
+  horario_alternativo_confirmado?: IMensajeFlujo;
+  mostrar_canchas?: IMensajeFlujoConOpciones;
+  cancha_seleccionada?: IMensajeFlujo;
+  solicitar_nombre?: IMensajeFlujo;
+  solicitar_telefono?: IMensajeFlujo;
+  resumen_reserva?: IMensajeFlujoConOpciones;
+  reserva_confirmada?: IMensajeFlujo;
+  reserva_cancelada?: IMensajeFlujo;
+  error?: IMensajeFlujo;
+}
+
 // ✨ NUEVO: Variables dinámicas por empresa
 export interface IVariablesDinamicas {
   nombre_empresa: string;
@@ -392,6 +412,7 @@ export interface IConfiguracionModulo extends Document {
     confirmacion_turnos?: IFlujoConfirmacion;
     menu_principal?: IFlujoMenu;
     notificacion_viajes?: IFlujoNotificacion;
+    reserva_canchas?: IFlujoReservaCanchas;
   };
   
   // ✨ NUEVO: Variables dinámicas por empresa
@@ -681,6 +702,24 @@ const MensajesFlujosSchema = new Schema(
       esperando_opcion_inicial: MensajeFlujoSchema,
       confirmado: MensajeFlujoSchema,
       cancelado: MensajeFlujoSchema
+    },
+    // ✨ NUEVO: Flujo de reserva de canchas deportivas
+    reserva_canchas: {
+      bienvenida: MensajeFlujoSchema,
+      solicitar_fecha: MensajeFlujoSchema,
+      fecha_confirmada: MensajeFlujoSchema,
+      solicitar_hora: MensajeFlujoSchema,
+      solicitar_duracion: MensajeFlujoConOpcionesSchema,
+      sin_disponibilidad: MensajeFlujoConOpcionesSchema,
+      horario_alternativo_confirmado: MensajeFlujoSchema,
+      mostrar_canchas: MensajeFlujoConOpcionesSchema,
+      cancha_seleccionada: MensajeFlujoSchema,
+      solicitar_nombre: MensajeFlujoSchema,
+      solicitar_telefono: MensajeFlujoSchema,
+      resumen_reserva: MensajeFlujoConOpcionesSchema,
+      reserva_confirmada: MensajeFlujoSchema,
+      reserva_cancelada: MensajeFlujoSchema,
+      error: MensajeFlujoSchema
     }
   },
   { _id: false }

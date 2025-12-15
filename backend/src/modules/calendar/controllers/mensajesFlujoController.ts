@@ -47,7 +47,7 @@ export const actualizarMensajesFlujo = async (req: Request, res: Response) => {
     const { empresaId, flujo } = req.params;
     const { mensajes } = req.body;
     
-    const flujosValidos = ['confirmacion_turnos', 'menu_principal', 'notificacion_viajes'];
+    const flujosValidos = ['confirmacion_turnos', 'menu_principal', 'notificacion_viajes', 'reserva_canchas'];
     if (!flujosValidos.includes(flujo)) {
       res.status(400).json({
         success: false,

@@ -23,6 +23,19 @@ export const menuPrincipalFlow: Flow = {
       return false;
     }
     
+    // 🏟️ NO activar para empresas de tipo "canchas" (tienen su propio flujo)
+    try {
+      const { ConfiguracionModuloModel } = await import('../modules/calendar/models/ConfiguracionModulo.js');
+      const configModulo = await ConfiguracionModuloModel.findOne({ empresaId });
+      console.log(`🔍 [MenuPrincipal] Verificando tipoNegocio para ${empresaId}: ${configModulo?.tipoNegocio}`);
+      if (configModulo?.tipoNegocio === 'canchas') {
+        console.log(`⏭️ [MenuPrincipal] Empresa ${empresaId} es de tipo canchas, usar reservaCanchasFlow`);
+        return false;
+      }
+    } catch (err) {
+      console.error(`❌ [MenuPrincipal] Error verificando tipoNegocio:`, err);
+    }
+    
     // Detectar intención de interactuar con el bot
     const keywords = [
       'hola', 'menu', 'menú', 'opciones', 'ayuda',
