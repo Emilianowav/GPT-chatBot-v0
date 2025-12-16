@@ -5,15 +5,15 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 60px 20px;
-  gap: 16px;
+  padding: 40px 16px;
+  gap: 12px;
 }
 
 .spinner {
-  width: 48px;
-  height: 48px;
-  border: 4px solid #f3f3f3;
-  border-top: 4px solid #FF6B4A;
+  width: 28px;
+  height: 28px;
+  border: 3px solid #f3f3f3;
+  border-top: 3px solid #FF6B4A;
   border-radius: 50%;
   animation: spin 1s linear infinite;
 }
@@ -24,7 +24,8 @@
 }
 
 .container {
-  max-width: 1000px;
+  max-width: 800px;
+  padding: 1rem;
 }
 
 /* Page Header */
@@ -32,27 +33,27 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 32px;
-  padding-bottom: 24px;
-  border-bottom: 3px solid #FF6B4A;
+  margin-bottom: 1.25rem;
+  padding-bottom: 1rem;
+  border-bottom: 2px solid #FF6B4A;
 }
 
 .pageHeader h1 {
-  margin: 0 0 8px 0;
-  font-size: 2rem;
-  color: var(--momento-white, #FFFFFF);
+  margin: 0 0 4px 0;
+  font-size: 1.25rem;
+  color: var(--primary-blue, #1E3A5F);
   font-weight: 700;
 }
 
 .pageHeader p {
   margin: 0;
   color: rgba(255, 255, 255, 0.95);
-  font-size: 1rem;
+  font-size: 0.8rem;
 }
 
 /* Admin Actions */
 .adminActions {
-  margin-bottom: 24px;
+  margin-bottom: 1rem;
   display: flex;
   justify-content: flex-end;
 }
@@ -60,22 +61,22 @@
 .btnUsuarios {
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 12px 24px;
+  gap: 6px;
+  padding: 0.5rem 1rem;
   background: linear-gradient(135deg, #FF6B4A 0%, #FF8A6E 100%);
   color: white;
   border: none;
-  border-radius: 8px;
-  font-size: 16px;
+  border-radius: 5px;
+  font-size: 0.75rem;
   font-weight: 600;
   cursor: pointer;
-  transition: all 0.3s ease;
-  box-shadow: 0 4px 12px rgba(255, 107, 74, 0.3);
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 8px rgba(255, 107, 74, 0.3);
 }
 
 .btnUsuarios:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(255, 107, 74, 0.4);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(255, 107, 74, 0.4);
 }
 
 .btnUsuarios svg {
@@ -84,10 +85,11 @@
 
 /* Messages */
 .message {
-  padding: 16px 20px;
-  border-radius: 8px;
-  margin-bottom: 24px;
+  padding: 10px 14px;
+  border-radius: 5px;
+  margin-bottom: 1rem;
   font-weight: 500;
+  font-size: 0.8rem;
   animation: slideDown 0.3s ease;
 }
 
@@ -118,57 +120,57 @@
 .form {
   display: flex;
   flex-direction: column;
-  gap: 32px;
+  gap: 1rem;
 }
 
 .section {
-  background: linear-gradient(135deg, var(--momento-orange, #FF6B4A) 0%, var(--momento-orange-light, #FF8A6E) 100%);
-  border: none;
-  border-radius: 16px;
-  padding: 24px;
-  margin-bottom: 24px;
-  box-shadow: 0 4px 12px rgba(255, 107, 74, 0.3);
+  background: var(--momento-white, #FFFFFF);
+  border: 1px solid var(--gray-200, #E2E8F0);
+  border-radius: 8px;
+  padding: 1rem;
+  margin-bottom: 0.75rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
   color: white;
 }
 
 .section h2 {
-  font-size: 20px;
-  color: var(--momento-white, #FFFFFF);
-  margin: 0 0 20px 0;
+  font-size: 0.9rem;
+  color: var(--momento-orange, #FF6B4A);
+  margin: 0 0 0.75rem 0;
   font-weight: 600;
-  padding-bottom: 12px;
-  border-bottom: 2px solid rgba(255, 107, 74, 0.3);
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid rgba(255, 107, 74, 0.3);
 }
 
 .formGrid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-  gap: 20px;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 0.75rem;
 }
 
 .formGroup {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 4px;
 }
 
 .formGroup label {
-  font-size: 14px;
+  font-size: 0.7rem;
   font-weight: 600;
-  color: var(--momento-white, #FFFFFF);
+  color: var(--gray-600, #475569);
 }
 
 .formGroup input,
 .formGroup select,
 .formGroup textarea {
-  padding: 12px 16px;
-  border: 2px solid rgba(255, 107, 74, 0.3);
-  background: var(--momento-black-light, #2A2A2A);
-  color: var(--momento-white, #FFFFFF);
-  border-radius: 8px;
-  font-size: 15px;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid var(--gray-200, #E2E8F0);
+  background: var(--gray-50, #F8FAFC);
+  color: var(--primary-blue, #1E3A5F);
+  border-radius: 5px;
+  font-size: 0.8rem;
   font-family: inherit;
-  transition: all 0.3s ease;
+  transition: all 0.2s ease;
   outline: none;
 }
 
@@ -181,63 +183,65 @@
 
 .formGroup textarea {
   resize: vertical;
-  min-height: 100px;
+  min-height: 80px;
 }
 
 .inputDisabled {
-  background-color: #f5f5f5;
+  background-color: rgba(255, 255, 255, 0.05);
   cursor: not-allowed;
-  color: rgba(255, 255, 255, 0.95);
+  color: rgba(255, 255, 255, 0.6);
 }
 
 .helpText {
-  font-size: 13px;
-  color: rgba(255, 255, 255, 0.85);
+  font-size: 0.65rem;
+  color: var(--gray-500, #64748B);
 }
 
 /* Theme Toggle */
 .themeToggle {
   display: flex;
-  gap: 12px;
-  padding: 4px;
-  background-color: #f5f5f5;
-  border-radius: 10px;
+  gap: 6px;
+  padding: 3px;
+  background-color: var(--momento-black, #1A1A1A);
+  border-radius: 6px;
   width: fit-content;
 }
 
 .themeButton {
-  padding: 12px 24px;
+  padding: 0.5rem 1rem;
   border: none;
   background: transparent;
-  border-radius: 8px;
-  font-size: 15px;
+  border-radius: 5px;
+  font-size: 0.75rem;
   font-weight: 500;
   cursor: pointer;
-  transition: all 0.3s ease;
-  color: rgba(255, 255, 255, 0.9);
+  transition: all 0.2s ease;
+  color: var(--gray-500, #64748B);
 }
 
 .themeButton:hover {
   background-color: rgba(255, 107, 74, 0.1);
+  color: var(--gray-600, #475569);
 }
 
 .themeButton.active {
   background: linear-gradient(135deg, #FF6B4A 0%, #FF8A6E 100%);
   color: white;
-  box-shadow: 0 4px 12px rgba(255, 107, 74, 0.3);
+  box-shadow: 0 2px 8px rgba(255, 107, 74, 0.3);
 }
 
 /* Catalog Info */
 .catalogInfo {
-  padding: 16px;
-  background-color: #f9f9f9;
-  border-radius: 8px;
+  padding: 0.75rem;
+  background-color: rgba(255, 255, 255, 0.05);
+  border-radius: 5px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .catalogInfo p {
-  margin: 8px 0;
-  font-size: 14px;
-  color: rgba(255, 255, 255, 0.9);
+  margin: 4px 0;
+  font-size: 0.75rem;
+  color: rgba(255, 255, 255, 0.8);
 }
 
 .catalogInfo a {
@@ -252,65 +256,66 @@
 
 /* Password Section */
 .passwordSection {
-  margin-top: 24px;
-  padding-top: 24px;
-  border-top: 2px dashed #e0e0e0;
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px dashed rgba(255, 255, 255, 0.2);
 }
 
 .passwordSection h3 {
-  margin: 0 0 16px 0;
-  font-size: 1.1rem;
-  color: white;
+  margin: 0 0 0.75rem 0;
+  font-size: 0.85rem;
+  color: var(--gray-600, #475569);
   font-weight: 600;
 }
 
 .btnSecondary {
-  padding: 10px 20px;
-  background: #f5f5f5;
-  color: white;
-  border: 2px solid #ddd;
-  border-radius: 8px;
-  font-size: 14px;
+  padding: 0.5rem 1rem;
+  background: transparent;
+  color: var(--momento-orange, #FF6B4A);
+  border: 1px solid var(--momento-orange, #FF6B4A);
+  border-radius: 5px;
+  font-size: 0.75rem;
   font-weight: 600;
   cursor: pointer;
-  transition: all 0.3s ease;
-  margin-top: 12px;
+  transition: all 0.2s ease;
+  margin-top: 0.5rem;
 }
 
 .btnSecondary:hover {
-  background: #e0e0e0;
-  border-color: #ccc;
+  background: rgba(255, 107, 74, 0.1);
 }
 
 /* Actions */
 .actions {
   display: flex;
   justify-content: flex-end;
-  gap: 16px;
-  padding: 24px;
-  background: white;
-  border-radius: 12px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  gap: 0.75rem;
+  padding: 1rem;
+  background: var(--momento-white, #FFFFFF);
+  border-radius: 8px;
+  border: 1px solid rgba(255, 107, 74, 0.2);
 }
 
 .cancelButton,
 .saveButton {
-  padding: 12px 32px;
+  padding: 0.5rem 1.5rem;
   border: none;
-  border-radius: 8px;
-  font-size: 15px;
+  border-radius: 5px;
+  font-size: 0.75rem;
   font-weight: 600;
   cursor: pointer;
-  transition: all 0.3s ease;
+  transition: all 0.2s ease;
 }
 
 .cancelButton {
-  background-color: #f5f5f5;
-  color: rgba(255, 255, 255, 0.9);
+  background-color: transparent;
+  color: var(--gray-500, #64748B);
+  border: 1px solid rgba(255, 255, 255, 0.2);
 }
 
 .cancelButton:hover {
-  background-color: #e0e0e0;
+  background-color: rgba(255, 255, 255, 0.05);
+  color: var(--gray-600, #475569);
 }
 
 .saveButton {
@@ -319,8 +324,8 @@
 }
 
 .saveButton:hover:not(:disabled) {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 20px rgba(255, 107, 74, 0.4);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(255, 107, 74, 0.4);
 }
 
 .saveButton:disabled {

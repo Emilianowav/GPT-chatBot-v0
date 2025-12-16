@@ -1,69 +1,87 @@
-/* 👤 Estilos de Lista de Clientes */
+/* 👤 Estilos de Lista de Clientes - Formato Tabla */
 
-.grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
-  gap: 1.5rem;
-  margin: 2rem;
+.tableContainer {
+  margin: 1rem;
+  background: var(--momento-black, #1A1A1A);
+  border: 1px solid rgba(255, 107, 74, 0.3);
+  border-radius: 8px;
+  overflow: hidden;
 }
 
-.card {
-  background: var(--momento-black, #1A1A1A);
-  border: 2px solid rgba(255, 107, 74, 0.3);
-  border-radius: 2px;
-  overflow: hidden;
-  transition: all 0.3s;
-  display: flex;
-  flex-direction: column;
+.table {
+  width: 100%;
+  border-collapse: collapse;
   color: white;
 }
 
-.card:hover {
-  border-color: var(--momento-orange-light, #FF8A6E);
-}
-
-/* Header */
-.cardHeader {
-  padding: 1.5rem;
+.table thead {
   background: var(--momento-black-light, #2A2A2A);
   border-bottom: 2px solid rgba(255, 107, 74, 0.3);
-  color: white;
+}
+
+.table th {
+  padding: 1rem;
+  text-align: left;
+  font-weight: 600;
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.table td {
+  padding: 1rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  font-size: 0.9rem;
+  color: rgba(255, 255, 255, 0.85);
+}
+
+.table tbody tr:hover {
+  background: rgba(255, 107, 74, 0.05);
+}
+
+.table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+/* Celda de cliente con avatar */
+.clienteCell {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
 }
 
 .clienteInfo {
   display: flex;
-  align-items: center;
-  gap: 1rem;
+  flex-direction: column;
+  gap: 0.25rem;
 }
 
 .avatar {
-  width: 50px;
-  height: 50px;
+  width: 40px;
+  height: 40px;
   border-radius: 50%;
   background: linear-gradient(135deg, #FF6B4A 0%, #FF8A6E 100%);
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 1.2rem;
+  font-size: 0.9rem;
   font-weight: 700;
   color: white;
-  border: none;
-  box-shadow: 0 2px 8px rgba(255, 107, 74, 0.3);
+  flex-shrink: 0;
 }
 
 .nombre {
-  font-size: 1.1rem;
   font-weight: 600;
-  margin: 0 0 0.5rem 0;
   color: white;
 }
 
-.badges {
-  display: flex;
-  gap: 0.5rem;
-  flex-wrap: wrap;
+.dni {
+  font-size: 0.75rem;
+  color: rgba(255, 255, 255, 0.6);
 }
 
+/* Badges */
 .badgeActivo,
 .badgeInactivo,
 .badgeChatbot,
@@ -74,6 +92,7 @@
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.5px;
+  display: inline-block;
 }
 
 .badgeActivo {
@@ -100,65 +119,21 @@
   border: 1px solid rgba(155, 89, 182, 0.3);
 }
 
-/* Body */
-.cardBody {
-  padding: 1.5rem;
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
-}
-
-.infoRow {
-  display: flex;
-  align-items: flex-start;
-  gap: 0.75rem;
-  color: white;
-  font-size: 0.9rem;
-  line-height: 1.5;
-}
-
-.infoRow svg {
-  flex-shrink: 0;
-  margin-top: 2px;
-  color: #FF6B4A;
-}
-
-.notas {
-  margin-top: 0.5rem;
-  padding: 0.75rem;
-  background: rgba(255, 107, 74, 0.1);
-  border: 1px solid rgba(255, 107, 74, 0.3);
-  border-radius: 8px;
-  font-size: 0.85rem;
-  color: white;
-  line-height: 1.5;
-}
-
-.notas strong {
-  color: var(--momento-white, #FFFFFF);
-  display: block;
-  margin-bottom: 0.25rem;
-}
-
-/* Actions */
-.cardActions {
+/* Acciones */
+.actions {
   display: flex;
   gap: 0.5rem;
-  padding: 0 1.5rem 1rem 1.5rem;
 }
 
-.cardActions button {
-  flex: 1;
+.btnEditar,
+.btnEliminar {
+  width: 36px;
+  height: 36px;
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 0.5rem;
-  padding: 0.75rem;
   border: none;
-  border-radius: 8px;
-  font-weight: 600;
-  font-size: 0.9rem;
+  border-radius: 6px;
   cursor: pointer;
   transition: all 0.2s;
 }
@@ -166,37 +141,23 @@
 .btnEditar {
   background: var(--momento-orange, #FF6B4A);
   color: white;
-  border: none;
 }
 
 .btnEditar:hover {
   background: var(--momento-orange-light, #FF8A6E);
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(255, 107, 74, 0.4);
+  transform: translateY(-1px);
 }
 
 .btnEliminar {
   background: transparent;
-  color: rgba(255, 255, 255, 0.8);
-  border: 2px solid rgba(255, 255, 255, 0.3);
+  color: rgba(255, 255, 255, 0.6);
+  border: 1px solid rgba(255, 255, 255, 0.2);
 }
 
 .btnEliminar:hover {
   background: rgba(231, 76, 60, 0.2);
   border-color: #e74c3c;
   color: #e74c3c;
-  transform: translateY(-2px);
-}
-
-/* Footer */
-.cardFooter {
-  padding: 0.75rem 1.5rem;
-  border-top: 1px solid #e9ecef;
-}
-
-.fechaCreacion {
-  font-size: 0.8rem;
-  color: rgba(255, 255, 255, 0.95);
 }
 
 /* Empty State */
@@ -229,25 +190,31 @@
 
 /* Responsive */
 @media (max-width: 768px) {
-  .grid {
-    grid-template-columns: 1fr;
-    gap: 1rem;
+  .tableContainer {
+    margin: 0.5rem;
+    overflow-x: auto;
   }
 
-  .cardHeader {
-    padding: 1rem;
+  .table th,
+  .table td {
+    padding: 0.75rem 0.5rem;
+    font-size: 0.8rem;
   }
 
-  .cardBody {
-    padding: 1rem;
+  .avatar {
+    width: 32px;
+    height: 32px;
+    font-size: 0.75rem;
   }
 
-  .cardActions {
-    padding: 0 1rem 1rem 1rem;
+  .actions {
     flex-direction: column;
+    gap: 0.25rem;
   }
 
-  .cardActions button {
-    width: 100%;
+  .btnEditar,
+  .btnEliminar {
+    width: 32px;
+    height: 32px;
   }
 }

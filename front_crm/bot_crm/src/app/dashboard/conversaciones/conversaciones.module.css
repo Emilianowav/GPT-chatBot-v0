@@ -16,20 +16,20 @@
    ======================================== */
 
 .sidebar {
-  width: 380px;
+  width: 300px;
   background: var(--card-bg);
   border-right: 1px solid var(--border-color);
   display: flex;
   flex-direction: column;
   flex-shrink: 0;
-  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 /* sidebarHidden se aplica solo en móvil - ver @media queries */
 
 /* Header del Sidebar */
 .sidebarHeader {
-  padding: 20px 24px;
+  padding: 12px 14px;
   background: var(--card-bg);
   border-bottom: 1px solid var(--border-color);
   display: flex;
@@ -40,31 +40,31 @@
 .sidebarTitle {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 8px;
 }
 
 .sidebarTitle h2 {
   margin: 0;
-  font-size: 22px;
+  font-size: 14px;
   font-weight: 700;
   color: var(--text-primary);
-  letter-spacing: -0.5px;
+  letter-spacing: -0.3px;
 }
 
 .conversacionesCount {
   background: var(--accent-color);
   color: white;
-  font-size: 12px;
+  font-size: 10px;
   font-weight: 600;
-  padding: 4px 10px;
-  border-radius: 12px;
-  min-width: 24px;
+  padding: 2px 6px;
+  border-radius: 8px;
+  min-width: 18px;
   text-align: center;
 }
 
 .iconButton {
-  width: 40px;
-  height: 40px;
+  width: 28px;
+  height: 28px;
   border: none;
   background: transparent;
   color: var(--text-secondary);
@@ -88,7 +88,7 @@
 
 /* Buscador */
 .searchBox {
-  padding: 16px 24px;
+  padding: 10px 14px;
   background: var(--card-bg);
   border-bottom: 1px solid var(--border-color);
 }
@@ -109,14 +109,14 @@
 
 .searchInput {
   width: 100%;
-  padding: 12px 40px 12px 44px;
-  border: 2px solid transparent;
+  padding: 8px 32px 8px 36px;
+  border: 1px solid transparent;
   background: var(--active-bg);
-  border-radius: 12px;
-  font-size: 14px;
+  border-radius: 8px;
+  font-size: 12px;
   color: var(--text-primary);
   outline: none;
-  transition: all 0.3s ease;
+  transition: all 0.2s ease;
 }
 
 .searchInput:focus {
@@ -127,9 +127,9 @@
 
 .clearButton {
   position: absolute;
-  right: 8px;
-  width: 28px;
-  height: 28px;
+  right: 6px;
+  width: 20px;
+  height: 20px;
   border: none;
   background: var(--text-tertiary);
   color: var(--card-bg);
@@ -178,8 +178,8 @@
 .conversacionItem {
   display: flex;
   align-items: center;
-  padding: 16px 24px;
-  gap: 14px;
+  padding: 10px 14px;
+  gap: 10px;
   cursor: pointer;
   border-bottom: 1px solid var(--border-color);
   transition: all 0.2s ease;
@@ -192,10 +192,11 @@
   left: 0;
   top: 0;
   bottom: 0;
-  width: 4px;
+  width: 3px;
   background: var(--accent-color);
   transform: scaleY(0);
   transition: transform 0.2s ease;
+  color: white;
 }
 
 .conversacionItem:hover {
@@ -219,18 +220,18 @@
 }
 
 .avatarCircle {
-  width: 52px;
-  height: 52px;
+  width: 36px;
+  height: 36px;
   border-radius: 50%;
   background: linear-gradient(135deg, var(--accent-color) 0%, var(--accent-hover) 100%);
   color: white;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 22px;
+  font-size: 14px;
   font-weight: 700;
-  box-shadow: 0 2px 8px var(--shadow);
-  transition: all 0.3s ease;
+  box-shadow: 0 1px 4px var(--shadow);
+  transition: all 0.2s ease;
 }
 
 .conversacionItem:hover .avatarCircle {
@@ -243,19 +244,19 @@
   min-width: 0;
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 3px;
 }
 
 .conversacionTop {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
 }
 
 .conversacionNombre {
   margin: 0;
-  font-size: 16px;
+  font-size: 12px;
   font-weight: 600;
   color: var(--text-primary);
   overflow: hidden;
@@ -264,7 +265,7 @@
 }
 
 .conversacionFecha {
-  font-size: 12px;
+  font-size: 10px;
   color: var(--text-tertiary);
   flex-shrink: 0;
   font-weight: 500;
@@ -274,12 +275,12 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
 }
 
 .conversacionMensaje {
   margin: 0;
-  font-size: 14px;
+  font-size: 11px;
   color: var(--text-secondary);
   overflow: hidden;
   text-overflow: ellipsis;
@@ -287,7 +288,7 @@
   flex: 1;
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 4px;
 }
 
 .checkIcon {
@@ -303,11 +304,11 @@
 .badge {
   background: var(--accent-color);
   color: white;
-  font-size: 11px;
+  font-size: 9px;
   font-weight: 700;
-  padding: 3px 8px;
-  border-radius: 10px;
-  min-width: 20px;
+  padding: 2px 5px;
+  border-radius: 8px;
+  min-width: 16px;
   text-align: center;
   flex-shrink: 0;
   animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
@@ -330,8 +331,8 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 60px 40px;
-  gap: 16px;
+  padding: 40px 24px;
+  gap: 12px;
   color: var(--text-secondary);
   text-align: center;
 }
@@ -343,15 +344,15 @@
 
 .emptyState p {
   margin: 0;
-  font-size: 14px;
+  font-size: 12px;
   color: var(--text-secondary);
 }
 
 /* Loader */
 .loader {
-  width: 40px;
-  height: 40px;
-  border: 3px solid var(--border-color);
+  width: 28px;
+  height: 28px;
+  border: 2px solid var(--border-color);
   border-top-color: var(--accent-color);
   border-radius: 50%;
   animation: spin 0.8s linear infinite;
@@ -386,8 +387,8 @@
 
 .emptyChatContent {
   text-align: center;
-  padding: 60px 40px;
-  max-width: 400px;
+  padding: 40px 24px;
+  max-width: 320px;
   animation: fadeIn 0.5s ease;
 }
 
@@ -419,36 +420,36 @@
 }
 
 .emptyChatContent h2 {
-  margin: 0 0 12px 0;
-  font-size: 28px;
+  margin: 0 0 8px 0;
+  font-size: 18px;
   font-weight: 700;
   color: var(--text-primary);
-  letter-spacing: -0.5px;
+  letter-spacing: -0.3px;
 }
 
 .emptyChatContent p {
   margin: 0;
-  font-size: 15px;
+  font-size: 12px;
   color: var(--text-secondary);
-  line-height: 1.6;
+  line-height: 1.5;
 }
 
 /* Header del Chat */
 .chatHeader {
-  padding: 16px 24px;
+  padding: 10px 14px;
   background: var(--card-bg);
   border-bottom: 1px solid var(--border-color);
   display: flex;
   align-items: center;
-  gap: 16px;
-  box-shadow: 0 2px 8px var(--shadow);
+  gap: 10px;
+  box-shadow: 0 1px 4px var(--shadow);
   z-index: 10;
 }
 
 .backButton {
   display: none;
-  width: 40px;
-  height: 40px;
+  width: 28px;
+  height: 28px;
   border: none;
   background: transparent;
   color: var(--text-secondary);
@@ -471,51 +472,51 @@
 .chatHeaderUser {
   display: flex;
   align-items: center;
-  gap: 14px;
+  gap: 10px;
   flex: 1;
 }
 
 .chatAvatar {
-  width: 44px;
-  height: 44px;
+  width: 32px;
+  height: 32px;
   border-radius: 50%;
   background: linear-gradient(135deg, var(--accent-color) 0%, var(--accent-hover) 100%);
   color: white;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 18px;
+  font-size: 13px;
   font-weight: 700;
-  box-shadow: 0 2px 8px var(--shadow);
+  box-shadow: 0 1px 4px var(--shadow);
 }
 
 .chatUserInfo h3 {
   margin: 0;
-  font-size: 17px;
+  font-size: 13px;
   font-weight: 600;
   color: var(--text-primary);
 }
 
 .chatUserInfo p {
-  margin: 4px 0 0 0;
-  font-size: 13px;
+  margin: 2px 0 0 0;
+  font-size: 11px;
   color: var(--text-secondary);
 }
 
 .chatHeaderActions {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 8px;
 }
 
 .chatStats {
   display: flex;
   align-items: center;
-  gap: 6px;
-  padding: 8px 14px;
+  gap: 4px;
+  padding: 5px 10px;
   background: var(--active-bg);
-  border-radius: 20px;
-  font-size: 13px;
+  border-radius: 12px;
+  font-size: 11px;
   font-weight: 600;
   color: var(--text-secondary);
 }
@@ -529,10 +530,10 @@
   flex: 1;
   overflow-y: auto;
   overflow-x: hidden;
-  padding: 24px;
+  padding: 14px;
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 8px;
   background: var(--background);
 }
 
@@ -575,7 +576,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  margin: 24px 0 16px 0;
+  margin: 14px 0 10px 0;
   position: relative;
 }
 
@@ -586,19 +587,21 @@
   height: 1px;
   background: var(--border-color);
   opacity: 0.3;
+  color: white;
 }
 
 .dateDivider span {
-  padding: 4px 12px;
-  margin: 0 12px;
+  padding: 3px 8px;
+  margin: 0 8px;
   background: var(--bg-secondary);
-  border-radius: 8px;
-  font-size: 11px;
+  border-radius: 6px;
+  font-size: 9px;
   font-weight: 500;
   color: var(--text-secondary);
   text-transform: capitalize;
   white-space: nowrap;
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+  color: white;
 }
 
 /* Mensajes */
@@ -629,8 +632,8 @@
 
 .mensajeBubble {
   max-width: 70%;
-  padding: 12px 16px;
-  border-radius: 16px;
+  padding: 8px 12px;
+  border-radius: 12px;
   box-shadow: 0 1px 2px var(--shadow);
   transition: all 0.2s ease;
   position: relative;
@@ -653,23 +656,31 @@
 
 .mensajeTexto {
   margin: 0;
-  font-size: 15px;
-  line-height: 1.5;
-  color: var(--text-primary);
+  font-size: 12px;
+  line-height: 1.4;
+  font-weight: normal;
   word-wrap: break-word;
   white-space: pre-wrap;
+}
+
+.mensajeRecibido .mensajeTexto {
+  color: #1e3a5f;
+}
+
+.mensajeEnviado .mensajeTexto {
+  color: white;
 }
 
 .mensajeMeta {
   display: flex;
   align-items: center;
   justify-content: flex-end;
-  gap: 6px;
-  margin-top: 6px;
+  gap: 4px;
+  margin-top: 4px;
 }
 
 .mensajeHora {
-  font-size: 11px;
+  font-size: 9px;
   color: var(--text-tertiary);
   font-weight: 500;
 }
@@ -681,7 +692,7 @@
 
 /* Footer del Chat */
 .chatFooter {
-  padding: 14px 24px;
+  padding: 8px 14px;
   background: var(--card-bg);
   border-top: 1px solid var(--border-color);
 }
@@ -690,8 +701,8 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 8px;
-  font-size: 13px;
+  gap: 6px;
+  font-size: 11px;
   color: var(--text-tertiary);
 }
 
@@ -705,7 +716,7 @@
 
 @media (max-width: 1024px) {
   .sidebar {
-    width: 340px;
+    width: 280px;
   }
 }
 

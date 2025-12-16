@@ -1,105 +1,137 @@
-/* 🎨 Momento IA - Sistema de Diseño */
-/* Paleta de colores basada en la identidad de marca */
+/* 🎨 Momento IA - Sistema de Diseño Empresarial */
+/* Paleta de colores: Azules + Blancos (principal) | Naranjas (acento) */
 
 :root {
   /* ========================================
-     COLORES PRINCIPALES - MOMENTO
+     COLORES PRINCIPALES - EMPRESARIAL
      ======================================== */
   
-  /* Naranja Momento - Color principal de la marca */
+  /* Azul Empresarial - Color principal */
+  --primary-blue: #1E3A5F;
+  --primary-blue-light: #2D4A6F;
+  --primary-blue-dark: #0F2A4A;
+  --primary-blue-hover: #2A4670;
+  --primary-blue-rgb: 30, 58, 95;
+  
+  /* Azul Secundario - Para elementos UI */
+  --secondary-blue: #3B5998;
+  --secondary-blue-light: #4A6AA8;
+  --secondary-blue-dark: #2C4A88;
+  
+  /* Naranja Momento - Color de ACENTO (resaltar) */
   --momento-orange: #FF6B4A;
   --momento-orange-light: #FF8A6E;
   --momento-orange-dark: #E55A3A;
   --momento-orange-hover: #FF7A5A;
   --momento-orange-rgb: 255, 107, 74;
   
-  /* Negro Momento - Fondo oscuro */
-  --momento-black: #1A1A1A;
-  --momento-black-light: #2A2A2A;
-  --momento-black-dark: #0A0A0A;
-  --momento-black-rgb: 26, 26, 26;
+  /* Fondos oscuros empresariales */
+  --momento-black: #1E3A5F;
+  --momento-black-light: #2D4A6F;
+  --momento-black-dark: #0F2A4A;
+  --momento-black-rgb: 30, 58, 95;
   
-  /* Blanco */
+  /* Blanco y grises */
   --momento-white: #FFFFFF;
-  --momento-white-soft: #F5F5F5;
+  --momento-white-soft: #F8FAFC;
   --momento-white-rgb: 255, 255, 255;
+  --gray-50: #F8FAFC;
+  --gray-100: #F1F5F9;
+  --gray-200: #E2E8F0;
+  --gray-300: #CBD5E1;
+  --gray-400: #94A3B8;
+  --gray-500: #64748B;
+  --gray-600: #475569;
+  --gray-700: #334155;
+  --gray-800: #1E293B;
   
   /* ========================================
      COLORES DE ESTADO
      ======================================== */
   
   /* Éxito */
-  --success: #4CAF50;
-  --success-light: #81C784;
-  --success-dark: #388E3C;
-  --success-bg: rgba(76, 175, 80, 0.1);
+  --success: #10B981;
+  --success-light: #34D399;
+  --success-dark: #059669;
+  --success-bg: rgba(16, 185, 129, 0.1);
   
   /* Error */
-  --error: #F44336;
-  --error-light: #E57373;
-  --error-dark: #D32F2F;
-  --error-bg: rgba(244, 67, 54, 0.1);
+  --error: #EF4444;
+  --error-light: #F87171;
+  --error-dark: #DC2626;
+  --error-bg: rgba(239, 68, 68, 0.1);
   
-  /* Advertencia */
-  --warning: #FF9800;
-  --warning-light: #FFB74D;
-  --warning-dark: #F57C00;
-  --warning-bg: rgba(255, 152, 0, 0.1);
+  /* Advertencia - Naranja como acento */
+  --warning: #FF6B4A;
+  --warning-light: #FF8A6E;
+  --warning-dark: #E55A3A;
+  --warning-bg: rgba(255, 107, 74, 0.1);
   
   /* Info */
-  --info: #FF6B4A;
-  --info-light: #64B5F6;
-  --info-dark: #E55A3A;
-  --info-bg: rgba(255, 107, 74, 0.1);
+  --info: #3B82F6;
+  --info-light: #60A5FA;
+  --info-dark: #2563EB;
+  --info-bg: rgba(59, 130, 246, 0.1);
   
   /* ========================================
      COLORES DE TEXTO
      ======================================== */
   
-  /* Sobre fondo oscuro */
+  /* Sobre fondo oscuro (azul) */
   --text-on-dark: #FFFFFF;
-  --text-on-dark-secondary: rgba(255, 255, 255, 0.7);
-  --text-on-dark-disabled: rgba(255, 255, 255, 0.4);
+  --text-on-dark-secondary: rgba(255, 255, 255, 0.8);
+  --text-on-dark-disabled: rgba(255, 255, 255, 0.5);
   
-  /* Sobre fondo claro */
-  --text-on-light: #1A1A1A;
-  --text-on-light-secondary: rgba(26, 26, 26, 0.7);
-  --text-on-light-disabled: rgba(26, 26, 26, 0.4);
+  /* Sobre fondo claro (blanco) */
+  --text-on-light: #1E293B;
+  --text-on-light-secondary: #475569;
+  --text-on-light-disabled: #94A3B8;
   
-  /* Sobre naranja */
+  /* Sobre naranja (acento) */
   --text-on-orange: #FFFFFF;
+  
+  /* Sobre azul */
+  --text-on-blue: #FFFFFF;
   
   /* ========================================
      COLORES DE FONDO
      ======================================== */
   
-  /* Fondos principales */
-  --bg-primary: #1A1A1A;
-  --bg-secondary: #2A2A2A;
-  --bg-tertiary: #3A3A3A;
+  /* Fondos principales (azul empresarial) */
+  --bg-primary: #1E3A5F;
+  --bg-secondary: #2D4A6F;
+  --bg-tertiary: #3D5A7F;
   
-  /* Fondos claros */
+  /* Fondos claros (blanco/gris) */
   --bg-light: #FFFFFF;
-  --bg-light-secondary: #F5F5F5;
-  --bg-light-tertiary: #EEEEEE;
+  --bg-light-secondary: #F8FAFC;
+  --bg-light-tertiary: #F1F5F9;
   
-  /* Fondos con naranja */
+  /* Fondos con azul */
+  --bg-blue-soft: rgba(30, 58, 95, 0.05);
+  --bg-blue-medium: rgba(30, 58, 95, 0.1);
+  
+  /* Fondos con naranja (acento) */
   --bg-orange-soft: rgba(255, 107, 74, 0.1);
-  --bg-orange-medium: rgba(255, 107, 74, 0.2);
+  --bg-orange-medium: rgba(255, 107, 74, 0.15);
   
   /* ========================================
      GRADIENTES
      ======================================== */
   
-  /* Gradiente principal (Naranja) */
+  /* Gradiente principal (Azul empresarial) */
+  --gradient-primary: linear-gradient(135deg, #1E3A5F 0%, #2D4A6F 100%);
+  --gradient-primary-reverse: linear-gradient(135deg, #2D4A6F 0%, #1E3A5F 100%);
+  
+  /* Gradiente naranja (acento/resaltar) */
   --gradient-orange: linear-gradient(135deg, #FF6B4A 0%, #FF8A6E 100%);
   --gradient-orange-reverse: linear-gradient(135deg, #FF8A6E 0%, #FF6B4A 100%);
   
-  /* Gradiente oscuro */
-  --gradient-dark: linear-gradient(135deg, #1A1A1A 0%, #2A2A2A 100%);
+  /* Gradiente oscuro (azul) */
+  --gradient-dark: linear-gradient(135deg, #1E3A5F 0%, #2D4A6F 100%);
   
-  /* Gradiente suave (para fondos) */
-  --gradient-soft: linear-gradient(135deg, rgba(255, 107, 74, 0.05) 0%, rgba(255, 138, 110, 0.05) 100%);
+  /* Gradiente suave (para fondos claros) */
+  --gradient-soft: linear-gradient(135deg, rgba(30, 58, 95, 0.03) 0%, rgba(59, 130, 246, 0.03) 100%);
   
   /* ========================================
      TIPOGRAFÍA
@@ -146,15 +178,20 @@
      ======================================== */
   
   /* Sombras neutras */
-  --shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.05);
-  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.08);
-  --shadow-lg: 0 10px 25px rgba(0, 0, 0, 0.1);
-  --shadow-xl: 0 20px 40px rgba(0, 0, 0, 0.15);
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.07);
+  --shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.1);
+  --shadow-xl: 0 20px 25px rgba(0, 0, 0, 0.15);
   
-  /* Sombras naranja */
-  --shadow-orange: 0 4px 12px rgba(255, 107, 74, 0.3);
-  --shadow-orange-lg: 0 8px 24px rgba(255, 107, 74, 0.4);
-  --shadow-orange-xl: 0 12px 32px rgba(255, 107, 74, 0.5);
+  /* Sombras azul (principal) */
+  --shadow-blue: 0 4px 12px rgba(30, 58, 95, 0.15);
+  --shadow-blue-lg: 0 8px 24px rgba(30, 58, 95, 0.2);
+  --shadow-blue-xl: 0 12px 32px rgba(30, 58, 95, 0.25);
+  
+  /* Sombras naranja (acento) */
+  --shadow-orange: 0 4px 12px rgba(255, 107, 74, 0.25);
+  --shadow-orange-lg: 0 8px 24px rgba(255, 107, 74, 0.35);
+  --shadow-orange-xl: 0 12px 32px rgba(255, 107, 74, 0.45);
   
   /* ========================================
      BORDES REDONDEADOS
@@ -180,9 +217,10 @@
      BORDES
      ======================================== */
   
-  --border-light: 1px solid #EEEEEE;
-  --border-medium: 1px solid #DDDDDD;
-  --border-dark: 1px solid #CCCCCC;
+  --border-light: 1px solid #E2E8F0;
+  --border-medium: 1px solid #CBD5E1;
+  --border-dark: 1px solid #94A3B8;
+  --border-blue: 1px solid var(--primary-blue);
   --border-orange: 2px solid var(--momento-orange);
   
   /* ========================================

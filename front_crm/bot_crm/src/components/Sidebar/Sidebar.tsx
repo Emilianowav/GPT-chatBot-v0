@@ -2,7 +2,6 @@
 
 // 🎨 Componente Sidebar
 import { useRouter, usePathname } from 'next/navigation';
-import { useAuth } from '@/contexts/AuthContext';
 import styles from './Sidebar.module.css';
 
 interface SidebarProps {
@@ -13,7 +12,6 @@ interface SidebarProps {
 export default function Sidebar({ isOpen, onClose }: SidebarProps) {
   const router = useRouter();
   const pathname = usePathname();
-  const { empresa, logout } = useAuth();
 
   const menuItems = [
     { 
@@ -57,12 +55,7 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
 
   const handleNavigate = (path: string) => {
     router.push(path);
-    onClose(); // Cerrar sidebar en móvil después de navegar
-  };
-
-  const handleLogout = () => {
-    logout();
-    router.push('/login');
+    onClose();
   };
 
   return (
@@ -94,17 +87,6 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
           </button>
         </div>
 
-        {/* Información de la Empresa */}
-        <div className={styles.empresaInfo}>
-          <div className={styles.empresaAvatar}>
-            {empresa?.empresaNombre.charAt(0).toUpperCase()}
-          </div>
-          <div className={styles.empresaDetails}>
-            <p className={styles.empresaNombre}>{empresa?.empresaNombre}</p>
-            <p className={styles.empresaRole}>Administrador</p>
-          </div>
-        </div>
-
         {/* Menú de Navegación */}
         <nav className={styles.nav}>
           {menuItems.map((item) => (
@@ -121,20 +103,6 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
             </button>
           ))}
         </nav>
-
-        {/* Footer del Sidebar */}
-        <div className={styles.sidebarFooter}>
-          <button className={styles.logoutButton} onClick={handleLogout}>
-            <span className={styles.navIcon}>
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
-                <polyline points="16 17 21 12 16 7"/>
-                <line x1="21" y1="12" x2="9" y2="12"/>
-              </svg>
-            </span>
-            <span className={styles.navLabel}>Cerrar Sesión</span>
-          </button>
-        </div>
       </aside>
     </>
   );

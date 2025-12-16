@@ -1,4 +1,4 @@
-/* 🎨 Estilos del Sidebar */
+/* 🎨 Estilos del Sidebar - Colapsable */
 
 .overlay {
   position: fixed;
@@ -16,170 +16,147 @@
   left: 0;
   top: 0;
   bottom: 0;
-  width: 280px;
-  background: var(--momento-black, #1A1A1A);
-  border-right: 2px solid var(--momento-orange, #FF6B4A);
+  width: 56px;
+  background: var(--primary-blue, #1E3A5F);
+  border-right: 1px solid var(--gray-300, #CBD5E1);
   display: flex;
   flex-direction: column;
   z-index: 999;
-  transition: transform 0.3s ease;
+  transition: width 0.2s ease;
+  overflow: hidden;
+  box-shadow: var(--shadow-blue, 0 4px 12px rgba(30, 58, 95, 0.15));
+}
+
+.sidebar:hover {
+  width: 200px;
 }
 
 /* Header del Sidebar */
 .sidebarHeader {
-  padding: 20px;
-  border-bottom: 2px solid rgba(255, 107, 74, 0.3);
+  padding: 12px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
   display: flex;
-  justify-content: space-between;
+  justify-content: center;
   align-items: center;
+  min-height: 48px;
 }
 
 .logo {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 8px;
+  overflow: hidden;
 }
 
 .logoIcon {
-  font-size: 32px;
+  font-size: 24px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .logoText {
-  font-size: 20px;
+  font-size: 14px;
   font-weight: 700;
-  background: linear-gradient(135deg, #FF6B4A 0%, #FF8A6E 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
+  color: var(--momento-white, #FFFFFF);
+  white-space: nowrap;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+
+.sidebar:hover .logoText {
+  opacity: 1;
 }
 
 .closeButton {
   display: none;
-  width: 32px;
-  height: 32px;
+  width: 28px;
+  height: 28px;
   border: none;
   background: #f5f5f5;
-  border-radius: 6px;
+  border-radius: 4px;
   cursor: pointer;
-  font-size: 18px;
+  font-size: 14px;
   color: rgba(255, 255, 255, 0.9);
-  transition: all 0.3s ease;
+  transition: all 0.2s ease;
 }
 
 .closeButton:hover {
   background: #e0e0e0;
 }
 
-/* Información de la Empresa */
-.empresaInfo {
-  padding: 20px;
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  border-bottom: 2px solid rgba(255, 107, 74, 0.3);
-}
-
-.empresaAvatar {
-  width: 48px;
-  height: 48px;
-  border-radius: 50%;
-  background: linear-gradient(135deg, #FF6B4A 0%, #FF8A6E 100%);
-  color: white;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 20px;
-  font-weight: 700;
-}
-
-.empresaDetails {
-  flex: 1;
-}
-
-.empresaNombre {
-  margin: 0;
-  font-size: 15px;
-  font-weight: 600;
-  color: var(--momento-white, #FFFFFF);
-}
-
-.empresaRole {
-  margin: 4px 0 0 0;
-  font-size: 13px;
-  color: rgba(255, 255, 255, 0.9);
-}
-
 /* Navegación */
 .nav {
   flex: 1;
-  padding: 20px 0px;
+  padding: 8px 0;
   overflow-y: auto;
+  overflow-x: hidden;
 }
 
 .navItem {
   width: 100%;
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 16px 16px;
+  gap: 10px;
+  padding: 10px 16px;
   border: none;
   background: none;
   cursor: pointer;
-  transition: all 0.3s ease;
+  transition: all 0.2s ease;
   text-align: left;
   color: rgba(255, 255, 255, 0.8);
+  white-space: nowrap;
 }
 
 .navItem:hover {
-  background-color: rgba(255, 107, 74, 0.1);
+  background-color: rgba(255, 255, 255, 0.1);
   color: var(--momento-white, #FFFFFF);
 }
 
 .navItem.active {
-  background: var(--momento-black-light, #2a2a2a);
+  background: rgba(255, 255, 255, 0.15);
   color: var(--momento-orange, #FF6B4A);
+  border-left: 3px solid var(--momento-orange, #FF6B4A);
 }
 
 .navIcon {
-  font-size: 20px;
+  font-size: 18px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
 }
 
 .navLabel {
-  font-size: 15px;
+  font-size: 13px;
   font-weight: 500;
   color: inherit;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+
+.sidebar:hover .navLabel {
+  opacity: 1;
 }
 
 .navItem.active .navLabel {
   font-weight: 600;
 }
 
-/* Footer del Sidebar */
-.sidebarFooter {
-  padding: 20px;
-  border-top: 2px solid rgba(255, 107, 74, 0.3);
+.badge {
+  font-size: 10px;
+  padding: 2px 6px;
+  background: var(--momento-orange, #FF6B4A);
+  color: white;
+  border-radius: 10px;
+  opacity: 0;
+  transition: opacity 0.2s ease;
 }
 
-.logoutButton {
-  width: 100%;
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 12px 16px;
-  border: 2px solid rgba(231, 76, 60, 0.5);
-  background: rgba(231, 76, 60, 0.1);
-  color: #e74c3c;
-  border-radius: 8px;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  font-size: 15px;
-  font-weight: 500;
-}
-
-.logoutButton:hover {
-  background: rgba(231, 76, 60, 0.2);
-  border-color: #e74c3c;
-  transform: translateY(-2px);
+.sidebar:hover .badge {
+  opacity: 1;
 }
 
 /* Responsive */
@@ -189,11 +166,22 @@
   }
 
   .sidebar {
+    width: 200px;
     transform: translateX(-100%);
   }
 
   .sidebar.open {
     transform: translateX(0);
+  }
+
+  .sidebar:hover {
+    width: 200px;
+  }
+
+  .logoText,
+  .navLabel,
+  .badge {
+    opacity: 1;
   }
 
   .closeButton {
