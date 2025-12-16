@@ -19,11 +19,15 @@ export const getConversaciones = async (req: Request, res: Response): Promise<vo
       return;
     }
 
-    // Obtener contactos con historial de mensajes
+    // Obtener contactos con interacciones recientes (incluye los que aún no tienen historial guardado)
     const contactos = await ContactoEmpresaModel.find({ 
       empresaId,
-      'conversaciones.historial': { $exists: true, $ne: [] }
-    }).sort({ 'metricas.ultimaInteraccion': -1 });
+      $or: [
+        { 'conversaciones.historial': { $exists: true, $ne: [] } },
+        { 'metricas.interacciones': { $gt: 0 } },
+        { 'metricas.ultimaInteraccion': { $exists: true } }
+      ]
+    }).sort({ 'metricas.ultimaInteraccion': -1 }).limit(100);
 
     const conversaciones = contactos.map(contacto => {
       const historial = contacto.conversaciones?.historial || [];
