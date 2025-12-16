@@ -72,7 +72,8 @@ export const menuPrincipalFlow: Flow = {
       return {
         success: true,
         nextState: 'esperando_opcion',
-        data: {}
+        data: {},
+        response: mensajeMenu
       };
     } catch (error) {
       console.error('❌ Error iniciando menú principal:', error);

@@ -9,6 +9,7 @@ import { wss } from '../app.js';
 import { buscarOCrearContacto, limpiarHistorial, incrementarMetricas } from '../services/contactoService.js';
 import { flowManager } from '../flows/index.js';
 import type { FlowContext } from '../flows/types.js';
+import { startTracking, endTracking } from '../services/conversationTracker.js';
 import { EmpresaModel } from '../models/Empresa.js';
 import { universalRouter } from '../services/universalRouter.js';
 import { apiKeywordHandler } from '../services/apiKeywordHandler.js';
@@ -338,6 +339,9 @@ export const recibirMensaje = async (req: Request, res: Response, next: NextFunc
       profileName
     };
     
+    // 📝 Iniciar tracking de mensajes para guardar en historial
+    startTracking(telefonoCliente, contacto._id.toString());
+    
     try {
       console.log('🔍 [DEBUG] Llamando a flowManager.handleMessage con:', {
         telefono: flowContext.telefono,
@@ -359,6 +363,29 @@ export const recibirMensaje = async (req: Request, res: Response, next: NextFunc
       
       if (handled && result?.success) {
         console.log('✅ Mensaje procesado por sistema de flujos');
+        
+        // Guardar en historial de conversaciones
+        try {
+          const { actualizarHistorialConversacion } = await import('../services/contactoService.js');
+          
+          // Guardar mensaje del usuario
+          await actualizarHistorialConversacion(contacto._id.toString(), mensaje);
+          
+          // Obtener mensajes trackeados (respuestas del bot)
+          const tracked = endTracking(telefonoCliente);
+          if (tracked && tracked.mensajes.length > 0) {
+            for (const respuesta of tracked.mensajes) {
+              await actualizarHistorialConversacion(contacto._id.toString(), respuesta);
+            }
+            console.log(`📝 Historial actualizado: 1 mensaje usuario + ${tracked.mensajes.length} respuestas bot`);
+          } else {
+            console.log('📝 Historial actualizado: 1 mensaje usuario (sin respuestas trackeadas)');
+          }
+        } catch (errorHistorial) {
+          console.error('⚠️ Error guardando historial (no crítico):', errorHistorial);
+          // Limpiar tracking en caso de error
+          endTracking(telefonoCliente);
+        }
         
         // Actualizar métricas del contacto (no crítico)
         try {
@@ -430,6 +457,9 @@ export const recibirMensaje = async (req: Request, res: Response, next: NextFunc
       console.error('❌ [DEBUG] result:', result);
       console.error('❌ [DEBUG] FlowContext usado:', flowContext);
       
+      // Limpiar tracking
+      endTracking(telefonoCliente);
+      
       // Mensaje más útil para el usuario
       await enviarMensajeWhatsAppTexto(
         telefonoCliente,
@@ -442,6 +472,9 @@ export const recibirMensaje = async (req: Request, res: Response, next: NextFunc
     } catch (errorFlujos) {
       console.error('❌ Error en sistema de flujos:', errorFlujos);
       console.error('❌ Stack trace:', (errorFlujos as Error).stack);
+      
+      // Limpiar tracking en caso de error
+      endTracking(telefonoCliente);
       
       // Solo enviar mensaje de error si NO se envió respuesta exitosa
       // (evita mensajes duplicados cuando el error ocurre después del procesamiento)

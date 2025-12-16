@@ -2,6 +2,7 @@ import dotenv from "dotenv";
 dotenv.config();
 import fetch from "node-fetch";
 import { getMetaToken } from "./metaTokenService.js";
+import { trackMessage, isTracking } from "./conversationTracker.js";
 
 const modoDev = process.env.MODO_DEV === "true";
 
@@ -89,6 +90,14 @@ export const enviarMensajeWhatsAppTexto = async (
 
   const data = await res.json();
   console.log("✅ Mensaje enviado:", data);
+  
+  // Trackear mensaje para historial si hay contexto activo
+  if (isTracking(numero) || isTracking(numeroFormateado)) {
+    const telefonoTracking = isTracking(numero) ? numero : numeroFormateado;
+    trackMessage(telefonoTracking, texto);
+    console.log("📝 Mensaje trackeado para historial");
+  }
+  
   return data;
 };
 

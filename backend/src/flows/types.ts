@@ -17,6 +17,7 @@ export interface FlowResult {
   end?: boolean;
   error?: string;
   shouldContinue?: boolean; // Si debe continuar con otros flujos
+  response?: string; // Respuesta enviada al usuario (para guardar en historial)
 }
 
 export interface FlowStep {
