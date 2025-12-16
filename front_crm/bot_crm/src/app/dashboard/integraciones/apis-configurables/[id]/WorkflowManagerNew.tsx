@@ -15,7 +15,7 @@ interface Endpoint {
 }
 
 type ValidationType = 'texto' | 'numero' | 'opcion' | 'regex';
-type StepType = 'recopilar' | 'ejecutar' | 'validar';
+type StepType = 'recopilar' | 'input' | 'confirmacion' | 'consulta_filtrada' | 'ejecutar' | 'validar';
 type TriggerType = 'keyword' | 'primer_mensaje' | 'manual';
 
 interface StepValidation {
