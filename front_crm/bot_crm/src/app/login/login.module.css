@@ -1,8 +1,8 @@
 /* 🔐 Estilos del Login */
 
 .container {
-  min-height: 111vh;
-  height: 111vh;
+  min-height: 100vh;
+  height: 100vh;
   display: flex;
   align-items: stretch;
   justify-content: flex-start;
@@ -14,7 +14,7 @@
 
 .videoSection {
   flex-shrink: 0;
-  height: 111vh;
+  height: 100vh;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -34,9 +34,10 @@
   display: flex;
   flex-direction: column;
   justify-content: center;
-  padding: 0 15%;
+  padding: 40px 15%;
   overflow-y: auto;
   animation: slideIn 0.5s ease-out;
+  min-height: 0;
 }
 
 @keyframes slideIn {
