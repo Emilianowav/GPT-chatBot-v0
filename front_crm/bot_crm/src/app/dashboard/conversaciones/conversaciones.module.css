@@ -6,8 +6,8 @@
 
 .container {
   display: flex;
-  height: calc(115vh - 140px);
-  background: var(--background);
+  height: 100%;
+  background: var(--momento-black, #1A1A1A);
   overflow: hidden;
 }
 

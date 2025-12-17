@@ -1,7 +1,10 @@
 /* 📈 Estilos de Estadísticas - Momento IA */
 
-.container{
-  margin: 1rem;
+.container {
+  margin: 0;
+  padding: 1rem;
+  min-height: 100%;
+  background: var(--momento-black, #1A1A1A);
 }
 .loading {
   display: flex;

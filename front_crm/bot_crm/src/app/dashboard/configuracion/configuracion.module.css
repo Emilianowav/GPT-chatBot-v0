@@ -26,6 +26,8 @@
 .container {
   max-width: 800px;
   padding: 1rem;
+  min-height: 100%;
+  background: var(--momento-black, #1A1A1A);
 }
 
 /* Page Header */
