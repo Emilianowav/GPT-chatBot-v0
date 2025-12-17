@@ -4,7 +4,7 @@
   max-width: 100%;
   margin: 0;
   position: relative;
-  background: var(--momento-black, #1A1A1A);
+  background: #ffffff;
   min-height: 100%;
   display: flex;
   flex-direction: column;
@@ -20,10 +20,10 @@
 }
 
 .spinner {
-  width: 28px;
-  height: 28px;
-  border: 3px solid #f3f3f3;
-  border-top: 3px solid #3498db;
+  width: 32px;
+  height: 32px;
+  border: 3px solid var(--gray-200, #E2E8F0);
+  border-top: 3px solid var(--momento-orange, #FF6B4A);
   border-radius: 50%;
   animation: spin 1s linear infinite;
 }
