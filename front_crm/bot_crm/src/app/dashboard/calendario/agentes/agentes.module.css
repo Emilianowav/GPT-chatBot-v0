@@ -15,7 +15,7 @@
   justify-content: space-between;
   align-items: center;
   padding: 1rem 1.25rem;
-  background: var(--momento-white, #FFFFFF);
+  background: #FFFFFF;
   border-bottom: 1px solid var(--gray-200, #E2E8F0);
   margin-bottom: 0;
   gap: 1rem;
@@ -88,7 +88,7 @@
   align-items: center;
   gap: 0.5rem;
   padding: 0.5rem 0.75rem;
-  background: var(--momento-white, #FFFFFF);
+  background: #FFFFFF;
   border: 1px solid var(--gray-300, #CBD5E1);
   border-radius: 5px;
   cursor: pointer;

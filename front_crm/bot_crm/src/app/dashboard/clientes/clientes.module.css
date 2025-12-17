@@ -15,7 +15,7 @@
   justify-content: space-between;
   align-items: center;
   padding: 1rem 1.25rem;
-  background: var(--momento-white, #FFFFFF);
+  background: #FFFFFF;
   border-bottom: 1px solid var(--gray-200, #E2E8F0);
   margin-bottom: 0;
   gap: 1rem;
@@ -123,7 +123,7 @@
 
 /* Filtros Momento */
 .filtrosCard {
-  background: var(--momento-white, #FFFFFF);
+  background: #FFFFFF;
   border-radius: 0;
   padding: 1rem 1.25rem;
   margin: 0;
@@ -218,7 +218,7 @@
 /* Resultados Header */
 .resultadosHeader {
   padding: 1rem 1.25rem 0.75rem 1.25rem;
-  background: var(--momento-white, #FFFFFF);
+  background: #FFFFFF;
   border-bottom: 1px solid var(--gray-200, #E2E8F0);
 }
 

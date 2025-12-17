@@ -42,12 +42,18 @@
 /* Header - Igual que clientes */
 .header {
   display: flex;
-  flex-direction: column;
+  justify-content: space-between;
+  align-items: center;
   padding: 1rem 1.25rem;
-  background: var(--momento-white, #FFFFFF);
+  background: #FFFFFF;
   border-bottom: 1px solid var(--gray-200, #E2E8F0);
   margin-bottom: 0;
-  gap: 0.25rem;
+  gap: 1rem;
+}
+
+.header > div:first-child {
+  flex: 1;
+  min-width: 180px;
 }
 
 .header h1 {
@@ -61,7 +67,7 @@
 .header p {
   color: var(--gray-500, #64748B);
   font-size: 0.8rem;
-  margin: 0;
+  margin: 0.25rem 0 0 0;
   font-weight: 400;
 }
 

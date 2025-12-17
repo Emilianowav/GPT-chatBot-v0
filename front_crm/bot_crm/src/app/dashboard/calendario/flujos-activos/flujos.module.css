@@ -22,15 +22,19 @@
 }
 
 .header {
-  padding: 1rem 1.25rem;
-  border-bottom: 1px solid var(--gray-200, #E2E8F0);
-  margin-bottom: 0;
   display: flex;
   justify-content: space-between;
-  background: var(--momento-white, #FFFFFF);
   align-items: center;
-  flex-wrap: wrap;
+  padding: 1rem 1.25rem;
+  background: #FFFFFF;
+  border-bottom: 1px solid var(--gray-200, #E2E8F0);
+  margin-bottom: 0;
   gap: 1rem;
+}
+
+.header > div:first-child {
+  flex: 1;
+  min-width: 180px;
 }
 
 .headerContent h1 {

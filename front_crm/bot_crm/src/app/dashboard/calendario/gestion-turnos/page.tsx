@@ -238,10 +238,12 @@ export default function GestionTurnosPage() {
   return (
     <ModuleGuard moduleId="calendar_booking">
       <div className={styles.container}>
-        {/* Header */}
+        {/* Header - Igual que clientes */}
         <div className={styles.header}>
-          <h1>🔧 Gestión de Turnos</h1>
-          <p>Administra y reconfigura los turnos guardados</p>
+          <div>
+            <h1>🔧 Gestión de Turnos</h1>
+            <p>Administra y reconfigura los turnos guardados</p>
+          </div>
         </div>
 
           {/* Filtros */}
