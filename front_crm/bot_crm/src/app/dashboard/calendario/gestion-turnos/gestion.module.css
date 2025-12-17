@@ -42,21 +42,14 @@
 /* Header - Igual que clientes */
 .header {
   display: flex;
-  justify-content: space-between;
-  align-items: center;
+  flex-direction: column;
   padding: 1rem 1.25rem;
   background: var(--momento-white, #FFFFFF);
   border-bottom: 1px solid var(--gray-200, #E2E8F0);
   margin-bottom: 0;
-  gap: 1rem;
+  gap: 0.25rem;
 }
 
-.header > div:first-child {
-  flex: 1;
-  min-width: 180px;
-}
-
-.headerLeft h1,
 .header h1 {
   font-size: 1.25rem;
   color: var(--primary-blue, #1E3A5F);
@@ -65,11 +58,10 @@
   letter-spacing: -0.3px;
 }
 
-.headerLeft p,
 .header p {
   color: var(--gray-500, #64748B);
   font-size: 0.8rem;
-  margin: 0.25rem 0 0 0;
+  margin: 0;
   font-weight: 400;
 }
 
@@ -167,7 +159,7 @@
   transform: none;
 }
 
-/* Filtros */
+/* Filtros - Igual que clientes */
 .filtrosCard {
   background: var(--momento-white, #FFFFFF);
   border-radius: 0;
