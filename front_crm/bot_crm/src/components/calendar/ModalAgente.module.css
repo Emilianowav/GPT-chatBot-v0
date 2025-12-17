@@ -54,28 +54,30 @@
   justify-content: space-between;
   align-items: flex-start;
   padding: 2rem 2rem 1rem;
-  border-bottom: 1px solid #e5e7eb;
+  border-bottom: 1px solid rgba(255, 107, 74, 0.2);
+  background: linear-gradient(135deg, #FF6B4A 0%, #FF8A6E 100%);
+  border-radius: 16px 16px 0 0;
 }
 
 .header h2 {
   margin: 0;
   font-size: 1.5rem;
   font-weight: 600;
-  color: #111827;
+  color: white;
 }
 
 .subtitle {
   margin: 0.25rem 0 0;
   font-size: 0.875rem;
-  color: #6b7280;
+  color: rgba(255, 255, 255, 0.8);
 }
 
 .closeBtn {
-  background: none;
+  background: rgba(255, 255, 255, 0.2);
   border: none;
   padding: 0.5rem;
   cursor: pointer;
-  color: #6b7280;
+  color: white;
   border-radius: 8px;
   transition: all 0.2s;
   display: flex;
@@ -84,8 +86,8 @@
 }
 
 .closeBtn:hover {
-  background: #f3f4f6;
-  color: #111827;
+  background: rgba(255, 255, 255, 0.3);
+  color: white;
 }
 
 /* Progress */
@@ -114,8 +116,8 @@
   width: 40px;
   height: 40px;
   border-radius: 50%;
-  background: #e5e7eb;
-  color: #6b7280;
+  background: rgba(255, 255, 255, 0.1);
+  color: rgba(255, 255, 255, 0.6);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -125,24 +127,24 @@
 }
 
 .progressStep.active .progressCircle {
-  background: #FF6B4A;
+  background: linear-gradient(135deg, #FF6B4A 0%, #FF8A6E 100%);
   color: white;
 }
 
 .progressStep span {
   font-size: 0.75rem;
-  color: #6b7280;
+  color: rgba(255, 255, 255, 0.5);
   font-weight: 500;
 }
 
 .progressStep.active span {
-  color: #111827;
+  color: white;
 }
 
 .progressLine {
   width: 60px;
   height: 2px;
-  background: #e5e7eb;
+  background: rgba(255, 255, 255, 0.1);
   margin: 0 0.5rem;
   margin-bottom: 1.5rem;
 }
@@ -185,7 +187,7 @@
 .field label {
   font-size: 0.875rem;
   font-weight: 500;
-  color: #374151;
+  color: white;
   display: flex;
   align-items: center;
   gap: 0.5rem;
@@ -195,11 +197,18 @@
 .field select,
 .field textarea {
   padding: 0.75rem;
-  border: 1px solid #d1d5db;
+  border: 2px solid rgba(255, 255, 255, 0.1);
   border-radius: 8px;
   font-size: 0.875rem;
   transition: all 0.2s;
   font-family: inherit;
+  background: var(--momento-black, #1A1A1A);
+  color: white;
+}
+
+.field input::placeholder,
+.field textarea::placeholder {
+  color: rgba(255, 255, 255, 0.4);
 }
 
 .field input:focus,
@@ -207,7 +216,8 @@
 .field textarea:focus {
   outline: none;
   border-color: #FF6B4A;
-  box-shadow: 0 0 0 3px rgba(255, 107, 74, 0.1);
+  box-shadow: 0 0 0 3px rgba(255, 107, 74, 0.2);
+  background: var(--momento-black-light, #2A2A2A);
 }
 
 .field textarea {
@@ -217,7 +227,7 @@
 
 .hint {
   font-size: 0.75rem;
-  color: #6b7280;
+  color: rgba(255, 255, 255, 0.5);
   margin-top: -0.25rem;
 }
 
@@ -236,7 +246,7 @@
   margin: 0 0 0.5rem;
   font-size: 1.125rem;
   font-weight: 600;
-  color: #111827;
+  color: white;
   display: flex;
   align-items: center;
   gap: 0.5rem;
@@ -245,21 +255,22 @@
 .horariosHeader p {
   margin: 0;
   font-size: 0.875rem;
-  color: #6b7280;
+  color: rgba(255, 255, 255, 0.6);
 }
 
 .horariosRapidos {
   padding: 1rem;
-  background: #f9fafb;
+  background: rgba(255, 255, 255, 0.05);
   border-radius: 8px;
   margin-bottom: 1.5rem;
+  border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .horariosRapidos label {
   display: block;
   font-size: 0.875rem;
   font-weight: 500;
-  color: #374151;
+  color: white;
   margin-bottom: 0.75rem;
 }
 
@@ -271,17 +282,17 @@
 
 .btnHorarioRapido {
   padding: 0.5rem 0.75rem;
-  background: var(--momento-black, #1A1A1A);
-  border: 1px solid #d1d5db;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 6px;
   font-size: 0.75rem;
   cursor: pointer;
   transition: all 0.2s;
-  color: #374151;
+  color: white;
 }
 
 .btnHorarioRapido:hover {
-  background: #f3f4f6;
+  background: rgba(255, 107, 74, 0.1);
   border-color: #FF6B4A;
   color: #FF6B4A;
 }
@@ -294,7 +305,7 @@
 }
 
 .diaCard {
-  border: 2px solid #e5e7eb;
+  border: 2px solid rgba(255, 255, 255, 0.1);
   border-radius: 12px;
   padding: 1rem;
   transition: all 0.2s;
@@ -302,12 +313,12 @@
 }
 
 .diaCard:hover {
-  border-color: #d1d5db;
+  border-color: rgba(255, 255, 255, 0.2);
 }
 
 .diaActivo {
   border-color: #FF6B4A;
-  background: #eff6ff;
+  background: rgba(255, 107, 74, 0.1);
 }
 
 .diaHeader {
@@ -331,7 +342,7 @@
 
 .diaNombre {
   font-weight: 600;
-  color: #111827;
+  color: white;
   font-size: 0.875rem;
 }
 
@@ -339,7 +350,7 @@
   display: flex;
   gap: 0.75rem;
   padding-top: 0.75rem;
-  border-top: 1px solid #e5e7eb;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .horarioInput {
@@ -351,30 +362,33 @@
 
 .horarioInput label {
   font-size: 0.75rem;
-  color: #6b7280;
+  color: rgba(255, 255, 255, 0.6);
   font-weight: 500;
 }
 
 .horarioInput input[type="time"] {
   padding: 0.5rem;
-  border: 1px solid #d1d5db;
+  border: 2px solid rgba(255, 255, 255, 0.1);
   border-radius: 6px;
   font-size: 0.875rem;
+  background: var(--momento-black, #1A1A1A);
+  color: white;
+  color-scheme: dark;
 }
 
 /* Config Section */
 .configSection {
   padding: 1.5rem;
-  background: #f9fafb;
+  background: rgba(255, 255, 255, 0.03);
   border-radius: 12px;
-  border: 1px solid #e5e7eb;
+  border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .configSection h4 {
   margin: 0 0 1rem;
   font-size: 1rem;
   font-weight: 600;
-  color: #111827;
+  color: white;
 }
 
 /* Switch */
@@ -395,7 +409,7 @@
 
 .switchLabel span {
   font-weight: 500;
-  color: #111827;
+  color: white;
 }
 
 /* Footer */
@@ -404,8 +418,8 @@
   justify-content: space-between;
   gap: 1rem;
   padding: 1.5rem 2rem;
-  border-top: 1px solid #e5e7eb;
-  background: #f9fafb;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  background: var(--momento-black-light, #2A2A2A);
   border-radius: 0 0 16px 16px;
 }
 
@@ -424,26 +438,27 @@
 }
 
 .btnSecondary {
-  background: var(--momento-black, #1A1A1A);
-  color: #374151;
-  border: 1px solid #d1d5db;
+  background: rgba(255, 255, 255, 0.05);
+  color: white;
+  border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .btnSecondary:hover:not(:disabled) {
-  background: #f3f4f6;
-  border-color: #9ca3af;
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.2);
 }
 
 .btnPrimary {
-  background: #FF6B4A;
+  background: linear-gradient(135deg, #FF6B4A 0%, #FF8A6E 100%);
   color: white;
   min-width: 140px;
   justify-content: center;
+  box-shadow: 0 4px 12px rgba(255, 107, 74, 0.3);
 }
 
 .btnPrimary:hover:not(:disabled) {
-  background: #E55A3A;
-  box-shadow: 0 4px 12px rgba(255, 107, 74, 0.3);
+  transform: translateY(-1px);
+  box-shadow: 0 6px 16px rgba(255, 107, 74, 0.4);
 }
 
 .btnSecondary:disabled,

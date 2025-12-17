@@ -26,14 +26,15 @@
 }
 
 .modal {
-  background: white;
+  background: var(--momento-black, #1A1A1A);
   border-radius: 16px;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
   max-height: 90vh;
   display: flex;
   flex-direction: column;
   animation: slideUp 0.3s ease-out;
   position: relative;
+  border: 1px solid rgba(255, 107, 74, 0.2);
 }
 
 @keyframes slideUp {
@@ -74,8 +75,10 @@
   align-items: center;
   justify-content: space-between;
   padding: 1.5rem 2rem;
-  border-bottom: 1px solid #e0e0e0;
+  border-bottom: 1px solid rgba(255, 107, 74, 0.2);
   flex-shrink: 0;
+  background: linear-gradient(135deg, #FF6B4A 0%, #FF8A6E 100%);
+  border-radius: 16px 16px 0 0;
 }
 
 .title {
@@ -89,19 +92,19 @@
   width: 36px;
   height: 36px;
   border: none;
-  background: #f5f5f5;
+  background: rgba(255, 255, 255, 0.2);
   border-radius: 8px;
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
   transition: all 0.2s;
-  color: rgba(255, 255, 255, 0.9);
+  color: white;
   flex-shrink: 0;
 }
 
 .closeButton:hover {
-  background: #e0e0e0;
+  background: rgba(255, 255, 255, 0.3);
   color: white;
 }
 
@@ -110,6 +113,7 @@
   padding: 2rem;
   overflow-y: auto;
   flex: 1;
+  color: white;
 }
 
 /* Scrollbar personalizado */
@@ -118,17 +122,17 @@
 }
 
 .content::-webkit-scrollbar-track {
-  background: #f1f1f1;
+  background: var(--momento-black, #1A1A1A);
   border-radius: 10px;
 }
 
 .content::-webkit-scrollbar-thumb {
-  background: #888;
+  background: linear-gradient(135deg, #FF6B4A 0%, #FF8A6E 100%);
   border-radius: 10px;
 }
 
 .content::-webkit-scrollbar-thumb:hover {
-  background: #555;
+  background: #FF7A5A;
 }
 
 /* Responsive */

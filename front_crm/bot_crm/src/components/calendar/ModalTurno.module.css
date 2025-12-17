@@ -26,15 +26,16 @@
 
 /* Modal */
 .modal {
-  background: white;
+  background: var(--momento-black, #1A1A1A);
   border-radius: 16px;
   width: 100%;
   max-width: 700px;
   max-height: 90vh;
   display: flex;
   flex-direction: column;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
   animation: slideUp 0.3s ease-out;
+  border: 1px solid rgba(255, 107, 74, 0.2);
 }
 
 @keyframes slideUp {
@@ -54,28 +55,30 @@
   justify-content: space-between;
   align-items: flex-start;
   padding: 2rem 2rem 1rem;
-  border-bottom: 1px solid #e5e7eb;
+  border-bottom: 1px solid rgba(255, 107, 74, 0.2);
+  background: linear-gradient(135deg, #FF6B4A 0%, #FF8A6E 100%);
+  border-radius: 16px 16px 0 0;
 }
 
 .header h2 {
   margin: 0;
   font-size: 1.5rem;
   font-weight: 600;
-  color: #1a1a1a;
+  color: white;
 }
 
 .subtitle {
   margin: 0.25rem 0 0;
   font-size: 0.875rem;
-  color: #6b7280;
+  color: rgba(255, 255, 255, 0.8);
 }
 
 .closeBtn {
-  background: none;
+  background: rgba(255, 255, 255, 0.2);
   border: none;
   padding: 0.5rem;
   cursor: pointer;
-  color: #6b7280;
+  color: white;
   border-radius: 8px;
   transition: all 0.2s;
   display: flex;
@@ -84,8 +87,8 @@
 }
 
 .closeBtn:hover {
-  background: #f3f4f6;
-  color: #111827;
+  background: rgba(255, 255, 255, 0.3);
+  color: white;
 }
 
 /* Progress */
@@ -114,8 +117,8 @@
   width: 40px;
   height: 40px;
   border-radius: 50%;
-  background: #e5e7eb;
-  color: #6b7280;
+  background: rgba(255, 255, 255, 0.1);
+  color: rgba(255, 255, 255, 0.6);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -125,24 +128,24 @@
 }
 
 .progressStep.active .progressCircle {
-  background: #FF6B4A;
+  background: linear-gradient(135deg, #FF6B4A 0%, #FF8A6E 100%);
   color: white;
 }
 
 .progressStep span {
   font-size: 0.75rem;
-  color: #6b7280;
+  color: rgba(255, 255, 255, 0.5);
   font-weight: 500;
 }
 
 .progressStep.active span {
-  color: #1a1a1a;
+  color: white;
 }
 
 .progressLine {
   width: 60px;
   height: 2px;
-  background: #e5e7eb;
+  background: rgba(255, 255, 255, 0.1);
   margin: 0 0.5rem;
   margin-bottom: 1.5rem;
 }
@@ -185,7 +188,7 @@
 .field label {
   font-size: 0.875rem;
   font-weight: 500;
-  color: #1a1a1a;
+  color: white;
   display: flex;
   align-items: center;
   gap: 0.5rem;
@@ -195,11 +198,18 @@
 .field select,
 .field textarea {
   padding: 0.75rem;
-  border: 1px solid #d1d5db;
+  border: 2px solid rgba(255, 255, 255, 0.1);
   border-radius: 8px;
   font-size: 0.875rem;
   transition: all 0.2s;
   font-family: inherit;
+  background: var(--momento-black, #1A1A1A);
+  color: white;
+}
+
+.field input::placeholder,
+.field textarea::placeholder {
+  color: rgba(255, 255, 255, 0.4);
 }
 
 /* Forzar formato 24 horas en input time */
@@ -218,7 +228,8 @@
 .field textarea:focus {
   outline: none;
   border-color: #FF6B4A;
-  box-shadow: 0 0 0 3px rgba(255, 107, 74, 0.1);
+  box-shadow: 0 0 0 3px rgba(255, 107, 74, 0.2);
+  background: var(--momento-black-light, #2A2A2A);
 }
 
 .field textarea {
@@ -228,15 +239,15 @@
 
 .hint {
   font-size: 0.75rem;
-  color: #6b7280;
+  color: rgba(255, 255, 255, 0.5);
   margin-top: -0.25rem;
 }
 
 .loading {
   padding: 1rem;
   text-align: center;
-  color: #6b7280;
-  background: #f9fafb;
+  color: rgba(255, 255, 255, 0.7);
+  background: rgba(255, 255, 255, 0.05);
   border-radius: 8px;
   font-size: 0.875rem;
 }
@@ -244,9 +255,9 @@
 .noSlots {
   padding: 1rem;
   text-align: center;
-  color: #dc2626;
-  background: #fef2f2;
-  border: 1px solid #fecaca;
+  color: #fca5a5;
+  background: rgba(239, 68, 68, 0.1);
+  border: 1px solid rgba(239, 68, 68, 0.3);
   border-radius: 8px;
   font-size: 0.875rem;
 }
@@ -254,13 +265,13 @@
 /* Info Box */
 .infoBox {
   padding: 1rem;
-  background: #eff6ff;
-  border: 1px solid #bfdbfe;
+  background: rgba(59, 130, 246, 0.1);
+  border: 1px solid rgba(59, 130, 246, 0.3);
   border-radius: 12px;
   display: flex;
   gap: 1rem;
   align-items: flex-start;
-  color: #1e40af;
+  color: #93c5fd;
 }
 
 .infoBox svg {
@@ -289,12 +300,12 @@
   margin: 0 0 1rem;
   font-size: 1rem;
   font-weight: 600;
-  color: #1a1a1a;
+  color: white;
   display: flex;
   align-items: center;
   gap: 0.5rem;
   padding-bottom: 0.75rem;
-  border-bottom: 1px solid #e5e7eb;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 /* Footer */
@@ -303,8 +314,8 @@
   justify-content: space-between;
   gap: 1rem;
   padding: 1.5rem 2rem;
-  border-top: 1px solid #e5e7eb;
-  background: #f9fafb;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  background: var(--momento-black-light, #2A2A2A);
   border-radius: 0 0 16px 16px;
 }
 
@@ -323,26 +334,27 @@
 }
 
 .btnSecondary {
-  background: white;
-  color: #374151;
-  border: 1px solid #d1d5db;
+  background: rgba(255, 255, 255, 0.05);
+  color: white;
+  border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .btnSecondary:hover:not(:disabled) {
-  background: #f3f4f6;
-  border-color: #9ca3af;
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.2);
 }
 
 .btnPrimary {
-  background: #FF6B4A;
+  background: linear-gradient(135deg, #FF6B4A 0%, #FF8A6E 100%);
   color: white;
   min-width: 140px;
   justify-content: center;
+  box-shadow: 0 4px 12px rgba(255, 107, 74, 0.3);
 }
 
 .btnPrimary:hover:not(:disabled) {
-  background: #E55A3A;
-  box-shadow: 0 4px 12px rgba(255, 107, 74, 0.3);
+  transform: translateY(-1px);
+  box-shadow: 0 6px 16px rgba(255, 107, 74, 0.4);
 }
 
 .btnSecondary:disabled,
