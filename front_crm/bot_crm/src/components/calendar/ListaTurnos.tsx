@@ -87,147 +87,104 @@ export default function ListaTurnos({ turnos, configuracion, onCancelar, onActua
 
   return (
     <>
-      <div className={styles.lista}>
-        {turnos.map(turno => {
-          const agente = turno.agenteId as any;
-          const fechaInicio = new Date(turno.fechaInicio);
-          
-          return (
-            <div key={turno._id} className={styles.turnoCard}>
-              <div className={styles.turnoHeader}>
-                <div className={styles.turnoHora}>
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <circle cx="12" cy="12" r="10"/>
-                    <polyline points="12 6 12 12 16 14"/>
-                  </svg>
-                  {formatearHora(fechaInicio)}
-                </div>
-                <div 
-                  className={styles.turnoEstado}
-                  style={{ background: getEstadoColor(turno.estado) }}
-                >
-                  {getEstadoTexto(turno.estado)}
-                </div>
-              </div>
-
-              <div className={styles.turnoBody}>
-                <div className={styles.turnoInfo}>
-                  <div className={styles.infoItem}>
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                      <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
-                      <circle cx="12" cy="7" r="4"/>
-                    </svg>
-                    <span>
-                      <strong>Agente:</strong> {agente?.nombre} {agente?.apellido}
-                    </span>
-                  </div>
-
-                  <div className={styles.infoItem}>
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                      <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
-                      <circle cx="12" cy="7" r="4"/>
-                    </svg>
-                    <span>
-                      <strong>Cliente:</strong> {
-                        (turno as any).clienteInfo 
-                          ? `${(turno as any).clienteInfo.nombre} ${(turno as any).clienteInfo.apellido}`
+      <div className={styles.tableContainer}>
+        <table className={styles.table}>
+          <thead>
+            <tr>
+              <th>Hora</th>
+              <th>Cliente</th>
+              <th>Agente</th>
+              <th>Duración</th>
+              <th>Estado</th>
+              <th>Acciones</th>
+            </tr>
+          </thead>
+          <tbody>
+            {turnos.map(turno => {
+              const agente = turno.agenteId as any;
+              const fechaInicio = new Date(turno.fechaInicio);
+              const clienteInfo = (turno as any).clienteInfo;
+              
+              return (
+                <tr key={turno._id}>
+                  <td className={styles.tdHora}>
+                    {formatearHora(fechaInicio)}
+                  </td>
+                  <td>
+                    <div className={styles.clienteCell}>
+                      <span className={styles.clienteNombre}>
+                        {clienteInfo 
+                          ? `${clienteInfo.nombre} ${clienteInfo.apellido}`
                           : `ID: ${turno.clienteId.substring(0, 8)}...`
-                      }
-                      {(turno as any).clienteInfo?.documento && (
-                        <span style={{ marginLeft: '0.5rem', color: '#888' }}>
-                          (DNI: {(turno as any).clienteInfo.documento})
-                        </span>
+                        }
+                      </span>
+                      {clienteInfo?.documento && (
+                        <span className={styles.clienteDoc}>DNI: {clienteInfo.documento}</span>
                       )}
-                    </span>
-                  </div>
-
-                  <div className={styles.infoItem}>
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                      <circle cx="12" cy="12" r="10"/>
-                      <polyline points="12 6 12 12 16 14"/>
-                    </svg>
-                    <span>
-                      <strong>Duración:</strong> {turno.duracion} minutos
-                    </span>
-                  </div>
-
-                  {/* Campos personalizados configurados */}
-                  {configuracion?.camposPersonalizados
-                    ?.filter(campo => campo.mostrarEnLista)
-                    .sort((a, b) => a.orden - b.orden)
-                    .map(campo => {
-                      const valor = turno.datos?.[campo.clave];
-                      if (!valor) return null;
-                      
-                      return (
-                        <div key={campo.clave} className={styles.infoItem}>
-                          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
-                            <polyline points="14 2 14 8 20 8"/>
-                            <line x1="16" y1="13" x2="8" y2="13"/>
-                            <line x1="16" y1="17" x2="8" y2="17"/>
-                          </svg>
-                          <span>
-                            <strong>{campo.etiqueta}:</strong> {
-                              typeof valor === 'boolean' 
-                                ? (valor ? 'Sí' : 'No')
-                                : Array.isArray(valor)
-                                  ? valor.join(', ')
-                                  : valor
-                            }
-                          </span>
-                        </div>
-                      );
-                    })
-                  }
-
-                  {turno.notas && (
-                    <div className={styles.turnoNotas}>
-                      <strong>Notas:</strong> {turno.notas}
                     </div>
-                  )}
-                </div>
+                  </td>
+                  <td>
+                    {agente?.nombre} {agente?.apellido}
+                  </td>
+                  <td>
+                    {turno.duracion} min
+                  </td>
+                  <td>
+                    <span 
+                      className={styles.estadoBadge}
+                      style={{ background: getEstadoColor(turno.estado) }}
+                    >
+                      {getEstadoTexto(turno.estado)}
+                    </span>
+                  </td>
+                  <td>
+                    {(onCancelar || onActualizarEstado) && turno.estado !== 'cancelado' && turno.estado !== 'completado' ? (
+                      <div className={styles.acciones}>
+                        {turno.estado === 'pendiente' && onActualizarEstado && (
+                          <button
+                            onClick={() => handleActualizarEstado(turno._id, 'confirmado')}
+                            className={styles.btnConfirmar}
+                            disabled={loading}
+                            title="Confirmar"
+                          >
+                            ✓
+                          </button>
+                        )}
+                        
+                        {turno.estado === 'confirmado' && onActualizarEstado && (
+                          <button
+                            onClick={() => handleActualizarEstado(turno._id, 'completado')}
+                            className={styles.btnCompletar}
+                            disabled={loading}
+                            title="Completar"
+                          >
+                            ✓✓
+                          </button>
+                        )}
 
-                {(onCancelar || onActualizarEstado) && turno.estado !== 'cancelado' && turno.estado !== 'completado' && (
-                  <div className={styles.turnoAcciones}>
-                    {turno.estado === 'pendiente' && onActualizarEstado && (
-                      <button
-                        onClick={() => handleActualizarEstado(turno._id, 'confirmado')}
-                        className={styles.btnConfirmar}
-                        disabled={loading}
-                      >
-                        Confirmar
-                      </button>
+                        {onCancelar && (
+                          <button
+                            onClick={() => {
+                              setTurnoSeleccionado(turno._id);
+                              setMostrarModalCancelar(true);
+                            }}
+                            className={styles.btnCancelar}
+                            disabled={loading}
+                            title="Cancelar"
+                          >
+                            ✕
+                          </button>
+                        )}
+                      </div>
+                    ) : (
+                      <span className={styles.sinAcciones}>-</span>
                     )}
-                    
-                    {turno.estado === 'confirmado' && onActualizarEstado && (
-                      <button
-                        onClick={() => handleActualizarEstado(turno._id, 'completado')}
-                        className={styles.btnCompletar}
-                        disabled={loading}
-                      >
-                        Completar
-                      </button>
-                    )}
-
-                    {onCancelar && (
-                      <button
-                        onClick={() => {
-                          setTurnoSeleccionado(turno._id);
-                          setMostrarModalCancelar(true);
-                        }}
-                        className={styles.btnCancelar}
-                        disabled={loading}
-                      >
-                        Cancelar
-                      </button>
-                    )}
-                  </div>
-                )}
-              </div>
-            </div>
-          );
-        })}
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
       </div>
 
       {/* Modal de cancelación */}

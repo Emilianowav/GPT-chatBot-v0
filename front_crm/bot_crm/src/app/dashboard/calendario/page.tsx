@@ -132,25 +132,7 @@ export default function CalendarioPage() {
   return (
     <ModuleGuard moduleId="calendar_booking">
       <div className={styles.container}>
-        {/* Header - Igual que clientes */}
-        <div className={styles.header}>
-          <div>
-            <h1>📅 Calendario de Turnos</h1>
-            <p>Gestiona los turnos de tus agentes y clientes</p>
-          </div>
-          <button 
-            className={styles.btnNuevo}
-            onClick={() => setModalNuevoTurno(true)}
-            disabled={agentes.length === 0}
-          >
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <path d="M12 5v14M5 12h14"/>
-            </svg>
-            Nuevo Turno
-          </button>
-        </div>
-
-        {/* Filtros - Igual que clientes */}
+        {/* Filtros */}
         <div className={styles.filtrosCard}>
           <h3>🔍 Filtrar por Agente</h3>
           <div className={styles.filtrosGrid}>

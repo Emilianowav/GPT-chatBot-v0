@@ -109,6 +109,7 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  font-weight: bold;
 }
 
 /* Dropdown Menu */
@@ -134,7 +135,8 @@
 
 .dropdownRole {
   font-size: 11px;
-  color: var(--gray-500, #64748B);
+  color: var(--primary-blue , #1E3A5F);
+  font-weight: bold;
 }
 
 .dropdownItem {
@@ -160,7 +162,6 @@
 .dropdownDivider {
   height: 1px;
   background: var(--gray-200, #E2E8F0);
-  margin: 4px 0;
 }
 
 .dropdownItemLogout {
