@@ -39,7 +39,7 @@
   font-size: 0.8rem;
 }
 
-/* Header */
+/* Header - Igual que clientes */
 .header {
   display: flex;
   justify-content: space-between;
@@ -56,6 +56,7 @@
   min-width: 180px;
 }
 
+.headerLeft h1,
 .header h1 {
   font-size: 1.25rem;
   color: var(--primary-blue, #1E3A5F);
@@ -64,6 +65,7 @@
   letter-spacing: -0.3px;
 }
 
+.headerLeft p,
 .header p {
   color: var(--gray-500, #64748B);
   font-size: 0.8rem;
@@ -256,119 +258,102 @@
 
 .empty {
   text-align: center;
-  padding: 2rem 1rem;
-  color: var(--gray-500, #64748B);
+  padding: 4rem 2rem;
+  color: rgba(255, 255, 255, 0.95);
 }
 
 .empty p {
-  font-size: 0.875rem;
+  font-size: 1rem;
   margin: 0.5rem 0;
+  color: rgba(255, 255, 255, 0.95);
 }
 
-/* Tabla */
+/* Tabla - Igual que ListaClientes */
 .tableContainer {
-  overflow-x: auto;
-  padding: 0;
+  margin: 1rem;
+  background: var(--momento-black, #1A1A1A);
+  border: 1px solid rgba(255, 107, 74, 0.3);
+  border-radius: 8px;
+  overflow: hidden;
 }
 
 .table {
   width: 100%;
   border-collapse: collapse;
+  color: white;
 }
 
 .table thead {
-  background: var(--gray-50, #F8FAFC);
-  border-bottom: 1px solid var(--gray-200, #E2E8F0);
+  background: var(--momento-black-light, #2A2A2A);
+  border-bottom: 2px solid rgba(255, 107, 74, 0.3);
 }
 
 .table th {
-  padding: 0.75rem 1rem;
+  padding: 1rem;
   text-align: left;
   font-weight: 600;
-  font-size: 0.7rem;
+  font-size: 0.85rem;
   text-transform: uppercase;
   letter-spacing: 0.5px;
-  color: var(--gray-600, #475569);
-  border-bottom: none;
-}
-
-.table th:first-child {
-  padding-left: 1.25rem;
-}
-
-.table th:last-child {
-  padding-right: 1.25rem;
-}
-
-.table tbody tr {
-  border-bottom: 1px solid var(--gray-100, #F1F5F9);
-  transition: all 0.2s ease;
-}
-
-.table tbody tr:hover {
-  background: var(--gray-50, #F8FAFC);
-}
-
-.table tbody tr:last-child {
-  border-bottom: none;
+  color: rgba(255, 255, 255, 0.9);
 }
 
 .table td {
-  padding: 0.875rem 1rem;
-  vertical-align: middle;
-  font-size: 0.8rem;
-  color: var(--primary-blue, #1E3A5F);
+  padding: 1rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  font-size: 0.9rem;
+  color: rgba(255, 255, 255, 0.85);
 }
 
-.table td:first-child {
-  padding-left: 1.25rem;
+.table tbody tr:hover {
+  background: rgba(255, 107, 74, 0.05);
 }
 
-.table td:last-child {
-  padding-right: 1.25rem;
+.table tbody tr:last-child td {
+  border-bottom: none;
 }
 
 /* Celdas */
 .fechaCell {
   display: flex;
   flex-direction: column;
-  gap: 0.125rem;
+  gap: 0.25rem;
 }
 
 .fecha {
   font-weight: 600;
-  color: var(--primary-blue, #1E3A5F);
-  font-size: 0.8rem;
+  color: white;
+  font-size: 0.9rem;
 }
 
 .hora {
-  font-size: 0.7rem;
-  color: var(--gray-500, #64748B);
+  font-size: 0.75rem;
+  color: rgba(255, 255, 255, 0.6);
   font-weight: 500;
 }
 
 .clienteCell {
   display: flex;
   flex-direction: column;
-  gap: 0.125rem;
+  gap: 0.25rem;
 }
 
 .nombre {
   font-weight: 600;
-  color: var(--primary-blue, #1E3A5F);
-  font-size: 0.8rem;
+  color: white;
+  font-size: 0.9rem;
 }
 
 .telefono {
-  font-size: 0.7rem;
-  color: var(--gray-500, #64748B);
+  font-size: 0.75rem;
+  color: rgba(255, 255, 255, 0.6);
   font-family: 'SF Mono', 'Monaco', 'Courier New', monospace;
 }
 
 .agente {
   font-weight: 600;
   color: var(--momento-orange, #FF6B4A);
-  font-size: 0.8rem;
+  font-size: 0.9rem;
 }
 
 .estadoBadge {
