@@ -24,9 +24,16 @@ export async function getLinksBySeller(sellerId: string): Promise<IPaymentLink[]
  * Obtiene un link por ID o slug
  */
 export async function getLinkByIdOrSlug(identifier: string): Promise<IPaymentLink | null> {
-  return PaymentLink.findOne({
-    $or: [{ _id: identifier }, { slug: identifier }]
-  });
+  // Primero intentar buscar por slug (más común en URLs)
+  const bySlug = await PaymentLink.findOne({ slug: identifier });
+  if (bySlug) return bySlug;
+  
+  // Si no se encuentra por slug, intentar por _id (solo si es un ObjectId válido)
+  if (identifier.match(/^[0-9a-fA-F]{24}$/)) {
+    return PaymentLink.findById(identifier);
+  }
+  
+  return null;
 }
 
 /**
