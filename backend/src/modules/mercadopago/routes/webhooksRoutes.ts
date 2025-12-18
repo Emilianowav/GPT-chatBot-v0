@@ -237,10 +237,19 @@ async function processPaymentNotification(paymentId: string): Promise<void> {
     // Extraer sellerId del collector_id o buscar por external_reference
     let sellerId = mpPayment.collector_id?.toString() || '';
     let paymentLinkId: string | undefined;
+    let clientePhoneFromRef: string | undefined;
+    
+    // Extraer teléfono del cliente del external_reference si existe (formato: xxx|phone:+5493794XXXXXX)
+    const externalRef = mpPayment.external_reference || '';
+    const phoneMatch = externalRef.match(/\|phone:([^\|]+)/);
+    if (phoneMatch) {
+      clientePhoneFromRef = phoneMatch[1];
+      console.log(`[MP Webhook] Teléfono extraído del external_reference: ${clientePhoneFromRef}`);
+    }
     
     // Si hay external_reference con formato "link_XXX", extraer el ID del PaymentLink
-    if (mpPayment.external_reference?.startsWith('link_')) {
-      paymentLinkId = mpPayment.external_reference.replace('link_', '');
+    if (externalRef.startsWith('link_')) {
+      paymentLinkId = externalRef.replace('link_', '').split('|')[0]; // Quitar el phone si existe
       
       // Buscar el PaymentLink para obtener el sellerId
       const paymentLink = await PaymentLink.findById(paymentLinkId);
@@ -305,12 +314,13 @@ async function processPaymentNotification(paymentId: string): Promise<void> {
       console.log(`[MP Webhook] PaymentLink ${paymentLinkId} actualizado con nuevo pago`);
       
       // Notificar al cliente por WhatsApp si el pago fue aprobado
+      // Prioridad: teléfono del external_reference > teléfono de MP > buscar por email
       await notifyPaymentApproved(
         sellerId,
         mpPayment.transaction_amount || 0,
         mpPayment.currency_id || 'ARS',
         mpPayment.payer?.email,
-        mpPayment.payer?.phone?.number
+        clientePhoneFromRef || mpPayment.payer?.phone?.number
       );
     }
     
@@ -321,7 +331,7 @@ async function processPaymentNotification(paymentId: string): Promise<void> {
         mpPayment.transaction_amount || 0,
         mpPayment.currency_id || 'ARS',
         mpPayment.payer?.email,
-        mpPayment.payer?.phone?.number
+        clientePhoneFromRef || mpPayment.payer?.phone?.number
       );
     }
     

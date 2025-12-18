@@ -10,7 +10,8 @@ interface GeneratePaymentLinkParams {
   amount: number;
   description?: string;
   payerEmail?: string;
-  payerPhone?: string;
+  payerPhone?: string;      // Teléfono del cliente para notificación
+  clientePhone?: string;    // Alias para payerPhone (usado desde gptFlow)
   externalReference?: string;
 }
 
@@ -26,7 +27,7 @@ interface PaymentLinkResult {
  * Busca el seller asociado a la empresa y crea una preferencia de pago
  */
 export async function generateDynamicPaymentLink(params: GeneratePaymentLinkParams): Promise<PaymentLinkResult> {
-  const { empresaId, title, amount, description, payerEmail, externalReference } = params;
+  const { empresaId, title, amount, description, payerEmail, clientePhone, externalReference } = params;
   
   try {
     console.log(`[PaymentLink] Generando link para empresa ${empresaId}, monto: $${amount}`);
@@ -71,7 +72,8 @@ export async function generateDynamicPaymentLink(params: GeneratePaymentLinkPara
         payer: payerEmail ? { email: payerEmail } : undefined,
         back_urls: backUrls,
         auto_return: 'approved',
-        external_reference: externalReference || `chatbot_${empresaId}_${Date.now()}`,
+        // Formato: sellerId|paymentLinkId|clientePhone (el teléfono va al final para extraerlo en el webhook)
+        external_reference: externalReference || `chatbot_${empresaId}_${Date.now()}${clientePhone ? `|phone:${clientePhone}` : ''}`,
         notification_url: `${MP_MODULE_URL}/webhooks`
       }
     });

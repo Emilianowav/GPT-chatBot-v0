@@ -157,12 +157,13 @@ IMPORTANTE: Cuando detectes intención de pago, USA LA FUNCIÓN generate_payment
         console.log(`💳 [GPT] Function call detectado: generate_payment_link`);
         const args = respuesta.functionCall.arguments;
         
-        // Generar el link de pago
+        // Generar el link de pago (incluye teléfono del cliente para notificación)
         const paymentResult = await generateDynamicPaymentLink({
           empresaId: empresaIdStr,
           title: args.title || `Pedido ${empresa.nombre}`,
           amount: args.amount || 0.20,
-          description: args.description || ''
+          description: args.description || '',
+          clientePhone: telefono  // Teléfono del cliente para notificación cuando pague
         });
         
         if (paymentResult.success && paymentResult.paymentUrl) {
@@ -215,7 +216,8 @@ IMPORTANTE: Cuando detectes intención de pago, USA LA FUNCIÓN generate_payment
             empresaId: empresaIdStr,
             title: `Pedido ${empresa.nombre} - ${cantidad} libro${cantidad > 1 ? 's' : ''}`,
             amount: total,
-            description: `Compra de ${cantidad} libro(s)`
+            description: `Compra de ${cantidad} libro(s)`,
+            clientePhone: telefono  // Teléfono del cliente para notificación cuando pague
           });
           
           if (paymentResult.success && paymentResult.paymentUrl) {
