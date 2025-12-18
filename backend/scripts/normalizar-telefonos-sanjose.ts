@@ -9,7 +9,8 @@ import mongoose from 'mongoose';
 import { ClienteModel } from '../src/models/Cliente.js';
 
 // Configuración
-const EMPRESA_NOMBRE = 'San Jose'; // Nombre de la empresa a buscar
+// El empresaId puede ser el nombre directamente (como viene en el JWT) o un ObjectId
+const EMPRESA_ID = 'San Jose'; // empresaId tal como está en los clientes
 const DRY_RUN = process.argv.includes('--dry-run'); // Si true, solo muestra cambios sin aplicar
 
 /**
@@ -83,32 +84,28 @@ async function main() {
   await mongoose.connect(mongoUri);
   console.log('✅ Conectado a MongoDB');
   
-  // Buscar la empresa San Jose
-  const EmpresaModel = mongoose.model('Empresa', new mongoose.Schema({
-    nombre: String,
-    slug: String
-  }));
+  // Buscar clientes directamente por empresaId (puede ser string como "San Jose")
+  // Primero verificar qué empresaIds existen
+  const empresaIds = await ClienteModel.distinct('empresaId');
+  console.log('📋 EmpresaIds encontrados en clientes:', empresaIds);
   
-  const empresa = await EmpresaModel.findOne({ 
-    $or: [
-      { nombre: { $regex: /san\s*jose/i } },
-      { slug: { $regex: /san.*jose/i } }
-    ]
-  });
+  // Buscar el empresaId que coincida con "San Jose" (case insensitive)
+  const empresaIdMatch = empresaIds.find((id: string) => 
+    id.toLowerCase().includes('san') && id.toLowerCase().includes('jose')
+  );
   
-  if (!empresa) {
-    console.error('❌ No se encontró la empresa "San Jose"');
-    console.log('📋 Empresas disponibles:');
-    const empresas = await EmpresaModel.find({}, { nombre: 1, slug: 1 }).limit(20);
-    empresas.forEach(e => console.log(`   - ${e.nombre} (${e._id})`));
+  if (!empresaIdMatch) {
+    console.error(`❌ No se encontraron clientes con empresaId que contenga "San Jose"`);
+    console.log('📋 EmpresaIds disponibles:');
+    empresaIds.forEach((id: string) => console.log(`   - ${id}`));
     await mongoose.disconnect();
     process.exit(1);
   }
   
-  console.log(`✅ Empresa encontrada: ${empresa.nombre} (ID: ${empresa._id})`);
+  console.log(`✅ EmpresaId encontrado: ${empresaIdMatch}`);
   
   // Buscar clientes de esa empresa
-  const clientes = await ClienteModel.find({ empresaId: empresa._id.toString() });
+  const clientes = await ClienteModel.find({ empresaId: empresaIdMatch });
   console.log(`📊 Total de clientes: ${clientes.length}`);
   console.log('');
   
