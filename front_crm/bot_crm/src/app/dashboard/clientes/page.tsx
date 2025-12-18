@@ -137,7 +137,7 @@ export default function ClientesPage() {
 
             {/* Filtros */}
             <div className={styles.filtrosCard}>
-              <h3>🔍 Filtros</h3>
+              <h3>Filtros</h3>
               <div className={styles.filtrosGrid}>
                 <div className={styles.filtroItem}>
                   <label>Buscar</label>
