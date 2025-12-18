@@ -8,14 +8,19 @@ import subscriptionsRoutes from './subscriptionsRoutes.js';
 
 const router = Router();
 
-console.log('🟢 [MP] Módulo Mercado Pago - Montando rutas...');
+console.log('🟢 [MP] Módulo Mercado Pago v1.1 - Montando rutas...');
 
 // Montar rutas
 router.use('/oauth', oauthRoutes);
+console.log('🟢 [MP] -> /oauth montado');
 router.use('/sellers', sellersRoutes);
+console.log('🟢 [MP] -> /sellers montado');
 router.use('/payments', paymentsRoutes);
+console.log('🟢 [MP] -> /payments montado');
 router.use('/payment-links', paymentLinksRoutes);
+console.log('🟢 [MP] -> /payment-links montado');
 router.use('/subscriptions', subscriptionsRoutes);
+console.log('🟢 [MP] -> /subscriptions montado');
 
 // Health check del módulo
 router.get('/health', (req, res) => {
