@@ -1,5 +1,7 @@
 // 🔔 Rutas de Webhooks de Mercado Pago
+// Implementación segura con validación HMAC según documentación oficial
 import { Router, Request, Response } from 'express';
+import crypto from 'crypto';
 import { MercadoPagoConfig, Payment as MPPaymentClient } from 'mercadopago';
 import { Payment, PaymentStatus, IPayment } from '../models/Payment.js';
 import { PaymentLink } from '../models/PaymentLink.js';
@@ -7,31 +9,152 @@ import { Seller } from '../models/Seller.js';
 
 const router = Router();
 
+// Clave secreta de webhooks (configurar en variables de entorno)
+const WEBHOOK_SECRET = process.env.MP_WEBHOOK_SECRET || '';
+
 /**
- * POST /webhooks
- * Recibe notificaciones de Mercado Pago
- * Documentación: https://www.mercadopago.com.ar/developers/es/docs/your-integrations/notifications/webhooks
+ * Valida la firma HMAC de la notificación de Mercado Pago
+ * Según documentación: https://www.mercadopago.com.ar/developers/es/docs/your-integrations/notifications/webhooks
  */
-router.post('/', async (req: Request, res: Response): Promise<void> => {
+function validateWebhookSignature(req: Request): { valid: boolean; reason?: string } {
+  const xSignature = req.headers['x-signature'] as string;
+  const xRequestId = req.headers['x-request-id'] as string;
+  
+  if (!xSignature) {
+    console.log('[MP Webhook] ⚠️ Sin x-signature en header (puede ser simulación)');
+    return { valid: true, reason: 'no_signature' }; // Permitir en desarrollo/simulación
+  }
+  
+  if (!WEBHOOK_SECRET) {
+    console.warn('[MP Webhook] ⚠️ MP_WEBHOOK_SECRET no configurado - omitiendo validación');
+    return { valid: true, reason: 'no_secret_configured' };
+  }
+  
   try {
-    const { type, data, action } = req.body;
+    // Extraer ts y v1 del header x-signature
+    // Formato: ts=1742505638683,v1=ced36ab6d33566bb1e16c125819b8d840d6b8ef136b0b9127c76064466f5229b
+    const parts = xSignature.split(',');
+    let ts: string | null = null;
+    let hash: string | null = null;
     
-    console.log(`[MP Webhook] Recibido: type=${type}, action=${action}, data=`, data);
-    
-    // Responder inmediatamente con 200 para que MP no reintente
-    res.status(200).send('OK');
-    
-    // Procesar según el tipo de notificación
-    if (type === 'payment') {
-      await processPaymentNotification(data.id);
-    } else if (action === 'payment.created' || action === 'payment.updated') {
-      await processPaymentNotification(data.id);
+    for (const part of parts) {
+      const [key, value] = part.split('=');
+      if (key?.trim() === 'ts') ts = value?.trim();
+      if (key?.trim() === 'v1') hash = value?.trim();
     }
     
+    if (!ts || !hash) {
+      return { valid: false, reason: 'invalid_signature_format' };
+    }
+    
+    // Obtener data.id de query params
+    const dataId = req.query['data.id'] as string || req.body?.data?.id || '';
+    
+    // Construir el manifest según documentación
+    // Template: id:[data.id_url];request-id:[x-request-id_header];ts:[ts_header];
+    let manifest = '';
+    if (dataId) manifest += `id:${dataId};`;
+    if (xRequestId) manifest += `request-id:${xRequestId};`;
+    manifest += `ts:${ts};`;
+    
+    // Generar HMAC SHA256
+    const expectedHash = crypto
+      .createHmac('sha256', WEBHOOK_SECRET)
+      .update(manifest)
+      .digest('hex');
+    
+    // Comparar hashes de forma segura (timing-safe)
+    const isValid = crypto.timingSafeEqual(
+      Buffer.from(hash, 'hex'),
+      Buffer.from(expectedHash, 'hex')
+    );
+    
+    if (!isValid) {
+      console.error('[MP Webhook] ❌ Firma inválida');
+      console.error(`  Manifest: ${manifest}`);
+      console.error(`  Expected: ${expectedHash}`);
+      console.error(`  Received: ${hash}`);
+      return { valid: false, reason: 'signature_mismatch' };
+    }
+    
+    // Validar timestamp (tolerancia de 5 minutos)
+    const notificationTime = parseInt(ts);
+    const now = Date.now();
+    const fiveMinutes = 5 * 60 * 1000;
+    
+    if (Math.abs(now - notificationTime) > fiveMinutes) {
+      console.warn('[MP Webhook] ⚠️ Timestamp fuera de rango (posible replay attack)');
+      // No rechazar, solo advertir - MP puede tener retrasos
+    }
+    
+    console.log('[MP Webhook] ✅ Firma validada correctamente');
+    return { valid: true };
+    
   } catch (error: any) {
-    console.error('[MP Webhook] Error procesando webhook:', error);
-    // Siempre responder 200 para evitar reintentos
-    res.status(200).send('OK');
+    console.error('[MP Webhook] Error validando firma:', error.message);
+    return { valid: false, reason: 'validation_error' };
+  }
+}
+
+/**
+ * POST /webhooks
+ * Recibe notificaciones de Mercado Pago con validación de seguridad
+ */
+router.post('/', async (req: Request, res: Response): Promise<void> => {
+  const startTime = Date.now();
+  
+  try {
+    // Log de la notificación recibida
+    console.log('[MP Webhook] 📥 Notificación recibida:', {
+      type: req.body?.type,
+      action: req.body?.action,
+      dataId: req.body?.data?.id || req.query['data.id'],
+      headers: {
+        'x-signature': req.headers['x-signature'] ? '***presente***' : 'ausente',
+        'x-request-id': req.headers['x-request-id']
+      }
+    });
+    
+    // Validar firma HMAC
+    const validation = validateWebhookSignature(req);
+    if (!validation.valid) {
+      console.error(`[MP Webhook] ❌ Rechazado: ${validation.reason}`);
+      // Responder 401 para notificaciones inválidas
+      res.status(401).json({ error: 'Invalid signature', reason: validation.reason });
+      return;
+    }
+    
+    // Responder inmediatamente con 200 (requerido por MP en < 22 segundos)
+    res.status(200).json({ 
+      received: true,
+      timestamp: new Date().toISOString()
+    });
+    
+    // Procesar la notificación de forma asíncrona
+    const { type, data, action } = req.body;
+    const dataId = data?.id || req.query['data.id'];
+    
+    if (!dataId) {
+      console.warn('[MP Webhook] ⚠️ Notificación sin data.id');
+      return;
+    }
+    
+    // Procesar según el tipo de notificación
+    if (type === 'payment' || action?.startsWith('payment.')) {
+      await processPaymentNotification(dataId.toString());
+    } else {
+      console.log(`[MP Webhook] ℹ️ Tipo de notificación no manejado: ${type || action}`);
+    }
+    
+    const duration = Date.now() - startTime;
+    console.log(`[MP Webhook] ✅ Procesado en ${duration}ms`);
+    
+  } catch (error: any) {
+    console.error('[MP Webhook] ❌ Error procesando webhook:', error.message);
+    // Siempre responder 200 para evitar reintentos innecesarios
+    if (!res.headersSent) {
+      res.status(200).json({ received: true, error: 'processing_error' });
+    }
   }
 });
 
@@ -42,9 +165,32 @@ router.post('/', async (req: Request, res: Response): Promise<void> => {
 router.get('/test', (req: Request, res: Response): void => {
   res.json({ 
     status: 'ok', 
-    message: 'Webhook endpoint activo',
+    message: 'Webhook endpoint activo y configurado',
+    webhookSecretConfigured: !!WEBHOOK_SECRET,
     timestamp: new Date().toISOString()
   });
+});
+
+/**
+ * GET /webhooks/health
+ * Health check detallado del sistema de webhooks
+ */
+router.get('/health', async (req: Request, res: Response): Promise<void> => {
+  try {
+    // Contar pagos recientes procesados
+    const hace24h = new Date(Date.now() - 24 * 60 * 60 * 1000);
+    const pagosRecientes = await Payment.countDocuments({ createdAt: { $gte: hace24h } });
+    
+    res.json({
+      status: 'healthy',
+      webhookSecretConfigured: !!WEBHOOK_SECRET,
+      mpAccessTokenConfigured: !!process.env.MP_ACCESS_TOKEN,
+      pagosUltimas24h: pagosRecientes,
+      timestamp: new Date().toISOString()
+    });
+  } catch (error: any) {
+    res.status(500).json({ status: 'error', error: error.message });
+  }
 });
 
 /**
