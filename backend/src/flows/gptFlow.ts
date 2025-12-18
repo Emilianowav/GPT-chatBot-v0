@@ -4,7 +4,38 @@ import { enviarMensajeWhatsAppTexto } from '../services/metaService.js';
 import { obtenerRespuestaChat } from '../services/openaiService.js';
 import { buscarOCrearContacto, actualizarHistorialConversacion, incrementarMetricas } from '../services/contactoService.js';
 import { EmpresaModel } from '../models/Empresa.js';
-import type { ChatCompletionMessageParam } from '../services/openaiService.js';
+import { generateDynamicPaymentLink } from '../services/paymentLinkService.js';
+import type { ChatCompletionMessageParam, ChatCompletionTool } from '../services/openaiService.js';
+
+// Tool para generar link de pago
+const paymentLinkTool: ChatCompletionTool = {
+  type: "function",
+  function: {
+    name: "generate_payment_link",
+    description: "Genera un link de pago de Mercado Pago cuando el cliente confirma su pedido y quiere pagar. Usar cuando el cliente dice 'quiero pagar', 'confirmo el pedido', 'listo para pagar', etc.",
+    parameters: {
+      type: "object",
+      properties: {
+        title: {
+          type: "string",
+          description: "Título del pedido, ej: 'Pedido Veo Veo - 3 libros'"
+        },
+        amount: {
+          type: "number",
+          description: "Monto total a cobrar en pesos argentinos"
+        },
+        description: {
+          type: "string",
+          description: "Descripción detallada del pedido con los items"
+        }
+      },
+      required: ["title", "amount"]
+    }
+  }
+};
+
+// Empresas con pagos habilitados (por ID o nombre)
+const EMPRESAS_CON_PAGOS = ['6940a9a181b92bfce970fdb5', 'Veo Veo'];
 
 export const gptFlow: Flow = {
   name: 'gpt_conversation',
@@ -48,11 +79,31 @@ export const gptFlow: Flow = {
         empresaTelefono: empresa.telefono
       });
       
-      // 3. Construir historial de mensajes para GPT
+      // 3. Verificar si la empresa tiene pagos habilitados
+      const empresaIdStr = empresa._id?.toString() || '';
+      const tienePageosHabilitados = EMPRESAS_CON_PAGOS.includes(empresaIdStr) || 
+                                      EMPRESAS_CON_PAGOS.includes(empresa.nombre);
+      
+      // 4. Construir historial de mensajes para GPT
+      let promptBase = empresa.prompt || 'Eres un asistente virtual amable y servicial.';
+      
+      // Si tiene pagos habilitados, agregar instrucciones de pago al prompt
+      if (tienePageosHabilitados) {
+        promptBase += `\n\n--- INSTRUCCIONES DE PAGO ---
+IMPORTANTE: Cada libro/producto tiene un precio fijo de $0.20 (veinte centavos).
+Cuando el cliente confirme su pedido y quiera pagar:
+1. Calculá el total multiplicando la cantidad de items por $0.20
+2. Usá la función generate_payment_link para generar el link de pago
+3. Enviá el link al cliente con un mensaje amable
+
+Ejemplo: Si el cliente pide 5 libros, el total es $1.00 (5 x $0.20)
+Cuando el cliente diga "quiero pagar", "confirmo", "listo", generá el link automáticamente.`;
+      }
+      
       const historialGPT: ChatCompletionMessageParam[] = [
         {
           role: 'system',
-          content: empresa.prompt || 'Eres un asistente virtual amable y servicial.'
+          content: promptBase
         }
       ];
       
@@ -74,22 +125,60 @@ export const gptFlow: Flow = {
       
       console.log(`🧠 [GPT] Procesando con ${historialGPT.length} mensajes en el historial`);
       
-      // 4. Obtener respuesta de GPT
+      // 5. Obtener respuesta de GPT (con tools si tiene pagos habilitados)
       const modelo = empresa.modelo || 'gpt-3.5-turbo';
+      const tools = tienePageosHabilitados ? [paymentLinkTool] : undefined;
+      
       const respuesta = await obtenerRespuestaChat({
         modelo,
-        historial: historialGPT
+        historial: historialGPT,
+        tools
       });
       
       console.log(`✅ [GPT] Respuesta generada (${respuesta.tokens} tokens, $${respuesta.costo})`);
       
-      // 5. Guardar en historial (mensaje del usuario)
+      // 6. Guardar en historial (mensaje del usuario)
       await actualizarHistorialConversacion(contacto._id.toString(), mensaje);
       
-      // 6. Guardar respuesta del asistente
-      await actualizarHistorialConversacion(contacto._id.toString(), respuesta.texto);
+      // 7. Manejar function call si existe (generar link de pago)
+      let textoFinal = respuesta.texto;
       
-      // 7. Actualizar métricas del contacto
+      if (respuesta.functionCall && respuesta.functionCall.name === 'generate_payment_link') {
+        console.log(`💳 [GPT] Function call detectado: generate_payment_link`);
+        const args = respuesta.functionCall.arguments;
+        
+        // Generar el link de pago
+        const paymentResult = await generateDynamicPaymentLink({
+          empresaId: empresaIdStr,
+          title: args.title || `Pedido ${empresa.nombre}`,
+          amount: args.amount || 0.20,
+          description: args.description || ''
+        });
+        
+        if (paymentResult.success && paymentResult.paymentUrl) {
+          console.log(`💳 [GPT] Link de pago generado: ${paymentResult.paymentUrl}`);
+          
+          // Construir mensaje con el link
+          textoFinal = `¡Perfecto! Tu pedido está listo. 🛒\n\n` +
+            `📦 *${args.title || 'Tu pedido'}*\n` +
+            `💰 Total: $${(args.amount || 0).toFixed(2)}\n\n` +
+            `Para completar tu compra, hacé clic en el siguiente link:\n` +
+            `👉 ${paymentResult.paymentUrl}\n\n` +
+            `Una vez que realices el pago, te confirmaremos por este medio. ¡Gracias por tu compra! 🙌`;
+        } else {
+          console.error(`💳 [GPT] Error generando link:`, paymentResult.error);
+          textoFinal = `Tu pedido está confirmado:\n\n` +
+            `📦 *${args.title || 'Tu pedido'}*\n` +
+            `💰 Total: $${(args.amount || 0).toFixed(2)}\n\n` +
+            `En este momento no pudimos generar el link de pago automático. ` +
+            `Por favor, contactanos para coordinar el pago. ¡Disculpá las molestias!`;
+        }
+      }
+      
+      // 8. Guardar respuesta del asistente
+      await actualizarHistorialConversacion(contacto._id.toString(), textoFinal);
+      
+      // 9. Actualizar métricas del contacto
       await incrementarMetricas(contacto._id.toString(), {
         mensajesRecibidos: 1,
         mensajesEnviados: 1,
@@ -97,8 +186,8 @@ export const gptFlow: Flow = {
         interacciones: 1
       });
       
-      // 8. Enviar respuesta al usuario
-      await enviarMensajeWhatsAppTexto(telefono, respuesta.texto, phoneNumberId);
+      // 10. Enviar respuesta al usuario
+      await enviarMensajeWhatsAppTexto(telefono, textoFinal, phoneNumberId);
       
       // 9. Actualizar métricas de la empresa (opcional)
       if (empresa.uso) {
