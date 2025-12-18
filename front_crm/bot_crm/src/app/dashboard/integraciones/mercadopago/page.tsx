@@ -35,13 +35,37 @@ interface ChatbotFlowConfig {
   sendMessage: string;
 }
 
+interface Payment {
+  _id: string;
+  mpPaymentId: string;
+  status: 'pending' | 'approved' | 'rejected' | 'cancelled' | 'refunded' | 'in_process';
+  statusDetail?: string;
+  amount: number;
+  currency: string;
+  payerEmail?: string;
+  payerName?: string;
+  paymentMethodId?: string;
+  paymentTypeId?: string;
+  createdAt: string;
+  dateApproved?: string;
+}
+
 export default function MercadoPagoConfigPage() {
   const router = useRouter();
-  const [activeSection, setActiveSection] = useState<'productos' | 'suscripciones' | 'chatbot'>('productos');
+  const [activeSection, setActiveSection] = useState<'productos' | 'suscripciones' | 'pagos' | 'chatbot'>('productos');
   const [loading, setLoading] = useState(false);
   const [paymentLinks, setPaymentLinks] = useState<PaymentLink[]>([]);
   const [plans, setPlans] = useState<SubscriptionPlan[]>([]);
+  const [payments, setPayments] = useState<Payment[]>([]);
+  const [paymentStats, setPaymentStats] = useState<{
+    pagosAprobados: number;
+    ingresosTotales: number;
+    pagosDelMes: number;
+    ingresosDelMes: number;
+    pagosPendientes: number;
+  } | null>(null);
   const [copiedId, setCopiedId] = useState<string | null>(null);
+  const [selectedPayment, setSelectedPayment] = useState<Payment | null>(null);
   
   // Estados para crear nuevo
   const [showNewProduct, setShowNewProduct] = useState(false);
@@ -83,9 +107,11 @@ export default function MercadoPagoConfigPage() {
   const loadData = async () => {
     setLoading(true);
     try {
-      const [linksRes, plansRes] = await Promise.all([
+      const [linksRes, plansRes, paymentsRes, statsRes] = await Promise.all([
         fetch(`${MP_API_URL}/payment-links?sellerId=${sellerId}`),
         fetch(`${MP_API_URL}/subscriptions/plans?sellerId=${sellerId}`),
+        fetch(`${MP_API_URL}/payments/history/${sellerId}?limit=50`),
+        fetch(`${MP_API_URL}/payments/stats/${sellerId}`),
       ]);
       
       if (linksRes.ok) {
@@ -96,6 +122,16 @@ export default function MercadoPagoConfigPage() {
       if (plansRes.ok) {
         const data = await plansRes.json();
         setPlans(data.plans || []);
+      }
+      
+      if (paymentsRes.ok) {
+        const data = await paymentsRes.json();
+        setPayments(data.payments || []);
+      }
+      
+      if (statsRes.ok) {
+        const data = await statsRes.json();
+        setPaymentStats(data.stats || null);
       }
     } catch (err) {
       console.error('Error cargando datos:', err);
@@ -201,6 +237,29 @@ export default function MercadoPagoConfigPage() {
     yearly: 'Anual',
   };
 
+  const statusLabels: Record<string, { label: string; color: string; bg: string }> = {
+    pending: { label: 'Pendiente', color: '#d97706', bg: '#fef3c7' },
+    approved: { label: 'Aprobado', color: '#15803d', bg: '#dcfce7' },
+    rejected: { label: 'Rechazado', color: '#dc2626', bg: '#fef2f2' },
+    cancelled: { label: 'Cancelado', color: '#6b7280', bg: '#f3f4f6' },
+    refunded: { label: 'Reembolsado', color: '#7c3aed', bg: '#ede9fe' },
+    in_process: { label: 'En proceso', color: '#2563eb', bg: '#dbeafe' },
+    authorized: { label: 'Autorizado', color: '#0891b2', bg: '#cffafe' },
+    in_mediation: { label: 'En mediación', color: '#ea580c', bg: '#ffedd5' },
+    charged_back: { label: 'Contracargo', color: '#be123c', bg: '#ffe4e6' },
+  };
+
+  const formatDate = (dateStr: string) => {
+    const date = new Date(dateStr);
+    return date.toLocaleDateString('es-AR', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+  };
+
   return (
     <DashboardLayout title="Configurar Mercado Pago">
       <div className={styles.container}>
@@ -243,6 +302,16 @@ export default function MercadoPagoConfigPage() {
               <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
             </svg>
             Cobrar Suscripciones
+          </button>
+          <button
+            className={`${styles.tab} ${activeSection === 'pagos' ? styles.tabActive : ''}`}
+            onClick={() => setActiveSection('pagos')}
+          >
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <rect x="1" y="4" width="22" height="16" rx="2" ry="2"/>
+              <line x1="1" y1="10" x2="23" y2="10"/>
+            </svg>
+            Historial Pagos
           </button>
           <button
             className={`${styles.tab} ${activeSection === 'chatbot' ? styles.tabActive : ''}`}
@@ -525,6 +594,243 @@ export default function MercadoPagoConfigPage() {
                   ))
                 )}
               </div>
+            </div>
+          ) : activeSection === 'pagos' ? (
+            <div className={styles.section}>
+              <div className={styles.sectionHeader}>
+                <div>
+                  <h2>Historial de Pagos</h2>
+                  <p>Consulta el estado de todos los pagos recibidos</p>
+                </div>
+                <button className={styles.refreshButton} onClick={loadData} disabled={loading}>
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <polyline points="23 4 23 10 17 10"/>
+                    <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/>
+                  </svg>
+                  {loading ? 'Cargando...' : 'Actualizar'}
+                </button>
+              </div>
+
+              {/* Stats Cards */}
+              {paymentStats && (
+                <div className={styles.statsCards}>
+                  <div className={styles.statCard}>
+                    <div className={styles.statIcon} style={{ background: '#dcfce7' }}>
+                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#15803d" strokeWidth="2">
+                        <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
+                        <polyline points="22 4 12 14.01 9 11.01"/>
+                      </svg>
+                    </div>
+                    <div className={styles.statInfo}>
+                      <span className={styles.statValue}>{paymentStats.pagosAprobados}</span>
+                      <span className={styles.statLabel}>Pagos Aprobados</span>
+                    </div>
+                  </div>
+                  <div className={styles.statCard}>
+                    <div className={styles.statIcon} style={{ background: '#dbeafe' }}>
+                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#2563eb" strokeWidth="2">
+                        <line x1="12" y1="1" x2="12" y2="23"/>
+                        <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
+                      </svg>
+                    </div>
+                    <div className={styles.statInfo}>
+                      <span className={styles.statValue}>${paymentStats.ingresosTotales.toLocaleString()}</span>
+                      <span className={styles.statLabel}>Ingresos Totales</span>
+                    </div>
+                  </div>
+                  <div className={styles.statCard}>
+                    <div className={styles.statIcon} style={{ background: '#fef3c7' }}>
+                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#d97706" strokeWidth="2">
+                        <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
+                        <line x1="16" y1="2" x2="16" y2="6"/>
+                        <line x1="8" y1="2" x2="8" y2="6"/>
+                        <line x1="3" y1="10" x2="21" y2="10"/>
+                      </svg>
+                    </div>
+                    <div className={styles.statInfo}>
+                      <span className={styles.statValue}>{paymentStats.pagosDelMes}</span>
+                      <span className={styles.statLabel}>Pagos del Mes</span>
+                    </div>
+                  </div>
+                  <div className={styles.statCard}>
+                    <div className={styles.statIcon} style={{ background: '#ede9fe' }}>
+                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#7c3aed" strokeWidth="2">
+                        <circle cx="12" cy="12" r="10"/>
+                        <polyline points="12 6 12 12 16 14"/>
+                      </svg>
+                    </div>
+                    <div className={styles.statInfo}>
+                      <span className={styles.statValue}>{paymentStats.pagosPendientes}</span>
+                      <span className={styles.statLabel}>Pendientes</span>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Tabla de Pagos */}
+              <div className={styles.paymentsTable}>
+                {payments.length === 0 ? (
+                  <div className={styles.emptyState}>
+                    <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                      <rect x="1" y="4" width="22" height="16" rx="2" ry="2"/>
+                      <line x1="1" y1="10" x2="23" y2="10"/>
+                    </svg>
+                    <p>No hay pagos registrados</p>
+                    <span>Los pagos aparecerán aquí cuando se procesen</span>
+                  </div>
+                ) : (
+                  <table className={styles.table}>
+                    <thead>
+                      <tr>
+                        <th>Pago</th>
+                        <th>Monto</th>
+                        <th>Estado</th>
+                        <th>Pagador</th>
+                        <th>Fecha</th>
+                        <th>Acciones</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {payments.map((payment) => {
+                        const statusInfo = statusLabels[payment.status] || { label: payment.status, color: '#6b7280', bg: '#f3f4f6' };
+                        return (
+                          <tr key={payment._id} onClick={() => setSelectedPayment(payment)} className={styles.clickableRow}>
+                            <td>
+                              <div className={styles.paymentCell}>
+                                <div className={styles.paymentAvatar} style={{ background: statusInfo.bg }}>
+                                  {payment.status === 'approved' ? '✓' : payment.status === 'pending' ? '⏳' : payment.status === 'rejected' ? '✕' : '•'}
+                                </div>
+                                <div className={styles.paymentInfo}>
+                                  <span className={styles.paymentId}>#{payment.mpPaymentId}</span>
+                                  <span className={styles.paymentMethod}>{payment.paymentMethodId || 'N/A'}</span>
+                                </div>
+                              </div>
+                            </td>
+                            <td>
+                              <span className={styles.amount}>${payment.amount.toLocaleString()}</span>
+                              <span className={styles.currency}>{payment.currency}</span>
+                            </td>
+                            <td>
+                              <span 
+                                className={styles.statusBadge}
+                                style={{ background: statusInfo.bg, color: statusInfo.color }}
+                              >
+                                {statusInfo.label}
+                              </span>
+                            </td>
+                            <td>
+                              <div className={styles.payerCell}>
+                                <span>{payment.payerName || 'Sin nombre'}</span>
+                                <span className={styles.payerEmail}>{payment.payerEmail || '-'}</span>
+                              </div>
+                            </td>
+                            <td>
+                              <span className={styles.date}>{formatDate(payment.createdAt)}</span>
+                            </td>
+                            <td onClick={(e) => e.stopPropagation()}>
+                              <div className={styles.actions}>
+                                <button
+                                  onClick={() => setSelectedPayment(payment)}
+                                  className={styles.btnVer}
+                                  title="Ver detalles"
+                                >
+                                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                                    <circle cx="12" cy="12" r="3"/>
+                                  </svg>
+                                </button>
+                              </div>
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                )}
+              </div>
+
+              {/* Modal de Detalles del Pago */}
+              {selectedPayment && (
+                <div className={styles.modal} onClick={() => setSelectedPayment(null)}>
+                  <div className={styles.modalContent} onClick={e => e.stopPropagation()}>
+                    <div className={styles.modalHeader}>
+                      <div className={styles.modalPaymentIcon} style={{ background: statusLabels[selectedPayment.status]?.bg || '#f3f4f6' }}>
+                        {selectedPayment.status === 'approved' ? '✓' : selectedPayment.status === 'pending' ? '⏳' : '•'}
+                      </div>
+                      <div>
+                        <h2>Pago #{selectedPayment.mpPaymentId}</h2>
+                        <span 
+                          className={styles.statusBadge}
+                          style={{ 
+                            background: statusLabels[selectedPayment.status]?.bg || '#f3f4f6', 
+                            color: statusLabels[selectedPayment.status]?.color || '#6b7280' 
+                          }}
+                        >
+                          {statusLabels[selectedPayment.status]?.label || selectedPayment.status}
+                        </span>
+                      </div>
+                      <button className={styles.modalClose} onClick={() => setSelectedPayment(null)}>
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                          <line x1="18" y1="6" x2="6" y2="18"/>
+                          <line x1="6" y1="6" x2="18" y2="18"/>
+                        </svg>
+                      </button>
+                    </div>
+
+                    <div className={styles.modalBody}>
+                      <div className={styles.modalSection}>
+                        <h4>Información del Pago</h4>
+                        <div className={styles.modalInfo}>
+                          <div className={styles.modalInfoItem}>
+                            <span className={styles.label}>Monto:</span>
+                            <span className={styles.amountLarge}>${selectedPayment.amount.toLocaleString()} {selectedPayment.currency}</span>
+                          </div>
+                          <div className={styles.modalInfoItem}>
+                            <span className={styles.label}>Método:</span>
+                            <span>{selectedPayment.paymentMethodId || 'N/A'} ({selectedPayment.paymentTypeId || 'N/A'})</span>
+                          </div>
+                          <div className={styles.modalInfoItem}>
+                            <span className={styles.label}>Fecha creación:</span>
+                            <span>{formatDate(selectedPayment.createdAt)}</span>
+                          </div>
+                          {selectedPayment.dateApproved && (
+                            <div className={styles.modalInfoItem}>
+                              <span className={styles.label}>Fecha aprobación:</span>
+                              <span>{formatDate(selectedPayment.dateApproved)}</span>
+                            </div>
+                          )}
+                          {selectedPayment.statusDetail && (
+                            <div className={styles.modalInfoItem}>
+                              <span className={styles.label}>Detalle estado:</span>
+                              <span>{selectedPayment.statusDetail}</span>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+
+                      <div className={styles.modalSection}>
+                        <h4>Información del Pagador</h4>
+                        <div className={styles.modalInfo}>
+                          <div className={styles.modalInfoItem}>
+                            <span className={styles.label}>Nombre:</span>
+                            <span>{selectedPayment.payerName || 'No disponible'}</span>
+                          </div>
+                          <div className={styles.modalInfoItem}>
+                            <span className={styles.label}>Email:</span>
+                            <span>{selectedPayment.payerEmail || 'No disponible'}</span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className={styles.modalActions}>
+                      <button onClick={() => setSelectedPayment(null)} className={styles.btnModalCerrar}>
+                        Cerrar
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
           ) : activeSection === 'chatbot' ? (
             <div className={styles.section}>
