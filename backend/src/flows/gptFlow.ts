@@ -84,6 +84,8 @@ export const gptFlow: Flow = {
       const tienePageosHabilitados = EMPRESAS_CON_PAGOS.includes(empresaIdStr) || 
                                       EMPRESAS_CON_PAGOS.includes(empresa.nombre);
       
+      console.log(`💳 [GPT] Empresa: ${empresa.nombre}, ID: ${empresaIdStr}, Pagos habilitados: ${tienePageosHabilitados}`);
+      
       // 4. Construir historial de mensajes para GPT
       let promptBase = empresa.prompt || 'Eres un asistente virtual amable y servicial.';
       
@@ -193,8 +195,10 @@ IMPORTANTE: Cuando detectes intención de pago, USA LA FUNCIÓN generate_payment
         const triggersPago = ['quiero pagar', 'pagar', 'confirmo', 'listo', 'proceder', 'realizar pago', 'hacer el pago'];
         const quierePagar = triggersPago.some(trigger => mensajeLower.includes(trigger));
         
+        console.log(`💳 [GPT] FALLBACK check: mensaje="${mensajeLower}", quierePagar=${quierePagar}`);
+        
         if (quierePagar) {
-          console.log(`💳 [GPT] FALLBACK: Detectada intención de pago por keywords`);
+          console.log(`💳 [GPT] FALLBACK: Detectada intención de pago por keywords, generando link...`);
           
           // Extraer cantidad del historial (buscar números)
           const historialCompleto = historialReciente.join(' ') + ' ' + mensaje;
