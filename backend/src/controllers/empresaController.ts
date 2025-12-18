@@ -2,6 +2,8 @@
 import type { Request, Response } from 'express';
 import { EmpresaModel } from '../models/Empresa.js';
 import { UsuarioModel } from '../models/Usuario.js';
+import { TurnoModel, EstadoTurno } from '../modules/calendar/models/Turno.js';
+import { ClienteModel } from '../models/Cliente.js';
 
 /**
  * GET /api/empresas/:empresaId/stats
@@ -77,6 +79,47 @@ export const getEmpresaStats = async (req: Request, res: Response): Promise<void
       .map(([fecha, cantidad]) => ({ fecha, cantidad }))
       .sort((a, b) => a.fecha.localeCompare(b.fecha));
 
+    // ========== ESTADÍSTICAS DEL BOT DE PASOS (Turnos/Reservas) ==========
+    const hoy = new Date();
+    hoy.setHours(0, 0, 0, 0);
+    const inicioMes = new Date(hoy.getFullYear(), hoy.getMonth(), 1);
+    
+    // Turnos del mes actual
+    const turnosDelMes = await TurnoModel.find({
+      empresaId,
+      fechaInicio: { $gte: inicioMes }
+    });
+    
+    // Turnos de hoy
+    const manana = new Date(hoy);
+    manana.setDate(manana.getDate() + 1);
+    const turnosHoy = turnosDelMes.filter(t => 
+      t.fechaInicio >= hoy && t.fechaInicio < manana
+    );
+    
+    // Contadores por estado
+    const turnosPendientes = turnosDelMes.filter(t => 
+      t.estado === EstadoTurno.PENDIENTE || t.estado === EstadoTurno.NO_CONFIRMADO
+    ).length;
+    const turnosConfirmados = turnosDelMes.filter(t => 
+      t.estado === EstadoTurno.CONFIRMADO
+    ).length;
+    const turnosCompletados = turnosDelMes.filter(t => 
+      t.estado === EstadoTurno.COMPLETADO
+    ).length;
+    const turnosCancelados = turnosDelMes.filter(t => 
+      t.estado === EstadoTurno.CANCELADO
+    ).length;
+    
+    // Tasa de confirmación
+    const turnosConRespuesta = turnosConfirmados + turnosCancelados + turnosCompletados;
+    const tasaConfirmacion = turnosDelMes.length > 0 
+      ? ((turnosConfirmados + turnosCompletados) / turnosDelMes.length * 100).toFixed(1)
+      : '0';
+    
+    // Total clientes
+    const totalClientes = await ClienteModel.countDocuments({ empresaId });
+
     res.status(200).json({
       success: true,
       empresa: {
@@ -95,6 +138,17 @@ export const getEmpresaStats = async (req: Request, res: Response): Promise<void
         usuariosActivos,
         promedioInteracciones: totalUsuarios > 0 ? (totalInteracciones / totalUsuarios).toFixed(2) : 0,
         promedioTokens: totalUsuarios > 0 ? (totalTokens / totalUsuarios).toFixed(0) : 0
+      },
+      // Estadísticas del Bot de Pasos
+      botPasos: {
+        turnosHoy: turnosHoy.length,
+        turnosMes: turnosDelMes.length,
+        turnosPendientes,
+        turnosConfirmados,
+        turnosCompletados,
+        turnosCancelados,
+        tasaConfirmacion: parseFloat(tasaConfirmacion),
+        totalClientes
       },
       usuariosRecientes: usuariosRecientes.map(u => ({
         id: u._id,

@@ -1,5 +1,89 @@
 /* 📊 Estilos del Dashboard */
 
+/* Línea de colores decorativa */
+.colorLine {
+  height: 4px;
+  background: linear-gradient(90deg, #FF6B4A 0%, #FF8A6E 25%, #1E3A5F 50%, #2D4A6F 75%, #FF6B4A 100%);
+  margin-bottom: 16px;
+}
+
+/* Sección Bot de Pasos */
+.botPasosSection {
+  background: linear-gradient(135deg, #1E3A5F 0%, #2D4A6F 100%);
+  border-radius: 12px;
+  padding: 16px;
+  margin: 0 1rem 1rem 1rem;
+  color: white;
+}
+
+.sectionTitle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  margin-bottom: 14px;
+  color: white;
+}
+
+.sectionTitle svg {
+  stroke: #FF6B4A;
+}
+
+.botPasosGrid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 10px;
+}
+
+.botPasosCard {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  padding: 12px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  transition: all 0.2s ease;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.botPasosCard:hover {
+  background: rgba(255, 255, 255, 0.15);
+  transform: translateY(-2px);
+}
+
+.botPasosIcon {
+  font-size: 24px;
+}
+
+.botPasosContent {
+  display: flex;
+  flex-direction: column;
+}
+
+.botPasosNumber {
+  font-size: 20px;
+  font-weight: 700;
+  color: white;
+}
+
+.botPasosLabel {
+  font-size: 10px;
+  color: rgba(255, 255, 255, 0.7);
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+
+/* Colores específicos para cada card */
+.cardHoy { border-left: 3px solid #FF6B4A; }
+.cardMes { border-left: 3px solid #3B82F6; }
+.cardConfirmados { border-left: 3px solid #10B981; }
+.cardPendientes { border-left: 3px solid #F59E0B; }
+.cardCompletados { border-left: 3px solid #8B5CF6; }
+.cardCancelados { border-left: 3px solid #EF4444; }
+.cardTasa { border-left: 3px solid #06B6D4; }
+.cardClientes { border-left: 3px solid #EC4899; }
+
 /* Admin Actions */
 .adminActions {
   margin-bottom: 16px;
@@ -302,6 +386,12 @@
 }
 
 /* Responsive */
+@media (max-width: 1024px) {
+  .botPasosGrid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
 @media (max-width: 768px) {
   .headerContent {
     flex-direction: column;
@@ -318,6 +408,15 @@
     grid-template-columns: 1fr;
     gap: 8px;
     margin: 0.75rem;
+  }
+
+  .botPasosGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .botPasosSection {
+    margin: 0 0.75rem 0.75rem 0.75rem;
+    padding: 12px;
   }
 
   .empresasList {
