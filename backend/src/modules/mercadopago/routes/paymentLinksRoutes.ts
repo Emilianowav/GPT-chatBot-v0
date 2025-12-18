@@ -198,7 +198,11 @@ router.get('/pay/:slug', async (req: Request, res: Response): Promise<void> => {
     
     const preference = new Preference(sellerClient);
     
-    const baseUrl = process.env.MP_MODULE_URL || `${req.protocol}://${req.get('host')}`;
+    // Construir baseUrl - usar variable de entorno o URL de producción
+    const baseUrl = process.env.BACKEND_URL || process.env.MP_MODULE_URL || 'https://gpt-chatbot-v0.onrender.com';
+    const callbackBase = `${baseUrl}/api/modules/mercadopago/payment-links/callback`;
+    
+    console.log(`[MP] Creando preferencia con baseUrl: ${baseUrl}`);
     
     const preferenceData = await preference.create({
       body: {
@@ -213,9 +217,9 @@ router.get('/pay/:slug', async (req: Request, res: Response): Promise<void> => {
           }
         ],
         back_urls: {
-          success: `${baseUrl}/api/modules/mercadopago/payment-links/callback?status=success&link=${slug}`,
-          failure: `${baseUrl}/api/modules/mercadopago/payment-links/callback?status=failure&link=${slug}`,
-          pending: `${baseUrl}/api/modules/mercadopago/payment-links/callback?status=pending&link=${slug}`
+          success: `${callbackBase}?status=success&link=${slug}`,
+          failure: `${callbackBase}?status=failure&link=${slug}`,
+          pending: `${callbackBase}?status=pending&link=${slug}`
         },
         auto_return: 'approved',
         external_reference: `link_${link._id}`
