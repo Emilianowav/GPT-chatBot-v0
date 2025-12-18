@@ -122,11 +122,16 @@ router.get('/history/:empresaId', async (req, res): Promise<void> => {
   const { empresaId } = req.params;
   const { status, limit = '50', offset = '0' } = req.query;
   
+  console.log(`📊 [MP Payments] Buscando historial para empresaId: "${empresaId}"`);
+  
   try {
     // Buscar el seller por internalId (empresaId)
     const seller = await Seller.findOne({ internalId: empresaId });
     
+    console.log(`📊 [MP Payments] Seller encontrado:`, seller ? { internalId: seller.internalId, userId: seller.userId } : 'NO ENCONTRADO');
+    
     if (!seller) {
+      console.log(`📊 [MP Payments] No hay seller para "${empresaId}", retornando lista vacía`);
       res.json({
         success: true,
         payments: [],
@@ -139,6 +144,7 @@ router.get('/history/:empresaId', async (req, res): Promise<void> => {
     
     // Buscar pagos por el userId de MP del seller
     const query: any = { sellerId: seller.userId };
+    console.log(`📊 [MP Payments] Query de pagos:`, query);
     
     if (status && typeof status === 'string') {
       query.status = status;
