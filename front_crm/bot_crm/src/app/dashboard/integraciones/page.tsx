@@ -24,24 +24,48 @@ export default function IntegracionesPage() {
     loading: false
   });
 
-  // Verificar parámetros de URL al montar (callback de OAuth)
+  // Verificar estado de conexión de MP al cargar
   useEffect(() => {
-    if (typeof window === 'undefined') return;
+    const checkMPConnection = async () => {
+      if (typeof window === 'undefined') return;
+      
+      const empresaId = localStorage.getItem('empresa_id') || 'default';
+      
+      try {
+        const response = await fetch(`${MP_API_URL}/sellers/by-internal/${empresaId}`);
+        if (response.ok) {
+          const data = await response.json();
+          if (data.seller && data.seller.active) {
+            setMpStatus({ 
+              connected: true, 
+              userId: data.seller.userId, 
+              loading: false 
+            });
+            return;
+          }
+        }
+      } catch (err) {
+        console.log('MP no conectado o error al verificar');
+      }
+      
+      // Si no hay conexión, verificar parámetros de URL (callback de OAuth)
+      const params = new URLSearchParams(window.location.search);
+      const mpStatusParam = params.get('mp_status');
+      const mpUserId = params.get('mp_user_id');
+      const mpError = params.get('mp_error');
 
-    const params = new URLSearchParams(window.location.search);
-    const mpStatusParam = params.get('mp_status');
-    const mpUserId = params.get('mp_user_id');
-    const mpError = params.get('mp_error');
-
-    if (mpStatusParam === 'success' && mpUserId) {
-      setMpStatus({ connected: true, userId: mpUserId, loading: false });
-      setActiveTab('marketplace');
-      window.history.replaceState({}, '', window.location.pathname);
-    } else if (mpStatusParam === 'error') {
-      setMpStatus({ connected: false, loading: false, error: mpError || 'Error al conectar' });
-      setActiveTab('marketplace');
-      window.history.replaceState({}, '', window.location.pathname);
-    }
+      if (mpStatusParam === 'success' && mpUserId) {
+        setMpStatus({ connected: true, userId: mpUserId, loading: false });
+        setActiveTab('marketplace');
+        window.history.replaceState({}, '', window.location.pathname);
+      } else if (mpStatusParam === 'error') {
+        setMpStatus({ connected: false, loading: false, error: mpError || 'Error al conectar' });
+        setActiveTab('marketplace');
+        window.history.replaceState({}, '', window.location.pathname);
+      }
+    };
+    
+    checkMPConnection();
   }, []);
 
   const handleNavigate = (path: string) => {
