@@ -339,34 +339,51 @@
   transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
   position: relative;
   overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  min-height: 200px;
 }
 
-.integrationCard::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 3px;
-  background: linear-gradient(90deg, #E2E8F0, #E2E8F0);
-  transition: all 0.25s;
+.integrationCardDisabled {
+  opacity: 0.55;
+  background: #f8fafc;
 }
 
-.integrationCard:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 12px 24px rgba(30, 58, 95, 0.12);
-  border-color: #CBD5E1;
+.integrationCardDisabled .integrationLogo {
+  filter: grayscale(100%);
+  opacity: 0.7;
 }
 
-.integrationCard:hover::before {
-  background: linear-gradient(90deg, #FF6B4A, #FF8A6E);
+.integrationCardDisabled .integrationTitle,
+.integrationCardDisabled .integrationDescription,
+.integrationCardDisabled .feature {
+  color: #94a3b8;
 }
+
+.integrationCardDisabled .badge {
+  background: #e2e8f0;
+  color: #94a3b8;
+}
+
 
 .integrationHeader {
   display: flex;
-  justify-content: space-between;
   align-items: flex-start;
+  gap: 0.75rem;
   margin-bottom: 1rem;
+}
+
+.integrationInfo {
+  flex: 1;
+  min-width: 0;
+}
+
+.integrationInfo .integrationTitle {
+  margin: 0 0 0.25rem 0;
+}
+
+.integrationInfo .integrationDescription {
+  margin: 0;
 }
 
 .integrationLogo {
@@ -402,17 +419,18 @@
 }
 
 .integrationTitle {
-  font-size: 1rem;
+  font-size: 0.95rem;
   font-weight: 700;
   color: #1E3A5F;
   margin: 0 0 0.375rem 0;
+  line-height: 1.2;
 }
 
 .integrationDescription {
-  font-size: 0.8rem;
+  font-size: 0.75rem;
   color: #64748B;
   margin: 0 0 1rem 0;
-  line-height: 1.5;
+  line-height: 1.4;
 }
 
 .integrationFeatures {
@@ -420,6 +438,8 @@
   flex-wrap: wrap;
   gap: 0.5rem;
   margin-bottom: 1rem;
+  margin-top: auto;
+  padding-top: 0.5rem;
 }
 
 .feature {
@@ -433,6 +453,10 @@
 }
 
 .integrationButton {
+  display: flex;
+  flex-direction: column;
+  align-items: start;
+  justify-content: center;
   width: 100%;
   padding: 0.625rem 1rem;
   background: #F1F5F9;
@@ -443,11 +467,9 @@
   font-weight: 600;
   cursor: pointer;
   transition: all 0.2s;
+  gap: 4px;
 }
 
-.integrationButton:hover:not(:disabled) {
-  background: #E2E8F0;
-}
 
 .integrationButton:disabled {
   background: #F8FAFC;
@@ -457,8 +479,7 @@
 
 .integrationButtonActive {
   display: flex;
-  align-items: center;
-  justify-content: center;
+  flex-direction: row;
   gap: 0.5rem;
   background: linear-gradient(135deg, #009ee3 0%, #00b4ff 100%);
   color: white;
@@ -467,7 +488,6 @@
 }
 
 .integrationButtonActive:hover:not(:disabled) {
-  transform: translateY(-1px);
   box-shadow: 0 6px 16px rgba(0, 158, 227, 0.35);
 }
 

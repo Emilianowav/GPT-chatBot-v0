@@ -238,13 +238,6 @@ export default function IntegracionesPage() {
           <div className={styles.section}>
             {/* Marketplace Header */}
             <div className={styles.marketplaceHeader}>
-              <div className={styles.marketplaceIcon}>
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <circle cx="9" cy="21" r="1"/>
-                  <circle cx="20" cy="21" r="1"/>
-                  <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/>
-                </svg>
-              </div>
               <div className={styles.marketplaceInfo}>
                 <h2>Marketplace de Integraciones</h2>
                 <p>Conecta con aplicaciones populares en un click y potencia tu negocio</p>
@@ -271,14 +264,16 @@ export default function IntegracionesPage() {
                   <div className={styles.integrationLogo}>
                     <img src="/logos tecnologias/mp-logo.png" alt="Mercado Pago" width="32" height="32" style={{ objectFit: 'contain' }} />
                   </div>
+                  <div className={styles.integrationInfo}>
+                    <h3 className={styles.integrationTitle}>Mercado Pago</h3>
+                    <p className={styles.integrationDescription}>
+                      Acepta pagos online y cobra comisiones como marketplace SaaS
+                    </p>
+                  </div>
                   <span className={`${styles.badge} ${mpStatus.connected ? styles.badgeConnected : styles.badgeActive}`}>
                     {mpStatus.connected ? 'Conectado' : 'Disponible'}
                   </span>
                 </div>
-                <h3 className={styles.integrationTitle}>Mercado Pago</h3>
-                <p className={styles.integrationDescription}>
-                  Acepta pagos y cobra comisiones como marketplace
-                </p>
                 <div className={styles.integrationFeatures}>
                   <span className={styles.feature}>✓ Cobrar Productos</span>
                   <span className={styles.feature}>✓ Cobrar Suscripciones</span>
@@ -340,7 +335,7 @@ export default function IntegracionesPage() {
               </div>
 
               {/* Google Calendar */}
-              <div className={styles.integrationCard}>
+              <div className={`${styles.integrationCard} ${styles.integrationCardDisabled}`}>
                 <div className={styles.integrationHeader}>
                   <div className={styles.integrationLogo} style={{ background: '#4285F4' }}>
                     <svg width="32" height="32" viewBox="0 0 24 24" fill="white">
@@ -350,12 +345,14 @@ export default function IntegracionesPage() {
                       <line x1="3" y1="10" x2="21" y2="10" stroke="white" strokeWidth="2"/>
                     </svg>
                   </div>
+                  <div className={styles.integrationInfo}>
+                    <h3 className={styles.integrationTitle}>Google Calendar</h3>
+                    <p className={styles.integrationDescription}>
+                      Sincroniza turnos y citas automáticamente con Google Calendar
+                    </p>
+                  </div>
                   <span className={styles.badge}>Próximamente</span>
                 </div>
-                <h3 className={styles.integrationTitle}>Google Calendar</h3>
-                <p className={styles.integrationDescription}>
-                  Sincroniza turnos automáticamente con Google Calendar
-                </p>
                 <div className={styles.integrationFeatures}>
                   <span className={styles.feature}>✓ Sincronización bidireccional</span>
                   <span className={styles.feature}>✓ Notificaciones automáticas</span>
@@ -367,7 +364,7 @@ export default function IntegracionesPage() {
               </div>
 
               {/* Outlook Calendar */}
-              <div className={styles.integrationCard}>
+              <div className={`${styles.integrationCard} ${styles.integrationCardDisabled}`}>
                 <div className={styles.integrationHeader}>
                   <div className={styles.integrationLogo} style={{ background: '#0078D4' }}>
                     <svg width="32" height="32" viewBox="0 0 24 24" fill="white">
@@ -377,12 +374,14 @@ export default function IntegracionesPage() {
                       <line x1="3" y1="10" x2="21" y2="10" stroke="white" strokeWidth="2"/>
                     </svg>
                   </div>
+                  <div className={styles.integrationInfo}>
+                    <h3 className={styles.integrationTitle}>Outlook Calendar</h3>
+                    <p className={styles.integrationDescription}>
+                      Integra turnos y citas con Microsoft Outlook y Office 365
+                    </p>
+                  </div>
                   <span className={styles.badge}>Próximamente</span>
                 </div>
-                <h3 className={styles.integrationTitle}>Outlook Calendar</h3>
-                <p className={styles.integrationDescription}>
-                  Integra con Microsoft Outlook y Office 365
-                </p>
                 <div className={styles.integrationFeatures}>
                   <span className={styles.feature}>✓ Sincronización en tiempo real</span>
                   <span className={styles.feature}>✓ Invitaciones automáticas</span>
@@ -394,7 +393,7 @@ export default function IntegracionesPage() {
               </div>
 
               {/* Google Sheets */}
-              <div className={styles.integrationCard}>
+              <div className={`${styles.integrationCard} ${styles.integrationCardDisabled}`}>
                 <div className={styles.integrationHeader}>
                   <div className={styles.integrationLogo} style={{ background: '#0F9D58' }}>
                     <svg width="32" height="32" viewBox="0 0 24 24" fill="white">
@@ -404,12 +403,14 @@ export default function IntegracionesPage() {
                       <line x1="8" y1="17" x2="16" y2="17"/>
                     </svg>
                   </div>
+                  <div className={styles.integrationInfo}>
+                    <h3 className={styles.integrationTitle}>Google Sheets</h3>
+                    <p className={styles.integrationDescription}>
+                      Exporta y sincroniza datos con hojas de cálculo de Google
+                    </p>
+                  </div>
                   <span className={styles.badge}>Próximamente</span>
                 </div>
-                <h3 className={styles.integrationTitle}>Google Sheets</h3>
-                <p className={styles.integrationDescription}>
-                  Exporta y sincroniza datos con hojas de cálculo
-                </p>
                 <div className={styles.integrationFeatures}>
                   <span className={styles.feature}>✓ Exportación automática</span>
                   <span className={styles.feature}>✓ Actualización en tiempo real</span>
@@ -421,19 +422,21 @@ export default function IntegracionesPage() {
               </div>
 
               {/* Zapier */}
-              <div className={styles.integrationCard}>
+              <div className={`${styles.integrationCard} ${styles.integrationCardDisabled}`}>
                 <div className={styles.integrationHeader}>
                   <div className={styles.integrationLogo} style={{ background: '#FF4A00' }}>
                     <svg width="32" height="32" viewBox="0 0 24 24" fill="white">
                       <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/>
                     </svg>
                   </div>
+                  <div className={styles.integrationInfo}>
+                    <h3 className={styles.integrationTitle}>Zapier</h3>
+                    <p className={styles.integrationDescription}>
+                      Conecta con más de 5,000 aplicaciones y automatiza flujos
+                    </p>
+                  </div>
                   <span className={styles.badge}>Próximamente</span>
                 </div>
-                <h3 className={styles.integrationTitle}>Zapier</h3>
-                <p className={styles.integrationDescription}>
-                  Conecta con más de 5,000 aplicaciones
-                </p>
                 <div className={styles.integrationFeatures}>
                   <span className={styles.feature}>✓ Automatizaciones ilimitadas</span>
                   <span className={styles.feature}>✓ Workflows personalizados</span>
