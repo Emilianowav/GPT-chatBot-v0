@@ -353,7 +353,7 @@ async function notifyPaymentApproved(
   try {
     console.log(`[MP Webhook] Intentando notificar pago aprobado...`);
     
-    // Buscar el seller para obtener el internalId (empresaId)
+    // Buscar el seller para obtener el internalId (empresaId o nombre)
     const seller = await Seller.findOne({ userId: sellerId });
     if (!seller || !seller.internalId) {
       console.log(`[MP Webhook] No se encontró seller o internalId para ${sellerId}`);
@@ -361,7 +361,13 @@ async function notifyPaymentApproved(
     }
     
     // Buscar la empresa para obtener el phoneNumberId
-    const empresa = await EmpresaModel.findById(seller.internalId);
+    // internalId puede ser el nombre de la empresa o un ObjectId
+    let empresa = await EmpresaModel.findById(seller.internalId).catch(() => null);
+    if (!empresa) {
+      // Si no es un ObjectId válido, buscar por nombre
+      empresa = await EmpresaModel.findOne({ nombre: seller.internalId });
+    }
+    
     if (!empresa || !empresa.phoneNumberId) {
       console.log(`[MP Webhook] No se encontró empresa o phoneNumberId para ${seller.internalId}`);
       return;
