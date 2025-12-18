@@ -6,6 +6,9 @@ import { MercadoPagoConfig, Payment as MPPaymentClient } from 'mercadopago';
 import { Payment, PaymentStatus, IPayment } from '../models/Payment.js';
 import { PaymentLink } from '../models/PaymentLink.js';
 import { Seller } from '../models/Seller.js';
+import { enviarMensajeWhatsAppTexto } from '../../../services/metaService.js';
+import { EmpresaModel } from '../../../models/Empresa.js';
+import { ClienteModel } from '../../../models/Cliente.js';
 
 const router = Router();
 
@@ -300,10 +303,98 @@ async function processPaymentNotification(paymentId: string): Promise<void> {
         }
       );
       console.log(`[MP Webhook] PaymentLink ${paymentLinkId} actualizado con nuevo pago`);
+      
+      // Notificar al cliente por WhatsApp si el pago fue aprobado
+      await notifyPaymentApproved(
+        sellerId,
+        mpPayment.transaction_amount || 0,
+        mpPayment.currency_id || 'ARS',
+        mpPayment.payer?.email,
+        mpPayment.payer?.phone?.number
+      );
+    }
+    
+    // Si el pago fue aprobado sin PaymentLink, también notificar
+    if (status === PaymentStatus.APPROVED && !paymentLinkId && !existingPayment) {
+      await notifyPaymentApproved(
+        sellerId,
+        mpPayment.transaction_amount || 0,
+        mpPayment.currency_id || 'ARS',
+        mpPayment.payer?.email,
+        mpPayment.payer?.phone?.number
+      );
     }
     
   } catch (error: any) {
     console.error(`[MP Webhook] Error procesando pago ${paymentId}:`, error.message);
+  }
+}
+
+/**
+ * Notifica al cliente que su pago fue aprobado
+ */
+async function notifyPaymentApproved(
+  sellerId: string,
+  amount: number,
+  currency: string,
+  payerEmail?: string,
+  payerPhone?: string
+): Promise<void> {
+  try {
+    console.log(`[MP Webhook] Intentando notificar pago aprobado...`);
+    
+    // Buscar el seller para obtener el internalId (empresaId)
+    const seller = await Seller.findOne({ userId: sellerId });
+    if (!seller || !seller.internalId) {
+      console.log(`[MP Webhook] No se encontró seller o internalId para ${sellerId}`);
+      return;
+    }
+    
+    // Buscar la empresa para obtener el phoneNumberId
+    const empresa = await EmpresaModel.findById(seller.internalId);
+    if (!empresa || !empresa.phoneNumberId) {
+      console.log(`[MP Webhook] No se encontró empresa o phoneNumberId para ${seller.internalId}`);
+      return;
+    }
+    
+    // Buscar cliente por email o teléfono
+    let clientePhone: string | null = null;
+    
+    if (payerPhone) {
+      clientePhone = payerPhone;
+    } else if (payerEmail) {
+      // Buscar cliente por email en la empresa
+      const cliente = await ClienteModel.findOne({ 
+        empresaId: seller.internalId,
+        email: payerEmail 
+      });
+      if (cliente) {
+        clientePhone = cliente.telefono;
+      }
+    }
+    
+    if (!clientePhone) {
+      console.log(`[MP Webhook] No se pudo determinar el teléfono del cliente`);
+      return;
+    }
+    
+    // Formatear mensaje de confirmación
+    const mensaje = `✅ *¡Pago recibido!*\n\n` +
+      `Hemos recibido tu pago de *$${amount.toLocaleString()} ${currency}*.\n\n` +
+      `Gracias por tu compra. Si tienes alguna consulta, no dudes en escribirnos.`;
+    
+    // Enviar mensaje de WhatsApp
+    await enviarMensajeWhatsAppTexto(
+      clientePhone,
+      mensaje,
+      empresa.phoneNumberId
+    );
+    
+    console.log(`[MP Webhook] ✅ Notificación de pago enviada a ${clientePhone}`);
+    
+  } catch (error: any) {
+    console.error(`[MP Webhook] Error notificando pago:`, error.message);
+    // No lanzar error para no afectar el flujo principal
   }
 }
 
