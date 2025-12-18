@@ -5,10 +5,11 @@ import sellersRoutes from './sellersRoutes.js';
 import paymentsRoutes from './paymentsRoutes.js';
 import paymentLinksRoutes from './paymentLinksRoutes.js';
 import subscriptionsRoutes from './subscriptionsRoutes.js';
+import webhooksRoutes from './webhooksRoutes.js';
 
 const router = Router();
 
-console.log('🟢 [MP] Módulo Mercado Pago v1.1 - Montando rutas...');
+console.log('🟢 [MP] Módulo Mercado Pago v1.2 - Montando rutas...');
 
 // Montar rutas
 router.use('/oauth', oauthRoutes);
@@ -21,6 +22,8 @@ router.use('/payment-links', paymentLinksRoutes);
 console.log('🟢 [MP] -> /payment-links montado');
 router.use('/subscriptions', subscriptionsRoutes);
 console.log('🟢 [MP] -> /subscriptions montado');
+router.use('/webhooks', webhooksRoutes);
+console.log('🟢 [MP] -> /webhooks montado');
 
 // Health check del módulo
 router.get('/health', (req, res) => {
@@ -35,7 +38,7 @@ router.get('/health', (req, res) => {
 router.get('/', (req, res) => {
   res.json({
     name: 'mercadopago-module',
-    version: '1.1.0',
+    version: '1.2.0',
     description: 'Módulo de Mercado Pago integrado al CRM',
     endpoints: {
       oauth: {
@@ -53,6 +56,7 @@ router.get('/', (req, res) => {
         list: 'GET /payment-links?sellerId=xxx',
         create: 'POST /payment-links { sellerId, title, unitPrice, description?, priceType? }',
         get: 'GET /payment-links/:id',
+        pay: 'GET /payment-links/pay/:slug (redirige a checkout MP)',
         delete: 'DELETE /payment-links/:id',
       },
       subscriptions: {
@@ -66,6 +70,10 @@ router.get('/', (req, res) => {
         get: 'GET /sellers/:userId',
         getByInternal: 'GET /sellers/by-internal/:internalId',
         delete: 'DELETE /sellers/:userId',
+      },
+      webhooks: {
+        receive: 'POST /webhooks (recibe notificaciones de MP)',
+        test: 'GET /webhooks/test (verificar endpoint activo)',
       },
     },
   });

@@ -2,6 +2,7 @@
 import { Router } from 'express';
 import * as mpService from '../services/mercadopagoService.js';
 import * as sellersService from '../services/sellersService.js';
+import { Payment } from '../models/Payment.js';
 
 const router = Router();
 
@@ -107,6 +108,100 @@ router.get('/:paymentId', async (req, res) => {
     });
   } catch (err: any) {
     console.error('❌ [MP Payments] Error obteniendo pago:', err.message);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+/**
+ * GET /payments/history/:sellerId
+ * Lista el historial de pagos de un vendedor
+ */
+router.get('/history/:sellerId', async (req, res) => {
+  const { sellerId } = req.params;
+  const { status, limit = '50', offset = '0' } = req.query;
+  
+  try {
+    const query: any = { sellerId };
+    
+    if (status && typeof status === 'string') {
+      query.status = status;
+    }
+    
+    const payments = await Payment.find(query)
+      .sort({ createdAt: -1 })
+      .skip(parseInt(offset as string))
+      .limit(parseInt(limit as string));
+    
+    const total = await Payment.countDocuments(query);
+    
+    res.json({
+      success: true,
+      payments,
+      total,
+      limit: parseInt(limit as string),
+      offset: parseInt(offset as string)
+    });
+  } catch (err: any) {
+    console.error('❌ [MP Payments] Error listando pagos:', err.message);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+/**
+ * GET /payments/stats/:sellerId
+ * Estadísticas de pagos de un vendedor
+ */
+router.get('/stats/:sellerId', async (req, res) => {
+  const { sellerId } = req.params;
+  
+  try {
+    const hoy = new Date();
+    hoy.setHours(0, 0, 0, 0);
+    const inicioMes = new Date(hoy.getFullYear(), hoy.getMonth(), 1);
+    
+    // Total de pagos aprobados
+    const pagosAprobados = await Payment.countDocuments({ 
+      sellerId, 
+      status: 'approved' 
+    });
+    
+    // Ingresos totales
+    const ingresosTotales = await Payment.aggregate([
+      { $match: { sellerId, status: 'approved' } },
+      { $group: { _id: null, total: { $sum: '$amount' } } }
+    ]);
+    
+    // Pagos del mes
+    const pagosDelMes = await Payment.countDocuments({
+      sellerId,
+      status: 'approved',
+      createdAt: { $gte: inicioMes }
+    });
+    
+    // Ingresos del mes
+    const ingresosDelMes = await Payment.aggregate([
+      { $match: { sellerId, status: 'approved', createdAt: { $gte: inicioMes } } },
+      { $group: { _id: null, total: { $sum: '$amount' } } }
+    ]);
+    
+    // Pagos pendientes
+    const pagosPendientes = await Payment.countDocuments({
+      sellerId,
+      status: { $in: ['pending', 'in_process'] }
+    });
+    
+    res.json({
+      success: true,
+      stats: {
+        pagosAprobados,
+        ingresosTotales: ingresosTotales[0]?.total || 0,
+        pagosDelMes,
+        ingresosDelMes: ingresosDelMes[0]?.total || 0,
+        pagosPendientes
+      }
+    });
+  } catch (err: any) {
+    console.error('❌ [MP Payments] Error obteniendo stats:', err.message);
     res.status(500).json({ error: err.message });
   }
 });
