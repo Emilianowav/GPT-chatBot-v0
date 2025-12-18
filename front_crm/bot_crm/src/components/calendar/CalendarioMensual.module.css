@@ -1,8 +1,10 @@
 /* 📅 Estilos del Calendario Mensual */
 
 .container {
-  background: var(--momento-black, #2A2A2A);
-  padding: 1.5rem;
+    background: #2e4b7099;
+    padding: 1.5rem;
+    border-radius: 8px;
+    border: solid 2px var(--momento-black, #2a2a2a);
 }
 
 /* Filtros de Agentes */
@@ -150,8 +152,8 @@
 }
 
 .diaConTurnos {
-  background: rgba(255, 107, 74, 0.2);
-  border-color: var(--momento-orange, #FF6B4A);
+    background: #182f4d;
+  border-color: var(--momento-orange, #ab4832);
 }
 
 .diaNumero {
@@ -341,59 +343,61 @@
 .popupTurnos {
   max-height: 300px;
   overflow-y: auto;
-  display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
 }
 
-/* Item de turno en popup */
-.turnoItem {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  padding: 0.75rem;
-  border-radius: 8px;
-  background: var(--momento-black-light, #2A2A2A);
-  cursor: pointer;
-  transition: all 0.2s;
-}
-
-.turnoItem:hover {
-  background: #f0f2ff;
-}
-
-.turnoHora {
-  font-weight: 700;
-  font-size: 0.875rem;
-  color: #FF6B4A;
-  min-width: 50px;
-}
-
-.turnoInfo {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  gap: 0.25rem;
-}
-
-.turnoAgente {
-  font-weight: 600;
-  font-size: 0.875rem;
-  color: var(--momento-white, #FFFFFF);
-}
-
-.turnoCliente {
-  font-size: 0.8rem;
-  color: rgba(255, 255, 255, 0.95);
-}
-
-.turnoDocumento,
-.turnoTelefono,
-.turnoDuracion,
-.turnoNotas {
+/* Tabla dentro del popup */
+.popupTable {
+  width: 100%;
+  border-collapse: collapse;
   font-size: 0.75rem;
-  color: rgba(255, 255, 255, 0.8);
-  margin-top: 0.125rem;
+}
+
+.popupTable thead {
+  background: var(--primary-blue, #1E3A5F);
+}
+
+.popupTable th {
+  padding: 0.5rem;
+  text-align: left;
+  font-weight: 600;
+  color: #FFFFFF;
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+
+.popupTable tbody tr {
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  transition: background 0.15s ease;
+}
+
+.popupTable tbody tr:hover {
+  background: rgba(255, 107, 74, 0.1);
+}
+
+.popupTable td {
+  padding: 0.5rem;
+  color: rgba(255, 255, 255, 0.9);
+  vertical-align: middle;
+}
+
+.popupRow {
+  cursor: pointer;
+}
+
+.popupHora {
+  font-weight: 700;
+  color: #FF6B4A !important;
+}
+
+.popupEstado {
+  display: inline-block;
+  padding: 0.2rem 0.4rem;
+  border-radius: 4px;
+  color: white;
+  font-size: 0.65rem;
+  font-weight: 600;
+  text-transform: uppercase;
 }
 
 .turnoNotas {

@@ -1,17 +1,87 @@
 'use client';
 
 // 🔗 Página Principal del Módulo de Integraciones
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import DashboardLayout from '@/components/DashboardLayout/DashboardLayout';
 import styles from './integraciones.module.css';
 
+// URL del backend de MP (configurable via env)
+const MP_API_URL = process.env.NEXT_PUBLIC_MP_API_URL || 'http://localhost:3001';
+
+interface MPConnectionStatus {
+  connected: boolean;
+  userId?: string;
+  loading: boolean;
+  error?: string;
+}
+
 export default function IntegracionesPage() {
   const router = useRouter();
-  const [activeTab, setActiveTab] = useState<'apis' | 'marketplace'>('apis');
+  const [activeTab, setActiveTab] = useState<'apis' | 'marketplace'>('marketplace');
+  const [mpStatus, setMpStatus] = useState<MPConnectionStatus>({
+    connected: false,
+    loading: false
+  });
+
+  // Verificar parámetros de URL al montar (callback de OAuth)
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+
+    const params = new URLSearchParams(window.location.search);
+    const mpStatusParam = params.get('mp_status');
+    const mpUserId = params.get('mp_user_id');
+    const mpError = params.get('mp_error');
+
+    if (mpStatusParam === 'success' && mpUserId) {
+      setMpStatus({ connected: true, userId: mpUserId, loading: false });
+      setActiveTab('marketplace');
+      window.history.replaceState({}, '', window.location.pathname);
+    } else if (mpStatusParam === 'error') {
+      setMpStatus({ connected: false, loading: false, error: mpError || 'Error al conectar' });
+      setActiveTab('marketplace');
+      window.history.replaceState({}, '', window.location.pathname);
+    }
+  }, []);
 
   const handleNavigate = (path: string) => {
     router.push(path);
+  };
+
+  // Conectar con Mercado Pago
+  const handleMPConnect = () => {
+    setMpStatus(prev => ({ ...prev, loading: true, error: undefined }));
+    
+    const empresaId = localStorage.getItem('empresa_id') || 'default';
+    const redirectUrl = `${window.location.origin}/dashboard/integraciones`;
+    
+    const authUrl = `${MP_API_URL}/oauth/authorize?internalId=${empresaId}&redirectUrl=${encodeURIComponent(redirectUrl)}`;
+    window.location.href = authUrl;
+  };
+
+  // Desconectar Mercado Pago
+  const handleMPDisconnect = async () => {
+    if (!mpStatus.userId) return;
+    
+    const confirmacion = window.confirm(
+      '¿Estás seguro de que deseas desconectar tu cuenta de Mercado Pago?'
+    );
+    
+    if (!confirmacion) return;
+    
+    setMpStatus(prev => ({ ...prev, loading: true }));
+    
+    try {
+      const response = await fetch(`${MP_API_URL}/oauth/disconnect/${mpStatus.userId}`, {
+        method: 'DELETE',
+      });
+      
+      if (!response.ok) throw new Error('Error al desconectar');
+      
+      setMpStatus({ connected: false, loading: false });
+    } catch (err) {
+      setMpStatus(prev => ({ ...prev, loading: false, error: 'Error al desconectar' }));
+    }
   };
 
   return (
@@ -175,8 +245,82 @@ export default function IntegracionesPage() {
               </div>
             </div>
 
+            {/* Error de MP */}
+            {mpStatus.error && (
+              <div className={styles.errorBanner}>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <circle cx="12" cy="12" r="10"/>
+                  <line x1="12" y1="8" x2="12" y2="12"/>
+                  <line x1="12" y1="16" x2="12.01" y2="16"/>
+                </svg>
+                {mpStatus.error}
+              </div>
+            )}
+
             {/* Grid de integraciones */}
             <div className={styles.marketplaceGrid}>
+              {/* Mercado Pago */}
+              <div className={`${styles.integrationCard} ${mpStatus.connected ? styles.integrationCardConnected : ''}`}>
+                <div className={styles.integrationHeader}>
+                  <div className={styles.integrationLogo}>
+                    <img src="/logos tecnologias/mp-logo.png" alt="Mercado Pago" width="32" height="32" style={{ objectFit: 'contain' }} />
+                  </div>
+                  <span className={`${styles.badge} ${mpStatus.connected ? styles.badgeConnected : styles.badgeActive}`}>
+                    {mpStatus.connected ? 'Conectado' : 'Disponible'}
+                  </span>
+                </div>
+                <h3 className={styles.integrationTitle}>Mercado Pago</h3>
+                <p className={styles.integrationDescription}>
+                  Acepta pagos y cobra comisiones como marketplace
+                </p>
+                <div className={styles.integrationFeatures}>
+                  <span className={styles.feature}>✓ Checkout Pro</span>
+                  <span className={styles.feature}>✓ Split Payments</span>
+                  <span className={styles.feature}>✓ Suscripciones</span>
+                </div>
+                
+                {mpStatus.connected ? (
+                  <div className={styles.connectedInfo}>
+                    <div className={styles.connectedStatus}>
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#27ae60" strokeWidth="2">
+                        <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
+                        <polyline points="22 4 12 14.01 9 11.01"/>
+                      </svg>
+                      <span>ID: {mpStatus.userId}</span>
+                    </div>
+                    <button 
+                      className={styles.disconnectButton}
+                      onClick={handleMPDisconnect}
+                      disabled={mpStatus.loading}
+                    >
+                      {mpStatus.loading ? 'Desconectando...' : 'Desconectar'}
+                    </button>
+                  </div>
+                ) : (
+                  <button 
+                    className={`${styles.integrationButton} ${styles.integrationButtonActive}`}
+                    onClick={handleMPConnect}
+                    disabled={mpStatus.loading}
+                  >
+                    {mpStatus.loading ? (
+                      <>
+                        <div className={styles.spinnerSmall}></div>
+                        Conectando...
+                      </>
+                    ) : (
+                      <>
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                          <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>
+                          <polyline points="15 3 21 3 21 9"/>
+                          <line x1="10" y1="14" x2="21" y2="3"/>
+                        </svg>
+                        Conectar con Mercado Pago
+                      </>
+                    )}
+                  </button>
+                )}
+              </div>
+
               {/* Google Calendar */}
               <div className={styles.integrationCard}>
                 <div className={styles.integrationHeader}>

@@ -1,10 +1,11 @@
 // 📋 Lista de turnos con acciones
 'use client';
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import type { Turno } from '@/lib/calendarApi';
 import type { ConfiguracionModulo } from '@/lib/configuracionApi';
 import { formatearHora } from '@/lib/fechaUtils';
+import Pagination from '@/components/ui/Pagination';
 import styles from './ListaTurnos.module.css';
 
 interface ListaTurnosProps {
@@ -12,13 +13,22 @@ interface ListaTurnosProps {
   configuracion?: ConfiguracionModulo | null;
   onCancelar?: (turnoId: string, motivo: string) => Promise<void>;
   onActualizarEstado?: (turnoId: string, estado: string) => Promise<void>;
+  itemsPerPage?: number;
 }
 
-export default function ListaTurnos({ turnos, configuracion, onCancelar, onActualizarEstado }: ListaTurnosProps) {
+export default function ListaTurnos({ turnos, configuracion, onCancelar, onActualizarEstado, itemsPerPage = 10 }: ListaTurnosProps) {
   const [turnoSeleccionado, setTurnoSeleccionado] = useState<string | null>(null);
   const [mostrarModalCancelar, setMostrarModalCancelar] = useState(false);
   const [motivoCancelacion, setMotivoCancelacion] = useState('');
   const [loading, setLoading] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+
+  // Paginación
+  const totalPages = Math.ceil(turnos.length / itemsPerPage);
+  const turnosPaginados = useMemo(() => {
+    const start = (currentPage - 1) * itemsPerPage;
+    return turnos.slice(start, start + itemsPerPage);
+  }, [turnos, currentPage, itemsPerPage]);
 
   const getEstadoColor = (estado: string) => {
     const colores: any = {
@@ -91,6 +101,7 @@ export default function ListaTurnos({ turnos, configuracion, onCancelar, onActua
         <table className={styles.table}>
           <thead>
             <tr>
+              <th>Fecha</th>
               <th>Hora</th>
               <th>Cliente</th>
               <th>Agente</th>
@@ -100,13 +111,16 @@ export default function ListaTurnos({ turnos, configuracion, onCancelar, onActua
             </tr>
           </thead>
           <tbody>
-            {turnos.map(turno => {
+            {turnosPaginados.map(turno => {
               const agente = turno.agenteId as any;
               const fechaInicio = new Date(turno.fechaInicio);
               const clienteInfo = (turno as any).clienteInfo;
               
               return (
                 <tr key={turno._id}>
+                  <td className={styles.tdFecha}>
+                    {fechaInicio.toLocaleDateString('es-AR', { weekday: 'short', day: 'numeric', month: 'short' })}
+                  </td>
                   <td className={styles.tdHora}>
                     {formatearHora(fechaInicio)}
                   </td>
@@ -185,6 +199,14 @@ export default function ListaTurnos({ turnos, configuracion, onCancelar, onActua
             })}
           </tbody>
         </table>
+        
+        <Pagination
+          currentPage={currentPage}
+          totalPages={totalPages}
+          onPageChange={setCurrentPage}
+          totalItems={turnos.length}
+          itemsPerPage={itemsPerPage}
+        />
       </div>
 
       {/* Modal de cancelación */}

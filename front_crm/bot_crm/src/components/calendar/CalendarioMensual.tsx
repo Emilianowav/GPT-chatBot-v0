@@ -142,21 +142,6 @@ export default function CalendarioMensual({
 
   return (
     <div className={styles.container}>
-      {/* Filtros de Agentes */}
-      <div className={styles.filtros}>
-        <h3>Filtrar por Agente</h3>
-        <div className={styles.agentesChips}>
-          {agentes.map(agente => (
-            <button
-              key={agente.id}
-              className={`${styles.chip} ${agentesFiltro.includes(agente.id) ? styles.chipActive : ''}`}
-              onClick={() => toggleAgenteFiltro(agente.id)}
-            >
-              {agente.nombre} {agente.apellido}
-            </button>
-          ))}
-        </div>
-      </div>
 
       {/* Header del Calendario */}
       <div className={styles.header}>
@@ -291,65 +276,56 @@ export default function CalendarioMensual({
                       )}
                       
                       <div className={styles.popupTurnos}>
-                        {turnosDelDia
-                          .filter(turno => 
-                            agentesPopupFiltro.length === 0 || 
-                            agentesPopupFiltro.includes((turno.agenteId as any)?._id || turno.agenteId)
-                          )
-                          .map(turno => {
-                            const agente = turno.agenteId as any;
-                            const horaInicio = formatearHora(turno.fechaInicio);
-                            const clienteInfo = (turno as any).clienteInfo;
-                            
-                            return (
-                              <div
-                                key={turno._id}
-                                className={styles.turnoItem}
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  setTurnoSeleccionado(turno);
-                                }}
-                              >
-                                <div className={styles.turnoHora}>{horaInicio}</div>
-                                <div className={styles.turnoInfo}>
-                                  <div className={styles.turnoAgente}>
-                                    👤 {agente?.nombre} {agente?.apellido}
-                                  </div>
-                                  <div className={styles.turnoCliente}>
-                                    👥 {clienteInfo 
-                                      ? `${clienteInfo.nombre} ${clienteInfo.apellido}`
-                                      : `Cliente: ${turno.clienteId.substring(0, 8)}...`
-                                    }
-                                  </div>
-                                  {clienteInfo?.documento && (
-                                    <div className={styles.turnoDocumento}>
-                                      🆔 {clienteInfo.documento}
-                                    </div>
-                                  )}
-                                  {clienteInfo?.telefono && (
-                                    <div className={styles.turnoTelefono}>
-                                      📞 {clienteInfo.telefono}
-                                    </div>
-                                  )}
-                                  {turno.duracion && (
-                                    <div className={styles.turnoDuracion}>
-                                      ⏱️ {turno.duracion} min
-                                    </div>
-                                  )}
-                                  {turno.notas && (
-                                    <div className={styles.turnoNotas}>
-                                      📝 {turno.notas}
-                                    </div>
-                                  )}
-                                </div>
-                                <div
-                                  className={styles.turnoEstado}
-                                  style={{ background: getEstadoColor(turno.estado) }}
-                                  title={turno.estado}
-                                />
-                              </div>
-                            );
-                          })}
+                        <table className={styles.popupTable}>
+                          <thead>
+                            <tr>
+                              <th>Hora</th>
+                              <th>Cliente</th>
+                              <th>Agente</th>
+                              <th>Estado</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {turnosDelDia
+                              .filter(turno => 
+                                agentesPopupFiltro.length === 0 || 
+                                agentesPopupFiltro.includes((turno.agenteId as any)?._id || turno.agenteId)
+                              )
+                              .map(turno => {
+                                const agente = turno.agenteId as any;
+                                const horaInicio = formatearHora(turno.fechaInicio);
+                                const clienteInfo = (turno as any).clienteInfo;
+                                
+                                return (
+                                  <tr
+                                    key={turno._id}
+                                    className={styles.popupRow}
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      setTurnoSeleccionado(turno);
+                                    }}
+                                  >
+                                    <td className={styles.popupHora}>{horaInicio}</td>
+                                    <td>
+                                      {clienteInfo 
+                                        ? `${clienteInfo.nombre} ${clienteInfo.apellido}`
+                                        : `ID: ${turno.clienteId.substring(0, 8)}...`
+                                      }
+                                    </td>
+                                    <td>{agente?.nombre} {agente?.apellido}</td>
+                                    <td>
+                                      <span
+                                        className={styles.popupEstado}
+                                        style={{ background: getEstadoColor(turno.estado) }}
+                                      >
+                                        {turno.estado}
+                                      </span>
+                                    </td>
+                                  </tr>
+                                );
+                              })}
+                          </tbody>
+                        </table>
                       </div>
                     </div>
                   )}

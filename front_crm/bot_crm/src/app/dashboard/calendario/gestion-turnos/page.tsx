@@ -1,12 +1,14 @@
 'use client';
 
 // 🔧 Página de Gestión de Turnos
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import ModuleGuard from '@/components/ModuleGuard';
 import { useTurnos } from '@/hooks/useTurnos';
 import { useAgentes } from '@/hooks/useAgentes';
+import Pagination from '@/components/ui/Pagination';
+import FiltrosCalendario, { FiltrosState } from '@/components/calendar/FiltrosCalendario';
 import type { Turno } from '@/lib/calendarApi';
 import styles from './gestion.module.css';
 
@@ -16,13 +18,21 @@ export default function GestionTurnosPage() {
   const { turnos, loading, cargarTurnos, actualizarEstado, cancelarTurno } = useTurnos();
   const { agentes } = useAgentes(true);
 
-  const [filtros, setFiltros] = useState({
+  // Por defecto cargar turnos del día actual
+  const hoy = new Date();
+  const fechaHoy = hoy.toLocaleDateString('es-AR', { weekday: 'long', day: 'numeric', month: 'long' });
+  
+  const [filtros, setFiltros] = useState<FiltrosState>({
     estado: 'todos',
     agenteId: '',
-    fechaDesde: '',
-    fechaHasta: '',
+    fechaDesde: hoy.toISOString().split('T')[0],
+    fechaHasta: hoy.toISOString().split('T')[0],
     busqueda: ''
   });
+  
+  // Paginación
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
 
   const [turnoSeleccionado, setTurnoSeleccionado] = useState<Turno | null>(null);
   const [modalEditar, setModalEditar] = useState(false);
@@ -51,23 +61,24 @@ export default function GestionTurnosPage() {
     }
   }, [isAuthenticated]);
 
-  const cargarTurnosConFiltros = () => {
+  const cargarTurnosConFiltros = (nuevosFiltros?: FiltrosState) => {
+    const f = nuevosFiltros || filtros;
     const filtrosApi: any = {};
     
-    if (filtros.estado !== 'todos') {
-      filtrosApi.estado = filtros.estado;
+    if (f.estado !== 'todos') {
+      filtrosApi.estado = f.estado;
     }
     
-    if (filtros.agenteId) {
-      filtrosApi.agenteId = filtros.agenteId;
+    if (f.agenteId) {
+      filtrosApi.agenteId = f.agenteId;
     }
     
-    if (filtros.fechaDesde) {
-      filtrosApi.fechaDesde = new Date(filtros.fechaDesde).toISOString();
+    if (f.fechaDesde) {
+      filtrosApi.fechaDesde = new Date(f.fechaDesde).toISOString();
     }
     
-    if (filtros.fechaHasta) {
-      const fecha = new Date(filtros.fechaHasta);
+    if (f.fechaHasta) {
+      const fecha = new Date(f.fechaHasta);
       fecha.setHours(23, 59, 59, 999);
       filtrosApi.fechaHasta = fecha.toISOString();
     }
@@ -75,19 +86,34 @@ export default function GestionTurnosPage() {
     cargarTurnos(filtrosApi);
   };
 
-  const turnosFiltrados = turnos.filter(turno => {
-    if (filtros.busqueda) {
-      const busqueda = filtros.busqueda.toLowerCase();
-      const clienteNombre = turno.clienteInfo?.nombre?.toLowerCase() || '';
-      const clienteApellido = turno.clienteInfo?.apellido?.toLowerCase() || '';
-      const agenteNombre = (turno.agenteId as any)?.nombre?.toLowerCase() || '';
-      
-      return clienteNombre.includes(busqueda) || 
-             clienteApellido.includes(busqueda) ||
-             agenteNombre.includes(busqueda);
-    }
-    return true;
-  });
+  const handleFiltrar = (nuevosFiltros: FiltrosState) => {
+    setFiltros(nuevosFiltros);
+    cargarTurnosConFiltros(nuevosFiltros);
+    setCurrentPage(1);
+  };
+
+  const turnosFiltrados = useMemo(() => {
+    return turnos.filter(turno => {
+      if (filtros.busqueda) {
+        const busqueda = filtros.busqueda.toLowerCase();
+        const clienteNombre = turno.clienteInfo?.nombre?.toLowerCase() || '';
+        const clienteApellido = turno.clienteInfo?.apellido?.toLowerCase() || '';
+        const agenteNombre = (turno.agenteId as any)?.nombre?.toLowerCase() || '';
+        
+        return clienteNombre.includes(busqueda) || 
+               clienteApellido.includes(busqueda) ||
+               agenteNombre.includes(busqueda);
+      }
+      return true;
+    });
+  }, [turnos, filtros.busqueda]);
+
+  // Paginación de turnos
+  const totalPages = Math.ceil(turnosFiltrados.length / itemsPerPage);
+  const turnosPaginados = useMemo(() => {
+    const start = (currentPage - 1) * itemsPerPage;
+    return turnosFiltrados.slice(start, start + itemsPerPage);
+  }, [turnosFiltrados, currentPage, itemsPerPage]);
 
   const handleCambiarEstado = async (turnoId: string, nuevoEstado: string) => {
     try {
@@ -238,93 +264,31 @@ export default function GestionTurnosPage() {
   return (
     <ModuleGuard moduleId="calendar_booking">
       <div className={styles.container}>
-        {/* Header - Igual que clientes */}
+        {/* Header */}
         <div className={styles.header}>
           <div>
-            <h1>🔧 Gestión de Turnos</h1>
-            <p>Administra y reconfigura los turnos guardados</p>
+            <h1>Gestión de Turnos</h1>
+            <p>Administra y gestiona los turnos programados</p>
           </div>
         </div>
 
-          {/* Filtros */}
-          <div className={styles.filtrosCard}>
-            <h3>🔍 Filtros</h3>
-            <div className={styles.filtrosGrid}>
-              <div className={styles.filtroItem}>
-                <label>Estado</label>
-                <select
-                  value={filtros.estado}
-                  onChange={(e) => setFiltros({ ...filtros, estado: e.target.value })}
-                >
-                  <option value="todos">Todos los estados</option>
-                  <option value="pendiente">Pendiente</option>
-                  <option value="confirmado">Confirmado</option>
-                  <option value="en_curso">En Curso</option>
-                  <option value="completado">Completado</option>
-                  <option value="cancelado">Cancelado</option>
-                </select>
-              </div>
+        {/* Filtros */}
+        <FiltrosCalendario
+          agentes={agentes}
+          onFiltrar={handleFiltrar}
+          mostrarEstado={true}
+          mostrarFechas={true}
+          mostrarAgente={true}
+          mostrarBusqueda={true}
+          fechaDefecto="hoy"
+          titulo="Filtros de Turnos"
+        />
 
-              <div className={styles.filtroItem}>
-                <label>Agente</label>
-                <select
-                  value={filtros.agenteId}
-                  onChange={(e) => setFiltros({ ...filtros, agenteId: e.target.value })}
-                >
-                  <option value="">Todos los agentes</option>
-                  {agentes.map(agente => (
-                    <option key={agente._id} value={agente._id}>
-                      {agente.nombre} {agente.apellido}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              <div className={styles.filtroItem}>
-                <label>Desde</label>
-                <input
-                  type="date"
-                  value={filtros.fechaDesde}
-                  onChange={(e) => setFiltros({ ...filtros, fechaDesde: e.target.value })}
-                />
-              </div>
-
-              <div className={styles.filtroItem}>
-                <label>Hasta</label>
-                <input
-                  type="date"
-                  value={filtros.fechaHasta}
-                  onChange={(e) => setFiltros({ ...filtros, fechaHasta: e.target.value })}
-                />
-              </div>
-
-              <div className={styles.filtroItem}>
-                <label>Buscar</label>
-                <input
-                  type="text"
-                  placeholder="Cliente o agente..."
-                  value={filtros.busqueda}
-                  onChange={(e) => setFiltros({ ...filtros, busqueda: e.target.value })}
-                />
-              </div>
-
-              <div className={styles.filtroItem}>
-                <label>&nbsp;</label>
-                <button 
-                  className={styles.btnFiltrar}
-                  onClick={cargarTurnosConFiltros}
-                >
-                  Aplicar Filtros
-                </button>
-              </div>
-            </div>
+        {/* Tabla de Turnos */}
+        <div className={styles.turnosCard}>
+          <div className={styles.turnosHeader}>
+            <h3>Turnos para el día de hoy: {fechaHoy} ({turnosFiltrados.length})</h3>
           </div>
-
-          {/* Tabla de Turnos */}
-          <div className={styles.turnosCard}>
-            <div className={styles.turnosHeader}>
-              <h3>📋 Turnos ({turnosFiltrados.length})</h3>
-            </div>
 
             {loading ? (
               <div className={styles.loading}>
@@ -349,7 +313,7 @@ export default function GestionTurnosPage() {
                     </tr>
                   </thead>
                   <tbody>
-                    {turnosFiltrados.map(turno => (
+                    {turnosPaginados.map(turno => (
                       <tr key={turno._id}>
                         <td>
                           <div className={styles.fechaCell}>
@@ -448,6 +412,14 @@ export default function GestionTurnosPage() {
                     ))}
                   </tbody>
                 </table>
+                
+                <Pagination
+                  currentPage={currentPage}
+                  totalPages={totalPages}
+                  onPageChange={setCurrentPage}
+                  totalItems={turnosFiltrados.length}
+                  itemsPerPage={itemsPerPage}
+                />
               </div>
             )}
           </div>

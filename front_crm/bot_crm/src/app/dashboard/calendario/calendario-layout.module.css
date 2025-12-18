@@ -6,8 +6,6 @@
 
 .header {
   background: #FFFFFF;
-  border-bottom: 1px solid var(--gray-200, #E2E8F0);
-  position: sticky;
   top: 0;
   z-index: 50;
   padding: 0;
@@ -139,12 +137,6 @@
 /* Tabs de Navegación */
 .tabs {
   display: flex;
-  padding: 0 1.25rem;
-  overflow-x: auto;
-  scrollbar-width: none;
-  background: #FFFFFF;
-  border-bottom: 1px solid var(--gray-200, #E2E8F0);
-  gap: 0.25rem;
 }
 
 .tabs::-webkit-scrollbar {
@@ -164,7 +156,6 @@
   white-space: nowrap;
   position: relative;
   letter-spacing: 0.2px;
-  border-bottom: 2px solid transparent;
 }
 
 .tab:hover {
@@ -173,8 +164,8 @@
 }
 
 .tabActive {
-  color: var(--momento-orange, #FF6B4A);
-  border-bottom-color: var(--momento-orange, #FF6B4A);
+  color: white;
+  background: #264469;
 }
 
 .btnNuevoTurno {

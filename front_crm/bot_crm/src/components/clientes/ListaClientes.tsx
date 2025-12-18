@@ -1,20 +1,33 @@
 // 👤 Lista de Clientes - Formato Tabla
 'use client';
 
+import { useState, useMemo } from 'react';
 import type { Cliente } from '@/lib/clientesApi';
+import Pagination from '@/components/ui/Pagination';
 import styles from './ListaClientes.module.css';
 
 interface ListaClientesProps {
   clientes: Cliente[];
   onEditar?: (cliente: Cliente) => void;
   onEliminar?: (cliente: Cliente) => void;
+  itemsPerPage?: number;
 }
 
 export default function ListaClientes({ 
   clientes, 
   onEditar,
-  onEliminar
+  onEliminar,
+  itemsPerPage = 10
 }: ListaClientesProps) {
+  const [currentPage, setCurrentPage] = useState(1);
+
+  // Paginación
+  const totalPages = Math.ceil(clientes.length / itemsPerPage);
+  const clientesPaginados = useMemo(() => {
+    const start = (currentPage - 1) * itemsPerPage;
+    return clientes.slice(start, start + itemsPerPage);
+  }, [clientes, currentPage, itemsPerPage]);
+
   if (clientes.length === 0) {
     return (
       <div className={styles.empty}>
@@ -64,7 +77,7 @@ export default function ListaClientes({
           </tr>
         </thead>
         <tbody>
-          {clientes.map((cliente) => (
+          {clientesPaginados.map((cliente) => (
             <tr key={cliente._id}>
               <td>
                 <div className={styles.clienteCell}>
@@ -122,6 +135,14 @@ export default function ListaClientes({
           ))}
         </tbody>
       </table>
+      
+      <Pagination
+        currentPage={currentPage}
+        totalPages={totalPages}
+        onPageChange={setCurrentPage}
+        totalItems={clientes.length}
+        itemsPerPage={itemsPerPage}
+      />
     </div>
   );
 }

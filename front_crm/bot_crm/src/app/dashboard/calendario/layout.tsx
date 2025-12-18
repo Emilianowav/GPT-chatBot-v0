@@ -86,17 +86,7 @@ export default function CalendarioLayout({
       icon: (
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
           <circle cx="12" cy="12" r="3"/>
-          <path d="M12 1v6m0 6v6M1 12h6m6 0h6"/>
-        </svg>
-      )
-    },
-    {
-      label: 'Horarios',
-      href: '/dashboard/calendario/configuracion/horarios',
-      icon: (
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-          <circle cx="12" cy="12" r="10"/>
-          <polyline points="12 6 12 12 16 14"/>
+          <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/>
         </svg>
       )
     }
@@ -116,8 +106,8 @@ export default function CalendarioLayout({
         <div className={styles.header}>
           <div className={styles.headerTop}>
             <div className={styles.headerLeft}>
-              <h1>📅 Calendario de Turnos</h1>
-              <p>Gestiona los turnos de tus agentes y clientes</p>
+              <h1>📅 Calendario de Reservas</h1>
+              <p>Gestiona las reservas, tus horarios disponibles y las notificaciones a enviar.</p>
             </div>
             <div className={styles.headerRight}>
               {/* Menú de Configuración */}
@@ -175,17 +165,6 @@ export default function CalendarioLayout({
                 <span>{tab.label}</span>
               </Link>
             ))}
-            
-            {/* Botón Nuevo Turno */}
-            <Link
-              href="/dashboard/calendario?nuevo=true"
-              className={styles.btnNuevoTurno}
-            >
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <path d="M12 5v14M5 12h14"/>
-              </svg>
-              <span>Nuevo Turno</span>
-            </Link>
           </div>
         </div>
 

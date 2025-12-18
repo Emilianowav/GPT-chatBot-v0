@@ -47,6 +47,12 @@
   vertical-align: middle;
 }
 
+.tdFecha {
+  font-weight: 500;
+  color: var(--gray-600, #475569) !important;
+  font-size: 0.75rem;
+}
+
 .tdHora {
   font-weight: 600;
   color: var(--primary-blue, #1E3A5F) !important;

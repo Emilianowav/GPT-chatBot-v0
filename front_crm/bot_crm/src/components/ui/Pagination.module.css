@@ -1,0 +1,77 @@
+/* 📄 Estilos de Paginación */
+
+.container {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.75rem 1rem;
+  background: #FFFFFF;
+  border-top: 1px solid var(--gray-200, #E2E8F0);
+}
+
+.info {
+  font-size: 0.75rem;
+  color: var(--gray-500, #64748B);
+}
+
+.buttons {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.btn {
+  min-width: 32px;
+  height: 32px;
+  padding: 0 0.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--gray-300, #CBD5E1);
+  border-radius: 4px;
+  background: #FFFFFF;
+  color: var(--gray-600, #475569);
+  font-size: 0.75rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.btn:hover:not(:disabled) {
+  border-color: var(--primary-blue, #1E3A5F);
+  color: var(--primary-blue, #1E3A5F);
+  background: var(--gray-50, #F8FAFC);
+}
+
+.btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.btnActive {
+  background: var(--primary-blue, #1E3A5F);
+  border-color: var(--primary-blue, #1E3A5F);
+  color: #FFFFFF;
+}
+
+.btnActive:hover:not(:disabled) {
+  background: var(--primary-blue, #1E3A5F);
+  color: #FFFFFF;
+}
+
+.ellipsis {
+  padding: 0 0.25rem;
+  color: var(--gray-400, #94A3B8);
+  font-size: 0.75rem;
+}
+
+@media (max-width: 768px) {
+  .container {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+  
+  .info {
+    order: 2;
+  }
+}

@@ -15,7 +15,7 @@
   justify-content: space-between;
   align-items: center;
   padding: 1rem 1.25rem;
-  background: #FFFFFF;
+  background: #264469;
   border-bottom: 1px solid var(--gray-200, #E2E8F0);
   margin-bottom: 0;
   gap: 1rem;
@@ -27,15 +27,15 @@
 }
 
 .header h1 {
-  font-size: 1.25rem;
-  color: var(--primary-blue, #1E3A5F);
+  font-size: 1rem;
+  color: white;
   margin: 0;
   font-weight: 700;
   letter-spacing: -0.3px;
 }
 
 .header p {
-  color: var(--gray-500, #64748B);
+  color: white;
   font-size: 0.8rem;
   margin: 0.25rem 0 0 0;
   font-weight: 400;

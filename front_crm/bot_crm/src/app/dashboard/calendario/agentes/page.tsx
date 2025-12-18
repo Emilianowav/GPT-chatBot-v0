@@ -1,13 +1,14 @@
 'use client';
 
 // 👨‍⚕️ Página de gestión de agentes
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import ModuleGuard from '@/components/ModuleGuard';
 import { useAgentes } from '@/hooks/useAgentes';
 import ListaAgentes from '@/components/calendar/ListaAgentes';
 import ModalAgente from '@/components/calendar/ModalAgente';
+import FiltrosCalendario, { FiltrosState } from '@/components/calendar/FiltrosCalendario';
 import styles from './agentes.module.css';
 
 export default function AgentesPage() {
@@ -17,6 +18,42 @@ export default function AgentesPage() {
 
   const [modalFormulario, setModalFormulario] = useState(false);
   const [agenteEditar, setAgenteEditar] = useState<any>(null);
+  const [filtros, setFiltros] = useState<FiltrosState>({
+    estado: 'todos',
+    agenteId: '',
+    fechaDesde: '',
+    fechaHasta: '',
+    busqueda: ''
+  });
+
+  // Filtrar agentes
+  const agentesFiltrados = useMemo(() => {
+    let resultado = agentes;
+    
+    // Filtrar por estado (activo/inactivo)
+    if (filtros.estado === 'activo') {
+      resultado = resultado.filter(a => a.activo);
+    } else if (filtros.estado === 'inactivo') {
+      resultado = resultado.filter(a => !a.activo);
+    }
+    
+    // Filtrar por búsqueda
+    if (filtros.busqueda) {
+      const busqueda = filtros.busqueda.toLowerCase();
+      resultado = resultado.filter(a => 
+        a.nombre.toLowerCase().includes(busqueda) ||
+        a.apellido.toLowerCase().includes(busqueda) ||
+        a.email?.toLowerCase().includes(busqueda) ||
+        a.especialidad?.toLowerCase().includes(busqueda)
+      );
+    }
+    
+    return resultado;
+  }, [agentes, filtros]);
+
+  const handleFiltrar = (nuevosFiltros: FiltrosState) => {
+    setFiltros(nuevosFiltros);
+  };
 
   if (authLoading) {
     return <div className={styles.loading}>Cargando...</div>;
@@ -90,7 +127,7 @@ export default function AgentesPage() {
       <div className={styles.container}>
         <div className={styles.header}>
           <div>
-            <h1>👨‍⚕️ Gestión de Agentes</h1>
+            <h1>Gestión de Agentes</h1>
             <p>Administra los profesionales que atienden turnos</p>
           </div>
           <button 
@@ -103,6 +140,23 @@ export default function AgentesPage() {
             Nuevo Agente
           </button>
         </div>
+
+        {/* Filtros */}
+        <FiltrosCalendario
+          agentes={[]}
+          onFiltrar={handleFiltrar}
+          mostrarEstado={true}
+          mostrarFechas={false}
+          mostrarAgente={false}
+          mostrarBusqueda={true}
+          fechaDefecto="ninguna"
+          titulo="Filtros de Agentes"
+          opcionesEstado={[
+            { value: 'todos', label: 'Todos' },
+            { value: 'activo', label: 'Activos' },
+            { value: 'inactivo', label: 'Inactivos' }
+          ]}
+        />
 
         {error && (
           <div className={styles.error}>
@@ -117,7 +171,7 @@ export default function AgentesPage() {
           </div>
         ) : (
           <ListaAgentes 
-            agentes={agentes}
+            agentes={agentesFiltrados}
             onEditar={handleEditar}
             onDesactivar={handleDesactivar}
             onEliminar={handleEliminarPermanente}
