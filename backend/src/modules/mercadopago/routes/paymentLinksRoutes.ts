@@ -1,5 +1,6 @@
 // 💳 Rutas de Payment Links de Mercado Pago
 import { Router, Request, Response } from 'express';
+import { MercadoPagoConfig, Preference } from 'mercadopago';
 import paymentLinksService from '../services/paymentLinksService.js';
 import { Seller } from '../models/Seller.js';
 
@@ -134,6 +135,174 @@ router.delete('/:id', async (req: Request, res: Response): Promise<void> => {
     console.error('[MP] Error eliminando payment link:', error);
     res.status(500).json({ error: error.message });
   }
+});
+
+/**
+ * GET /payment-links/pay/:slug
+ * Crea una preferencia de MP y redirige al checkout
+ */
+router.get('/pay/:slug', async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { slug } = req.params;
+    
+    // Buscar el link por slug
+    const link = await paymentLinksService.getLinkByIdOrSlug(slug);
+    
+    if (!link) {
+      res.status(404).send(`
+        <html>
+          <head><title>Link no encontrado</title></head>
+          <body style="font-family: Arial; text-align: center; padding: 50px;">
+            <h1>❌ Link no encontrado</h1>
+            <p>El link de pago que buscas no existe o fue eliminado.</p>
+          </body>
+        </html>
+      `);
+      return;
+    }
+    
+    if (!link.active) {
+      res.status(400).send(`
+        <html>
+          <head><title>Link inactivo</title></head>
+          <body style="font-family: Arial; text-align: center; padding: 50px;">
+            <h1>⚠️ Link inactivo</h1>
+            <p>Este link de pago ya no está disponible.</p>
+          </body>
+        </html>
+      `);
+      return;
+    }
+    
+    // Buscar el seller para obtener el access_token
+    const seller = await Seller.findOne({ userId: link.sellerId });
+    
+    if (!seller || !seller.accessToken) {
+      res.status(400).send(`
+        <html>
+          <head><title>Error de configuración</title></head>
+          <body style="font-family: Arial; text-align: center; padding: 50px;">
+            <h1>⚠️ Error de configuración</h1>
+            <p>El vendedor no tiene configurada su cuenta de Mercado Pago.</p>
+          </body>
+        </html>
+      `);
+      return;
+    }
+    
+    // Crear cliente de MP con el access_token del vendedor
+    const sellerClient = new MercadoPagoConfig({
+      accessToken: seller.accessToken,
+      options: { timeout: 5000 }
+    });
+    
+    const preference = new Preference(sellerClient);
+    
+    const baseUrl = process.env.MP_MODULE_URL || `${req.protocol}://${req.get('host')}`;
+    
+    const preferenceData = await preference.create({
+      body: {
+        items: [
+          {
+            id: link._id.toString(),
+            title: link.title,
+            description: link.description || link.title,
+            quantity: 1,
+            unit_price: link.unitPrice,
+            currency_id: link.currency || 'ARS'
+          }
+        ],
+        back_urls: {
+          success: `${baseUrl}/api/modules/mercadopago/payment-links/callback?status=success&link=${slug}`,
+          failure: `${baseUrl}/api/modules/mercadopago/payment-links/callback?status=failure&link=${slug}`,
+          pending: `${baseUrl}/api/modules/mercadopago/payment-links/callback?status=pending&link=${slug}`
+        },
+        auto_return: 'approved',
+        external_reference: `link_${link._id}`
+      }
+    });
+    
+    // Redirigir al checkout de MP
+    const checkoutUrl = preferenceData.init_point || preferenceData.sandbox_init_point;
+    
+    if (!checkoutUrl) {
+      throw new Error('No se pudo obtener URL de checkout');
+    }
+    
+    console.log(`[MP] Redirigiendo a checkout: ${checkoutUrl}`);
+    res.redirect(checkoutUrl);
+    
+  } catch (error: any) {
+    console.error('[MP] Error creando preferencia:', error);
+    res.status(500).send(`
+      <html>
+        <head><title>Error</title></head>
+        <body style="font-family: Arial; text-align: center; padding: 50px;">
+          <h1>❌ Error al procesar el pago</h1>
+          <p>${error.message}</p>
+        </body>
+      </html>
+    `);
+  }
+});
+
+/**
+ * GET /payment-links/callback
+ * Callback después del pago
+ */
+router.get('/callback', async (req: Request, res: Response): Promise<void> => {
+  const { status, link } = req.query;
+  
+  let message = '';
+  let icon = '';
+  
+  switch (status) {
+    case 'success':
+      message = '¡Pago realizado con éxito!';
+      icon = '✅';
+      // Incrementar contador de usos
+      if (link) {
+        const paymentLink = await paymentLinksService.getLinkByIdOrSlug(link as string);
+        if (paymentLink) {
+          await paymentLinksService.incrementLinkUsage(paymentLink._id.toString(), paymentLink.unitPrice);
+        }
+      }
+      break;
+    case 'failure':
+      message = 'El pago no pudo ser procesado.';
+      icon = '❌';
+      break;
+    case 'pending':
+      message = 'Tu pago está pendiente de confirmación.';
+      icon = '⏳';
+      break;
+    default:
+      message = 'Estado del pago desconocido.';
+      icon = '❓';
+  }
+  
+  res.send(`
+    <html>
+      <head>
+        <title>Resultado del pago</title>
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <style>
+          body { font-family: Arial, sans-serif; text-align: center; padding: 50px; background: #f5f5f5; }
+          .card { background: white; padding: 40px; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.1); max-width: 400px; margin: 0 auto; }
+          .icon { font-size: 64px; margin-bottom: 20px; }
+          h1 { color: #333; margin-bottom: 10px; }
+          p { color: #666; }
+        </style>
+      </head>
+      <body>
+        <div class="card">
+          <div class="icon">${icon}</div>
+          <h1>${message}</h1>
+          <p>Gracias por tu compra.</p>
+        </div>
+      </body>
+    </html>
+  `);
 });
 
 export default router;
