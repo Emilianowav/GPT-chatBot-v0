@@ -18,7 +18,7 @@ interface MPConnectionStatus {
 
 export default function IntegracionesPage() {
   const router = useRouter();
-  const [activeTab, setActiveTab] = useState<'marketplace' | 'apis'>('marketplace');
+  const [activeTab, setActiveTab] = useState<'marketplace' | 'devs'>('marketplace');
   const [mpStatus, setMpStatus] = useState<MPConnectionStatus>({
     connected: false,
     loading: false
@@ -106,32 +106,32 @@ export default function IntegracionesPage() {
         {/* Tabs */}
         <div className={styles.tabs}>
           <button
-            className={`${styles.tab} ${activeTab === 'apis' ? styles.tabActive : ''}`}
-            onClick={() => setActiveTab('apis')}
-          >
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <polyline points="16 18 22 12 16 6"/>
-              <polyline points="8 6 2 12 8 18"/>
-            </svg>
-            APIs Configurables
-          </button>
-          <button
             className={`${styles.tab} ${activeTab === 'marketplace' ? styles.tabActive : ''}`}
             onClick={() => setActiveTab('marketplace')}
           >
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
               <circle cx="9" cy="21" r="1"/>
               <circle cx="20" cy="21" r="1"/>
               <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/>
             </svg>
             Marketplace
           </button>
+          <button
+            className={`${styles.tab} ${activeTab === 'devs' ? styles.tabActive : ''}`}
+            onClick={() => setActiveTab('devs')}
+          >
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <polyline points="16 18 22 12 16 6"/>
+              <polyline points="8 6 2 12 8 18"/>
+            </svg>
+            Área para Devs
+          </button>
         </div>
       </div>
 
       {/* Content */}
       <div className={styles.content}>
-        {activeTab === 'apis' ? (
+        {activeTab === 'devs' ? (
           <div className={styles.section}>
             <div className={styles.sectionHeader}>
               <div>
@@ -236,12 +236,18 @@ export default function IntegracionesPage() {
           </div>
         ) : (
           <div className={styles.section}>
-            <div className={styles.sectionHeader}>
-              <div>
-                <h2 className={styles.sectionTitle}>Marketplace de Integraciones</h2>
-                <p className={styles.sectionDescription}>
-                  Conecta con aplicaciones populares en un click
-                </p>
+            {/* Marketplace Header */}
+            <div className={styles.marketplaceHeader}>
+              <div className={styles.marketplaceIcon}>
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <circle cx="9" cy="21" r="1"/>
+                  <circle cx="20" cy="21" r="1"/>
+                  <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/>
+                </svg>
+              </div>
+              <div className={styles.marketplaceInfo}>
+                <h2>Marketplace de Integraciones</h2>
+                <p>Conecta con aplicaciones populares en un click y potencia tu negocio</p>
               </div>
             </div>
 
@@ -274,9 +280,9 @@ export default function IntegracionesPage() {
                   Acepta pagos y cobra comisiones como marketplace
                 </p>
                 <div className={styles.integrationFeatures}>
-                  <span className={styles.feature}>✓ Checkout Pro</span>
+                  <span className={styles.feature}>✓ Cobrar Productos</span>
+                  <span className={styles.feature}>✓ Cobrar Suscripciones</span>
                   <span className={styles.feature}>✓ Split Payments</span>
-                  <span className={styles.feature}>✓ Suscripciones</span>
                 </div>
                 
                 {mpStatus.connected ? (
@@ -286,15 +292,27 @@ export default function IntegracionesPage() {
                         <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
                         <polyline points="22 4 12 14.01 9 11.01"/>
                       </svg>
-                      <span>ID: {mpStatus.userId}</span>
+                      <span>Cuenta conectada</span>
                     </div>
-                    <button 
-                      className={styles.disconnectButton}
-                      onClick={handleMPDisconnect}
-                      disabled={mpStatus.loading}
-                    >
-                      {mpStatus.loading ? 'Desconectando...' : 'Desconectar'}
-                    </button>
+                    <div className={styles.connectedActions}>
+                      <button 
+                        className={styles.configureButton}
+                        onClick={() => handleNavigate('/dashboard/integraciones/mercadopago')}
+                      >
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                          <circle cx="12" cy="12" r="3"/>
+                          <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+                        </svg>
+                        Configurar
+                      </button>
+                      <button 
+                        className={styles.disconnectButton}
+                        onClick={handleMPDisconnect}
+                        disabled={mpStatus.loading}
+                      >
+                        {mpStatus.loading ? '...' : 'Desconectar'}
+                      </button>
+                    </div>
                   </div>
                 ) : (
                   <button 
