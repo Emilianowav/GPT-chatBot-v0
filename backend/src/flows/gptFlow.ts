@@ -91,13 +91,22 @@ export const gptFlow: Flow = {
       if (tienePageosHabilitados) {
         promptBase += `\n\n--- INSTRUCCIONES DE PAGO ---
 IMPORTANTE: Cada libro/producto tiene un precio fijo de $0.20 (veinte centavos).
-Cuando el cliente confirme su pedido y quiera pagar:
-1. Calculá el total multiplicando la cantidad de items por $0.20
-2. Usá la función generate_payment_link para generar el link de pago
-3. Enviá el link al cliente con un mensaje amable
 
-Ejemplo: Si el cliente pide 5 libros, el total es $1.00 (5 x $0.20)
-Cuando el cliente diga "quiero pagar", "confirmo", "listo", generá el link automáticamente.`;
+Cuando el cliente quiera pagar o confirme su pedido, DEBES llamar a la función generate_payment_link con:
+- title: descripción del pedido (ej: "Pedido Veo Veo - 2 libros")
+- amount: total calculado (cantidad de items × $0.20)
+- description: detalle de los productos
+
+TRIGGERS para generar link de pago (cuando el cliente dice alguna de estas frases):
+- "quiero pagar"
+- "listo para pagar"  
+- "confirmo"
+- "pagar"
+- "proceder al pago"
+
+Ejemplo: 2 libros = $0.40 (2 × $0.20)
+
+IMPORTANTE: Cuando detectes intención de pago, USA LA FUNCIÓN generate_payment_link. No pidas más datos, genera el link directamente.`;
       }
       
       const historialGPT: ChatCompletionMessageParam[] = [
@@ -142,6 +151,7 @@ Cuando el cliente diga "quiero pagar", "confirmo", "listo", generá el link auto
       
       // 7. Manejar function call si existe (generar link de pago)
       let textoFinal = respuesta.texto;
+      let linkGenerado = false;
       
       if (respuesta.functionCall && respuesta.functionCall.name === 'generate_payment_link') {
         console.log(`💳 [GPT] Function call detectado: generate_payment_link`);
@@ -157,6 +167,7 @@ Cuando el cliente diga "quiero pagar", "confirmo", "listo", generá el link auto
         
         if (paymentResult.success && paymentResult.paymentUrl) {
           console.log(`💳 [GPT] Link de pago generado: ${paymentResult.paymentUrl}`);
+          linkGenerado = true;
           
           // Construir mensaje con el link
           textoFinal = `¡Perfecto! Tu pedido está listo. 🛒\n\n` +
@@ -172,6 +183,51 @@ Cuando el cliente diga "quiero pagar", "confirmo", "listo", generá el link auto
             `💰 Total: $${(args.amount || 0).toFixed(2)}\n\n` +
             `En este momento no pudimos generar el link de pago automático. ` +
             `Por favor, contactanos para coordinar el pago. ¡Disculpá las molestias!`;
+        }
+      }
+      
+      // 7b. FALLBACK: Si GPT no llamó la función pero el usuario quiere pagar, forzar generación
+      if (!linkGenerado && tienePageosHabilitados) {
+        const mensajeLower = mensaje.toLowerCase();
+        const triggersPago = ['quiero pagar', 'pagar', 'confirmo', 'listo', 'proceder', 'realizar pago', 'hacer el pago'];
+        const quierePagar = triggersPago.some(trigger => mensajeLower.includes(trigger));
+        
+        if (quierePagar) {
+          console.log(`💳 [GPT] FALLBACK: Detectada intención de pago por keywords`);
+          
+          // Extraer cantidad del historial (buscar números)
+          const historialCompleto = historialReciente.join(' ') + ' ' + mensaje;
+          const numerosEncontrados = historialCompleto.match(/(\d+)\s*(libros?|ejemplares?|unidades?|productos?)/gi);
+          let cantidad = 1;
+          
+          if (numerosEncontrados && numerosEncontrados.length > 0) {
+            const ultimoMatch = numerosEncontrados[numerosEncontrados.length - 1];
+            const numMatch = ultimoMatch.match(/\d+/);
+            if (numMatch) {
+              cantidad = parseInt(numMatch[0], 10);
+            }
+          }
+          
+          const total = cantidad * 0.20;
+          console.log(`💳 [GPT] FALLBACK: Cantidad detectada: ${cantidad}, Total: $${total}`);
+          
+          const paymentResult = await generateDynamicPaymentLink({
+            empresaId: empresaIdStr,
+            title: `Pedido ${empresa.nombre} - ${cantidad} libro${cantidad > 1 ? 's' : ''}`,
+            amount: total,
+            description: `Compra de ${cantidad} libro(s)`
+          });
+          
+          if (paymentResult.success && paymentResult.paymentUrl) {
+            console.log(`💳 [GPT] FALLBACK: Link generado: ${paymentResult.paymentUrl}`);
+            
+            textoFinal = `¡Perfecto! Tu pedido está listo. 🛒\n\n` +
+              `📦 *Pedido ${empresa.nombre} - ${cantidad} libro${cantidad > 1 ? 's' : ''}*\n` +
+              `💰 Total: $${total.toFixed(2)}\n\n` +
+              `Para completar tu compra, hacé clic en el siguiente link:\n` +
+              `👉 ${paymentResult.paymentUrl}\n\n` +
+              `Una vez que realices el pago, te confirmaremos por este medio. ¡Gracias por tu compra! 🙌`;
+          }
         }
       }
       
