@@ -1,6 +1,7 @@
 // 💳 Servicio para generar links de pago dinámicos desde el chatbot
 import { MercadoPagoConfig, Preference } from 'mercadopago';
 import { Seller } from '../modules/mercadopago/models/Seller.js';
+import { EmpresaModel } from '../models/Empresa.js';
 
 const MP_MODULE_URL = process.env.MP_MODULE_URL || 'https://gpt-chatbot-v0.onrender.com/api/modules/mercadopago';
 
@@ -33,7 +34,17 @@ export async function generateDynamicPaymentLink(params: GeneratePaymentLinkPara
     console.log(`[PaymentLink] Generando link para empresa ${empresaId}, monto: $${amount}`);
     
     // Buscar el seller asociado a la empresa
-    const seller = await Seller.findOne({ internalId: empresaId });
+    // El internalId puede ser el nombre de la empresa o el ObjectId
+    let seller = await Seller.findOne({ internalId: empresaId });
+    
+    // Si no se encuentra, buscar por nombre de empresa
+    if (!seller) {
+      const empresa = await EmpresaModel.findById(empresaId);
+      if (empresa) {
+        console.log(`[PaymentLink] Buscando seller por nombre de empresa: ${empresa.nombre}`);
+        seller = await Seller.findOne({ internalId: empresa.nombre });
+      }
+    }
     
     if (!seller || !seller.accessToken) {
       console.log(`[PaymentLink] No se encontró seller con MP conectado para empresa ${empresaId}`);
@@ -42,6 +53,8 @@ export async function generateDynamicPaymentLink(params: GeneratePaymentLinkPara
         error: 'La empresa no tiene Mercado Pago conectado'
       };
     }
+    
+    console.log(`[PaymentLink] Seller encontrado: ${seller.userId}, internalId: ${seller.internalId}`);
     
     // Crear cliente de MP con el token del seller
     const mpClient = new MercadoPagoConfig({

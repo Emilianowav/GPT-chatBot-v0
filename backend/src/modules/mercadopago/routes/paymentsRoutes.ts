@@ -125,8 +125,18 @@ router.get('/history/:empresaId', async (req, res): Promise<void> => {
   console.log(`📊 [MP Payments] Buscando historial para empresaId: "${empresaId}"`);
   
   try {
-    // Buscar el seller por internalId (empresaId)
-    const seller = await Seller.findOne({ internalId: empresaId });
+    // Buscar el seller por internalId (puede ser nombre o ObjectId)
+    let seller = await Seller.findOne({ internalId: empresaId });
+    
+    // Si no se encuentra, buscar por nombre de empresa usando el ObjectId
+    if (!seller) {
+      const { EmpresaModel } = await import('../../../models/Empresa.js');
+      const empresa = await EmpresaModel.findById(empresaId);
+      if (empresa) {
+        console.log(`📊 [MP Payments] Buscando seller por nombre: ${empresa.nombre}`);
+        seller = await Seller.findOne({ internalId: empresa.nombre });
+      }
+    }
     
     console.log(`📊 [MP Payments] Seller encontrado:`, seller ? { internalId: seller.internalId, userId: seller.userId } : 'NO ENCONTRADO');
     
@@ -179,8 +189,17 @@ router.get('/stats/:empresaId', async (req, res): Promise<void> => {
   const { empresaId } = req.params;
   
   try {
-    // Buscar el seller por internalId (empresaId)
-    const seller = await Seller.findOne({ internalId: empresaId });
+    // Buscar el seller por internalId (puede ser nombre o ObjectId)
+    let seller = await Seller.findOne({ internalId: empresaId });
+    
+    // Si no se encuentra, buscar por nombre de empresa usando el ObjectId
+    if (!seller) {
+      const { EmpresaModel } = await import('../../../models/Empresa.js');
+      const empresa = await EmpresaModel.findById(empresaId);
+      if (empresa) {
+        seller = await Seller.findOne({ internalId: empresa.nombre });
+      }
+    }
     
     if (!seller) {
       res.json({
