@@ -13,8 +13,30 @@ import { startTracking, endTracking } from '../services/conversationTracker.js';
 import { EmpresaModel } from '../models/Empresa.js';
 import { universalRouter } from '../services/universalRouter.js';
 import { apiKeywordHandler } from '../services/apiKeywordHandler.js';
+import { generateDynamicPaymentLink } from '../services/paymentLinkService.js';
 
 import type { EmpresaConfig } from '../types/Types.js';
+
+// Empresas con pagos habilitados (por ID o nombre)
+const EMPRESAS_CON_PAGOS = ['6940a9a181b92bfce970fdb5', 'Veo Veo'];
+
+// Tool para generar link de pago (para function calling de GPT)
+const paymentLinkTool = {
+  type: "function" as const,
+  function: {
+    name: "generate_payment_link",
+    description: "Genera un link de pago de Mercado Pago cuando el cliente confirma su pedido y quiere pagar.",
+    parameters: {
+      type: "object",
+      properties: {
+        title: { type: "string", description: "Título del pedido" },
+        amount: { type: "number", description: "Monto total a cobrar" },
+        description: { type: "string", description: "Descripción del pedido" }
+      },
+      required: ["title", "amount"]
+    }
+  }
+};
 
 export const recibirMensaje = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
@@ -233,29 +255,50 @@ export const recibirMensaje = async (req: Request, res: Response, next: NextFunc
     console.log(`🤖 Tipo de bot para ${empresa.nombre}: ${usarBotDePasos ? 'BOT DE PASOS' : 'GPT CONVERSACIONAL'}`);
     
     if (!usarBotDePasos) {
-      // 🧠 USAR GPT CONVERSACIONAL DIRECTAMENTE
+      // 🧠 USAR GPT CONVERSACIONAL DIRECTAMENTE (CON SOPORTE DE PAGOS)
       console.log('🧠 Procesando con GPT conversacional...');
-      console.log('📊 Datos del contacto:', {
-        id: contacto._id,
-        nombre: contacto.nombre,
-        historialLength: contacto.conversaciones?.historial?.length || 0
-      });
+      
+      // Verificar si la empresa tiene pagos habilitados
+      // Buscar el _id de la empresa en MongoDB
+      const empresaDoc = await EmpresaModel.findOne({ nombre: empresa.nombre });
+      const empresaIdStr = empresaDoc?._id?.toString() || '';
+      const tienePageosHabilitados = EMPRESAS_CON_PAGOS.includes(empresaIdStr) || 
+                                      EMPRESAS_CON_PAGOS.includes(empresa.nombre);
+      
+      console.log(`💳 [GPT] Empresa: ${empresa.nombre}, ID: ${empresaIdStr}, Pagos habilitados: ${tienePageosHabilitados}`);
       
       try {
         const { obtenerRespuestaChat } = await import('../services/openaiService.js');
         const { actualizarHistorialConversacion, incrementarMetricas } = await import('../services/contactoService.js');
         
+        // Construir prompt base con instrucciones de pago si aplica
+        let promptBase = empresa.prompt || 'Eres un asistente virtual amable y servicial.';
+        
+        if (tienePageosHabilitados) {
+          promptBase += `\n\n--- INSTRUCCIONES DE PAGO ---
+IMPORTANTE: Cada libro/producto tiene un precio fijo de $0.20 (veinte centavos).
+
+Cuando el cliente quiera pagar o confirme su pedido, DEBES llamar a la función generate_payment_link con:
+- title: descripción del pedido (ej: "Pedido Veo Veo - 2 libros")
+- amount: total calculado (cantidad de items × $0.20)
+- description: detalle de los productos
+
+TRIGGERS para generar link de pago:
+- "quiero pagar", "pagar", "confirmo", "listo", "proceder al pago"
+
+Ejemplo: 2 libros = $0.40 (2 × $0.20)
+
+IMPORTANTE: Cuando detectes intención de pago, USA LA FUNCIÓN generate_payment_link. No pidas más datos.`;
+        }
+        
         // Construir historial para GPT
         const historialGPT: any[] = [
-          {
-            role: 'system',
-            content: empresa.prompt || 'Eres un asistente virtual amable y servicial.'
-          }
+          { role: 'system', content: promptBase }
         ];
         
-        // Agregar TODO el historial (sin límite)
-        console.log(`📚 [GPT] Cargando historial completo: ${contacto.conversaciones.historial.length} mensajes`);
+        // Agregar historial completo
         const historialCompleto = contacto.conversaciones.historial;
+        console.log(`📚 [GPT] Cargando historial: ${historialCompleto.length} mensajes`);
         for (let i = 0; i < historialCompleto.length; i++) {
           historialGPT.push({
             role: i % 2 === 0 ? 'user' : 'assistant',
@@ -264,25 +307,99 @@ export const recibirMensaje = async (req: Request, res: Response, next: NextFunc
         }
         
         // Agregar mensaje actual
-        historialGPT.push({
-          role: 'user',
-          content: mensaje
-        });
+        historialGPT.push({ role: 'user', content: mensaje });
         
-        console.log(`📊 [GPT] Total mensajes en contexto: ${historialGPT.length} (1 system + ${historialCompleto.length} historial + 1 actual)`);
-        
-        // Obtener respuesta de GPT
+        // Obtener respuesta de GPT (con tools si tiene pagos habilitados)
         const modelo = empresa.modelo || 'gpt-3.5-turbo';
+        const tools = tienePageosHabilitados ? [paymentLinkTool] : undefined;
+        
         const respuesta = await obtenerRespuestaChat({
           modelo,
-          historial: historialGPT
+          historial: historialGPT,
+          tools
         });
         
-        console.log(`✅ [GPT] Respuesta generada (${respuesta.tokens} tokens, $${respuesta.costo})`);
+        console.log(`✅ [GPT] Respuesta generada (${respuesta.tokens} tokens)`);
         
-        // Guardar en historial
+        // Guardar mensaje del usuario en historial
         await actualizarHistorialConversacion(contacto._id.toString(), mensaje);
-        await actualizarHistorialConversacion(contacto._id.toString(), respuesta.texto);
+        
+        // Manejar respuesta (puede ser texto o function call)
+        let textoFinal = respuesta.texto;
+        let linkGenerado = false;
+        
+        // Si GPT llamó a la función de pago
+        if (respuesta.functionCall && respuesta.functionCall.name === 'generate_payment_link') {
+          console.log(`💳 [GPT] Function call detectado: generate_payment_link`);
+          const args = respuesta.functionCall.arguments;
+          
+          const paymentResult = await generateDynamicPaymentLink({
+            empresaId: empresaIdStr,
+            title: args.title || `Pedido ${empresa.nombre}`,
+            amount: args.amount || 0.20,
+            description: args.description || '',
+            clientePhone: telefonoCliente
+          });
+          
+          if (paymentResult.success && paymentResult.paymentUrl) {
+            console.log(`💳 [GPT] Link generado: ${paymentResult.paymentUrl}`);
+            linkGenerado = true;
+            textoFinal = `¡Perfecto! Tu pedido está listo. 🛒\n\n` +
+              `📦 *${args.title || 'Tu pedido'}*\n` +
+              `💰 Total: $${(args.amount || 0).toFixed(2)}\n\n` +
+              `Para completar tu compra, hacé clic en el siguiente link:\n` +
+              `👉 ${paymentResult.paymentUrl}\n\n` +
+              `Una vez que realices el pago, te confirmaremos por este medio. ¡Gracias! 🙌`;
+          }
+        }
+        
+        // FALLBACK: Si GPT no llamó la función pero el usuario quiere pagar
+        if (!linkGenerado && tienePageosHabilitados) {
+          const mensajeLower = mensaje.toLowerCase();
+          const triggersPago = ['quiero pagar', 'pagar', 'confirmo', 'listo', 'proceder', 'realizar pago'];
+          const quierePagar = triggersPago.some(trigger => mensajeLower.includes(trigger));
+          
+          console.log(`💳 [GPT] FALLBACK check: quierePagar=${quierePagar}`);
+          
+          if (quierePagar) {
+            console.log(`💳 [GPT] FALLBACK: Generando link por keywords...`);
+            
+            // Extraer cantidad del historial
+            const historialTexto = historialCompleto.join(' ') + ' ' + mensaje;
+            const numerosEncontrados = historialTexto.match(/(\d+)\s*(libros?|ejemplares?|unidades?|productos?)/gi);
+            let cantidad = 1;
+            
+            if (numerosEncontrados && numerosEncontrados.length > 0) {
+              const ultimoMatch = numerosEncontrados[numerosEncontrados.length - 1];
+              const numMatch = ultimoMatch.match(/\d+/);
+              if (numMatch) cantidad = parseInt(numMatch[0], 10);
+            }
+            
+            const total = cantidad * 0.20;
+            console.log(`💳 [GPT] FALLBACK: Cantidad=${cantidad}, Total=$${total}`);
+            
+            const paymentResult = await generateDynamicPaymentLink({
+              empresaId: empresaIdStr,
+              title: `Pedido ${empresa.nombre} - ${cantidad} libro${cantidad > 1 ? 's' : ''}`,
+              amount: total,
+              description: `Compra de ${cantidad} libro(s)`,
+              clientePhone: telefonoCliente
+            });
+            
+            if (paymentResult.success && paymentResult.paymentUrl) {
+              console.log(`💳 [GPT] FALLBACK: Link generado: ${paymentResult.paymentUrl}`);
+              textoFinal = `¡Perfecto! Tu pedido está listo. 🛒\n\n` +
+                `📦 *Pedido ${empresa.nombre} - ${cantidad} libro${cantidad > 1 ? 's' : ''}*\n` +
+                `💰 Total: $${total.toFixed(2)}\n\n` +
+                `Para completar tu compra, hacé clic en el siguiente link:\n` +
+                `👉 ${paymentResult.paymentUrl}\n\n` +
+                `Una vez que realices el pago, te confirmaremos por este medio. ¡Gracias! 🙌`;
+            }
+          }
+        }
+        
+        // Guardar respuesta del asistente
+        await actualizarHistorialConversacion(contacto._id.toString(), textoFinal);
         
         // Actualizar métricas
         await incrementarMetricas(contacto._id.toString(), {
@@ -293,7 +410,7 @@ export const recibirMensaje = async (req: Request, res: Response, next: NextFunc
         });
         
         // Enviar respuesta
-        await enviarMensajeWhatsAppTexto(telefonoCliente, respuesta.texto, phoneNumberId);
+        await enviarMensajeWhatsAppTexto(telefonoCliente, textoFinal, phoneNumberId);
         
         // Actualizar métricas de la empresa
         try {
@@ -304,7 +421,7 @@ export const recibirMensaje = async (req: Request, res: Response, next: NextFunc
             await empresaDoc.save();
           }
         } catch (errorEmpresa) {
-          console.error('⚠️ Error actualizando métricas de empresa (no crítico):', errorEmpresa);
+          console.error('⚠️ Error actualizando métricas de empresa:', errorEmpresa);
         }
         
         res.sendStatus(200);
@@ -312,9 +429,7 @@ export const recibirMensaje = async (req: Request, res: Response, next: NextFunc
         
       } catch (errorGPT) {
         console.error('❌ [GPT] Error procesando con GPT:', errorGPT);
-        console.error('❌ [GPT] Stack trace:', (errorGPT as Error).stack);
-        console.error('❌ [GPT] Error type:', (errorGPT as Error).name);
-        console.error('❌ [GPT] Error message:', (errorGPT as Error).message);
+        console.error('❌ [GPT] Stack:', (errorGPT as Error).stack);
         
         await enviarMensajeWhatsAppTexto(
           telefonoCliente,
