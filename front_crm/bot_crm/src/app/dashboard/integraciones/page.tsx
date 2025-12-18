@@ -18,7 +18,7 @@ interface MPConnectionStatus {
 
 export default function IntegracionesPage() {
   const router = useRouter();
-  const [activeTab, setActiveTab] = useState<'apis' | 'marketplace'>('marketplace');
+  const [activeTab, setActiveTab] = useState<'marketplace' | 'apis'>('marketplace');
   const [mpStatus, setMpStatus] = useState<MPConnectionStatus>({
     connected: false,
     loading: false
@@ -55,7 +55,7 @@ export default function IntegracionesPage() {
     const empresaId = localStorage.getItem('empresa_id') || 'default';
     const redirectUrl = `${window.location.origin}/dashboard/integraciones`;
     
-    const authUrl = `${MP_API_URL}/oauth/authorize?internalId=${empresaId}&redirectUrl=${encodeURIComponent(redirectUrl)}`;
+    const authUrl = `${MP_API_URL}/oauth/authorize?internalId=${encodeURIComponent(empresaId)}&redirectUrl=${encodeURIComponent(redirectUrl)}`;
     window.location.href = authUrl;
   };
 
