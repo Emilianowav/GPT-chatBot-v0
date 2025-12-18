@@ -36,6 +36,8 @@ export default function IntegracionesPage() {
         if (response.ok) {
           const data = await response.json();
           if (data.seller && data.seller.active) {
+            // Guardar userId en localStorage para uso en otras páginas
+            localStorage.setItem('mp_user_id', data.seller.userId);
             setMpStatus({ 
               connected: true, 
               userId: data.seller.userId, 
@@ -55,6 +57,8 @@ export default function IntegracionesPage() {
       const mpError = params.get('mp_error');
 
       if (mpStatusParam === 'success' && mpUserId) {
+        // Guardar userId en localStorage para uso en otras páginas
+        localStorage.setItem('mp_user_id', mpUserId);
         setMpStatus({ connected: true, userId: mpUserId, loading: false });
         setActiveTab('marketplace');
         window.history.replaceState({}, '', window.location.pathname);
@@ -102,6 +106,8 @@ export default function IntegracionesPage() {
       
       if (!response.ok) throw new Error('Error al desconectar');
       
+      // Limpiar userId de localStorage
+      localStorage.removeItem('mp_user_id');
       setMpStatus({ connected: false, loading: false });
     } catch (err) {
       setMpStatus(prev => ({ ...prev, loading: false, error: 'Error al desconectar' }));
@@ -291,7 +297,7 @@ export default function IntegracionesPage() {
                   <div className={styles.integrationInfo}>
                     <h3 className={styles.integrationTitle}>Mercado Pago</h3>
                     <p className={styles.integrationDescription}>
-                      Acepta pagos online y cobra comisiones como marketplace SaaS
+                      Acepta pagos online de tus productos o servicios
                     </p>
                   </div>
                   <span className={`${styles.badge} ${mpStatus.connected ? styles.badgeConnected : styles.badgeActive}`}>
@@ -301,7 +307,7 @@ export default function IntegracionesPage() {
                 <div className={styles.integrationFeatures}>
                   <span className={styles.feature}>✓ Cobrar Productos</span>
                   <span className={styles.feature}>✓ Cobrar Suscripciones</span>
-                  <span className={styles.feature}>✓ Split Payments</span>
+                  <span className={styles.feature}>✓ ChatBot de venta</span>
                 </div>
                 
                 {mpStatus.connected ? (
