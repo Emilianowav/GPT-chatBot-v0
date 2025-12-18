@@ -96,9 +96,15 @@ export default function MercadoPagoConfigPage() {
     sendMessage: '¡Gracias por tu compra! Aquí está tu link de pago:',
   });
 
-  const sellerId = typeof window !== 'undefined' 
-    ? localStorage.getItem('mp_user_id') || 'default' 
-    : 'default';
+  // Usar empresa_id para filtrar datos por empresa (no mp_user_id que es compartido)
+  const empresaId = typeof window !== 'undefined' 
+    ? localStorage.getItem('empresa_id') || '' 
+    : '';
+  
+  // mp_user_id solo se usa para verificar si MP está conectado
+  const mpUserId = typeof window !== 'undefined' 
+    ? localStorage.getItem('mp_user_id') || '' 
+    : '';
 
   useEffect(() => {
     loadData();
@@ -108,10 +114,10 @@ export default function MercadoPagoConfigPage() {
     setLoading(true);
     try {
       const [linksRes, plansRes, paymentsRes, statsRes] = await Promise.all([
-        fetch(`${MP_API_URL}/payment-links?sellerId=${sellerId}`),
-        fetch(`${MP_API_URL}/subscriptions/plans?sellerId=${sellerId}`),
-        fetch(`${MP_API_URL}/payments/history/${sellerId}?limit=50`),
-        fetch(`${MP_API_URL}/payments/stats/${sellerId}`),
+        fetch(`${MP_API_URL}/payment-links?sellerId=${empresaId}`),
+        fetch(`${MP_API_URL}/subscriptions/plans?sellerId=${empresaId}`),
+        fetch(`${MP_API_URL}/payments/history/${empresaId}?limit=50`),
+        fetch(`${MP_API_URL}/payments/stats/${empresaId}`),
       ]);
       
       if (linksRes.ok) {
@@ -148,7 +154,7 @@ export default function MercadoPagoConfigPage() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          sellerId,
+          sellerId: empresaId,
           title: productForm.title,
           unitPrice: parseFloat(productForm.unitPrice),
           description: productForm.description || undefined,
@@ -176,7 +182,7 @@ export default function MercadoPagoConfigPage() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          sellerId,
+          sellerId: empresaId,
           name: planForm.name,
           amount: parseFloat(planForm.amount),
           frequency: planForm.frequency,

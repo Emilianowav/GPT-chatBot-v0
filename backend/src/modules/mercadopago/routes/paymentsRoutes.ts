@@ -3,6 +3,7 @@ import { Router } from 'express';
 import * as mpService from '../services/mercadopagoService.js';
 import * as sellersService from '../services/sellersService.js';
 import { Payment } from '../models/Payment.js';
+import { Seller } from '../models/Seller.js';
 
 const router = Router();
 
@@ -113,15 +114,31 @@ router.get('/:paymentId', async (req, res) => {
 });
 
 /**
- * GET /payments/history/:sellerId
- * Lista el historial de pagos de un vendedor
+ * GET /payments/history/:empresaId
+ * Lista el historial de pagos de una empresa
+ * Busca por internalId del seller (empresaId) en lugar de userId de MP
  */
-router.get('/history/:sellerId', async (req, res) => {
-  const { sellerId } = req.params;
+router.get('/history/:empresaId', async (req, res): Promise<void> => {
+  const { empresaId } = req.params;
   const { status, limit = '50', offset = '0' } = req.query;
   
   try {
-    const query: any = { sellerId };
+    // Buscar el seller por internalId (empresaId)
+    const seller = await Seller.findOne({ internalId: empresaId });
+    
+    if (!seller) {
+      res.json({
+        success: true,
+        payments: [],
+        total: 0,
+        limit: parseInt(limit as string),
+        offset: parseInt(offset as string)
+      });
+      return;
+    }
+    
+    // Buscar pagos por el userId de MP del seller
+    const query: any = { sellerId: seller.userId };
     
     if (status && typeof status === 'string') {
       query.status = status;
@@ -148,13 +165,33 @@ router.get('/history/:sellerId', async (req, res) => {
 });
 
 /**
- * GET /payments/stats/:sellerId
- * Estadísticas de pagos de un vendedor
+ * GET /payments/stats/:empresaId
+ * Estadísticas de pagos de una empresa
+ * Busca por internalId del seller (empresaId)
  */
-router.get('/stats/:sellerId', async (req, res) => {
-  const { sellerId } = req.params;
+router.get('/stats/:empresaId', async (req, res): Promise<void> => {
+  const { empresaId } = req.params;
   
   try {
+    // Buscar el seller por internalId (empresaId)
+    const seller = await Seller.findOne({ internalId: empresaId });
+    
+    if (!seller) {
+      res.json({
+        success: true,
+        stats: {
+          pagosAprobados: 0,
+          ingresosTotales: 0,
+          pagosDelMes: 0,
+          ingresosDelMes: 0,
+          pagosPendientes: 0
+        }
+      });
+      return;
+    }
+    
+    const sellerId = seller.userId;
+    
     const hoy = new Date();
     hoy.setHours(0, 0, 0, 0);
     const inicioMes = new Date(hoy.getFullYear(), hoy.getMonth(), 1);
