@@ -118,6 +118,57 @@ router.get('/:id', async (req: Request, res: Response): Promise<void> => {
 });
 
 /**
+ * PUT /payment-links/:id
+ * Actualiza un link de pago existente
+ */
+router.put('/:id', async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { title, unitPrice, description, priceType, active } = req.body;
+    
+    const link = await paymentLinksService.getLinkByIdOrSlug(req.params.id);
+    
+    if (!link) {
+      res.status(404).json({ error: 'Link no encontrado' });
+      return;
+    }
+
+    // Actualizar campos
+    const updates: any = {};
+    if (title !== undefined) updates.title = title;
+    if (unitPrice !== undefined) updates.unitPrice = Number(unitPrice);
+    if (description !== undefined) updates.description = description;
+    if (priceType !== undefined) updates.priceType = priceType;
+    if (active !== undefined) updates.active = active;
+
+    const updatedLink = await paymentLinksService.updatePaymentLink(req.params.id, updates);
+    
+    if (!updatedLink) {
+      res.status(404).json({ error: 'Link no encontrado' });
+      return;
+    }
+
+    const baseUrl = process.env.MP_MODULE_URL || `${req.protocol}://${req.get('host')}`;
+    
+    res.json({ 
+      success: true, 
+      link: {
+        id: updatedLink._id,
+        slug: updatedLink.slug,
+        title: updatedLink.title,
+        unitPrice: updatedLink.unitPrice,
+        priceType: updatedLink.priceType,
+        description: updatedLink.description,
+        active: updatedLink.active,
+        paymentUrl: `${baseUrl}/api/modules/mercadopago/payment-links/pay/${updatedLink.slug}`
+      }
+    });
+  } catch (error: any) {
+    console.error('[MP] Error actualizando payment link:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+/**
  * DELETE /payment-links/:id
  * Elimina un link de pago
  */
