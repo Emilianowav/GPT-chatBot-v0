@@ -29,6 +29,12 @@ export default function OnboardingModal({ isOpen, onClose, onSuccess }: Onboardi
     prompt: '',
   });
 
+  const [promptProperties, setPromptProperties] = useState({
+    tono: [] as string[],
+    objetivos: [] as string[],
+    restricciones: [] as string[],
+  });
+
   const [adminData, setAdminData] = useState({
     username: '',
     password: '',
@@ -143,15 +149,36 @@ export default function OnboardingModal({ isOpen, onClose, onSuccess }: Onboardi
     }
   };
 
+  const toggleProperty = (category: 'tono' | 'objetivos' | 'restricciones', value: string) => {
+    setPromptProperties(prev => ({
+      ...prev,
+      [category]: prev[category].includes(value)
+        ? prev[category].filter(v => v !== value)
+        : [...prev[category], value]
+    }));
+  };
+
   const handleGenerarPrompt = async () => {
     try {
       setGenerandoPrompt(true);
       setError('');
 
+      // Construir descripción de personalidad con las propiedades seleccionadas
+      let personalidadCompleta = formData.personalidad;
+      if (promptProperties.tono.length > 0) {
+        personalidadCompleta += ` Tono: ${promptProperties.tono.join(', ')}.`;
+      }
+      if (promptProperties.objetivos.length > 0) {
+        personalidadCompleta += ` Objetivos: ${promptProperties.objetivos.join(', ')}.`;
+      }
+      if (promptProperties.restricciones.length > 0) {
+        personalidadCompleta += ` Restricciones: ${promptProperties.restricciones.join(', ')}.`;
+      }
+
       const response = await apiClient.superAdminGenerarPrompt({
         nombreEmpresa: formData.nombre,
         categoria: formData.categoria,
-        personalidad: formData.personalidad,
+        personalidad: personalidadCompleta,
         tipoBot: formData.tipoBot,
         tipoNegocio: formData.tipoNegocio
       });
@@ -173,6 +200,7 @@ export default function OnboardingModal({ isOpen, onClose, onSuccess }: Onboardi
     onClose();
     setStep(1);
     setFormData({ nombre: '', email: '', telefono: '', plan: 'standard', categoria: 'comercio', tipoBot: 'conversacional', tipoNegocio: 'otro', personalidad: '', prompt: '' });
+    setPromptProperties({ tono: [], objetivos: [], restricciones: [] });
     setAdminData({ username: '', password: '', email: '', nombre: '', apellido: '' });
     setMetaConfig({ phoneNumberId: '', accessToken: '', businessAccountId: '', appId: '', appSecret: '' });
     setSuccess(false);
@@ -334,15 +362,73 @@ export default function OnboardingModal({ isOpen, onClose, onSuccess }: Onboardi
                 </div>
               </div>
 
+              {/* Selectores de propiedades para el prompt */}
               <div className={styles.formGroup} style={{ gridColumn: '1 / -1' }}>
-                <label>💬 Personalidad del Chatbot (opcional)</label>
+                <label>🎨 Propiedades del Chatbot (opcional)</label>
+                <div style={{ marginTop: '8px' }}>
+                  {/* Tono */}
+                  <div style={{ marginBottom: '12px' }}>
+                    <p style={{ fontSize: '12px', fontWeight: '600', color: 'rgba(255, 255, 255, 0.9)', marginBottom: '6px' }}>Tono:</p>
+                    <div className={styles.planGrid} style={{ gridTemplateColumns: 'repeat(4, 1fr)' }}>
+                      {['Profesional', 'Amigable', 'Formal', 'Casual', 'Entusiasta', 'Empático'].map((tono) => (
+                        <div
+                          key={tono}
+                          onClick={() => toggleProperty('tono', tono)}
+                          className={`${styles.planCard} ${promptProperties.tono.includes(tono) ? styles.active : ''}`}
+                          style={{ padding: '8px', textAlign: 'center' }}
+                        >
+                          <p style={{ fontSize: '12px', margin: 0 }}>{tono}</p>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Objetivos */}
+                  <div style={{ marginBottom: '12px' }}>
+                    <p style={{ fontSize: '12px', fontWeight: '600', color: 'rgba(255, 255, 255, 0.9)', marginBottom: '6px' }}>Objetivos:</p>
+                    <div className={styles.planGrid} style={{ gridTemplateColumns: 'repeat(4, 1fr)' }}>
+                      {['Vender productos', 'Dar soporte', 'Agendar citas', 'Informar', 'Educar', 'Entretener'].map((objetivo) => (
+                        <div
+                          key={objetivo}
+                          onClick={() => toggleProperty('objetivos', objetivo)}
+                          className={`${styles.planCard} ${promptProperties.objetivos.includes(objetivo) ? styles.active : ''}`}
+                          style={{ padding: '8px', textAlign: 'center' }}
+                        >
+                          <p style={{ fontSize: '12px', margin: 0 }}>{objetivo}</p>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Restricciones */}
+                  <div>
+                    <p style={{ fontSize: '12px', fontWeight: '600', color: 'rgba(255, 255, 255, 0.9)', marginBottom: '6px' }}>Restricciones:</p>
+                    <div className={styles.planGrid} style={{ gridTemplateColumns: 'repeat(4, 1fr)' }}>
+                      {['No dar precios', 'No hacer promesas', 'Derivar a humano', 'Solo info básica', 'Horario limitado', 'Verificar identidad'].map((restriccion) => (
+                        <div
+                          key={restriccion}
+                          onClick={() => toggleProperty('restricciones', restriccion)}
+                          className={`${styles.planCard} ${promptProperties.restricciones.includes(restriccion) ? styles.active : ''}`}
+                          style={{ padding: '8px', textAlign: 'center' }}
+                        >
+                          <p style={{ fontSize: '11px', margin: 0 }}>{restriccion}</p>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+                <span className={styles.hint}>Selecciona las características que quieres para tu chatbot. Esto ayudará a generar un mejor prompt.</span>
+              </div>
+
+              <div className={styles.formGroup} style={{ gridColumn: '1 / -1' }}>
+                <label>💬 Personalidad Personalizada (opcional)</label>
                 <input
                   type="text"
                   value={formData.personalidad}
                   onChange={(e) => setFormData({ ...formData, personalidad: e.target.value })}
-                  placeholder="Ej: Amigable y profesional, con tono juvenil"
+                  placeholder="Ej: Usa lenguaje inclusivo y evita tecnicismos"
                 />
-                <span className={styles.hint}>Describe cómo quieres que se comporte el chatbot</span>
+                <span className={styles.hint}>Agrega detalles adicionales sobre cómo debe comportarse el chatbot</span>
               </div>
 
               <div className={styles.formGroup} style={{ gridColumn: '1 / -1' }}>

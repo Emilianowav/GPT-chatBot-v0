@@ -45,6 +45,19 @@ export default function EmpresaDetailModal({ isOpen, empresaId, onClose, onUpdat
     appSecret: '',
   });
 
+  const [promptConfig, setPromptConfig] = useState({
+    prompt: '',
+    personalidad: '',
+  });
+
+  const [promptProperties, setPromptProperties] = useState({
+    tono: [] as string[],
+    objetivos: [] as string[],
+    restricciones: [] as string[],
+  });
+
+  const [generandoPrompt, setGenerandoPrompt] = useState(false);
+
   useEffect(() => {
     if (isOpen && empresaId) {
       cargarEmpresa();
@@ -78,6 +91,10 @@ export default function EmpresaDetailModal({ isOpen, empresaId, onClose, onUpdat
           appId: emp.appId || '',
           appSecret: emp.appSecret || '',
         });
+        setPromptConfig({
+          prompt: emp.prompt || '',
+          personalidad: '',
+        });
       }
     } catch (err: any) {
       setError(err.message || 'Error al cargar empresa');
@@ -107,6 +124,56 @@ export default function EmpresaDetailModal({ isOpen, empresaId, onClose, onUpdat
       setError(err.message || 'Error al guardar cambios');
     } finally {
       setSaving(false);
+    }
+  };
+
+  const toggleProperty = (category: 'tono' | 'objetivos' | 'restricciones', value: string) => {
+    setPromptProperties(prev => ({
+      ...prev,
+      [category]: prev[category].includes(value)
+        ? prev[category].filter(v => v !== value)
+        : [...prev[category], value]
+    }));
+  };
+
+  const handleGenerarPrompt = async () => {
+    if (!empresa) return;
+
+    try {
+      setGenerandoPrompt(true);
+      setError('');
+
+      // Construir descripción de personalidad con las propiedades seleccionadas
+      let personalidadCompleta = promptConfig.personalidad;
+      if (promptProperties.tono.length > 0) {
+        personalidadCompleta += ` Tono: ${promptProperties.tono.join(', ')}.`;
+      }
+      if (promptProperties.objetivos.length > 0) {
+        personalidadCompleta += ` Objetivos: ${promptProperties.objetivos.join(', ')}.`;
+      }
+      if (promptProperties.restricciones.length > 0) {
+        personalidadCompleta += ` Restricciones: ${promptProperties.restricciones.join(', ')}.`;
+      }
+
+      const response = await apiClient.superAdminGenerarPrompt({
+        nombreEmpresa: empresa.nombre,
+        categoria: empresa.categoria || 'general',
+        personalidad: personalidadCompleta,
+        tipoBot: 'conversacional',
+        tipoNegocio: ''
+      });
+
+      if (response.success && response.prompt) {
+        setPromptConfig({ ...promptConfig, prompt: response.prompt });
+        setSuccess('Prompt generado exitosamente');
+        setTimeout(() => setSuccess(''), 3000);
+      } else {
+        setError(response.message || 'Error al generar prompt');
+      }
+    } catch (err: any) {
+      setError(err.message || 'Error al generar prompt');
+    } finally {
+      setGenerandoPrompt(false);
     }
   };
 
