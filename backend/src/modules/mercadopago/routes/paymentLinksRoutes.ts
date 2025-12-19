@@ -308,6 +308,8 @@ router.get('/pay/:slug', async (req: Request, res: Response): Promise<void> => {
 router.get('/callback', async (req: Request, res: Response): Promise<void> => {
   const { status, link } = req.query;
   
+  console.log(`[MP Callback] Status: ${status}, Link: ${link}`);
+  
   let message = '';
   let icon = '';
   
@@ -317,9 +319,16 @@ router.get('/callback', async (req: Request, res: Response): Promise<void> => {
       icon = '✅';
       // Incrementar contador de usos
       if (link) {
-        const paymentLink = await paymentLinksService.getLinkByIdOrSlug(link as string);
-        if (paymentLink) {
-          await paymentLinksService.incrementLinkUsage(paymentLink._id.toString(), paymentLink.unitPrice);
+        try {
+          const paymentLink = await paymentLinksService.getLinkByIdOrSlug(link as string);
+          if (paymentLink) {
+            await paymentLinksService.incrementLinkUsage(paymentLink._id.toString(), paymentLink.unitPrice);
+            console.log(`[MP Callback] Contador incrementado para link: ${link}`);
+          } else {
+            console.warn(`[MP Callback] Link no encontrado: ${link}`);
+          }
+        } catch (err: any) {
+          console.error(`[MP Callback] Error incrementando contador:`, err.message);
         }
       }
       break;
