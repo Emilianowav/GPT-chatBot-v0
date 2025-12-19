@@ -16,9 +16,11 @@ export default function ConfiguracionPage() {
   const router = useRouter();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [generandoPrompt, setGenerandoPrompt] = useState(false);
   const [message, setMessage] = useState('');
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [empresaData, setEmpresaData] = useState<any>(null);
+  const [personalidad, setPersonalidad] = useState('');
   const [perfilData, setPerfilData] = useState({
     email: '',
     emailNotificaciones: '',
@@ -51,6 +53,36 @@ export default function ConfiguracionPage() {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isAuthenticated, authLoading, empresa, router]);
+
+  const handleGenerarPrompt = async () => {
+    if (!empresa || !empresaData) return;
+
+    try {
+      setGenerandoPrompt(true);
+      setMessage('');
+
+      const response = await apiClient.generarPrompt({
+        nombreEmpresa: empresaData.nombre,
+        categoria: empresaData.categoria || 'general',
+        personalidad: personalidad,
+        tipoBot: 'conversacional',
+        tipoNegocio: ''
+      });
+
+      if (response.success && response.prompt) {
+        setEmpresaData({ ...empresaData, prompt: response.prompt });
+        setMessage('✅ Prompt generado exitosamente');
+        setTimeout(() => setMessage(''), 3000);
+      } else {
+        setMessage('❌ ' + (response.message || 'Error al generar prompt'));
+      }
+    } catch (error) {
+      setMessage('❌ Error al generar prompt');
+      console.error('Error:', error);
+    } finally {
+      setGenerandoPrompt(false);
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -354,15 +386,55 @@ export default function ConfiguracionPage() {
               </div>
 
               <div className={styles.formGroup} style={{ gridColumn: '1 / -1' }}>
-                <label>Prompt del Sistema</label>
+                <label>Personalidad del Chatbot (opcional)</label>
+                <input
+                  type="text"
+                  value={personalidad}
+                  onChange={(e) => setPersonalidad(e.target.value)}
+                  placeholder="Ej: Amigable y profesional, con tono juvenil"
+                />
+                <span className={styles.helpText}>
+                  Describe cómo quieres que se comporte el chatbot para generar el prompt automáticamente
+                </span>
+              </div>
+
+              <div className={styles.formGroup} style={{ gridColumn: '1 / -1' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                  <label>Prompt del Sistema</label>
+                  <button
+                    type="button"
+                    onClick={handleGenerarPrompt}
+                    disabled={!empresaData?.nombre || generandoPrompt}
+                    style={{
+                      padding: '8px 16px',
+                      fontSize: '13px',
+                      background: generandoPrompt ? '#666' : 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                      border: 'none',
+                      borderRadius: '6px',
+                      color: 'white',
+                      cursor: generandoPrompt || !empresaData?.nombre ? 'not-allowed' : 'pointer',
+                      opacity: generandoPrompt || !empresaData?.nombre ? 0.6 : 1,
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '6px',
+                      fontWeight: '500'
+                    }}
+                  >
+                    {generandoPrompt ? '⏳ Generando...' : '✨ Generar con IA'}
+                  </button>
+                </div>
                 <textarea
                   value={empresaData?.prompt || ''}
                   onChange={(e) => setEmpresaData({ ...empresaData, prompt: e.target.value })}
                   rows={6}
                   placeholder="Instrucciones para el asistente de IA..."
+                  style={{
+                    fontFamily: 'monospace',
+                    fontSize: '13px'
+                  }}
                 />
                 <span className={styles.helpText}>
-                  Define cómo debe comportarse el asistente
+                  Define cómo debe comportarse el asistente. Usa el botón ✨ para generar uno automáticamente.
                 </span>
               </div>
 

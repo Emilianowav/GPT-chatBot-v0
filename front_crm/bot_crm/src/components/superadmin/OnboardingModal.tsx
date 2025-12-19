@@ -25,6 +25,8 @@ export default function OnboardingModal({ isOpen, onClose, onSuccess }: Onboardi
     categoria: 'comercio',
     tipoBot: 'conversacional',
     tipoNegocio: 'otro',
+    personalidad: '',
+    prompt: '',
   });
 
   const [adminData, setAdminData] = useState({
@@ -45,6 +47,7 @@ export default function OnboardingModal({ isOpen, onClose, onSuccess }: Onboardi
 
   const [skipMeta, setSkipMeta] = useState(false);
   const [createdEmpresaId, setCreatedEmpresaId] = useState('');
+  const [generandoPrompt, setGenerandoPrompt] = useState(false);
 
   if (!isOpen) return null;
 
@@ -140,11 +143,36 @@ export default function OnboardingModal({ isOpen, onClose, onSuccess }: Onboardi
     }
   };
 
+  const handleGenerarPrompt = async () => {
+    try {
+      setGenerandoPrompt(true);
+      setError('');
+
+      const response = await apiClient.superAdminGenerarPrompt({
+        nombreEmpresa: formData.nombre,
+        categoria: formData.categoria,
+        personalidad: formData.personalidad,
+        tipoBot: formData.tipoBot,
+        tipoNegocio: formData.tipoNegocio
+      });
+
+      if (response.success && response.prompt) {
+        setFormData({ ...formData, prompt: response.prompt });
+      } else {
+        setError(response.message || 'Error al generar prompt');
+      }
+    } catch (err: any) {
+      setError(err.message || 'Error al generar prompt');
+    } finally {
+      setGenerandoPrompt(false);
+    }
+  };
+
   const handleFinalizar = () => {
     onSuccess();
     onClose();
     setStep(1);
-    setFormData({ nombre: '', email: '', telefono: '', plan: 'standard', categoria: 'comercio', tipoBot: 'conversacional', tipoNegocio: 'otro' });
+    setFormData({ nombre: '', email: '', telefono: '', plan: 'standard', categoria: 'comercio', tipoBot: 'conversacional', tipoNegocio: 'otro', personalidad: '', prompt: '' });
     setAdminData({ username: '', password: '', email: '', nombre: '', apellido: '' });
     setMetaConfig({ phoneNumberId: '', accessToken: '', businessAccountId: '', appId: '', appSecret: '' });
     setSuccess(false);
@@ -304,6 +332,57 @@ export default function OnboardingModal({ isOpen, onClose, onSuccess }: Onboardi
                     </div>
                   ))}
                 </div>
+              </div>
+
+              <div className={styles.formGroup} style={{ gridColumn: '1 / -1' }}>
+                <label>💬 Personalidad del Chatbot (opcional)</label>
+                <input
+                  type="text"
+                  value={formData.personalidad}
+                  onChange={(e) => setFormData({ ...formData, personalidad: e.target.value })}
+                  placeholder="Ej: Amigable y profesional, con tono juvenil"
+                />
+                <span className={styles.hint}>Describe cómo quieres que se comporte el chatbot</span>
+              </div>
+
+              <div className={styles.formGroup} style={{ gridColumn: '1 / -1' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                  <label>🤖 Prompt del Sistema</label>
+                  <button
+                    type="button"
+                    onClick={handleGenerarPrompt}
+                    disabled={!formData.nombre || !formData.categoria || generandoPrompt}
+                    className={styles.btnGenerar}
+                    style={{
+                      padding: '6px 12px',
+                      fontSize: '12px',
+                      background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                      border: 'none',
+                      borderRadius: '6px',
+                      color: 'white',
+                      cursor: generandoPrompt || !formData.nombre ? 'not-allowed' : 'pointer',
+                      opacity: generandoPrompt || !formData.nombre ? 0.6 : 1,
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '6px'
+                    }}
+                  >
+                    {generandoPrompt ? '⏳ Generando...' : '✨ Generar con IA'}
+                  </button>
+                </div>
+                <textarea
+                  value={formData.prompt}
+                  onChange={(e) => setFormData({ ...formData, prompt: e.target.value })}
+                  rows={6}
+                  placeholder="El prompt se generará automáticamente o puedes escribir uno personalizado..."
+                  style={{
+                    fontFamily: 'monospace',
+                    fontSize: '13px'
+                  }}
+                />
+                <span className={styles.hint}>
+                  Define cómo debe comportarse el asistente. Usa el botón ✨ para generar uno automáticamente.
+                </span>
               </div>
 
               <div className={styles.actions}>

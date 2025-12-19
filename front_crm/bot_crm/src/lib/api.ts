@@ -120,6 +120,24 @@ export class ApiClient {
     });
   }
 
+  async generarPrompt(data: {
+    nombreEmpresa: string;
+    categoria: string;
+    personalidad?: string;
+    tipoBot?: string;
+    tipoNegocio?: string;
+  }) {
+    return this.request<{
+      success: boolean;
+      message?: string;
+      prompt: string;
+      tokens?: number;
+    }>('/api/empresas/generar-prompt', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
   // Conversaciones
   async getConversaciones(empresaId: string) {
     return this.request<Record<string, unknown>>(`/api/conversaciones/${empresaId}`);
@@ -172,12 +190,33 @@ export class ApiClient {
     telefono?: string;
     plan?: string;
     categoria?: string;
+    tipoBot?: string;
+    tipoNegocio?: string;
+    prompt?: string;
   }) {
     return this.request<{
       success: boolean;
       message: string;
       empresa?: Record<string, unknown>;
     }>('/api/sa/empresas', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async superAdminGenerarPrompt(data: {
+    nombreEmpresa: string;
+    categoria: string;
+    personalidad?: string;
+    tipoBot?: string;
+    tipoNegocio?: string;
+  }) {
+    return this.request<{
+      success: boolean;
+      message?: string;
+      prompt: string;
+      tokens?: number;
+    }>('/api/sa/generar-prompt', {
       method: 'POST',
       body: JSON.stringify(data),
     });
