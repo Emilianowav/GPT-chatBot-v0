@@ -44,8 +44,10 @@ interface Payment {
   currency: string;
   payerEmail?: string;
   payerName?: string;
+  payerPhone?: string;
   paymentMethodId?: string;
   paymentTypeId?: string;
+  externalReference?: string;
   createdAt: string;
   dateApproved?: string;
 }
@@ -727,7 +729,7 @@ export default function MercadoPagoConfigPage() {
                             <td>
                               <div className={styles.payerCell}>
                                 <span>{payment.payerName || 'Sin nombre'}</span>
-                                <span className={styles.payerEmail}>{payment.payerEmail || '-'}</span>
+                                <span className={styles.payerEmail}>{payment.payerPhone || payment.payerEmail || '-'}</span>
                               </div>
                             </td>
                             <td>
@@ -825,6 +827,18 @@ export default function MercadoPagoConfigPage() {
                             <span className={styles.label}>Email:</span>
                             <span>{selectedPayment.payerEmail || 'No disponible'}</span>
                           </div>
+                          {selectedPayment.payerPhone && (
+                            <div className={styles.modalInfoItem}>
+                              <span className={styles.label}>Teléfono:</span>
+                              <span>{selectedPayment.payerPhone}</span>
+                            </div>
+                          )}
+                          {selectedPayment.externalReference && (
+                            <div className={styles.modalInfoItem}>
+                              <span className={styles.label}>Referencia:</span>
+                              <span style={{ fontFamily: 'monospace', fontSize: '0.85em' }}>{selectedPayment.externalReference}</span>
+                            </div>
+                          )}
                         </div>
                       </div>
                     </div>
