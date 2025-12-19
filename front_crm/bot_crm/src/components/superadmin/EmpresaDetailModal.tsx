@@ -587,7 +587,7 @@ export default function EmpresaDetailModal({ isOpen, empresaId, onClose, onUpdat
                       </div>
 
                       <div className={styles.formGroup}>
-                        <label>🔑 Access Token</label>
+                        <label>🔑 META_WHATSAPP_TOKEN</label>
                         <input
                           type="password"
                           value={metaConfig.accessToken}
@@ -595,12 +595,12 @@ export default function EmpresaDetailModal({ isOpen, empresaId, onClose, onUpdat
                           disabled={!editMode}
                           placeholder="EAAxxxxxxxxxx..."
                         />
-                        <span className={styles.hint}>Token de acceso permanente de la app de Meta</span>
+                        <span className={styles.hint}>Token de acceso permanente de la app de Meta (META_WHATSAPP_TOKEN)</span>
                       </div>
 
                       <div className={styles.formRow}>
                         <div className={styles.formGroup}>
-                          <label>🏢 Business Account ID</label>
+                          <label>🏢 WABA ID</label>
                           <input
                             type="text"
                             value={metaConfig.businessAccountId}
@@ -608,6 +608,7 @@ export default function EmpresaDetailModal({ isOpen, empresaId, onClose, onUpdat
                             disabled={!editMode}
                             placeholder="123456789012345"
                           />
+                          <span className={styles.hint}>WhatsApp Business Account ID</span>
                         </div>
 
                         <div className={styles.formGroup}>

@@ -23,6 +23,8 @@ export default function OnboardingModal({ isOpen, onClose, onSuccess }: Onboardi
     telefono: '',
     plan: 'standard',
     categoria: 'comercio',
+    tipoBot: 'conversacional',
+    tipoNegocio: 'otro',
   });
 
   const [adminData, setAdminData] = useState({
@@ -142,7 +144,7 @@ export default function OnboardingModal({ isOpen, onClose, onSuccess }: Onboardi
     onSuccess();
     onClose();
     setStep(1);
-    setFormData({ nombre: '', email: '', telefono: '', plan: 'standard', categoria: 'comercio' });
+    setFormData({ nombre: '', email: '', telefono: '', plan: 'standard', categoria: 'comercio', tipoBot: 'conversacional', tipoNegocio: 'otro' });
     setAdminData({ username: '', password: '', email: '', nombre: '', apellido: '' });
     setMetaConfig({ phoneNumberId: '', accessToken: '', businessAccountId: '', appId: '', appSecret: '' });
     setSuccess(false);
@@ -241,6 +243,46 @@ export default function OnboardingModal({ isOpen, onClose, onSuccess }: Onboardi
                   <option value="otro">Otro</option>
                 </select>
               </div>
+
+              <div className={styles.formGroup}>
+                <label>🤖 Tipo de Bot</label>
+                <div className={styles.planGrid}>
+                  <div
+                    onClick={() => setFormData({ ...formData, tipoBot: 'conversacional' })}
+                    className={`${styles.planCard} ${formData.tipoBot === 'conversacional' ? styles.active : ''}`}
+                  >
+                    <h4>💬 Conversacional</h4>
+                    <p>GPT responde libremente</p>
+                    <span>Recomendado</span>
+                  </div>
+                  <div
+                    onClick={() => setFormData({ ...formData, tipoBot: 'pasos' })}
+                    className={`${styles.planCard} ${formData.tipoBot === 'pasos' ? styles.active : ''}`}
+                  >
+                    <h4>📋 Bot de Pasos</h4>
+                    <p>Flujo guiado estructurado</p>
+                    <span>Turnos/Reservas</span>
+                  </div>
+                </div>
+                <span className={styles.hint}>El bot conversacional usa GPT para responder. El bot de pasos sigue un flujo predefinido.</span>
+              </div>
+
+              {formData.tipoBot === 'pasos' && (
+                <div className={styles.formGroup}>
+                  <label>🏢 Tipo de Negocio (para bot de pasos)</label>
+                  <select
+                    value={formData.tipoNegocio}
+                    onChange={(e) => setFormData({ ...formData, tipoNegocio: e.target.value })}
+                  >
+                    <option value="canchas">Canchas/Deportes</option>
+                    <option value="viajes">Viajes/Remises</option>
+                    <option value="salud">Salud/Consultorios</option>
+                    <option value="belleza">Belleza/Spa</option>
+                    <option value="otro">Otro</option>
+                  </select>
+                  <span className={styles.hint}>Define qué flujo de conversación se activará</span>
+                </div>
+              )}
 
               <div className={styles.formGroup}>
                 <label>💳 Plan</label>
@@ -403,25 +445,26 @@ export default function OnboardingModal({ isOpen, onClose, onSuccess }: Onboardi
                   </div>
 
                   <div className={styles.formGroup}>
-                    <label>🔑 Access Token</label>
+                    <label>🔑 META_WHATSAPP_TOKEN</label>
                     <input
                       type="password"
                       value={metaConfig.accessToken}
                       onChange={(e) => setMetaConfig({ ...metaConfig, accessToken: e.target.value })}
                       placeholder="EAAxxxxxxxxxx..."
                     />
-                    <span className={styles.hint}>Token de acceso permanente de la app de Meta</span>
+                    <span className={styles.hint}>Token de acceso permanente de la app de Meta (META_WHATSAPP_TOKEN)</span>
                   </div>
 
                   <div className={styles.formRow}>
                     <div className={styles.formGroup}>
-                      <label>🏢 Business Account ID</label>
+                      <label>🏢 WABA ID</label>
                       <input
                         type="text"
                         value={metaConfig.businessAccountId}
                         onChange={(e) => setMetaConfig({ ...metaConfig, businessAccountId: e.target.value })}
                         placeholder="123456789012345"
                       />
+                      <span className={styles.hint}>WhatsApp Business Account ID</span>
                     </div>
 
                     <div className={styles.formGroup}>
@@ -489,6 +532,12 @@ export default function OnboardingModal({ isOpen, onClose, onSuccess }: Onboardi
                 <div className={styles.credentialRow}>
                   <span className={styles.credentialLabel}>Plan:</span>
                   <span className={styles.credentialValue}>{formData.plan}</span>
+                </div>
+                <div className={styles.credentialRow}>
+                  <span className={styles.credentialLabel}>Tipo de Bot:</span>
+                  <span className={styles.credentialValue}>
+                    {formData.tipoBot === 'conversacional' ? '💬 Conversacional (GPT)' : `📋 Bot de Pasos (${formData.tipoNegocio})`}
+                  </span>
                 </div>
                 <div className={styles.credentialRow}>
                   <span className={styles.credentialLabel}>Username:</span>
