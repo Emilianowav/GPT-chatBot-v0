@@ -106,10 +106,26 @@ export const gptFlow: Flow = {
         let productosInfo = '';
         
         if (seller) {
-          const paymentLinks = await PaymentLink.find({ 
+          // Determinar el prefijo del slug según la empresa
+          let slugPrefix = '';
+          if (empresa.nombre === 'JFC Techno') {
+            slugPrefix = 'jfc-';
+          } else if (empresa.nombre === 'Veo Veo') {
+            slugPrefix = 'veo-';
+          }
+          
+          // Filtrar payment links por sellerId Y por prefijo de slug
+          const query: any = { 
             sellerId: seller.userId,
             active: true 
-          }).limit(20);
+          };
+          
+          // Si hay prefijo, filtrar por slug que empiece con ese prefijo
+          if (slugPrefix) {
+            query.slug = { $regex: `^${slugPrefix}`, $options: 'i' };
+          }
+          
+          const paymentLinks = await PaymentLink.find(query).limit(20);
           
           if (paymentLinks.length > 0) {
             productosInfo = '\n\n📦 PRODUCTOS DISPONIBLES:\n';
