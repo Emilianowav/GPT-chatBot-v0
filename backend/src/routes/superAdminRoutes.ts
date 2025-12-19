@@ -24,4 +24,7 @@ router.post('/empresas/:id/user', controller.crearUsuarioAdmin);
 // DELETE /api/sa/empresas/:id - Eliminar empresa
 router.delete('/empresas/:id', controller.eliminarEmpresa);
 
+// POST /api/sa/generar-prompt - Generar prompt con GPT
+router.post('/generar-prompt', controller.generarPrompt);
+
 export default router;

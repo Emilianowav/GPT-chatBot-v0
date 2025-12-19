@@ -1,6 +1,7 @@
 // 🔐 Controlador de Super Administrador
 import type { Request, Response } from 'express';
 import * as superAdminService from '../services/superAdminService.js';
+import * as promptGeneratorService from '../services/promptGeneratorService.js';
 
 /**
  * POST /api/sa/empresas
@@ -8,7 +9,7 @@ import * as superAdminService from '../services/superAdminService.js';
  */
 export const crearEmpresa = async (req: Request, res: Response): Promise<void> => {
   try {
-    const { nombre, email, telefono, plan, categoria } = req.body;
+    const { nombre, email, telefono, plan, categoria, tipoBot, tipoNegocio, prompt } = req.body;
 
     // Validar datos requeridos
     if (!nombre || !email) {
@@ -24,7 +25,10 @@ export const crearEmpresa = async (req: Request, res: Response): Promise<void> =
       email,
       telefono,
       plan,
-      categoria
+      categoria,
+      tipoBot,
+      tipoNegocio,
+      prompt
     });
 
     if (!result.success) {
@@ -155,6 +159,46 @@ export const eliminarEmpresa = async (req: Request, res: Response): Promise<void
     res.status(200).json(result);
   } catch (error) {
     console.error('❌ Error en eliminarEmpresa controller:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error en el servidor'
+    });
+  }
+};
+
+/**
+ * POST /api/sa/generar-prompt
+ * Genera un prompt del sistema usando GPT
+ */
+export const generarPrompt = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { nombreEmpresa, categoria, personalidad, tipoBot, tipoNegocio } = req.body;
+
+    // Validar datos requeridos
+    if (!nombreEmpresa || !categoria) {
+      res.status(400).json({
+        success: false,
+        message: 'Nombre de empresa y categoría son requeridos'
+      });
+      return;
+    }
+
+    const result = await promptGeneratorService.generarPromptEmpresa({
+      nombreEmpresa,
+      categoria,
+      personalidad,
+      tipoBot,
+      tipoNegocio
+    });
+
+    if (!result.success) {
+      res.status(400).json(result);
+      return;
+    }
+
+    res.status(200).json(result);
+  } catch (error) {
+    console.error('❌ Error en generarPrompt controller:', error);
     res.status(500).json({
       success: false,
       message: 'Error en el servidor'

@@ -1,6 +1,6 @@
 // 🏢 Rutas de Empresas
 import { Router } from 'express';
-import { getEmpresaStats, getEmpresa, updateEmpresa } from '../controllers/empresaController.js';
+import { getEmpresaStats, getEmpresa, updateEmpresa, generarPrompt } from '../controllers/empresaController.js';
 import { authenticate, requireAdmin } from '../middlewares/authMiddleware.js';
 
 const router = Router();
@@ -16,5 +16,8 @@ router.get('/:empresaId', getEmpresa);
 
 // PUT /api/empresas/:empresaId - Actualizar empresa (solo admin)
 router.put('/:empresaId', requireAdmin, updateEmpresa);
+
+// POST /api/empresas/generar-prompt - Generar prompt con GPT
+router.post('/generar-prompt', generarPrompt);
 
 export default router;

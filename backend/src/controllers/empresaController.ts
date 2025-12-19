@@ -4,6 +4,7 @@ import { EmpresaModel } from '../models/Empresa.js';
 import { UsuarioModel } from '../models/Usuario.js';
 import { TurnoModel, EstadoTurno } from '../modules/calendar/models/Turno.js';
 import { ClienteModel } from '../models/Cliente.js';
+import * as promptGeneratorService from '../services/promptGeneratorService.js';
 
 /**
  * GET /api/empresas/:empresaId/stats
@@ -265,6 +266,46 @@ export const updateEmpresa = async (req: Request, res: Response): Promise<void> 
     res.status(500).json({
       success: false,
       message: 'Error al actualizar empresa'
+    });
+  }
+};
+
+/**
+ * POST /api/empresas/generar-prompt
+ * Genera un prompt del sistema usando GPT
+ */
+export const generarPrompt = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { nombreEmpresa, categoria, personalidad, tipoBot, tipoNegocio } = req.body;
+
+    // Validar datos requeridos
+    if (!nombreEmpresa || !categoria) {
+      res.status(400).json({
+        success: false,
+        message: 'Nombre de empresa y categoría son requeridos'
+      });
+      return;
+    }
+
+    const result = await promptGeneratorService.generarPromptEmpresa({
+      nombreEmpresa,
+      categoria,
+      personalidad,
+      tipoBot,
+      tipoNegocio
+    });
+
+    if (!result.success) {
+      res.status(400).json(result);
+      return;
+    }
+
+    res.status(200).json(result);
+  } catch (error) {
+    console.error('❌ Error en generarPrompt controller:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error en el servidor'
     });
   }
 };

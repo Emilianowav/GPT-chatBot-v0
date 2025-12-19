@@ -16,9 +16,10 @@ export async function crearEmpresa(data: {
   categoria?: string;
   tipoBot?: string;
   tipoNegocio?: string;
+  prompt?: string;
 }) {
   try {
-    const { nombre, email, telefono, plan = 'standard', categoria = 'general', tipoBot = 'conversacional', tipoNegocio = 'otro' } = data;
+    const { nombre, email, telefono, plan = 'standard', categoria = 'general', tipoBot = 'conversacional', tipoNegocio = 'otro', prompt } = data;
 
     // Validar que el nombre no exista
     const empresaExistente = await EmpresaModel.findOne({ nombre });
@@ -90,7 +91,7 @@ export async function crearEmpresa(data: {
       categoria,
       telefono: telefono || `+549${Date.now()}`, // Teléfono temporal si no se proporciona
       email,
-      prompt: `Sos el asistente virtual de ${nombre}. Tu objetivo es ayudar a los clientes de manera amable y profesional.`,
+      prompt: prompt || `Sos el asistente virtual de ${nombre}. Tu objetivo es ayudar a los clientes de manera amable y profesional.`,
       saludos: [`¡Hola! 👋 Bienvenido a ${nombre}. ¿En qué puedo ayudarte hoy?`],
       catalogoPath: `data/${nombre.toLowerCase().replace(/\s+/g, '_')}_catalogo.json`,
       modelo: 'gpt-3.5-turbo',
