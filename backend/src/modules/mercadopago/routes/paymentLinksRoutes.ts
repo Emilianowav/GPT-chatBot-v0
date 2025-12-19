@@ -190,11 +190,17 @@ router.delete('/:id', async (req: Request, res: Response): Promise<void> => {
 
 /**
  * GET /payment-links/pay/:slug
- * Crea una preferencia de MP y redirige al checkout
+ * Redirige al checkout de Mercado Pago para un link de pago
+ * Query params opcionales:
+ * - phone: Teléfono del cliente (se incluye en external_reference para notificaciones)
+ * - name: Nombre del cliente (opcional)
  */
 router.get('/pay/:slug', async (req: Request, res: Response): Promise<void> => {
   try {
     const { slug } = req.params;
+    const { phone, name } = req.query;
+    
+    console.log(`[MP] Procesando pago para slug: ${slug}, phone: ${phone || 'no proporcionado'}`);
     
     // Buscar el link por slug
     const link = await paymentLinksService.getLinkByIdOrSlug(slug);
@@ -253,7 +259,15 @@ router.get('/pay/:slug', async (req: Request, res: Response): Promise<void> => {
     const baseUrl = process.env.BACKEND_URL || process.env.MP_MODULE_URL || 'https://gpt-chatbot-v0.onrender.com';
     const callbackBase = `${baseUrl}/api/modules/mercadopago/payment-links/callback`;
     
+    // Construir external_reference con teléfono si está disponible
+    let externalReference = `link_${link._id}`;
+    if (phone && typeof phone === 'string') {
+      externalReference += `|phone:${phone}`;
+      console.log(`[MP] Teléfono incluido en external_reference: ${phone}`);
+    }
+    
     console.log(`[MP] Creando preferencia con baseUrl: ${baseUrl}`);
+    console.log(`[MP] External reference: ${externalReference}`);
     
     const preferenceData = await preference.create({
       body: {
@@ -273,7 +287,10 @@ router.get('/pay/:slug', async (req: Request, res: Response): Promise<void> => {
           pending: `${callbackBase}?status=pending&link=${slug}`
         },
         auto_return: 'approved',
-        external_reference: `link_${link._id}`
+        external_reference: externalReference,
+        payer: name && typeof name === 'string' ? {
+          name: name
+        } : undefined
       }
     });
     
