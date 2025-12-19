@@ -42,31 +42,52 @@ export interface TokenData {
 }
 
 export interface PaymentItem {
-  title: string;
-  quantity?: number;
-  unitPrice: number;
-  currency?: string;
-  description?: string;
+  id?: string;                    // Código del item (recomendado)
+  title: string;                  // Nombre del item (recomendado)
+  description?: string;           // Descripción del item (recomendado)
+  categoryId?: string;            // Categoría del item (recomendado) - ej: "services", "electronics"
+  quantity?: number;              // Cantidad (recomendado)
+  unitPrice: number;              // Precio unitario (recomendado)
+  currency?: string;              // Moneda (default: ARS)
+  pictureUrl?: string;            // URL de imagen del producto
 }
 
 export interface Payer {
-  email: string;
-  name?: string;
-  surname?: string;
+  email: string;                  // Email del comprador (OBLIGATORIO)
+  firstName?: string;             // Nombre del comprador (recomendado)
+  lastName?: string;              // Apellido del comprador (recomendado)
+  phone?: {
+    areaCode?: string;
+    number?: string;
+  };
+  identification?: {
+    type?: string;                // DNI, CUIT, etc.
+    number?: string;
+  };
+  address?: {
+    streetName?: string;
+    streetNumber?: number;
+    zipCode?: string;
+  };
 }
 
 export interface BackUrls {
-  success: string;
-  failure: string;
-  pending: string;
+  success: string;                // URL de redirección en caso de éxito
+  failure: string;                // URL de redirección en caso de fallo
+  pending: string;                // URL de redirección en caso de pendiente
 }
 
 export interface PreferenceOptions {
   items: PaymentItem[];
   payer?: Payer;
   backUrls?: BackUrls;
-  externalReference?: string;
-  notificationUrl?: string;
+  externalReference?: string;     // Referencia externa (OBLIGATORIO) - ID interno de tu sistema
+  notificationUrl?: string;       // URL para webhooks (recomendado)
+  statementDescriptor?: string;   // Descripción en resumen de tarjeta (recomendado) - max 22 chars
+  autoReturn?: 'approved' | 'all'; // Auto retorno después del pago
+  expires?: boolean;              // Si la preferencia expira
+  expirationDateFrom?: string;    // Fecha desde la que es válida
+  expirationDateTo?: string;      // Fecha hasta la que es válida
 }
 
 export interface SellerData {
@@ -147,39 +168,103 @@ export async function refreshAccessToken(refreshToken: string): Promise<Partial<
 
 /**
  * Crea una preferencia de pago simple (sin split)
+ * Incluye todos los campos requeridos y recomendados por MP para mejor puntuación
  */
 export async function createPreference(options: PreferenceOptions) {
   if (!preference) {
     throw new Error('Cliente MP no inicializado');
   }
   
-  const { items, payer, backUrls, externalReference, notificationUrl } = options;
+  const { 
+    items, 
+    payer, 
+    backUrls, 
+    externalReference, 
+    notificationUrl,
+    statementDescriptor,
+    autoReturn,
+    expires,
+    expirationDateFrom,
+    expirationDateTo
+  } = options;
   
-  const preferenceData = await preference.create({
-    body: {
-      items: items.map((item, index) => ({
-        id: `item-${index}`,
-        title: item.title,
-        quantity: item.quantity || 1,
-        unit_price: item.unitPrice,
-        currency_id: item.currency || 'ARS',
-        description: item.description || '',
-      })),
-      payer: payer ? {
-        email: payer.email,
-        name: payer.name,
-        surname: payer.surname,
+  // Validar campos obligatorios
+  if (!externalReference) {
+    console.warn('⚠️ [MP] external_reference es OBLIGATORIO para mejor puntuación');
+  }
+  if (!payer?.email) {
+    console.warn('⚠️ [MP] payer.email es OBLIGATORIO para mejor puntuación');
+  }
+  
+  const preferenceBody: any = {
+    // Items con todos los campos recomendados
+    items: items.map((item, index) => ({
+      id: item.id || `item-${index}-${Date.now()}`,           // Código del item
+      title: item.title,                                       // Nombre del item
+      description: item.description || item.title,             // Descripción del item
+      category_id: item.categoryId || 'services',              // Categoría del item
+      quantity: item.quantity || 1,                            // Cantidad
+      unit_price: item.unitPrice,                              // Precio unitario
+      currency_id: item.currency || 'ARS',
+      picture_url: item.pictureUrl,
+    })),
+    
+    // Referencia externa OBLIGATORIA
+    external_reference: externalReference || `ORDER-${Date.now()}`,
+    
+    // Statement descriptor para resumen de tarjeta (max 22 chars)
+    statement_descriptor: statementDescriptor 
+      ? statementDescriptor.substring(0, 22) 
+      : 'MOMENTO IA',
+    
+    // URL de notificaciones webhook
+    notification_url: notificationUrl || `${mpConfig.appUrl}/api/modules/mercadopago/webhooks`,
+  };
+  
+  // Payer con todos los campos recomendados
+  if (payer) {
+    preferenceBody.payer = {
+      email: payer.email,                                      // OBLIGATORIO
+      name: payer.firstName,                                   // Nombre (recomendado)
+      surname: payer.lastName,                                 // Apellido (recomendado)
+      phone: payer.phone ? {
+        area_code: payer.phone.areaCode,
+        number: payer.phone.number,
       } : undefined,
-      back_urls: backUrls ? {
-        success: backUrls.success,
-        failure: backUrls.failure,
-        pending: backUrls.pending,
+      identification: payer.identification ? {
+        type: payer.identification.type,
+        number: payer.identification.number,
       } : undefined,
-      auto_return: backUrls ? 'approved' : undefined,
-      external_reference: externalReference || `ORDER-${Date.now()}`,
-      notification_url: notificationUrl,
-    }
-  });
+      address: payer.address ? {
+        street_name: payer.address.streetName,
+        street_number: payer.address.streetNumber,
+        zip_code: payer.address.zipCode,
+      } : undefined,
+    };
+  }
+  
+  // Back URLs (recomendado)
+  if (backUrls) {
+    preferenceBody.back_urls = {
+      success: backUrls.success,
+      failure: backUrls.failure,
+      pending: backUrls.pending,
+    };
+    preferenceBody.auto_return = autoReturn || 'approved';
+  }
+  
+  // Expiración de la preferencia
+  if (expires !== undefined) {
+    preferenceBody.expires = expires;
+  }
+  if (expirationDateFrom) {
+    preferenceBody.expiration_date_from = expirationDateFrom;
+  }
+  if (expirationDateTo) {
+    preferenceBody.expiration_date_to = expirationDateTo;
+  }
+  
+  const preferenceData = await preference.create({ body: preferenceBody });
   
   return {
     id: preferenceData.id,
@@ -191,13 +276,33 @@ export async function createPreference(options: PreferenceOptions) {
 
 /**
  * Crea una preferencia de pago con Split Payment (Marketplace)
+ * Incluye todos los campos requeridos y recomendados por MP para mejor puntuación
  */
 export async function createSplitPreference(
   options: PreferenceOptions, 
   seller: SellerData, 
   marketplaceFee: number | null = null
 ) {
-  const { items, payer, backUrls, externalReference, notificationUrl } = options;
+  const { 
+    items, 
+    payer, 
+    backUrls, 
+    externalReference, 
+    notificationUrl,
+    statementDescriptor,
+    autoReturn,
+    expires,
+    expirationDateFrom,
+    expirationDateTo
+  } = options;
+  
+  // Validar campos obligatorios
+  if (!externalReference) {
+    console.warn('⚠️ [MP] external_reference es OBLIGATORIO para mejor puntuación');
+  }
+  if (!payer?.email) {
+    console.warn('⚠️ [MP] payer.email es OBLIGATORIO para mejor puntuación');
+  }
   
   // Calcular el total
   const total = items.reduce((sum, item) => sum + (item.unitPrice * (item.quantity || 1)), 0);
@@ -215,33 +320,79 @@ export async function createSplitPreference(
   
   const sellerPreference = new Preference(sellerClient);
   
-  const preferenceData = await sellerPreference.create({
-    body: {
-      items: items.map((item, index) => ({
-        id: `item-${index}`,
-        title: item.title,
-        quantity: item.quantity || 1,
-        unit_price: item.unitPrice,
-        currency_id: item.currency || 'ARS',
-        description: item.description || '',
-      })),
-      payer: payer ? {
-        email: payer.email,
-        name: payer.name,
-        surname: payer.surname,
+  const preferenceBody: any = {
+    // Items con todos los campos recomendados
+    items: items.map((item, index) => ({
+      id: item.id || `item-${index}-${Date.now()}`,           // Código del item
+      title: item.title,                                       // Nombre del item
+      description: item.description || item.title,             // Descripción del item
+      category_id: item.categoryId || 'services',              // Categoría del item
+      quantity: item.quantity || 1,                            // Cantidad
+      unit_price: item.unitPrice,                              // Precio unitario
+      currency_id: item.currency || 'ARS',
+      picture_url: item.pictureUrl,
+    })),
+    
+    // Referencia externa OBLIGATORIA
+    external_reference: externalReference || `ORDER-${Date.now()}`,
+    
+    // Statement descriptor para resumen de tarjeta (max 22 chars)
+    statement_descriptor: statementDescriptor 
+      ? statementDescriptor.substring(0, 22) 
+      : 'MOMENTO IA',
+    
+    // URL de notificaciones webhook
+    notification_url: notificationUrl || `${mpConfig.appUrl}/api/modules/mercadopago/webhooks`,
+    
+    // Marketplace split payment
+    marketplace_fee: fee,
+    marketplace: mpConfig.clientId,
+  };
+  
+  // Payer con todos los campos recomendados
+  if (payer) {
+    preferenceBody.payer = {
+      email: payer.email,                                      // OBLIGATORIO
+      name: payer.firstName,                                   // Nombre (recomendado)
+      surname: payer.lastName,                                 // Apellido (recomendado)
+      phone: payer.phone ? {
+        area_code: payer.phone.areaCode,
+        number: payer.phone.number,
       } : undefined,
-      back_urls: backUrls ? {
-        success: backUrls.success,
-        failure: backUrls.failure,
-        pending: backUrls.pending,
+      identification: payer.identification ? {
+        type: payer.identification.type,
+        number: payer.identification.number,
       } : undefined,
-      auto_return: backUrls ? 'approved' : undefined,
-      external_reference: externalReference || `ORDER-${Date.now()}`,
-      notification_url: notificationUrl,
-      marketplace_fee: fee,
-      marketplace: mpConfig.clientId,
-    }
-  });
+      address: payer.address ? {
+        street_name: payer.address.streetName,
+        street_number: payer.address.streetNumber,
+        zip_code: payer.address.zipCode,
+      } : undefined,
+    };
+  }
+  
+  // Back URLs (recomendado)
+  if (backUrls) {
+    preferenceBody.back_urls = {
+      success: backUrls.success,
+      failure: backUrls.failure,
+      pending: backUrls.pending,
+    };
+    preferenceBody.auto_return = autoReturn || 'approved';
+  }
+  
+  // Expiración de la preferencia
+  if (expires !== undefined) {
+    preferenceBody.expires = expires;
+  }
+  if (expirationDateFrom) {
+    preferenceBody.expiration_date_from = expirationDateFrom;
+  }
+  if (expirationDateTo) {
+    preferenceBody.expiration_date_to = expirationDateTo;
+  }
+  
+  const preferenceData = await sellerPreference.create({ body: preferenceBody });
   
   return {
     id: preferenceData.id,

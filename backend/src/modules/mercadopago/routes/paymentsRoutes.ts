@@ -10,13 +10,57 @@ const router = Router();
 /**
  * POST /payments/create-preference
  * Crea una preferencia de pago simple (sin split)
+ * 
+ * Body esperado para mejor puntuación en MP:
+ * {
+ *   items: [{
+ *     id: string,              // Código del item (recomendado)
+ *     title: string,           // Nombre del item (recomendado)
+ *     description: string,     // Descripción (recomendado)
+ *     categoryId: string,      // Categoría: "services", "electronics", etc. (recomendado)
+ *     quantity: number,        // Cantidad (recomendado)
+ *     unitPrice: number,       // Precio unitario (recomendado)
+ *     currency: string,        // Moneda (default: ARS)
+ *     pictureUrl: string       // URL de imagen
+ *   }],
+ *   payer: {
+ *     email: string,           // OBLIGATORIO
+ *     firstName: string,       // Nombre (recomendado)
+ *     lastName: string,        // Apellido (recomendado)
+ *     phone: { areaCode, number },
+ *     identification: { type, number }
+ *   },
+ *   backUrls: {                // URLs de redirección (recomendado)
+ *     success: string,
+ *     failure: string,
+ *     pending: string
+ *   },
+ *   externalReference: string, // OBLIGATORIO - ID interno de tu sistema
+ *   notificationUrl: string,   // URL para webhooks (recomendado)
+ *   statementDescriptor: string // Descripción en resumen de tarjeta (max 22 chars)
+ * }
  */
 router.post('/create-preference', async (req, res) => {
-  const { items, payer, backUrls, externalReference } = req.body;
+  const { 
+    items, 
+    payer, 
+    backUrls, 
+    externalReference,
+    notificationUrl,
+    statementDescriptor 
+  } = req.body;
   
   if (!items || !Array.isArray(items) || items.length === 0) {
     res.status(400).json({ error: 'items is required and must be an array' });
     return;
+  }
+  
+  // Validar campos obligatorios para mejor puntuación
+  if (!externalReference) {
+    console.warn('⚠️ [MP Payments] external_reference no proporcionado (OBLIGATORIO para mejor puntuación)');
+  }
+  if (!payer?.email) {
+    console.warn('⚠️ [MP Payments] payer.email no proporcionado (OBLIGATORIO para mejor puntuación)');
   }
   
   try {
@@ -25,6 +69,8 @@ router.post('/create-preference', async (req, res) => {
       payer,
       backUrls,
       externalReference,
+      notificationUrl,
+      statementDescriptor,
     });
     
     res.json({
@@ -40,9 +86,49 @@ router.post('/create-preference', async (req, res) => {
 /**
  * POST /payments/create-split-preference
  * Crea una preferencia de pago con Split Payment (Marketplace)
+ * 
+ * Body esperado para mejor puntuación en MP:
+ * {
+ *   sellerId: string,          // ID del vendedor en MP (OBLIGATORIO)
+ *   items: [{
+ *     id: string,              // Código del item (recomendado)
+ *     title: string,           // Nombre del item (recomendado)
+ *     description: string,     // Descripción (recomendado)
+ *     categoryId: string,      // Categoría: "services", "electronics", etc. (recomendado)
+ *     quantity: number,        // Cantidad (recomendado)
+ *     unitPrice: number,       // Precio unitario (recomendado)
+ *     currency: string,        // Moneda (default: ARS)
+ *     pictureUrl: string       // URL de imagen
+ *   }],
+ *   payer: {
+ *     email: string,           // OBLIGATORIO
+ *     firstName: string,       // Nombre (recomendado)
+ *     lastName: string,        // Apellido (recomendado)
+ *     phone: { areaCode, number },
+ *     identification: { type, number }
+ *   },
+ *   backUrls: {                // URLs de redirección (recomendado)
+ *     success: string,
+ *     failure: string,
+ *     pending: string
+ *   },
+ *   externalReference: string, // OBLIGATORIO - ID interno de tu sistema
+ *   notificationUrl: string,   // URL para webhooks (recomendado)
+ *   statementDescriptor: string, // Descripción en resumen de tarjeta (max 22 chars)
+ *   marketplaceFee: number     // Comisión del marketplace (opcional, usa config por defecto)
+ * }
  */
 router.post('/create-split-preference', async (req, res) => {
-  const { sellerId, items, payer, backUrls, externalReference, marketplaceFee } = req.body;
+  const { 
+    sellerId, 
+    items, 
+    payer, 
+    backUrls, 
+    externalReference, 
+    notificationUrl,
+    statementDescriptor,
+    marketplaceFee 
+  } = req.body;
   
   if (!sellerId) {
     res.status(400).json({ error: 'sellerId is required' });
@@ -52,6 +138,14 @@ router.post('/create-split-preference', async (req, res) => {
   if (!items || !Array.isArray(items) || items.length === 0) {
     res.status(400).json({ error: 'items is required and must be an array' });
     return;
+  }
+  
+  // Validar campos obligatorios para mejor puntuación
+  if (!externalReference) {
+    console.warn('⚠️ [MP Payments] external_reference no proporcionado (OBLIGATORIO para mejor puntuación)');
+  }
+  if (!payer?.email) {
+    console.warn('⚠️ [MP Payments] payer.email no proporcionado (OBLIGATORIO para mejor puntuación)');
   }
   
   try {
@@ -68,7 +162,7 @@ router.post('/create-split-preference', async (req, res) => {
     }
     
     const preference = await mpService.createSplitPreference(
-      { items, payer, backUrls, externalReference },
+      { items, payer, backUrls, externalReference, notificationUrl, statementDescriptor },
       { accessToken: seller.accessToken, userId: seller.userId },
       marketplaceFee
     );
