@@ -114,12 +114,19 @@ export default function MercadoPagoConfigPage() {
 
   const loadData = async () => {
     setLoading(true);
+    
+    // Si no hay mpUserId, no cargar datos de MP
+    if (!mpUserId) {
+      setLoading(false);
+      return;
+    }
+    
     try {
       const [linksRes, plansRes, paymentsRes, statsRes] = await Promise.all([
-        fetch(`${MP_API_URL}/payment-links?sellerId=${empresaId}`),
-        fetch(`${MP_API_URL}/subscriptions/plans?sellerId=${empresaId}`),
-        fetch(`${MP_API_URL}/payments/history/${empresaId}?limit=50`),
-        fetch(`${MP_API_URL}/payments/stats/${empresaId}`),
+        fetch(`${MP_API_URL}/payment-links?sellerId=${mpUserId}`),
+        fetch(`${MP_API_URL}/subscriptions/plans?sellerId=${mpUserId}`),
+        fetch(`${MP_API_URL}/payments/history/${mpUserId}?limit=50`),
+        fetch(`${MP_API_URL}/payments/stats/${mpUserId}`),
       ]);
       
       if (linksRes.ok) {
@@ -149,6 +156,13 @@ export default function MercadoPagoConfigPage() {
 
   const handleCreateProduct = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Validar que MP esté conectado
+    if (!mpUserId) {
+      alert('Debes conectar tu cuenta de Mercado Pago primero');
+      return;
+    }
+    
     setLoading(true);
     
     try {
@@ -156,7 +170,7 @@ export default function MercadoPagoConfigPage() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          sellerId: empresaId,
+          sellerId: mpUserId, // ✅ Usar mp_user_id en lugar de empresa_id
           title: productForm.title,
           unitPrice: parseFloat(productForm.unitPrice),
           description: productForm.description || undefined,
@@ -164,19 +178,32 @@ export default function MercadoPagoConfigPage() {
         }),
       });
       
-      if (res.ok) {
-        setProductForm({ title: '', unitPrice: '', description: '', priceType: 'fixed' });
-        setShowNewProduct(false);
-        loadData();
+      if (!res.ok) {
+        const error = await res.json();
+        alert(`Error: ${error.error || 'No se pudo crear el link'}`);
+        setLoading(false);
+        return;
       }
+      
+      setProductForm({ title: '', unitPrice: '', description: '', priceType: 'fixed' });
+      setShowNewProduct(false);
+      await loadData();
     } catch (err) {
       console.error('Error creando producto:', err);
+      alert('Error al crear el link de pago');
     }
     setLoading(false);
   };
 
   const handleCreatePlan = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Validar que MP esté conectado
+    if (!mpUserId) {
+      alert('Debes conectar tu cuenta de Mercado Pago primero');
+      return;
+    }
+    
     setLoading(true);
     
     try {
@@ -184,7 +211,7 @@ export default function MercadoPagoConfigPage() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          sellerId: empresaId,
+          sellerId: mpUserId, // ✅ Usar mp_user_id en lugar de empresa_id
           name: planForm.name,
           amount: parseFloat(planForm.amount),
           frequency: planForm.frequency,
@@ -193,13 +220,19 @@ export default function MercadoPagoConfigPage() {
         }),
       });
       
-      if (res.ok) {
-        setPlanForm({ name: '', amount: '', frequency: 'monthly', trialDays: '0', description: '' });
-        setShowNewPlan(false);
-        loadData();
+      if (!res.ok) {
+        const error = await res.json();
+        alert(`Error: ${error.error || 'No se pudo crear el plan'}`);
+        setLoading(false);
+        return;
       }
+      
+      setPlanForm({ name: '', amount: '', frequency: 'monthly', trialDays: '0', description: '' });
+      setShowNewPlan(false);
+      await loadData();
     } catch (err) {
       console.error('Error creando plan:', err);
+      alert('Error al crear el plan de suscripción');
     }
     setLoading(false);
   };
