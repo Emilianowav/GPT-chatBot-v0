@@ -130,8 +130,8 @@ export default function MercadoPagoConfigPage() {
       const [linksRes, plansRes, paymentsRes, statsRes] = await Promise.all([
         fetch(`${MP_API_URL}/payment-links?sellerId=${mpUserId}`),
         fetch(`${MP_API_URL}/subscriptions/plans?sellerId=${mpUserId}`),
-        fetch(`${MP_API_URL}/payments/history/${mpUserId}?limit=50`),
-        fetch(`${MP_API_URL}/payments/stats/${mpUserId}`),
+        fetch(`${MP_API_URL}/payments/history/${empresaId}?limit=50`),
+        fetch(`${MP_API_URL}/payments/stats/${empresaId}`),
       ]);
       
       if (linksRes.ok) {
