@@ -278,7 +278,8 @@ async function processPaymentNotification(paymentId: string): Promise<void> {
       payerName: mpPayment.payer?.first_name 
         ? `${mpPayment.payer.first_name} ${mpPayment.payer.last_name || ''}`
         : undefined,
-      payerPhone: mpPayment.payer?.phone?.number,
+      // ✅ PRIORIZAR teléfono del external_reference sobre el de MP
+      payerPhone: clientePhoneFromRef || mpPayment.payer?.phone?.number,
       payerDocType: mpPayment.payer?.identification?.type,
       payerDocNumber: mpPayment.payer?.identification?.number,
       dateCreated: mpPayment.date_created ? new Date(mpPayment.date_created) : undefined,
@@ -286,6 +287,14 @@ async function processPaymentNotification(paymentId: string): Promise<void> {
       dateLastUpdated: mpPayment.date_last_updated ? new Date(mpPayment.date_last_updated) : undefined,
       metadata: mpPayment.metadata
     };
+    
+    console.log(`[MP Webhook] Datos del pago a guardar:`, {
+      mpPaymentId: paymentId,
+      amount: paymentData.amount,
+      payerPhone: paymentData.payerPhone,
+      payerEmail: paymentData.payerEmail,
+      externalReference: paymentData.externalReference
+    });
     
     if (existingPayment) {
       // Actualizar pago existente
