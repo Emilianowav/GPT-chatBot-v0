@@ -72,6 +72,9 @@ export default function MercadoPagoConfigPage() {
   // Estados para crear nuevo
   const [showNewProduct, setShowNewProduct] = useState(false);
   const [showNewPlan, setShowNewPlan] = useState(false);
+  const [editingLink, setEditingLink] = useState<PaymentLink | null>(null);
+  const [showEditWarning, setShowEditWarning] = useState(false);
+  const [pendingEdit, setPendingEdit] = useState<any>(null);
   
   // Form de producto
   const [productForm, setProductForm] = useState({
@@ -246,6 +249,91 @@ export default function MercadoPagoConfigPage() {
     setLoading(false);
   };
 
+  const handleEditLink = (link: PaymentLink) => {
+    setEditingLink(link);
+    setProductForm({
+      title: link.title,
+      unitPrice: link.unitPrice.toString().replace('.', ','),
+      description: link.description || '',
+      priceType: link.priceType || 'fixed'
+    });
+    setShowNewProduct(false);
+  };
+
+  const handleUpdateProduct = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!editingLink) return;
+    
+    // Validar y convertir precio
+    const priceStr = productForm.unitPrice.replace(/\./g, '').replace(',', '.');
+    const price = parseFloat(priceStr);
+    
+    if (isNaN(price) || price <= 0) {
+      alert('El precio debe ser mayor a 0');
+      return;
+    }
+    
+    // Verificar si el título cambió (esto cambiaría el slug/URL)
+    const titleChanged = productForm.title !== editingLink.title;
+    
+    if (titleChanged) {
+      // Mostrar advertencia
+      setPendingEdit({
+        id: editingLink.id,
+        title: productForm.title,
+        unitPrice: price,
+        description: productForm.description,
+        priceType: productForm.priceType
+      });
+      setShowEditWarning(true);
+      return;
+    }
+    
+    // Si no cambió el título, actualizar directamente
+    await performUpdate({
+      id: editingLink.id,
+      title: productForm.title,
+      unitPrice: price,
+      description: productForm.description,
+      priceType: productForm.priceType
+    });
+  };
+  
+  const performUpdate = async (data: any) => {
+    setLoading(true);
+    
+    try {
+      const res = await fetch(`${MP_API_URL}/payment-links/${data.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          title: data.title,
+          unitPrice: data.unitPrice,
+          description: data.description,
+          priceType: data.priceType
+        }),
+      });
+      
+      if (!res.ok) {
+        const error = await res.json();
+        alert(`Error: ${error.error || 'No se pudo actualizar el link'}`);
+        setLoading(false);
+        return;
+      }
+      
+      setProductForm({ title: '', unitPrice: '', description: '', priceType: 'fixed' });
+      setEditingLink(null);
+      setShowEditWarning(false);
+      setPendingEdit(null);
+      await loadData();
+    } catch (err) {
+      console.error('Error actualizando link:', err);
+      alert('Error al actualizar el link de pago');
+    }
+    setLoading(false);
+  };
+
   const handleDeleteLink = async (linkId: string) => {
     if (!confirm('¿Eliminar este link de pago?')) return;
     
@@ -253,7 +341,7 @@ export default function MercadoPagoConfigPage() {
       await fetch(`${MP_API_URL}/payment-links/${linkId}`, { method: 'DELETE' });
       loadData();
     } catch (err) {
-      console.error('Error eliminando:', err);
+      console.error('Error eliminando link:', err);
     }
   };
 
@@ -395,33 +483,16 @@ export default function MercadoPagoConfigPage() {
                 </button>
               </div>
 
-              {/* Form nuevo producto */}
-              {showNewProduct && (
-                <form className={styles.formModern} onSubmit={handleCreateProduct}>
+              {/* Form nuevo/editar producto */}
+              {(showNewProduct || editingLink) && (
+                <form className={styles.formModern} onSubmit={editingLink ? handleUpdateProduct : handleCreateProduct}>
                   <div className={styles.formHeader}>
-                    <div className={styles.formIcon}>
-                      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                        <circle cx="12" cy="12" r="10"/>
-                        <path d="M12 6v6l4 2"/>
-                      </svg>
-                    </div>
-                    <div>
-                      <h3>Crear Link de Pago</h3>
-                      <p>Completa los datos para generar tu link</p>
-                    </div>
+                    <h3>{editingLink ? 'Editar Link de Pago' : 'Crear Link de Pago'}</h3>
                   </div>
                   
                   <div className={styles.formBody}>
                     <div className={styles.formGroupModern}>
-                      <label>
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                          <path d="M20 7h-9"/>
-                          <path d="M14 17H5"/>
-                          <circle cx="17" cy="17" r="3"/>
-                          <circle cx="7" cy="7" r="3"/>
-                        </svg>
-                        Nombre del producto o servicio *
-                      </label>
+                      <label>Nombre del producto o servicio *</label>
                       <input
                         type="text"
                         value={productForm.title}
@@ -433,13 +504,7 @@ export default function MercadoPagoConfigPage() {
                     </div>
                     
                     <div className={styles.formGroupModern}>
-                      <label>
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                          <line x1="12" y1="1" x2="12" y2="23"/>
-                          <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
-                        </svg>
-                        Precio (ARS) *
-                      </label>
+                      <label>Precio (ARS) *</label>
                       <div className={styles.priceInputWrapper}>
                         <span className={styles.pricePrefix}>$</span>
                         <input
@@ -461,12 +526,7 @@ export default function MercadoPagoConfigPage() {
                     </div>
                     
                     <div className={styles.formGroupModern}>
-                      <label>
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                          <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
-                        </svg>
-                        Tipo de precio
-                      </label>
+                      <label>Tipo de precio</label>
                       <select
                         value={productForm.priceType}
                         onChange={(e) => setProductForm({...productForm, priceType: e.target.value})}
@@ -479,39 +539,27 @@ export default function MercadoPagoConfigPage() {
                     </div>
                     
                     <div className={styles.formGroupModern}>
-                      <label>
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
-                          <polyline points="14 2 14 8 20 8"/>
-                          <line x1="16" y1="13" x2="8" y2="13"/>
-                          <line x1="16" y1="17" x2="8" y2="17"/>
-                          <polyline points="10 9 9 9 8 9"/>
-                        </svg>
-                        Descripción (opcional)
-                      </label>
+                      <label>Descripción (opcional)</label>
                       <textarea
                         value={productForm.description}
                         onChange={(e) => setProductForm({...productForm, description: e.target.value})}
                         placeholder="Agrega detalles sobre el producto o servicio..."
-                        rows={3}
+                        rows={2}
                         className={styles.textareaModern}
                       />
                     </div>
                   </div>
                   
                   <div className={styles.formActionsModern}>
-                    <button type="button" className={styles.btnCancel} onClick={() => setShowNewProduct(false)}>
-                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                        <line x1="18" y1="6" x2="6" y2="18"/>
-                        <line x1="6" y1="6" x2="18" y2="18"/>
-                      </svg>
+                    <button type="button" className={styles.btnCancel} onClick={() => {
+                      setShowNewProduct(false);
+                      setEditingLink(null);
+                      setProductForm({ title: '', unitPrice: '', description: '', priceType: 'fixed' });
+                    }}>
                       Cancelar
                     </button>
                     <button type="submit" className={styles.btnSubmit} disabled={loading}>
-                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                        <polyline points="20 6 9 17 4 12"/>
-                      </svg>
-                      {loading ? 'Creando...' : 'Crear Link'}
+                      {loading ? (editingLink ? 'Actualizando...' : 'Creando...') : (editingLink ? 'Actualizar Link' : 'Crear Link')}
                     </button>
                   </div>
                 </form>
@@ -547,6 +595,16 @@ export default function MercadoPagoConfigPage() {
                           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                             <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/>
                             <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+                          </svg>
+                        </button>
+                        <button 
+                          className={styles.editButton}
+                          onClick={() => handleEditLink(link)}
+                          title="Editar"
+                        >
+                          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                            <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+                            <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
                           </svg>
                         </button>
                         <button 
@@ -1086,6 +1144,55 @@ export default function MercadoPagoConfigPage() {
             </div>
           ) : null}
         </div>
+
+        {/* Modal de advertencia al editar título */}
+        {showEditWarning && pendingEdit && (
+          <div className={styles.modalOverlay} onClick={() => setShowEditWarning(false)}>
+            <div className={styles.modalWarning} onClick={(e) => e.stopPropagation()}>
+              <div className={styles.modalWarningHeader}>
+                <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" strokeWidth="2">
+                  <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+                  <line x1="12" y1="9" x2="12" y2="13"/>
+                  <line x1="12" y1="17" x2="12.01" y2="17"/>
+                </svg>
+                <h3>⚠️ Advertencia: El link cambiará</h3>
+              </div>
+              <div className={styles.modalWarningBody}>
+                <p>
+                  Al cambiar el <strong>nombre del producto</strong>, se generará un nuevo link (URL).
+                </p>
+                <p>
+                  <strong>Esto significa que:</strong>
+                </p>
+                <ul>
+                  <li>❌ El link anterior dejará de funcionar</li>
+                  <li>❌ Los links compartidos previamente quedarán rotos</li>
+                  <li>❌ Deberás compartir el nuevo link a tus clientes</li>
+                </ul>
+                <p className={styles.warningQuestion}>
+                  ¿Estás seguro de que deseas continuar?
+                </p>
+              </div>
+              <div className={styles.modalWarningActions}>
+                <button 
+                  className={styles.btnWarningCancel} 
+                  onClick={() => {
+                    setShowEditWarning(false);
+                    setPendingEdit(null);
+                  }}
+                >
+                  Cancelar
+                </button>
+                <button 
+                  className={styles.btnWarningConfirm} 
+                  onClick={() => performUpdate(pendingEdit)}
+                >
+                  Sí, actualizar de todas formas
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </DashboardLayout>
   );
