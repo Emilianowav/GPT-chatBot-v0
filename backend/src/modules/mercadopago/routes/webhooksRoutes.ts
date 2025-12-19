@@ -9,6 +9,7 @@ import { Seller } from '../models/Seller.js';
 import { enviarMensajeWhatsAppTexto } from '../../../services/metaService.js';
 import { EmpresaModel } from '../../../models/Empresa.js';
 import { ClienteModel } from '../../../models/Cliente.js';
+import { actualizarHistorialConversacion } from '../../../services/contactoService.js';
 
 const router = Router();
 
@@ -439,6 +440,26 @@ async function notifyPaymentApproved(
     );
     
     console.log(`[MP Webhook] ✅ Notificación de pago enviada a ${clientePhone}`);
+    
+    // Guardar mensaje en el historial de conversación
+    try {
+      // Buscar el contacto por teléfono y empresa
+      const contacto = await ClienteModel.findOne({
+        telefono: clientePhone,
+        empresaId: seller.internalId
+      });
+      
+      if (contacto) {
+        // Actualizar historial con el mensaje del bot
+        await actualizarHistorialConversacion(contacto._id.toString(), mensaje);
+        console.log(`[MP Webhook] ✅ Mensaje guardado en historial de conversación`);
+      } else {
+        console.log(`[MP Webhook] ⚠️ No se encontró contacto para guardar en historial`);
+      }
+    } catch (historialError: any) {
+      console.error(`[MP Webhook] Error guardando en historial:`, historialError.message);
+      // No lanzar error, solo loguear
+    }
     
   } catch (error: any) {
     console.error(`[MP Webhook] Error notificando pago:`, error.message);
