@@ -3,6 +3,12 @@ import { Router, Request, Response } from 'express';
 import { MercadoPagoConfig, Preference } from 'mercadopago';
 import paymentLinksService from '../services/paymentLinksService.js';
 import { Seller } from '../models/Seller.js';
+import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const router = Router();
 
@@ -204,6 +210,20 @@ router.get('/pay/:slug', async (req: Request, res: Response): Promise<void> => {
     
     // Buscar el link por slug
     const link = await paymentLinksService.getLinkByIdOrSlug(slug);
+    
+    // Si no hay teléfono, mostrar formulario de captura
+    if (!phone) {
+      const formPath = path.join(__dirname, '../views/paymentForm.html');
+      let html = fs.readFileSync(formPath, 'utf-8');
+      
+      // Reemplazar placeholders
+      html = html.replace('{{TITLE}}', link?.title || 'Pago');
+      html = html.replace('{{DESCRIPTION}}', link?.description || 'Completa tus datos para continuar');
+      html = html.replace('{{PRICE}}', link?.unitPrice.toLocaleString('es-AR') || '0');
+      
+      res.send(html);
+      return;
+    }
     
     if (!link) {
       res.status(404).send(`

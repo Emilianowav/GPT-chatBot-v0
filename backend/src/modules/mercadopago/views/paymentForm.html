@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Completar datos - {{TITLE}}</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+    
+    .container {
+      background: white;
+      border-radius: 16px;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+      max-width: 450px;
+      width: 100%;
+      overflow: hidden;
+    }
+    
+    .header {
+      background: linear-gradient(135deg, #1e3a5f 0%, #264469 100%);
+      color: white;
+      padding: 30px;
+      text-align: center;
+    }
+    
+    .header h1 {
+      font-size: 24px;
+      margin-bottom: 8px;
+    }
+    
+    .header p {
+      font-size: 14px;
+      opacity: 0.9;
+    }
+    
+    .price-tag {
+      background: rgba(255, 255, 255, 0.2);
+      display: inline-block;
+      padding: 8px 16px;
+      border-radius: 20px;
+      margin-top: 12px;
+      font-size: 20px;
+      font-weight: bold;
+    }
+    
+    .form-container {
+      padding: 30px;
+    }
+    
+    .info-box {
+      background: #f0f9ff;
+      border-left: 4px solid #3b82f6;
+      padding: 16px;
+      margin-bottom: 24px;
+      border-radius: 4px;
+    }
+    
+    .info-box p {
+      color: #1e40af;
+      font-size: 14px;
+      line-height: 1.5;
+    }
+    
+    .form-group {
+      margin-bottom: 20px;
+    }
+    
+    label {
+      display: block;
+      font-size: 14px;
+      font-weight: 600;
+      color: #374151;
+      margin-bottom: 8px;
+    }
+    
+    input {
+      width: 100%;
+      padding: 12px 16px;
+      border: 2px solid #e5e7eb;
+      border-radius: 8px;
+      font-size: 16px;
+      transition: all 0.2s;
+    }
+    
+    input:focus {
+      outline: none;
+      border-color: #3b82f6;
+      box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+    }
+    
+    .btn-submit {
+      width: 100%;
+      background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+      color: white;
+      border: none;
+      padding: 14px 24px;
+      border-radius: 8px;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+    
+    .btn-submit:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 10px 20px rgba(59, 130, 246, 0.3);
+    }
+    
+    .btn-submit:active {
+      transform: translateY(0);
+    }
+    
+    .security-badge {
+      text-align: center;
+      margin-top: 20px;
+      padding-top: 20px;
+      border-top: 1px solid #e5e7eb;
+    }
+    
+    .security-badge p {
+      font-size: 12px;
+      color: #6b7280;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+    }
+    
+    .error-message {
+      background: #fee2e2;
+      border-left: 4px solid #ef4444;
+      padding: 12px;
+      margin-bottom: 16px;
+      border-radius: 4px;
+      color: #991b1b;
+      font-size: 14px;
+      display: none;
+    }
+    
+    @media (max-width: 480px) {
+      .header h1 {
+        font-size: 20px;
+      }
+      
+      .form-container {
+        padding: 20px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>{{TITLE}}</h1>
+      <p>{{DESCRIPTION}}</p>
+      <div class="price-tag">$ {{PRICE}}</div>
+    </div>
+    
+    <div class="form-container">
+      <div class="info-box">
+        <p>📱 Para confirmar tu pago por WhatsApp, necesitamos tu número de teléfono.</p>
+      </div>
+      
+      <div class="error-message" id="errorMessage"></div>
+      
+      <form id="paymentForm">
+        <div class="form-group">
+          <label for="phone">Número de WhatsApp *</label>
+          <input 
+            type="tel" 
+            id="phone" 
+            name="phone" 
+            placeholder="+54 9 3794 123456"
+            required
+            autocomplete="tel"
+          >
+        </div>
+        
+        <div class="form-group">
+          <label for="name">Nombre (opcional)</label>
+          <input 
+            type="text" 
+            id="name" 
+            name="name" 
+            placeholder="Tu nombre"
+            autocomplete="name"
+          >
+        </div>
+        
+        <button type="submit" class="btn-submit">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="1" y="4" width="22" height="16" rx="2" ry="2"/>
+            <line x1="1" y1="10" x2="23" y2="10"/>
+          </svg>
+          Continuar al pago
+        </button>
+      </form>
+      
+      <div class="security-badge">
+        <p>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+            <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+          </svg>
+          Pago seguro con Mercado Pago
+        </p>
+      </div>
+    </div>
+  </div>
+  
+  <script>
+    const form = document.getElementById('paymentForm');
+    const errorMessage = document.getElementById('errorMessage');
+    
+    form.addEventListener('submit', function(e) {
+      e.preventDefault();
+      
+      const phone = document.getElementById('phone').value.trim();
+      const name = document.getElementById('name').value.trim();
+      
+      // Validar teléfono
+      if (!phone) {
+        showError('Por favor ingresa tu número de WhatsApp');
+        return;
+      }
+      
+      // Limpiar número (quitar espacios, guiones, etc)
+      const cleanPhone = phone.replace(/[\s\-\(\)]/g, '');
+      
+      // Validar formato básico
+      if (cleanPhone.length < 10) {
+        showError('El número de teléfono parece incompleto');
+        return;
+      }
+      
+      // Construir URL con parámetros
+      const currentUrl = new URL(window.location.href);
+      const slug = currentUrl.pathname.split('/').pop();
+      
+      let redirectUrl = `/api/modules/mercadopago/payment-links/pay/${slug}?phone=${encodeURIComponent(cleanPhone)}`;
+      
+      if (name) {
+        redirectUrl += `&name=${encodeURIComponent(name)}`;
+      }
+      
+      // Redirigir
+      window.location.href = redirectUrl;
+    });
+    
+    function showError(message) {
+      errorMessage.textContent = message;
+      errorMessage.style.display = 'block';
+      
+      setTimeout(() => {
+        errorMessage.style.display = 'none';
+      }, 5000);
+    }
+    
+    // Auto-formatear teléfono mientras escribe
+    const phoneInput = document.getElementById('phone');
+    phoneInput.addEventListener('input', function(e) {
+      let value = e.target.value.replace(/\D/g, '');
+      
+      // Si no empieza con +, agregar +54 9 para Argentina
+      if (value && !e.target.value.startsWith('+')) {
+        if (!value.startsWith('549')) {
+          if (value.startsWith('9')) {
+            value = '54' + value;
+          } else {
+            value = '549' + value;
+          }
+        }
+        e.target.value = '+' + value;
+      }
+    });
+  </script>
+</body>
+</html>
