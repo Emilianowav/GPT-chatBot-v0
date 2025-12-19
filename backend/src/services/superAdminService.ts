@@ -3,6 +3,7 @@ import { EmpresaModel } from '../models/Empresa.js';
 import { UsuarioEmpresaModel } from '../models/UsuarioEmpresa.js';
 import { UsuarioModel } from '../models/Usuario.js';
 import bcrypt from 'bcryptjs';
+import mongoose from 'mongoose';
 
 /**
  * Crea una nueva empresa (onboarding)
@@ -13,9 +14,11 @@ export async function crearEmpresa(data: {
   telefono?: string;
   plan?: string;
   categoria?: string;
+  tipoBot?: string;
+  tipoNegocio?: string;
 }) {
   try {
-    const { nombre, email, telefono, plan = 'standard', categoria = 'general' } = data;
+    const { nombre, email, telefono, plan = 'standard', categoria = 'general', tipoBot = 'conversacional', tipoNegocio = 'otro' } = data;
 
     // Validar que el nombre no exista
     const empresaExistente = await EmpresaModel.findOne({ nombre });
@@ -111,6 +114,131 @@ export async function crearEmpresa(data: {
     await nuevaEmpresa.save();
 
     console.log('✅ Empresa creada por SuperAdmin:', nombre);
+
+    // Configurar bot según el tipo seleccionado
+    if (tipoBot === 'pasos') {
+      // Crear configuración de bot de pasos
+      await mongoose.connection.collection('configuracionbots').insertOne({
+        empresaId: nombre,
+        activo: true,
+        mensajeBienvenida: `¡Hola! 👋\nBienvenido a *${nombre}*\n\n¿En qué puedo ayudarte?`,
+        mensajeDespedida: '¡Hasta pronto! 👋',
+        mensajeError: '❌ No entendí tu respuesta. Por favor, intenta de nuevo.',
+        timeoutMinutos: 15,
+        horariosAtencion: {
+          activo: false,
+          inicio: '08:00',
+          fin: '23:00',
+          diasSemana: [0, 1, 2, 3, 4, 5, 6],
+          mensajeFueraHorario: '⏰ Estamos fuera de horario. Te responderemos pronto.'
+        },
+        requiereConfirmacion: true,
+        permiteCancelacion: true,
+        notificarAdmin: false,
+        createdAt: new Date(),
+        updatedAt: new Date()
+      });
+
+      // Crear configuración del módulo de calendario
+      const nomenclaturas: any = {
+        canchas: {
+          turno: 'Reserva',
+          turnos: 'Reservas',
+          agente: 'Cancha',
+          agentes: 'Canchas',
+          cliente: 'Jugador',
+          clientes: 'Jugadores',
+          recurso: 'Cancha',
+          recursos: 'Canchas'
+        },
+        viajes: {
+          turno: 'Viaje',
+          turnos: 'Viajes',
+          agente: 'Chofer',
+          agentes: 'Choferes',
+          cliente: 'Pasajero',
+          clientes: 'Pasajeros',
+          recurso: 'Vehículo',
+          recursos: 'Vehículos'
+        },
+        salud: {
+          turno: 'Turno',
+          turnos: 'Turnos',
+          agente: 'Profesional',
+          agentes: 'Profesionales',
+          cliente: 'Paciente',
+          clientes: 'Pacientes',
+          recurso: 'Consultorio',
+          recursos: 'Consultorios'
+        },
+        belleza: {
+          turno: 'Turno',
+          turnos: 'Turnos',
+          agente: 'Profesional',
+          agentes: 'Profesionales',
+          cliente: 'Cliente',
+          clientes: 'Clientes',
+          recurso: 'Sala',
+          recursos: 'Salas'
+        },
+        otro: {
+          turno: 'Turno',
+          turnos: 'Turnos',
+          agente: 'Agente',
+          agentes: 'Agentes',
+          cliente: 'Cliente',
+          clientes: 'Clientes',
+          recurso: 'Recurso',
+          recursos: 'Recursos'
+        }
+      };
+
+      const nomenclatura = nomenclaturas[tipoNegocio] || nomenclaturas.otro;
+
+      await mongoose.connection.collection('configuraciones_modulo').insertOne({
+        empresaId: nombre,
+        tipoNegocio,
+        activo: true,
+        nomenclatura,
+        usaAgentes: true,
+        agenteRequerido: true,
+        usaRecursos: false,
+        recursoRequerido: false,
+        usaHorariosDisponibilidad: true,
+        duracionPorDefecto: 60,
+        permiteDuracionVariable: true,
+        chatbotActivo: true,
+        chatbotPuedeCrear: true,
+        chatbotPuedeModificar: true,
+        chatbotPuedeCancelar: true,
+        requiereConfirmacion: false,
+        notificaciones: [],
+        estadosPersonalizados: [],
+        camposPersonalizados: [],
+        variablesDinamicas: {
+          nombre_empresa: nombre,
+          nomenclatura_turno: nomenclatura.turno,
+          nomenclatura_turnos: nomenclatura.turnos,
+          nomenclatura_agente: nomenclatura.agente,
+          nomenclatura_agentes: nomenclatura.agentes,
+          zona_horaria: 'America/Argentina/Buenos_Aires',
+          moneda: 'ARS',
+          idioma: 'es'
+        },
+        createdAt: new Date(),
+        updatedAt: new Date()
+      });
+
+      console.log(`✅ Bot de pasos configurado (${tipoNegocio})`);
+    } else {
+      // Bot conversacional (GPT) - asegurar que NO tenga bot de pasos activo
+      await mongoose.connection.collection('configuracionbots').updateOne(
+        { empresaId: nombre },
+        { $set: { activo: false, updatedAt: new Date() } },
+        { upsert: false }
+      );
+      console.log('✅ Bot conversacional configurado (GPT)');
+    }
 
     return {
       success: true,
