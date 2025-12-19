@@ -8,9 +8,11 @@ import styles from './mercadopago.module.css';
 const MP_API_URL = process.env.NEXT_PUBLIC_MP_API_URL || 'http://localhost:3001';
 
 interface PaymentLink {
-  id: string;
+  _id: string;
+  id?: string;
   slug: string;
   title: string;
+  description: string;
   unitPrice: number;
   priceType: string;
   active: boolean;
@@ -280,7 +282,7 @@ export default function MercadoPagoConfigPage() {
     if (titleChanged) {
       // Mostrar advertencia
       setPendingEdit({
-        id: editingLink.id,
+        id: editingLink._id,
         title: productForm.title,
         unitPrice: price,
         description: productForm.description,
@@ -292,7 +294,7 @@ export default function MercadoPagoConfigPage() {
     
     // Si no cambió el título, actualizar directamente
     await performUpdate({
-      id: editingLink.id,
+      id: editingLink._id,
       title: productForm.title,
       unitPrice: price,
       description: productForm.description,
@@ -578,7 +580,7 @@ export default function MercadoPagoConfigPage() {
                   </div>
                 ) : (
                   paymentLinks.filter(l => l.active).map((link) => (
-                    <div key={link.id} className={styles.listItem}>
+                    <div key={link._id} className={styles.listItem}>
                       <div className={styles.itemInfo}>
                         <h4>{link.title}</h4>
                         <p>${link.unitPrice.toLocaleString()}</p>
@@ -588,8 +590,8 @@ export default function MercadoPagoConfigPage() {
                       </div>
                       <div className={styles.itemActions}>
                         <button 
-                          className={`${styles.copyButton} ${copiedId === link.id ? styles.copied : ''}`}
-                          onClick={() => copyToClipboard(link.paymentUrl, link.id)}
+                          className={`${styles.copyButton} ${copiedId === link._id ? styles.copied : ''}`}
+                          onClick={() => copyToClipboard(link.paymentUrl, link._id)}
                           title="Copiar link"
                         >
                           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -609,7 +611,7 @@ export default function MercadoPagoConfigPage() {
                         </button>
                         <button 
                           className={styles.deleteButton}
-                          onClick={() => handleDeleteLink(link.id)}
+                          onClick={() => handleDeleteLink(link._id)}
                           title="Eliminar"
                         >
                           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -1100,7 +1102,7 @@ export default function MercadoPagoConfigPage() {
                       >
                         <option value="">Usar monto del ticket</option>
                         {paymentLinks.filter(l => l.active).map((link) => (
-                          <option key={link.id} value={link.id}>
+                          <option key={link._id} value={link._id}>
                             {link.title} - ${link.unitPrice.toLocaleString()}
                           </option>
                         ))}
