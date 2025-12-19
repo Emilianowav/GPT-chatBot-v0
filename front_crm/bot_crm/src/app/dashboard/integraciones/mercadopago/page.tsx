@@ -163,6 +163,15 @@ export default function MercadoPagoConfigPage() {
       return;
     }
     
+    // Validar y convertir precio
+    const priceStr = productForm.unitPrice.replace(/\./g, '').replace(',', '.');
+    const price = parseFloat(priceStr);
+    
+    if (isNaN(price) || price <= 0) {
+      alert('El precio debe ser mayor a 0');
+      return;
+    }
+    
     setLoading(true);
     
     try {
@@ -170,9 +179,9 @@ export default function MercadoPagoConfigPage() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          sellerId: mpUserId, // ✅ Usar mp_user_id en lugar de empresa_id
+          sellerId: mpUserId,
           title: productForm.title,
-          unitPrice: parseFloat(productForm.unitPrice),
+          unitPrice: price,
           description: productForm.description || undefined,
           priceType: productForm.priceType,
         }),
@@ -388,59 +397,120 @@ export default function MercadoPagoConfigPage() {
 
               {/* Form nuevo producto */}
               {showNewProduct && (
-                <form className={styles.form} onSubmit={handleCreateProduct}>
-                  <h3>Crear Link de Pago</h3>
-                  
-                  <div className={styles.formGroup}>
-                    <label>Nombre del producto o servicio *</label>
-                    <input
-                      type="text"
-                      value={productForm.title}
-                      onChange={(e) => setProductForm({...productForm, title: e.target.value})}
-                      placeholder="Ej: Consultoría 1 hora"
-                      required
-                    />
+                <form className={styles.formModern} onSubmit={handleCreateProduct}>
+                  <div className={styles.formHeader}>
+                    <div className={styles.formIcon}>
+                      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                        <circle cx="12" cy="12" r="10"/>
+                        <path d="M12 6v6l4 2"/>
+                      </svg>
+                    </div>
+                    <div>
+                      <h3>Crear Link de Pago</h3>
+                      <p>Completa los datos para generar tu link</p>
+                    </div>
                   </div>
                   
-                  <div className={styles.formGroup}>
-                    <label>Precio *</label>
-                    <input
-                      type="number"
-                      value={productForm.unitPrice}
-                      onChange={(e) => setProductForm({...productForm, unitPrice: e.target.value})}
-                      placeholder="1000"
-                      min="1"
-                      required
-                    />
+                  <div className={styles.formBody}>
+                    <div className={styles.formGroupModern}>
+                      <label>
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                          <path d="M20 7h-9"/>
+                          <path d="M14 17H5"/>
+                          <circle cx="17" cy="17" r="3"/>
+                          <circle cx="7" cy="7" r="3"/>
+                        </svg>
+                        Nombre del producto o servicio *
+                      </label>
+                      <input
+                        type="text"
+                        value={productForm.title}
+                        onChange={(e) => setProductForm({...productForm, title: e.target.value})}
+                        placeholder="Ej: Consultoría 1 hora"
+                        required
+                        className={styles.inputModern}
+                      />
+                    </div>
+                    
+                    <div className={styles.formGroupModern}>
+                      <label>
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                          <line x1="12" y1="1" x2="12" y2="23"/>
+                          <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
+                        </svg>
+                        Precio (ARS) *
+                      </label>
+                      <div className={styles.priceInputWrapper}>
+                        <span className={styles.pricePrefix}>$</span>
+                        <input
+                          type="text"
+                          value={productForm.unitPrice}
+                          onChange={(e) => {
+                            const value = e.target.value.replace(/[^0-9,]/g, '');
+                            const parts = value.split(',');
+                            if (parts.length > 2) return;
+                            if (parts[1] && parts[1].length > 2) return;
+                            setProductForm({...productForm, unitPrice: value});
+                          }}
+                          placeholder="1.000,00"
+                          required
+                          className={styles.inputModern}
+                        />
+                      </div>
+                      <small className={styles.helpText}>Usa coma para decimales (ej: 1.500,50)</small>
+                    </div>
+                    
+                    <div className={styles.formGroupModern}>
+                      <label>
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                          <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
+                        </svg>
+                        Tipo de precio
+                      </label>
+                      <select
+                        value={productForm.priceType}
+                        onChange={(e) => setProductForm({...productForm, priceType: e.target.value})}
+                        className={styles.selectModern}
+                      >
+                        <option value="fixed">💰 Precio fijo</option>
+                        <option value="minimum">📊 Precio mínimo (cliente puede pagar más)</option>
+                        <option value="customer_chooses">✏️ Cliente elige el monto</option>
+                      </select>
+                    </div>
+                    
+                    <div className={styles.formGroupModern}>
+                      <label>
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                          <polyline points="14 2 14 8 20 8"/>
+                          <line x1="16" y1="13" x2="8" y2="13"/>
+                          <line x1="16" y1="17" x2="8" y2="17"/>
+                          <polyline points="10 9 9 9 8 9"/>
+                        </svg>
+                        Descripción (opcional)
+                      </label>
+                      <textarea
+                        value={productForm.description}
+                        onChange={(e) => setProductForm({...productForm, description: e.target.value})}
+                        placeholder="Agrega detalles sobre el producto o servicio..."
+                        rows={3}
+                        className={styles.textareaModern}
+                      />
+                    </div>
                   </div>
                   
-                  <div className={styles.formGroup}>
-                    <label>Tipo de precio</label>
-                    <select
-                      value={productForm.priceType}
-                      onChange={(e) => setProductForm({...productForm, priceType: e.target.value})}
-                    >
-                      <option value="fixed">Precio fijo</option>
-                      <option value="minimum">Precio mínimo (cliente puede pagar más)</option>
-                      <option value="customer_chooses">Cliente elige el monto</option>
-                    </select>
-                  </div>
-                  
-                  <div className={styles.formGroup}>
-                    <label>Descripción (opcional)</label>
-                    <textarea
-                      value={productForm.description}
-                      onChange={(e) => setProductForm({...productForm, description: e.target.value})}
-                      placeholder="Descripción del producto o servicio"
-                      rows={2}
-                    />
-                  </div>
-                  
-                  <div className={styles.formActions}>
-                    <button type="button" className={styles.cancelButton} onClick={() => setShowNewProduct(false)}>
+                  <div className={styles.formActionsModern}>
+                    <button type="button" className={styles.btnCancel} onClick={() => setShowNewProduct(false)}>
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                        <line x1="18" y1="6" x2="6" y2="18"/>
+                        <line x1="6" y1="6" x2="18" y2="18"/>
+                      </svg>
                       Cancelar
                     </button>
-                    <button type="submit" className={styles.submitButton} disabled={loading}>
+                    <button type="submit" className={styles.btnSubmit} disabled={loading}>
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                        <polyline points="20 6 9 17 4 12"/>
+                      </svg>
                       {loading ? 'Creando...' : 'Crear Link'}
                     </button>
                   </div>

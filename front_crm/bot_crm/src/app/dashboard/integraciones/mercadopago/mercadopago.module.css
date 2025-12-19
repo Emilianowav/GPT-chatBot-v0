@@ -1063,3 +1063,221 @@
     min-width: 600px;
   }
 }
+
+/* Formulario Moderno */
+.formModern {
+  background: white;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  margin-bottom: 1.5rem;
+  overflow: hidden;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.formHeader {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1.5rem;
+  background: linear-gradient(135deg, #1e3a5f 0%, #264469 100%);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.formIcon {
+  width: 48px;
+  height: 48px;
+  background: rgba(255, 255, 255, 0.15);
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  flex-shrink: 0;
+}
+
+.formHeader h3 {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: white;
+  margin: 0;
+}
+
+.formHeader p {
+  font-size: 0.8rem;
+  color: rgba(255, 255, 255, 0.8);
+  margin: 0.25rem 0 0 0;
+}
+
+.formBody {
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.formGroupModern {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.formGroupModern label {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #334155;
+}
+
+.formGroupModern label svg {
+  color: #FF6B4A;
+  flex-shrink: 0;
+}
+
+.inputModern,
+.selectModern,
+.textareaModern {
+  width: 100%;
+  padding: 0.75rem 1rem;
+  background: #f8fafc;
+  border: 2px solid #e2e8f0;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  color: #1e3a5f;
+  transition: all 0.2s;
+  font-family: inherit;
+}
+
+.inputModern:focus,
+.selectModern:focus,
+.textareaModern:focus {
+  outline: none;
+  background: white;
+  border-color: #FF6B4A;
+  box-shadow: 0 0 0 4px rgba(255, 107, 74, 0.1);
+}
+
+.inputModern::placeholder,
+.textareaModern::placeholder {
+  color: #94a3b8;
+}
+
+.priceInputWrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.pricePrefix {
+  position: absolute;
+  left: 1rem;
+  font-size: 1rem;
+  font-weight: 600;
+  color: #64748b;
+  pointer-events: none;
+}
+
+.priceInputWrapper .inputModern {
+  padding-left: 2.5rem;
+  font-size: 1rem;
+  font-weight: 500;
+}
+
+.helpText {
+  font-size: 0.75rem;
+  color: #64748b;
+  margin-top: -0.25rem;
+}
+
+.selectModern {
+  cursor: pointer;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg width='12' height='8' viewBox='0 0 12 8' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1.5L6 6.5L11 1.5' stroke='%2364748b' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 1rem center;
+  padding-right: 3rem;
+}
+
+.textareaModern {
+  resize: vertical;
+  min-height: 80px;
+  line-height: 1.5;
+}
+
+.formActionsModern {
+  display: flex;
+  gap: 0.75rem;
+  padding: 1.5rem;
+  background: #f8fafc;
+  border-top: 1px solid #e2e8f0;
+}
+
+.btnCancel,
+.btnSubmit {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.875rem 1.5rem;
+  border: none;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btnCancel {
+  background: white;
+  color: #64748b;
+  border: 2px solid #e2e8f0;
+}
+
+.btnCancel:hover {
+  background: #f8fafc;
+  border-color: #cbd5e1;
+  color: #475569;
+}
+
+.btnSubmit {
+  background: linear-gradient(135deg, #FF6B4A 0%, #FF8A6B 100%);
+  color: white;
+  box-shadow: 0 2px 8px rgba(255, 107, 74, 0.3);
+}
+
+.btnSubmit:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(255, 107, 74, 0.4);
+}
+
+.btnSubmit:active {
+  transform: translateY(0);
+}
+
+.btnSubmit:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+
+@media (max-width: 640px) {
+  .formHeader {
+    padding: 1.25rem;
+  }
+  
+  .formBody {
+    padding: 1.25rem;
+  }
+  
+  .formActionsModern {
+    flex-direction: column;
+    padding: 1.25rem;
+  }
+  
+  .btnCancel,
+  .btnSubmit {
+    width: 100%;
+  }
+}
