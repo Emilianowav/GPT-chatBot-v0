@@ -81,34 +81,63 @@ export const gptFlow: Flow = {
       
       // 3. Verificar si la empresa tiene pagos habilitados
       const empresaIdStr = empresa._id?.toString() || '';
-      const tienePageosHabilitados = EMPRESAS_CON_PAGOS.includes(empresaIdStr) || 
+      
+      // Verificar si tiene módulo de Mercado Pago habilitado
+      const moduloMP = empresa.modulos?.find((m: any) => m.id === 'mercadopago' && m.activo);
+      const tieneMPHabilitado = moduloMP ? true : false;
+      
+      // Fallback a lista hardcodeada para compatibilidad
+      const tienePageosHabilitados = tieneMPHabilitado || 
+                                      EMPRESAS_CON_PAGOS.includes(empresaIdStr) || 
                                       EMPRESAS_CON_PAGOS.includes(empresa.nombre);
       
-      console.log(`💳 [GPT] Empresa: ${empresa.nombre}, ID: ${empresaIdStr}, Pagos habilitados: ${tienePageosHabilitados}`);
+      console.log(`💳 [GPT] Empresa: ${empresa.nombre}, ID: ${empresaIdStr}, MP habilitado: ${tieneMPHabilitado}, Pagos habilitados: ${tienePageosHabilitados}`);
       
       // 4. Construir historial de mensajes para GPT
       let promptBase = empresa.prompt || 'Eres un asistente virtual amable y servicial.';
       
       // Si tiene pagos habilitados, agregar instrucciones de pago al prompt
       if (tienePageosHabilitados) {
+        // Obtener payment links de la empresa para incluir en el prompt
+        const { PaymentLink } = await import('../modules/mercadopago/models/PaymentLink.js');
+        const { Seller } = await import('../modules/mercadopago/models/Seller.js');
+        
+        const seller = await Seller.findOne({ internalId: empresa.nombre });
+        let productosInfo = '';
+        
+        if (seller) {
+          const paymentLinks = await PaymentLink.find({ 
+            sellerId: seller.userId,
+            active: true 
+          }).limit(20);
+          
+          if (paymentLinks.length > 0) {
+            productosInfo = '\n\n📦 PRODUCTOS DISPONIBLES:\n';
+            paymentLinks.forEach(link => {
+              productosInfo += `- ${link.title}: $${link.unitPrice} ARS (slug: ${link.slug})\n`;
+            });
+          }
+        }
+        
         promptBase += `\n\n--- INSTRUCCIONES DE PAGO ---
-IMPORTANTE: Cada libro/producto tiene un precio fijo de $0.20 (veinte centavos).
+IMPORTANTE: Cuando el cliente mencione un producto o quiera pagar, DEBES:
 
-Cuando el cliente quiera pagar o confirme su pedido, DEBES llamar a la función generate_payment_link con:
-- title: descripción del pedido (ej: "Pedido Veo Veo - 2 libros")
-- amount: total calculado (cantidad de items × $0.20)
-- description: detalle de los productos
+1. Si menciona un producto específico (mouse, teclado, etc.), confirma el producto y pregunta si quiere proceder al pago
+2. Cuando confirme que quiere pagar, USA LA FUNCIÓN generate_payment_link con:
+   - title: nombre del producto (ej: "Mouse Gamer RGB")
+   - amount: precio del producto (todos están a $1 ARS para pruebas)
+   - description: descripción breve del producto
 
-TRIGGERS para generar link de pago (cuando el cliente dice alguna de estas frases):
-- "quiero pagar"
-- "listo para pagar"  
-- "confirmo"
-- "pagar"
-- "proceder al pago"
+${productosInfo}
 
-Ejemplo: 2 libros = $0.40 (2 × $0.20)
+TRIGGERS para generar link de pago:
+- "quiero pagar", "pagar", "sí quiero pagar", "confirmo", "listo", "proceder al pago", "comprar"
 
-IMPORTANTE: Cuando detectes intención de pago, USA LA FUNCIÓN generate_payment_link. No pidas más datos, genera el link directamente.`;
+IMPORTANTE: 
+- Cuando detectes intención de pago clara, USA LA FUNCIÓN generate_payment_link inmediatamente
+- NO pidas datos adicionales como email o dirección
+- El precio de prueba es $1 ARS para todos los productos
+- Sé directo y genera el link cuando el cliente confirme`;
       }
       
       const historialGPT: ChatCompletionMessageParam[] = [
