@@ -124,6 +124,13 @@ export const recibirMensaje = async (req: Request, res: Response, next: NextFunc
       interacciones: contacto.metricas.interacciones 
     });
 
+    // Guardar phoneNumberId para intervención manual
+    if (phoneNumberId && contacto.ultimoPhoneNumberId !== phoneNumberId) {
+      contacto.ultimoPhoneNumberId = phoneNumberId;
+      await contacto.save();
+      console.log('📱 [WEBHOOK] phoneNumberId actualizado:', phoneNumberId);
+    }
+
     // 🛑 INTERVENCIÓN HUMANA: Si el chatbot está pausado, solo guardar mensaje y notificar
     if (contacto.chatbotPausado) {
       console.log('⏸️ [INTERVENCIÓN] Chatbot pausado para este contacto, no se responde automáticamente');

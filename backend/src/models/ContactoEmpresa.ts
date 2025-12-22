@@ -92,6 +92,9 @@ export interface IContactoEmpresa extends Document {
   chatbotPausadoPor?: string;        // Quién pausó (usuario del CRM)
   chatbotPausadoEn?: Date;           // Cuándo se pausó
   
+  // Datos de última interacción WhatsApp (para intervención)
+  ultimoPhoneNumberId?: string;      // phoneNumberId del último mensaje recibido
+  
   // Estado
   activo: boolean;
   
@@ -278,6 +281,12 @@ const ContactoEmpresaSchema = new Schema<IContactoEmpresa>({
   },
   chatbotPausadoEn: {
     type: Date,
+    required: false
+  },
+  
+  // Datos de última interacción WhatsApp (para intervención)
+  ultimoPhoneNumberId: {
+    type: String,
     required: false
   },
   

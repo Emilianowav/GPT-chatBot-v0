@@ -95,22 +95,27 @@ export async function enviarMensajeManual(
     throw new Error('Este contacto no pertenece a tu empresa');
   }
 
-  // Buscar empresa para obtener phoneNumberId
-  const empresa = await EmpresaModel.findOne({ nombre: empresaId });
-  if (!empresa) {
-    throw new Error('Empresa no encontrada');
-  }
-
-  // Obtener phoneNumberId de la empresa
-  const phoneNumberId = empresa.phoneNumberId;
+  // Usar phoneNumberId del último mensaje del contacto, o buscar de la empresa como fallback
+  let phoneNumberId = contacto.ultimoPhoneNumberId;
+  
   if (!phoneNumberId) {
-    throw new Error('La empresa no tiene phoneNumberId configurado');
+    console.log('⚠️ [INTERVENCION] No hay ultimoPhoneNumberId, buscando de empresa...');
+    const empresa = await EmpresaModel.findOne({ nombre: empresaId });
+    if (!empresa) {
+      throw new Error('Empresa no encontrada');
+    }
+    phoneNumberId = empresa.phoneNumberId;
+  }
+  
+  if (!phoneNumberId) {
+    throw new Error('No se pudo obtener phoneNumberId para enviar mensaje');
   }
 
   try {
     console.log('📤 [INTERVENCION] Enviando mensaje manual:', {
       telefonoContacto: contacto.telefono,
       phoneNumberId,
+      usandoUltimoPhoneNumberId: !!contacto.ultimoPhoneNumberId,
       mensajeLength: mensaje.length
     });
     
