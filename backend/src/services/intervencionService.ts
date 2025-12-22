@@ -16,20 +16,20 @@ export async function pausarChatbot(
 ): Promise<IContactoEmpresa> {
   console.log('🔍 [INTERVENCION] Buscando contacto:', { contactoId, empresaId });
   
-  const contacto = await ContactoEmpresaModel.findOne({
-    _id: contactoId,
-    empresaId
-  });
+  // Buscar por ID primero, luego verificar empresa
+  const contacto = await ContactoEmpresaModel.findById(contactoId);
 
   if (!contacto) {
-    // Intentar buscar solo por ID para debug
-    const contactoSinEmpresa = await ContactoEmpresaModel.findById(contactoId);
-    console.log('❌ [INTERVENCION] Contacto no encontrado con empresaId:', empresaId);
-    console.log('🔍 [INTERVENCION] Contacto existe?', !!contactoSinEmpresa);
-    if (contactoSinEmpresa) {
-      console.log('🔍 [INTERVENCION] empresaId del contacto:', contactoSinEmpresa.empresaId);
-    }
-    throw new Error(`Contacto no encontrado. empresaId buscado: ${empresaId}`);
+    throw new Error('Contacto no encontrado');
+  }
+
+  // Verificar que el contacto pertenece a la empresa
+  if (contacto.empresaId !== empresaId) {
+    console.log('❌ [INTERVENCION] empresaId no coincide:', { 
+      contactoEmpresaId: contacto.empresaId, 
+      tokenEmpresaId: empresaId 
+    });
+    throw new Error('Este contacto no pertenece a tu empresa');
   }
 
   contacto.chatbotPausado = true;
@@ -52,13 +52,14 @@ export async function reanudarChatbot(
   contactoId: string,
   empresaId: string
 ): Promise<IContactoEmpresa> {
-  const contacto = await ContactoEmpresaModel.findOne({
-    _id: contactoId,
-    empresaId
-  });
+  const contacto = await ContactoEmpresaModel.findById(contactoId);
 
   if (!contacto) {
     throw new Error('Contacto no encontrado');
+  }
+
+  if (contacto.empresaId !== empresaId) {
+    throw new Error('Este contacto no pertenece a tu empresa');
   }
 
   contacto.chatbotPausado = false;
@@ -84,13 +85,14 @@ export async function enviarMensajeManual(
   enviadoPor: string
 ): Promise<{ success: boolean; messageId?: string }> {
   // Buscar contacto
-  const contacto = await ContactoEmpresaModel.findOne({
-    _id: contactoId,
-    empresaId
-  });
+  const contacto = await ContactoEmpresaModel.findById(contactoId);
 
   if (!contacto) {
     throw new Error('Contacto no encontrado');
+  }
+
+  if (contacto.empresaId !== empresaId) {
+    throw new Error('Este contacto no pertenece a tu empresa');
   }
 
   // Buscar empresa para obtener phoneNumberId
@@ -149,13 +151,14 @@ export async function obtenerEstadoIntervencion(
   pausadoPor?: string;
   pausadoEn?: Date;
 }> {
-  const contacto = await ContactoEmpresaModel.findOne({
-    _id: contactoId,
-    empresaId
-  });
+  const contacto = await ContactoEmpresaModel.findById(contactoId);
 
   if (!contacto) {
     throw new Error('Contacto no encontrado');
+  }
+
+  if (contacto.empresaId !== empresaId) {
+    throw new Error('Este contacto no pertenece a tu empresa');
   }
 
   return {
