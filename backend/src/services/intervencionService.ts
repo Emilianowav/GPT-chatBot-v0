@@ -108,6 +108,12 @@ export async function enviarMensajeManual(
   }
 
   try {
+    console.log('📤 [INTERVENCION] Enviando mensaje manual:', {
+      telefonoContacto: contacto.telefono,
+      phoneNumberId,
+      mensajeLength: mensaje.length
+    });
+    
     // Enviar mensaje vía WhatsApp API
     const result = await enviarMensajeWhatsAppTexto(
       contacto.telefono,
