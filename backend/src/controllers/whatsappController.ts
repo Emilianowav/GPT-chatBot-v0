@@ -118,7 +118,9 @@ export const recibirMensaje = async (req: Request, res: Response, next: NextFunc
       nombre: contacto.nombre,
       apellido: contacto.apellido,
       empresaId: contacto.empresaId,
-      telefono: contacto.telefono,
+      telefonoContacto: contacto.telefono,
+      telefonoWebhook: telefonoCliente,
+      telefonosCoinciden: contacto.telefono === telefonoCliente,
       interacciones: contacto.metricas.interacciones 
     });
 
