@@ -14,8 +14,13 @@ import {
 export const pausarChatbotController = async (req: Request, res: Response) => {
   try {
     const { contactoId } = req.params;
-    const empresaId = (req as any).empresaId;
-    const usuario = (req as any).usuario?.nombre || 'Operador';
+    const empresaId = req.user?.empresaId;
+    const usuario = req.user?.username || 'Operador';
+
+    if (!empresaId) {
+      res.status(401).json({ error: 'No autenticado' });
+      return;
+    }
 
     if (!contactoId) {
       res.status(400).json({ error: 'contactoId es requerido' });
@@ -48,7 +53,12 @@ export const pausarChatbotController = async (req: Request, res: Response) => {
 export const reanudarChatbotController = async (req: Request, res: Response) => {
   try {
     const { contactoId } = req.params;
-    const empresaId = (req as any).empresaId;
+    const empresaId = req.user?.empresaId;
+
+    if (!empresaId) {
+      res.status(401).json({ error: 'No autenticado' });
+      return;
+    }
 
     if (!contactoId) {
       res.status(400).json({ error: 'contactoId es requerido' });
@@ -80,8 +90,13 @@ export const enviarMensajeController = async (req: Request, res: Response) => {
   try {
     const { contactoId } = req.params;
     const { mensaje } = req.body;
-    const empresaId = (req as any).empresaId;
-    const usuario = (req as any).usuario?.nombre || 'Operador';
+    const empresaId = req.user?.empresaId;
+    const usuario = req.user?.username || 'Operador';
+
+    if (!empresaId) {
+      res.status(401).json({ error: 'No autenticado' });
+      return;
+    }
 
     if (!contactoId) {
       res.status(400).json({ error: 'contactoId es requerido' });
@@ -113,7 +128,12 @@ export const enviarMensajeController = async (req: Request, res: Response) => {
 export const obtenerEstadoController = async (req: Request, res: Response) => {
   try {
     const { contactoId } = req.params;
-    const empresaId = (req as any).empresaId;
+    const empresaId = req.user?.empresaId;
+
+    if (!empresaId) {
+      res.status(401).json({ error: 'No autenticado' });
+      return;
+    }
 
     if (!contactoId) {
       res.status(400).json({ error: 'contactoId es requerido' });

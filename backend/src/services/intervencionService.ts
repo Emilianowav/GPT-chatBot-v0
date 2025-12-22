@@ -14,13 +14,22 @@ export async function pausarChatbot(
   empresaId: string,
   pausadoPor: string
 ): Promise<IContactoEmpresa> {
+  console.log('🔍 [INTERVENCION] Buscando contacto:', { contactoId, empresaId });
+  
   const contacto = await ContactoEmpresaModel.findOne({
     _id: contactoId,
     empresaId
   });
 
   if (!contacto) {
-    throw new Error('Contacto no encontrado');
+    // Intentar buscar solo por ID para debug
+    const contactoSinEmpresa = await ContactoEmpresaModel.findById(contactoId);
+    console.log('❌ [INTERVENCION] Contacto no encontrado con empresaId:', empresaId);
+    console.log('🔍 [INTERVENCION] Contacto existe?', !!contactoSinEmpresa);
+    if (contactoSinEmpresa) {
+      console.log('🔍 [INTERVENCION] empresaId del contacto:', contactoSinEmpresa.empresaId);
+    }
+    throw new Error(`Contacto no encontrado. empresaId buscado: ${empresaId}`);
   }
 
   contacto.chatbotPausado = true;
