@@ -122,6 +122,44 @@ export const recibirMensaje = async (req: Request, res: Response, next: NextFunc
       interacciones: contacto.metricas.interacciones 
     });
 
+    // 🛑 INTERVENCIÓN HUMANA: Si el chatbot está pausado, solo guardar mensaje y notificar
+    if (contacto.chatbotPausado) {
+      console.log('⏸️ [INTERVENCIÓN] Chatbot pausado para este contacto, no se responde automáticamente');
+      
+      // Guardar mensaje en historial
+      const { actualizarHistorialConversacion, incrementarMetricas } = await import('../services/contactoService.js');
+      await actualizarHistorialConversacion(contacto._id.toString(), `Cliente: ${mensaje}`);
+      await incrementarMetricas(contacto._id.toString(), {
+        mensajesRecibidos: 1,
+        interacciones: 1
+      });
+      
+      // Notificar al CRM vía WebSocket
+      if (wss) {
+        wss.clients.forEach((client: any) => {
+          if (client.readyState === 1 && client.empresaId === empresa.nombre) {
+            client.send(JSON.stringify({
+              type: 'nuevo_mensaje_intervencion',
+              contactoId: contacto._id.toString(),
+              mensaje: {
+                contenido: mensaje,
+                rol: 'user',
+                fecha: new Date().toISOString()
+              },
+              contacto: {
+                nombre: contacto.nombre,
+                apellido: contacto.apellido,
+                telefono: contacto.telefono
+              }
+            }));
+          }
+        });
+      }
+      
+      res.sendStatus(200);
+      return;
+    }
+
     // 🧹 Comando especial: limpiar historial
     if (/^limpiar$/i.test(mensaje.trim())) {
       await limpiarHistorial(contacto._id.toString());

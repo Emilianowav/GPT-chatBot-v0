@@ -7,21 +7,21 @@ import styles from './FormularioCliente.module.css';
 
 // Lista de códigos de país
 const COUNTRY_CODES = [
-  { code: '+54', country: 'Argentina', flag: '🇦🇷' },
-  { code: '+55', country: 'Brasil', flag: '🇧🇷' },
-  { code: '+56', country: 'Chile', flag: '🇨🇱' },
-  { code: '+57', country: 'Colombia', flag: '🇨🇴' },
-  { code: '+52', country: 'México', flag: '🇲🇽' },
-  { code: '+51', country: 'Perú', flag: '🇵🇪' },
-  { code: '+598', country: 'Uruguay', flag: '🇺🇾' },
-  { code: '+58', country: 'Venezuela', flag: '🇻🇪' },
-  { code: '+1', country: 'Estados Unidos', flag: '🇺🇸' },
-  { code: '+34', country: 'España', flag: '🇪🇸' },
-  { code: '+593', country: 'Ecuador', flag: '🇪🇨' },
-  { code: '+591', country: 'Bolivia', flag: '🇧🇴' },
-  { code: '+595', country: 'Paraguay', flag: '🇵🇾' },
-  { code: '+506', country: 'Costa Rica', flag: '🇨🇷' },
-  { code: '+507', country: 'Panamá', flag: '🇵🇦' },
+  { code: '54', country: 'Argentina', flag: '🇦🇷' },
+  { code: '55', country: 'Brasil', flag: '🇧🇷' },
+  { code: '56', country: 'Chile', flag: '🇨🇱' },
+  { code: '57', country: 'Colombia', flag: '🇨🇴' },
+  { code: '52', country: 'México', flag: '🇲🇽' },
+  { code: '51', country: 'Perú', flag: '🇵🇪' },
+  { code: '598', country: 'Uruguay', flag: '🇺🇾' },
+  { code: '58', country: 'Venezuela', flag: '🇻🇪' },
+  { code: '1', country: 'Estados Unidos', flag: '🇺🇸' },
+  { code: '34', country: 'España', flag: '🇪🇸' },
+  { code: '593', country: 'Ecuador', flag: '🇪🇨' },
+  { code: '591', country: 'Bolivia', flag: '🇧🇴' },
+  { code: '595', country: 'Paraguay', flag: '🇵🇾' },
+  { code: '506', country: 'Costa Rica', flag: '🇨🇷' },
+  { code: '507', country: 'Panamá', flag: '🇵🇦' },
 ];
 
 interface FormularioClienteProps {
@@ -36,7 +36,7 @@ export default function FormularioCliente({
   clienteInicial 
 }: FormularioClienteProps) {
   const [step, setStep] = useState(1);
-  const [countryCode, setCountryCode] = useState('+54');
+  const [countryCode, setCountryCode] = useState('54');
   const [showCountryDropdown, setShowCountryDropdown] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
   
@@ -108,7 +108,11 @@ export default function FormularioCliente({
     return true;
   };
 
-  const goNext = () => {
+  const goNext = (e?: React.MouseEvent) => {
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
     if (step < totalSteps && canGoNext()) {
       setStep(step + 1);
       setError(null);
@@ -127,8 +131,29 @@ export default function FormularioCliente({
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    // Prevenir submit con Enter en todos los pasos
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      e.stopPropagation();
+      // Solo avanzar si no estamos en el último paso
+      if (step < totalSteps && canGoNext()) {
+        setStep(step + 1);
+        setError(null);
+      }
+      // En el último paso, no hacer nada con Enter (requiere click explícito)
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    e.stopPropagation();
+    
+    // Solo permitir submit si estamos en el paso final
+    if (step !== totalSteps) {
+      return;
+    }
+    
     setError(null);
 
     // Validaciones
@@ -214,7 +239,7 @@ export default function FormularioCliente({
           </div>
         </div>
 
-        <form onSubmit={handleSubmit} className={styles.form}>
+        <form onSubmit={handleSubmit} onKeyDown={handleKeyDown} className={styles.form}>
           {error && (
             <div className={styles.error}>
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -474,7 +499,7 @@ export default function FormularioCliente({
             {step < totalSteps ? (
               <button
                 type="button"
-                onClick={goNext}
+                onClick={(e) => goNext(e)}
                 className={styles.btnNext}
                 disabled={!canGoNext()}
               >

@@ -7,6 +7,7 @@ export interface IPaymentLink extends Document {
   title: string;            // Nombre del producto/servicio
   description?: string;     // Descripción opcional
   imageUrl?: string;        // URL de imagen
+  category?: string;        // Categoría del producto (mejora tasa de aprobación)
   priceType: 'fixed' | 'variable'; // Tipo de precio
   unitPrice: number;        // Precio fijo o mínimo
   minPrice?: number;        // Precio mínimo (si variable)
@@ -41,6 +42,10 @@ const PaymentLinkSchema = new Schema<IPaymentLink>({
   },
   imageUrl: { 
     type: String 
+  },
+  category: {
+    type: String,
+    default: 'services'
   },
   priceType: { 
     type: String, 

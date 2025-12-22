@@ -333,7 +333,11 @@ export default function FormularioTurno({ onSubmit, onCancel }: FormularioTurnoP
         <SelectorCliente
           onSelect={(cliente) => {
             setClienteSeleccionado(cliente);
-            setFormData((prev: any) => ({ ...prev, clienteId: cliente?._id || '' }));
+            setFormData((prev: any) => ({
+              ...prev,
+              clienteId: cliente?._id || '',
+              agenteId: cliente?.agenteAsignado || prev.agenteId
+            }));
           }}
           clienteSeleccionado={clienteSeleccionado}
           placeholder="Buscar cliente por nombre, teléfono o email..."

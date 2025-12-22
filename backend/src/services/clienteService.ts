@@ -152,18 +152,8 @@ export async function actualizarCliente(
   const cliente = await ContactoEmpresaModel.findOne({ _id: clienteId, empresaId });
   if (!cliente) throw new Error('Cliente no encontrado');
 
-  // Si se está actualizando el teléfono, verificar que no exista otro cliente con ese teléfono
-  if (datos.telefono && datos.telefono !== cliente.telefono) {
-    const clienteConTelefono = await ContactoEmpresaModel.findOne({
-      empresaId,
-      telefono: datos.telefono,
-      _id: { $ne: clienteId }
-    });
-
-    if (clienteConTelefono) {
-      throw new Error('Ya existe un cliente con ese teléfono');
-    }
-  }
+  // Nota: Se permite que múltiples clientes tengan el mismo teléfono
+  // (ej: hermanos usando el teléfono del padre)
 
   // Si se está actualizando el email, verificar que no exista otro cliente con ese email
   if (datos.email && datos.email !== cliente.email) {
@@ -217,4 +207,51 @@ export async function buscarClientes(
       { email: regex }
     ]
   }).limit(20).sort({ apellido: 1, nombre: 1 });
+}
+
+/**
+ * Asignar un agente a un cliente
+ */
+export async function asignarAgente(
+  clienteId: string,
+  empresaId: string,
+  agenteId: string | null
+): Promise<IContactoEmpresa> {
+  const cliente = await ContactoEmpresaModel.findOne({ _id: clienteId, empresaId });
+  if (!cliente) throw new Error('Cliente no encontrado');
+
+  cliente.agenteAsignado = agenteId ? agenteId as any : undefined;
+  await cliente.save();
+
+  return cliente;
+}
+
+/**
+ * Obtener clientes por agente asignado
+ */
+export async function obtenerClientesPorAgente(
+  empresaId: string,
+  agenteId: string
+): Promise<IContactoEmpresa[]> {
+  return await ContactoEmpresaModel.find({
+    empresaId,
+    agenteAsignado: agenteId,
+    activo: true
+  }).sort({ apellido: 1, nombre: 1 });
+}
+
+/**
+ * Obtener clientes sin agente asignado
+ */
+export async function obtenerClientesSinAgente(
+  empresaId: string
+): Promise<IContactoEmpresa[]> {
+  return await ContactoEmpresaModel.find({
+    empresaId,
+    $or: [
+      { agenteAsignado: null },
+      { agenteAsignado: { $exists: false } }
+    ],
+    activo: true
+  }).sort({ apellido: 1, nombre: 1 });
 }

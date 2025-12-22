@@ -35,12 +35,22 @@ export interface LoginResponse {
 export async function login(username: string, password: string): Promise<LoginResponse> {
   try {
     console.log('🔐 Intento de login:', { username });
+    console.log('   Password recibido:', password);
+    console.log('   Username lowercase:', username.toLowerCase());
 
     // Buscar primero en UsuarioEmpresa (nuevo sistema)
     let user = await UsuarioEmpresaModel.findOne({ 
       username: username.toLowerCase(),
       activo: true 
     });
+
+    console.log('   Búsqueda en UsuarioEmpresa:', user ? 'ENCONTRADO' : 'NO ENCONTRADO');
+    if (user) {
+      console.log('   - ID:', user._id);
+      console.log('   - Username:', user.username);
+      console.log('   - EmpresaId:', user.empresaId);
+      console.log('   - Password hash:', user.password?.substring(0, 30) + '...');
+    }
 
     // Si no se encuentra, buscar en AdminUser (sistema antiguo)
     if (!user) {
@@ -49,8 +59,16 @@ export async function login(username: string, password: string): Promise<LoginRe
         activo: true 
       });
 
+      console.log('   Búsqueda en AdminUser:', adminUser ? 'ENCONTRADO' : 'NO ENCONTRADO');
+      if (adminUser) {
+        console.log('   - ID:', adminUser._id);
+        console.log('   - Username:', adminUser.username);
+        console.log('   - EmpresaId:', adminUser.empresaId);
+        console.log('   - Password hash:', adminUser.password?.substring(0, 30) + '...');
+      }
+
       if (!adminUser) {
-        console.log('❌ Usuario no encontrado:', username);
+        console.log('❌ Usuario no encontrado en ninguna colección:', username);
         return {
           success: false,
           message: 'Usuario o contraseña incorrectos'
@@ -70,7 +88,13 @@ export async function login(username: string, password: string): Promise<LoginRe
     }
 
     // Verificar contraseña
+    console.log('   Comparando contraseña...');
+    console.log('   - Password ingresado:', password);
+    console.log('   - Hash en DB:', user.password?.substring(0, 30) + '...');
+    
     const isPasswordValid = await user.comparePassword(password);
+    console.log('   - Resultado comparación:', isPasswordValid ? '✅ VÁLIDA' : '❌ INVÁLIDA');
+    
     if (!isPasswordValid) {
       console.log('❌ Contraseña incorrecta para:', username);
       return {

@@ -84,6 +84,7 @@ export default function MercadoPagoConfigPage() {
     unitPrice: '',
     description: '',
     priceType: 'fixed',
+    category: 'services',
   });
   
   // Form de suscripción
@@ -189,6 +190,7 @@ export default function MercadoPagoConfigPage() {
           unitPrice: price,
           description: productForm.description || undefined,
           priceType: productForm.priceType,
+          category: productForm.category,
         }),
       });
       
@@ -199,7 +201,7 @@ export default function MercadoPagoConfigPage() {
         return;
       }
       
-      setProductForm({ title: '', unitPrice: '', description: '', priceType: 'fixed' });
+      setProductForm({ title: '', unitPrice: '', description: '', priceType: 'fixed', category: 'services' });
       setShowNewProduct(false);
       await loadData();
     } catch (err) {
@@ -324,7 +326,7 @@ export default function MercadoPagoConfigPage() {
         return;
       }
       
-      setProductForm({ title: '', unitPrice: '', description: '', priceType: 'fixed' });
+      setProductForm({ title: '', unitPrice: '', description: '', priceType: 'fixed', category: 'services' });
       setEditingLink(null);
       setShowEditWarning(false);
       setPendingEdit(null);
@@ -541,6 +543,33 @@ export default function MercadoPagoConfigPage() {
                     </div>
                     
                     <div className={styles.formGroupModern}>
+                      <label>Categoría del producto</label>
+                      <select
+                        value={productForm.category}
+                        onChange={(e) => setProductForm({...productForm, category: e.target.value})}
+                        className={styles.selectModern}
+                      >
+                        <option value="services">🛠️ Servicios</option>
+                        <option value="electronics">📱 Electrónica</option>
+                        <option value="computers">💻 Computadoras</option>
+                        <option value="phones">📞 Teléfonos</option>
+                        <option value="fashion">👕 Moda</option>
+                        <option value="clothing">👔 Ropa</option>
+                        <option value="shoes">👟 Calzado</option>
+                        <option value="home">🏠 Hogar</option>
+                        <option value="sports">⚽ Deportes</option>
+                        <option value="toys">🧸 Juguetes</option>
+                        <option value="books">📚 Libros</option>
+                        <option value="health">💊 Salud</option>
+                        <option value="beauty">💄 Belleza</option>
+                        <option value="food">🍔 Alimentos</option>
+                        <option value="automotive">🚗 Automotor</option>
+                        <option value="others">📦 Otros</option>
+                      </select>
+                      <small className={styles.helpText}>La categoría correcta mejora la tasa de aprobación de pagos</small>
+                    </div>
+                    
+                    <div className={styles.formGroupModern}>
                       <label>Descripción (opcional)</label>
                       <textarea
                         value={productForm.description}
@@ -556,7 +585,7 @@ export default function MercadoPagoConfigPage() {
                     <button type="button" className={styles.btnCancel} onClick={() => {
                       setShowNewProduct(false);
                       setEditingLink(null);
-                      setProductForm({ title: '', unitPrice: '', description: '', priceType: 'fixed' });
+                      setProductForm({ title: '', unitPrice: '', description: '', priceType: 'fixed', category: 'services' });
                     }}>
                       Cancelar
                     </button>

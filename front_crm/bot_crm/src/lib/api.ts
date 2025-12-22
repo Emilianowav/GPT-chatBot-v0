@@ -254,6 +254,62 @@ export class ApiClient {
       method: 'DELETE',
     });
   }
+
+  // ========== INTERVENCIÓN DE CONVERSACIONES ==========
+
+  // Obtener estado de intervención de un contacto
+  async getEstadoIntervencion(contactoId: string) {
+    return this.request<{
+      success: boolean;
+      chatbotPausado: boolean;
+      pausadoPor?: string;
+      pausadoEn?: string;
+    }>(`/api/intervencion/${contactoId}/estado`);
+  }
+
+  // Pausar chatbot para un contacto
+  async pausarChatbot(contactoId: string) {
+    return this.request<{
+      success: boolean;
+      message: string;
+      contacto: {
+        id: string;
+        nombre: string;
+        chatbotPausado: boolean;
+        pausadoPor: string;
+        pausadoEn: string;
+      };
+    }>(`/api/intervencion/${contactoId}/pausar`, {
+      method: 'POST',
+    });
+  }
+
+  // Reanudar chatbot para un contacto
+  async reanudarChatbot(contactoId: string) {
+    return this.request<{
+      success: boolean;
+      message: string;
+      contacto: {
+        id: string;
+        nombre: string;
+        chatbotPausado: boolean;
+      };
+    }>(`/api/intervencion/${contactoId}/reanudar`, {
+      method: 'POST',
+    });
+  }
+
+  // Enviar mensaje manual desde el CRM
+  async enviarMensajeManual(contactoId: string, mensaje: string) {
+    return this.request<{
+      success: boolean;
+      message: string;
+      messageId?: string;
+    }>(`/api/intervencion/${contactoId}/mensaje`, {
+      method: 'POST',
+      body: JSON.stringify({ mensaje }),
+    });
+  }
 }
 
 export const apiClient = new ApiClient();

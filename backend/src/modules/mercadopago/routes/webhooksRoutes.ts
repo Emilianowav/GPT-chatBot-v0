@@ -260,6 +260,7 @@ async function processPaymentNotification(paymentId: string): Promise<void> {
     
     // Extraer sellerId del collector_id o buscar por external_reference
     let sellerId = mpPayment.collector_id?.toString() || '';
+    let empresaId: string | undefined;
     let paymentLinkId: string | undefined;
     let clientePhoneFromRef: string | undefined;
     
@@ -282,6 +283,13 @@ async function processPaymentNotification(paymentId: string): Promise<void> {
       }
     }
     
+    // Buscar el seller para obtener el empresaId (internalId)
+    const seller = await Seller.findOne({ userId: sellerId });
+    if (seller && seller.internalId) {
+      empresaId = seller.internalId;
+      console.log(`[MP Webhook] EmpresaId encontrado: ${empresaId}`);
+    }
+    
     // Mapear status de MP a nuestro enum
     const status = mapMPStatus(mpPayment.status || 'pending');
     
@@ -289,6 +297,7 @@ async function processPaymentNotification(paymentId: string): Promise<void> {
     const paymentData: Partial<IPayment> = {
       mpPaymentId: paymentId,
       sellerId,
+      empresaId,
       paymentLinkId,
       externalReference: mpPayment.external_reference,
       status,

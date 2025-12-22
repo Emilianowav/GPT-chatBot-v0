@@ -983,6 +983,8 @@
 .modalInfoItem {
   display: flex;
   justify-content: space-between;
+  align-items: flex-start;
+  gap: 1rem;
   padding: 0.5rem 0;
   border-bottom: 1px solid #f1f5f9;
   font-size: 0.85rem;
@@ -992,9 +994,17 @@
   border-bottom: none;
 }
 
+.modalInfoItem span:last-child {
+  text-align: right;
+  word-break: break-all;
+  max-width: 60%;
+  overflow-wrap: break-word;
+}
+
 .label {
   color: #64748b;
   font-weight: 500;
+  flex-shrink: 0;
 }
 
 .modalActions {

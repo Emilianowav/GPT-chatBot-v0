@@ -1,7 +1,24 @@
 // Ajustar altura del gradiente según contenido de la página
+// SOLO para páginas públicas (landing page), NO para dashboard/login/superadmin
 if (typeof window !== 'undefined') {
   const adjustGradientHeight = () => {
+    // Verificar si estamos en una página que necesita el gradiente
     const body = document.body;
+    const isPublicPage = !body.querySelector('[data-page="login"]') && 
+                         !body.querySelector('[data-page="superadmin"]') && 
+                         !body.querySelector('[data-page="dashboard"]');
+    
+    // Solo ejecutar en páginas públicas
+    if (!isPublicPage) {
+      // Limpiar estilos si no es página pública
+      body.style.minHeight = '';
+      const oldStyle = document.getElementById('gradient-adjust');
+      if (oldStyle) {
+        oldStyle.remove();
+      }
+      return;
+    }
+    
     const html = document.documentElement;
     
     // Calcular altura real del contenido
@@ -13,8 +30,8 @@ if (typeof window !== 'undefined') {
       html.offsetHeight
     );
     
-    // Establecer altura mínima del body al contenido real
-    body.style.minHeight = `${contentHeight}px`;
+    // NO establecer min-height en body, solo ajustar el gradiente
+    // body.style.minHeight = `${contentHeight}px`; // REMOVIDO
     
     // Ajustar el pseudo-elemento ::before con el gradiente
     const style = document.createElement('style');

@@ -72,6 +72,23 @@ export function useClientes(soloActivos: boolean = false) {
     }
   }, [cargarClientes]);
 
+  const asignarAgente = useCallback(async (
+    clienteId: string,
+    agenteId: string | null
+  ) => {
+    try {
+      setLoading(true);
+      setError(null);
+      await clientesApi.asignarAgente(clienteId, agenteId);
+      await cargarClientes();
+    } catch (err: any) {
+      setError(err.message);
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  }, [cargarClientes]);
+
   return {
     clientes,
     loading,
@@ -79,7 +96,8 @@ export function useClientes(soloActivos: boolean = false) {
     recargar: cargarClientes,
     crearCliente,
     actualizarCliente,
-    eliminarCliente
+    eliminarCliente,
+    asignarAgente
   };
 }
 
@@ -154,5 +172,72 @@ export function useBuscarClientes() {
     error,
     buscar,
     limpiar
+  };
+}
+
+export function useClientesPorAgente(agenteId: string | null) {
+  const [clientes, setClientes] = useState<clientesApi.Cliente[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const cargarClientes = useCallback(async () => {
+    if (!agenteId) {
+      setClientes([]);
+      return;
+    }
+
+    try {
+      setLoading(true);
+      setError(null);
+      const data = await clientesApi.obtenerClientesPorAgente(agenteId);
+      setClientes(data);
+    } catch (err: any) {
+      setError(err.message);
+      console.error('Error al cargar clientes por agente:', err);
+    } finally {
+      setLoading(false);
+    }
+  }, [agenteId]);
+
+  useEffect(() => {
+    cargarClientes();
+  }, [cargarClientes]);
+
+  return {
+    clientes,
+    loading,
+    error,
+    recargar: cargarClientes
+  };
+}
+
+export function useClientesSinAgente() {
+  const [clientes, setClientes] = useState<clientesApi.Cliente[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const cargarClientes = useCallback(async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const data = await clientesApi.obtenerClientesSinAgente();
+      setClientes(data);
+    } catch (err: any) {
+      setError(err.message);
+      console.error('Error al cargar clientes sin agente:', err);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    cargarClientes();
+  }, [cargarClientes]);
+
+  return {
+    clientes,
+    loading,
+    error,
+    recargar: cargarClientes
   };
 }

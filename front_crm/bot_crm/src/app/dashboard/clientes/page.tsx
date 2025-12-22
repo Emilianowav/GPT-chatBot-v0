@@ -17,6 +17,7 @@ export default function ClientesPage() {
 
   const [mostrarFormulario, setMostrarFormulario] = useState(false);
   const [clienteEditar, setClienteEditar] = useState<any>(null);
+  const [paginaActual, setPaginaActual] = useState(1);
   
   const [filtros, setFiltros] = useState({
     busqueda: '',
@@ -116,107 +117,105 @@ export default function ClientesPage() {
   return (
     <DashboardLayout title="Clientes">
       <div className={styles.container}>
-        
-        {!mostrarFormulario ? (
-          <>
-            <div className={styles.header}>
-              <div>
-                <h1>👤 Gestión de Clientes</h1>
-                <p>Administra tu base de datos de clientes</p>
-              </div>
-              <button 
-                className={styles.btnNuevo}
-                onClick={() => setMostrarFormulario(true)}
+        <div className={styles.header}>
+          <div>
+            <h1>👤 Gestión de Clientes</h1>
+            <p>Administra tu base de datos de clientes</p>
+          </div>
+          <button 
+            className={styles.btnNuevo}
+            onClick={() => setMostrarFormulario(true)}
+          >
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M12 5v14M5 12h14"/>
+            </svg>
+            Nuevo Cliente
+          </button>
+        </div>
+
+        {/* Filtros */}
+        <div className={styles.filtrosCard}>
+          <h3>Filtros</h3>
+          <div className={styles.filtrosGrid}>
+            <div className={styles.filtroItem}>
+              <label>Buscar</label>
+              <input
+                type="text"
+                placeholder="Nombre, teléfono o email..."
+                value={filtros.busqueda}
+                onChange={(e) => setFiltros({ ...filtros, busqueda: e.target.value })}
+              />
+            </div>
+
+            <div className={styles.filtroItem}>
+              <label>Estado</label>
+              <select
+                value={filtros.estado}
+                onChange={(e) => setFiltros({ ...filtros, estado: e.target.value })}
               >
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <path d="M12 5v14M5 12h14"/>
-                </svg>
-                Nuevo Cliente
+                <option value="todos">Todos</option>
+                <option value="activo">Activos</option>
+                <option value="inactivo">Inactivos</option>
+              </select>
+            </div>
+
+            <div className={styles.filtroItem}>
+              <label>Origen</label>
+              <select
+                value={filtros.origen}
+                onChange={(e) => setFiltros({ ...filtros, origen: e.target.value })}
+              >
+                <option value="todos">Todos</option>
+                <option value="chatbot">Chatbot</option>
+                <option value="manual">Manual</option>
+              </select>
+            </div>
+
+            <div className={styles.filtroItem}>
+              <label>&nbsp;</label>
+              <button 
+                className={styles.btnLimpiar}
+                onClick={() => setFiltros({ busqueda: '', estado: 'todos', origen: 'todos' })}
+              >
+                Limpiar Filtros
               </button>
             </div>
-
-            {/* Filtros */}
-            <div className={styles.filtrosCard}>
-              <h3>Filtros</h3>
-              <div className={styles.filtrosGrid}>
-                <div className={styles.filtroItem}>
-                  <label>Buscar</label>
-                  <input
-                    type="text"
-                    placeholder="Nombre, teléfono o email..."
-                    value={filtros.busqueda}
-                    onChange={(e) => setFiltros({ ...filtros, busqueda: e.target.value })}
-                  />
-                </div>
-
-                <div className={styles.filtroItem}>
-                  <label>Estado</label>
-                  <select
-                    value={filtros.estado}
-                    onChange={(e) => setFiltros({ ...filtros, estado: e.target.value })}
-                  >
-                    <option value="todos">Todos</option>
-                    <option value="activo">Activos</option>
-                    <option value="inactivo">Inactivos</option>
-                  </select>
-                </div>
-
-                <div className={styles.filtroItem}>
-                  <label>Origen</label>
-                  <select
-                    value={filtros.origen}
-                    onChange={(e) => setFiltros({ ...filtros, origen: e.target.value })}
-                  >
-                    <option value="todos">Todos</option>
-                    <option value="chatbot">Chatbot</option>
-                    <option value="manual">Manual</option>
-                  </select>
-                </div>
-
-                <div className={styles.filtroItem}>
-                  <label>&nbsp;</label>
-                  <button 
-                    className={styles.btnLimpiar}
-                    onClick={() => setFiltros({ busqueda: '', estado: 'todos', origen: 'todos' })}
-                  >
-                    Limpiar Filtros
-                  </button>
-                </div>
-              </div>
-            </div>
-
-            {error && (
-              <div className={styles.error}>
-                Error al cargar clientes: {error}
-              </div>
-            )}
-
-            {/* Contador de resultados */}
-            <div className={styles.resultadosHeader}>
-              <h3>📋 Clientes ({clientesFiltrados.length})</h3>
-            </div>
-
-            {loading ? (
-              <div className={styles.loading}>
-                <div className={styles.spinner}></div>
-                <p>Cargando clientes...</p>
-              </div>
-            ) : (
-              <ListaClientes 
-                clientes={clientesFiltrados}
-                onEditar={handleEditar}
-                onEliminar={handleEliminar}
-              />
-            )}
-          </>
-        ) : (
-          <div className={styles.formularioContainer}>
-            <FormularioCliente
-              onSubmit={clienteEditar ? handleActualizar : handleCrear}
-              onCancel={handleCancelar}
-              clienteInicial={clienteEditar}
-            />
           </div>
+        </div>
+
+        {error && (
+          <div className={styles.error}>
+            Error al cargar clientes: {error}
+          </div>
+        )}
+
+        {/* Contador de resultados */}
+        <div className={styles.resultadosHeader}>
+          <h3>📋 Clientes ({clientesFiltrados.length})</h3>
+        </div>
+
+        {loading ? (
+          <div className={styles.loading}>
+            <div className={styles.spinner}></div>
+            <p>Cargando clientes...</p>
+          </div>
+        ) : (
+          <ListaClientes 
+            clientes={clientesFiltrados}
+            onEditar={handleEditar}
+            onEliminar={handleEliminar}
+            currentPage={paginaActual}
+            onPageChange={setPaginaActual}
+          />
+        )}
+
+        {/* Modal de formulario como overlay */}
+        {mostrarFormulario && (
+          <FormularioCliente
+            onSubmit={clienteEditar ? handleActualizar : handleCrear}
+            onCancel={handleCancelar}
+            clienteInicial={clienteEditar}
+          />
         )}
       </div>
     </DashboardLayout>

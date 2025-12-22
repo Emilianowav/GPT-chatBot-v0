@@ -57,7 +57,7 @@ router.get('/', async (req: Request, res: Response): Promise<void> => {
  */
 router.post('/', async (req: Request, res: Response): Promise<void> => {
   try {
-    const { sellerId, title, unitPrice, description, priceType } = req.body;
+    const { sellerId, title, unitPrice, description, priceType, category } = req.body;
 
     if (!sellerId || !title || !unitPrice) {
       res.status(400).json({ 
@@ -80,7 +80,8 @@ router.post('/', async (req: Request, res: Response): Promise<void> => {
       title,
       unitPrice: Number(unitPrice),
       description,
-      priceType: priceType || 'fixed'
+      priceType: priceType || 'fixed',
+      category: category || 'services'
     });
 
     const baseUrl = process.env.MP_MODULE_URL || `${req.protocol}://${req.get('host')}`;
@@ -289,6 +290,30 @@ router.get('/pay/:slug', async (req: Request, res: Response): Promise<void> => {
     console.log(`[MP] Creando preferencia con baseUrl: ${baseUrl}`);
     console.log(`[MP] External reference: ${externalReference}`);
     
+    // Buscar empresa para statement_descriptor
+    const { EmpresaModel } = await import('../../../models/Empresa.js');
+    let statementDescriptor = 'MOMENTO IA';
+    
+    try {
+      let empresa = await EmpresaModel.findById(seller.internalId).catch(() => null);
+      if (!empresa) {
+        empresa = await EmpresaModel.findOne({ nombre: seller.internalId });
+      }
+      if (empresa) {
+        // Generar statement descriptor optimizado (max 22 chars)
+        const empresaClean = empresa.nombre
+          .normalize('NFD')
+          .replace(/[\u0300-\u036f]/g, '')
+          .replace(/[^a-zA-Z0-9\s]/g, '')
+          .trim()
+          .toUpperCase()
+          .substring(0, 22);
+        statementDescriptor = empresaClean;
+      }
+    } catch (err) {
+      console.log('[MP] No se pudo obtener empresa para statement_descriptor');
+    }
+    
     const preferenceData = await preference.create({
       body: {
         items: [
@@ -296,6 +321,7 @@ router.get('/pay/:slug', async (req: Request, res: Response): Promise<void> => {
             id: link._id.toString(),
             title: link.title,
             description: link.description || link.title,
+            category_id: link.category || 'services',
             quantity: 1,
             unit_price: link.unitPrice,
             currency_id: link.currency || 'ARS'
@@ -308,6 +334,7 @@ router.get('/pay/:slug', async (req: Request, res: Response): Promise<void> => {
         },
         auto_return: 'approved',
         external_reference: externalReference,
+        statement_descriptor: statementDescriptor,
         payer: name && typeof name === 'string' ? {
           name: name
         } : undefined

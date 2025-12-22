@@ -1,0 +1,320 @@
+/* Setup Guide Styles */
+
+.guideContainer {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 2rem;
+}
+
+.guideHeader {
+  text-align: center;
+  margin-bottom: 2rem;
+}
+
+.guideHeader h2 {
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: #1e3a8a;
+  margin: 0 0 0.5rem 0;
+}
+
+.guideHeader p {
+  font-size: 1rem;
+  color: #64748b;
+  margin: 0;
+}
+
+/* Progress Bar */
+.progressBar {
+  height: 8px;
+  background: #e2e8f0;
+  border-radius: 4px;
+  overflow: hidden;
+  margin-bottom: 0.5rem;
+}
+
+.progressFill {
+  height: 100%;
+  background: linear-gradient(90deg, #2563eb 0%, #1e40af 100%);
+  transition: width 0.3s ease;
+}
+
+.progressText {
+  text-align: center;
+  font-size: 0.875rem;
+  color: #64748b;
+  margin-bottom: 2rem;
+}
+
+/* Steps Navigation */
+.stepsNav {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 2rem;
+  overflow-x: auto;
+  padding-bottom: 0.5rem;
+}
+
+.stepButton {
+  flex: 1;
+  min-width: 150px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 1rem;
+  background: white;
+  border: 2px solid #e2e8f0;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.stepButton:hover {
+  border-color: #2563eb;
+  transform: translateY(-2px);
+}
+
+.stepButtonActive {
+  border-color: #2563eb;
+  background: #eff6ff;
+}
+
+.stepButtonCompleted {
+  border-color: #22c55e;
+  background: #f0fdf4;
+}
+
+.stepNumber {
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #e2e8f0;
+  color: #64748b;
+  border-radius: 50%;
+  font-weight: 700;
+  font-size: 0.875rem;
+}
+
+.stepButtonActive .stepNumber {
+  background: #2563eb;
+  color: white;
+}
+
+.stepButtonCompleted .stepNumber {
+  background: #22c55e;
+  color: white;
+}
+
+.stepTitle {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #64748b;
+  text-align: center;
+}
+
+.stepButtonActive .stepTitle {
+  color: #2563eb;
+}
+
+.stepButtonCompleted .stepTitle {
+  color: #22c55e;
+}
+
+/* Step Card */
+.stepCard {
+  background: white;
+  border-radius: 12px;
+  padding: 2rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  margin-bottom: 2rem;
+}
+
+.stepHeader {
+  margin-bottom: 1.5rem;
+  padding-bottom: 1.5rem;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.stepBadge {
+  display: inline-block;
+  padding: 0.25rem 0.75rem;
+  background: #eff6ff;
+  color: #2563eb;
+  border-radius: 6px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  margin-bottom: 0.75rem;
+}
+
+.stepHeader h3 {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #1e3a8a;
+  margin: 0 0 0.5rem 0;
+}
+
+.stepHeader p {
+  font-size: 1rem;
+  color: #64748b;
+  margin: 0;
+}
+
+/* Step Content */
+.stepContent h4 {
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: #1e3a8a;
+  margin: 0 0 1rem 0;
+}
+
+.instructionsList {
+  margin: 0;
+  padding-left: 1.5rem;
+}
+
+.instructionsList li {
+  margin-bottom: 1rem;
+  color: #475569;
+  line-height: 1.6;
+}
+
+.instructionsList li strong {
+  color: #1e3a8a;
+}
+
+.instructionsList ul {
+  margin-top: 0.5rem;
+  padding-left: 1.5rem;
+}
+
+.instructionsList ul li {
+  margin-bottom: 0.5rem;
+}
+
+.codeBlock {
+  background: #1e293b;
+  color: #e2e8f0;
+  padding: 1rem;
+  border-radius: 6px;
+  font-family: 'Courier New', monospace;
+  font-size: 0.875rem;
+  overflow-x: auto;
+  margin: 0.5rem 0;
+}
+
+.instructionsList small {
+  display: block;
+  margin-top: 0.25rem;
+  color: #64748b;
+  font-size: 0.875rem;
+}
+
+/* Info Boxes */
+.warningBox,
+.infoBox,
+.successBox {
+  padding: 1rem;
+  border-radius: 8px;
+  margin-top: 1.5rem;
+  display: flex;
+  gap: 0.5rem;
+}
+
+.warningBox {
+  background: #fef3c7;
+  border-left: 4px solid #f59e0b;
+  color: #92400e;
+}
+
+.infoBox {
+  background: #dbeafe;
+  border-left: 4px solid #3b82f6;
+  color: #1e40af;
+}
+
+.successBox {
+  background: #d1fae5;
+  border-left: 4px solid #10b981;
+  color: #065f46;
+}
+
+.warningBox strong,
+.infoBox strong,
+.successBox strong {
+  display: block;
+  margin-bottom: 0.25rem;
+}
+
+/* Guide Actions */
+.guideActions {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.prevButton,
+.nextButton {
+  padding: 0.875rem 2rem;
+  border: none;
+  border-radius: 8px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.prevButton {
+  background: #f1f5f9;
+  color: #64748b;
+}
+
+.prevButton:hover:not(:disabled) {
+  background: #e2e8f0;
+}
+
+.prevButton:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.nextButton {
+  background: linear-gradient(135deg, #2563eb 0%, #1e40af 100%);
+  color: white;
+  box-shadow: 0 2px 8px rgba(37, 99, 235, 0.25);
+}
+
+.nextButton:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.35);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .guideContainer {
+    padding: 1rem;
+  }
+
+  .stepsNav {
+    flex-direction: column;
+  }
+
+  .stepButton {
+    min-width: 100%;
+  }
+
+  .stepCard {
+    padding: 1.5rem;
+  }
+
+  .guideActions {
+    flex-direction: column;
+  }
+
+  .prevButton,
+  .nextButton {
+    width: 100%;
+  }
+}

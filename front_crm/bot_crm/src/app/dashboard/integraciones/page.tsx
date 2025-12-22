@@ -286,32 +286,73 @@ export default function IntegracionesPage() {
               </div>
             )}
 
+            
+              
+
             {/* Grid de integraciones */}
             <div className={styles.marketplaceGrid}>
+              {/* ARCA - Facturación Electrónica */}
+              <div className={styles.integrationCard}>
+                <div className={styles.brandHeader} style={{ background: 'linear-gradient(135deg, #1a3a5c 0%, #264469 100%)' }}>
+                  <div className={styles.arcaLogo}>
+                    <span className={styles.arcaMain}>ARCA</span>
+                    <span className={styles.arcaDivider}>|</span>
+                    <span className={styles.arcaSubtitle}>AGENCIA DE RECAUDACIÓN<br/>Y CONTROL ADUANERO</span>
+                  </div>
+                </div>
+                <div className={styles.cardContent}>
+                  <div className={styles.integrationInfo}>
+                    <h3 className={styles.integrationTitle}>ARCA</h3>
+                    <p className={styles.integrationDescription}>
+                      Facturación Electrónica
+                    </p>
+                  </div>
+                  <div className={styles.integrationFeatures}>
+                    <span className={styles.feature}>✓ Facturas A/B/C</span>
+                    <span className={styles.feature}>✓ Notas de Crédito/Débito</span>
+                    <span className={styles.feature}>✓ Validación automática</span>
+                  </div>
+                  <button 
+                    className={`${styles.integrationButton} ${styles.integrationButtonActive}`}
+                    onClick={() => handleNavigate('/dashboard/integraciones/afip')}
+                  >
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <circle cx="12" cy="12" r="3"/>
+                      <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+                    </svg>
+                    Configurar
+                  </button>
+                </div>
+              
+              </div>
               {/* Mercado Pago */}
               <div className={`${styles.integrationCard} ${mpStatus.connected ? styles.integrationCardConnected : ''}`}>
-                <div className={styles.integrationHeader}>
-                  <div className={styles.integrationLogo}>
-                    <img src="/logos tecnologias/mp-logo.png" alt="Mercado Pago" width="32" height="32" style={{ objectFit: 'contain' }} />
-                  </div>
+                <div className={styles.brandHeader} style={{ background: 'linear-gradient(135deg, #009ee3 0%, #0080c7 100%)' }}>
+                  <img src="/logos tecnologias/mercado-pago.svg" alt="Mercado Pago" className={styles.brandLogo} />
+                </div>
+                <div className={styles.cardContent}>
                   <div className={styles.integrationInfo}>
                     <h3 className={styles.integrationTitle}>Mercado Pago</h3>
                     <p className={styles.integrationDescription}>
-                      Acepta pagos online de tus productos o servicios
+                      Acepta pagos online
                     </p>
+                    {mpStatus.connected && (
+                      <span className={styles.connectedBadge}>
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3">
+                          <polyline points="20 6 9 17 4 12"/>
+                        </svg>
+                        Conectado
+                      </span>
+                    )}
                   </div>
-                  <span className={`${styles.badge} ${mpStatus.connected ? styles.badgeConnected : styles.badgeActive}`}>
-                    {mpStatus.connected ? 'Conectado' : 'Disponible'}
-                  </span>
-                </div>
-                <div className={styles.integrationFeatures}>
-                  <span className={styles.feature}>✓ Cobrar Productos</span>
-                  <span className={styles.feature}>✓ Cobrar Suscripciones</span>
-                  <span className={styles.feature}>✓ ChatBot de venta</span>
-                </div>
-                
-                {mpStatus.connected ? (
-                  <div className={styles.connectedInfo}>
+                  <div className={styles.integrationFeatures}>
+                    <span className={styles.feature}>✓ Cobrar Productos</span>
+                    <span className={styles.feature}>✓ Cobrar Suscripciones</span>
+                    <span className={styles.feature}>✓ ChatBot de venta</span>
+                  </div>
+                  
+                  {mpStatus.connected ? (
+                    <div className={styles.connectedInfo}>
                     <div className={styles.connectedStatus}>
                       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#27ae60" strokeWidth="2">
                         <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
@@ -361,8 +402,50 @@ export default function IntegracionesPage() {
                       </>
                     )}
                   </button>
-                )}
+                  )}
+                </div>
               </div>
+
+              {/* OCR - Carga de Datos por Imagen */}
+              <div className={styles.integrationCard}>
+                <div className={styles.brandHeader} style={{ background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)' }}>
+                  <div className={styles.ocrLogo}>
+                    <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="1.5" className={styles.brandIcon}>
+                      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                      <polyline points="14 2 14 8 20 8"/>
+                      <line x1="8" y1="13" x2="16" y2="13"/>
+                      <line x1="8" y1="17" x2="16" y2="17"/>
+                      <line x1="8" y1="9" x2="10" y2="9"/>
+                    </svg>
+                    <span className={styles.ocrText}>OCR</span>
+                  </div>
+                </div>
+                <div className={styles.cardContent}>
+                  <div className={styles.integrationInfo}>
+                    <h3 className={styles.integrationTitle}>OCR</h3>
+                    <p className={styles.integrationDescription}>
+                      Carga de Datos por Imagen
+                    </p>
+                  </div>
+                  <div className={styles.integrationFeatures}>
+                    <span className={styles.feature}>✓ Reconocimiento de texto</span>
+                    <span className={styles.feature}>✓ Extracción de datos</span>
+                    <span className={styles.feature}>✓ Integración con MP y ARCA</span>
+                  </div>
+                  <button 
+                    className={`${styles.integrationButton} ${styles.integrationButtonActive}`}
+                    onClick={() => handleNavigate('/dashboard/integraciones/ocr')}
+                  >
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                      <polyline points="17 8 12 3 7 8"/>
+                      <line x1="12" y1="3" x2="12" y2="15"/>
+                    </svg>
+                    Usar OCR
+                  </button>
+                </div>
+              </div>
+
 
               {/* Google Calendar */}
               <div className={`${styles.integrationCard} ${styles.integrationCardDisabled}`}>

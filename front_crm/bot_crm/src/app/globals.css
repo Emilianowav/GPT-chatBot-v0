@@ -68,6 +68,7 @@ body {
   letter-spacing: 0.01em;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  min-height: 100vh !important;
 }
 
 /* Gradientes como gotas fundidas - Optimizado SIN scroll doble */

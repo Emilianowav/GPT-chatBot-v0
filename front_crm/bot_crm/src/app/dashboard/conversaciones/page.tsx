@@ -58,19 +58,37 @@ export default function ConversacionesPage() {
   const [loading, setLoading] = useState(true);
   const [loadingMensajes, setLoadingMensajes] = useState(false);
   const [showMobileList, setShowMobileList] = useState(true);
+  
+  // Estados de intervención
+  const [chatbotPausado, setChatbotPausado] = useState(false);
+  const [mensajeInput, setMensajeInput] = useState('');
+  const [enviandoMensaje, setEnviandoMensaje] = useState(false);
 
   // WebSocket para actualizaciones en tiempo real
   useWebSocket({
     url: config.wsUrl,
     empresaId: empresa?.empresaId || '',
-    onMessage: (data) => {
-      if (data.type === 'nuevo_mensaje') {
+    onMessage: (data: any) => {
+      if (data.type === 'nuevo_mensaje' || data.type === 'nuevo_mensaje_intervencion') {
         console.log('🔔 Nuevo mensaje recibido:', data);
         // Recargar conversaciones para actualizar la lista
         loadConversaciones();
         // Si es la conversación actual, recargar mensajes
-        if (conversacionActual === data.usuarioId) {
-          loadHistorial(data.usuarioId);
+        const targetId = data.usuarioId || data.contactoId;
+        if (conversacionActual && conversacionActual === targetId) {
+          loadHistorial(conversacionActual);
+        }
+      }
+      if (data.type === 'chatbot_estado') {
+        // Actualizar estado del chatbot
+        if (conversacionActual === data.contactoId) {
+          setChatbotPausado(Boolean(data.pausado));
+        }
+      }
+      if (data.type === 'mensaje_manual') {
+        // Mensaje enviado por otro operador
+        if (conversacionActual && conversacionActual === data.contactoId) {
+          loadHistorial(conversacionActual);
         }
       }
     },
@@ -148,12 +166,63 @@ export default function ConversacionesPage() {
       
       setMensajes(data.mensajes);
       
+      // Cargar estado de intervención
+      try {
+        const estadoIntervencion = await apiClient.getEstadoIntervencion(usuarioId);
+        setChatbotPausado(estadoIntervencion.chatbotPausado);
+      } catch (err) {
+        console.log('No se pudo cargar estado de intervención:', err);
+        setChatbotPausado(false);
+      }
+      
       // Scroll al final después de cargar
       setTimeout(() => scrollToBottom('auto'), 100);
     } catch (error) {
       console.error('Error al cargar historial:', error);
     } finally {
       setLoadingMensajes(false);
+    }
+  };
+
+  // Funciones de intervención
+  const toggleChatbot = async () => {
+    if (!conversacionActual) return;
+    
+    try {
+      if (chatbotPausado) {
+        await apiClient.reanudarChatbot(conversacionActual);
+        setChatbotPausado(false);
+      } else {
+        await apiClient.pausarChatbot(conversacionActual);
+        setChatbotPausado(true);
+      }
+    } catch (error) {
+      console.error('Error al cambiar estado del chatbot:', error);
+      alert('Error al cambiar estado del chatbot');
+    }
+  };
+
+  const enviarMensaje = async () => {
+    if (!conversacionActual || !mensajeInput.trim() || enviandoMensaje) return;
+    
+    try {
+      setEnviandoMensaje(true);
+      await apiClient.enviarMensajeManual(conversacionActual, mensajeInput.trim());
+      setMensajeInput('');
+      // Recargar historial para ver el mensaje enviado
+      await loadHistorial(conversacionActual);
+    } catch (error) {
+      console.error('Error al enviar mensaje:', error);
+      alert('Error al enviar mensaje');
+    } finally {
+      setEnviandoMensaje(false);
+    }
+  };
+
+  const handleKeyPress = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      enviarMensaje();
     }
   };
 
@@ -455,15 +524,63 @@ export default function ConversacionesPage() {
                 )}
               </div>
 
-              {/* Footer del Chat */}
+              {/* Footer del Chat - Controles de Intervención */}
               <footer className={styles.chatFooter}>
-                <div className={styles.footerInfo}>
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <circle cx="12" cy="12" r="10"/>
-                    <polyline points="12 6 12 12 16 14"/>
-                  </svg>
-                  <span>Conversación con asistente de IA</span>
+                {/* Indicador de estado */}
+                <div className={styles.estadoIndicador}>
+                  {chatbotPausado ? (
+                    <span className={styles.estadoPausado}>
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+                        <rect x="6" y="4" width="4" height="16"/>
+                        <rect x="14" y="4" width="4" height="16"/>
+                      </svg>
+                      Chatbot pausado - Modo intervención
+                    </span>
+                  ) : (
+                    <span className={styles.estadoActivo}>
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+                        <polygon points="5 3 19 12 5 21 5 3"/>
+                      </svg>
+                      Chatbot activo
+                    </span>
+                  )}
+                  <button 
+                    onClick={toggleChatbot}
+                    className={chatbotPausado ? styles.btnReanudar : styles.btnPausar}
+                    title={chatbotPausado ? 'Reanudar chatbot' : 'Pausar chatbot para intervenir'}
+                  >
+                    {chatbotPausado ? 'Reanudar Bot' : 'Intervenir'}
+                  </button>
                 </div>
+
+                {/* Input de mensaje (solo visible cuando está pausado) */}
+                {chatbotPausado && (
+                  <div className={styles.inputContainer}>
+                    <input
+                      type="text"
+                      value={mensajeInput}
+                      onChange={(e) => setMensajeInput(e.target.value)}
+                      onKeyDown={handleKeyPress}
+                      placeholder="Escribe un mensaje..."
+                      className={styles.mensajeInput}
+                      disabled={enviandoMensaje}
+                    />
+                    <button
+                      onClick={enviarMensaje}
+                      disabled={!mensajeInput.trim() || enviandoMensaje}
+                      className={styles.btnEnviar}
+                    >
+                      {enviandoMensaje ? (
+                        <div className={styles.spinnerSmall}></div>
+                      ) : (
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                          <line x1="22" y1="2" x2="11" y2="13"/>
+                          <polygon points="22 2 15 22 11 13 2 9 22 2"/>
+                        </svg>
+                      )}
+                    </button>
+                  </div>
+                )}
               </footer>
             </>
           )}

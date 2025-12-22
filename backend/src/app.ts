@@ -19,10 +19,13 @@ import notificacionesMetaRoutes from "./modules/calendar/routes/notificacionesMe
 import mensajesFlujoRoutes from "./modules/calendar/routes/mensajesFlujoRoutes.js";
 import integrationsRoutes from "./modules/integrations/routes/index.js";
 import mercadopagoRoutes from "./modules/mercadopago/routes/index.js";
+import afipRoutes from "./modules/afip/routes/index.js";
+import ocrRoutes from "./modules/ocr/routes/index.js";
 import usuarioEmpresaRoutes from "./routes/usuarioEmpresaRoutes.js";
 import flowRoutes from "./routes/flowRoutes.js";
 import superAdminRoutes from "./routes/superAdminRoutes.js";
 import chatbotRoutes from "./routes/chatbotRoutes.js";
+import intervencionRoutes from "./routes/intervencionRoutes.js";
 // import primerMensajeRoutes from "./routes/primerMensajeRoutes.js";
 import { errorHandler } from "./middlewares/errorHandler.js";
 import { connectDB } from "./config/database.js";
@@ -117,12 +120,30 @@ console.log('🟢 [APP] Montando rutas de integraciones en /api/modules/integrat
 app.use("/api/modules/integrations", integrationsRoutes);
 console.log('🟢 [APP] Montando rutas de Mercado Pago en /api/modules/mercadopago');
 app.use("/api/modules/mercadopago", mercadopagoRoutes);
+console.log('🟢 [APP] Montando rutas de AFIP en /api/modules/afip');
+app.use("/api/modules/afip", afipRoutes);
+console.log('🟢 [APP] Montando rutas de OCR en /api/modules/ocr');
+app.use("/api/modules/ocr", ocrRoutes);
 app.use("/api/flujos", flujosRoutes);
 app.use("/api/flows", flowRoutes);
 app.use("/api/chatbots", chatbotRoutes);
+app.use("/api/intervencion", intervencionRoutes);
 // app.use("/api/primer-mensaje", primerMensajeRoutes);
 app.use("/api", statusRoutes);
 app.use(errorHandler);
+
+// Manejo global de errores no capturados
+process.on('uncaughtException', (error: Error) => {
+  loggers.error('❌ Excepción no capturada:', error);
+  console.error('Stack trace:', error.stack);
+  process.exit(1);
+});
+
+process.on('unhandledRejection', (reason: any, promise: Promise<any>) => {
+  loggers.error('❌ Promesa rechazada no manejada:', reason);
+  console.error('Promise:', promise);
+  process.exit(1);
+});
 
 // Inicialización de la aplicación
 (async () => {

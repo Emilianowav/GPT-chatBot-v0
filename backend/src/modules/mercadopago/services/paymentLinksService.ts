@@ -45,6 +45,7 @@ export async function createPaymentLink(data: {
   unitPrice: number;
   description?: string;
   priceType?: 'fixed' | 'variable';
+  category?: string;
   imageUrl?: string;
   currency?: string;
 }): Promise<IPaymentLink> {
@@ -65,6 +66,7 @@ export async function createPaymentLink(data: {
     unitPrice: data.unitPrice,
     description: data.description || '',
     priceType: data.priceType || 'fixed',
+    category: data.category || 'services',
     imageUrl: data.imageUrl,
     currency: data.currency || 'ARS',
     active: true,

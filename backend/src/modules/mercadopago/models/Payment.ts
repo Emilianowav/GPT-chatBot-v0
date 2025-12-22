@@ -17,6 +17,7 @@ export interface IPayment extends Document {
   // Identificadores
   mpPaymentId: string;          // ID del pago en MP
   sellerId: string;             // userId de MP del vendedor
+  empresaId?: string;           // ID o nombre de la empresa (para filtrar por empresa)
   paymentLinkId?: string;       // ID del PaymentLink (si aplica)
   externalReference?: string;   // Referencia externa
   
@@ -62,6 +63,10 @@ const PaymentSchema = new Schema<IPayment>({
     type: String, 
     required: true,
     index: true 
+  },
+  empresaId: {
+    type: String,
+    index: true
   },
   paymentLinkId: { 
     type: String,
@@ -110,6 +115,8 @@ const PaymentSchema = new Schema<IPayment>({
 // Índices compuestos
 PaymentSchema.index({ sellerId: 1, status: 1 });
 PaymentSchema.index({ sellerId: 1, createdAt: -1 });
+PaymentSchema.index({ empresaId: 1, status: 1 });
+PaymentSchema.index({ empresaId: 1, createdAt: -1 });
 
 export const Payment = mongoose.model<IPayment>('MPPayment', PaymentSchema);
 export default Payment;

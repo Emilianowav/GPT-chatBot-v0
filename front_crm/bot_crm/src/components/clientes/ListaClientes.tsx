@@ -11,15 +11,23 @@ interface ListaClientesProps {
   onEditar?: (cliente: Cliente) => void;
   onEliminar?: (cliente: Cliente) => void;
   itemsPerPage?: number;
+  currentPage?: number;
+  onPageChange?: (page: number) => void;
 }
 
 export default function ListaClientes({ 
   clientes, 
   onEditar,
   onEliminar,
-  itemsPerPage = 10
+  itemsPerPage = 10,
+  currentPage: externalPage,
+  onPageChange
 }: ListaClientesProps) {
-  const [currentPage, setCurrentPage] = useState(1);
+  const [internalPage, setInternalPage] = useState(1);
+  
+  // Usar página externa si se proporciona, sino usar la interna
+  const currentPage = externalPage ?? internalPage;
+  const setCurrentPage = onPageChange ?? setInternalPage;
 
   // Paginación
   const totalPages = Math.ceil(clientes.length / itemsPerPage);

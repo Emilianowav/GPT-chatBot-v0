@@ -69,6 +69,7 @@ export interface IContactoEmpresa extends Document {
   fechaNacimiento?: Date;
   dni?: string;
   sector?: string;                // Sector asignado
+  agenteAsignado?: mongoose.Types.ObjectId; // Agente vinculado (opcional)
   notas?: string;
   
   // Origen y tracking
@@ -85,6 +86,11 @@ export interface IContactoEmpresa extends Document {
   
   // Estado de workflow activo
   workflowState?: WorkflowState;
+  
+  // Intervención humana
+  chatbotPausado: boolean;           // Si true, el chatbot no responde automáticamente
+  chatbotPausadoPor?: string;        // Quién pausó (usuario del CRM)
+  chatbotPausadoEn?: Date;           // Cuándo se pausó
   
   // Estado
   activo: boolean;
@@ -155,6 +161,11 @@ const ContactoEmpresaSchema = new Schema<IContactoEmpresa>({
   sector: {
     type: String,
     trim: true
+  },
+  agenteAsignado: {
+    type: Schema.Types.ObjectId,
+    ref: 'Agente',
+    required: false
   },
   notas: {
     type: String
@@ -256,6 +267,20 @@ const ContactoEmpresaSchema = new Schema<IContactoEmpresa>({
     required: false
   },
   
+  // Intervención humana
+  chatbotPausado: {
+    type: Boolean,
+    default: false
+  },
+  chatbotPausadoPor: {
+    type: String,
+    required: false
+  },
+  chatbotPausadoEn: {
+    type: Date,
+    required: false
+  },
+  
   // Estado
   activo: {
     type: Boolean,
@@ -270,10 +295,11 @@ const ContactoEmpresaSchema = new Schema<IContactoEmpresa>({
 });
 
 // Índices compuestos
-ContactoEmpresaSchema.index({ empresaId: 1, telefono: 1 }, { unique: true });
+ContactoEmpresaSchema.index({ empresaId: 1, telefono: 1 });
 ContactoEmpresaSchema.index({ empresaId: 1, email: 1 });
 ContactoEmpresaSchema.index({ empresaId: 1, activo: 1 });
 ContactoEmpresaSchema.index({ empresaId: 1, sector: 1 });
+ContactoEmpresaSchema.index({ empresaId: 1, agenteAsignado: 1 });
 ContactoEmpresaSchema.index({ 'metricas.ultimaInteraccion': 1 });
 
 // Middleware para actualizar fecha de modificación

@@ -23,6 +23,8 @@ export interface Cliente {
   fechaNacimiento?: string;
   dni?: string;
   notas?: string;
+  sector?: string;
+  agenteAsignado?: string;
   origen: 'chatbot' | 'manual';
   chatbotUserId?: string;
   activo: boolean;
@@ -154,4 +156,62 @@ export async function eliminarCliente(clienteId: string): Promise<void> {
     const error = await response.json();
     throw new Error(error.message || 'Error al eliminar cliente');
   }
+}
+
+/**
+ * Asignar o desasignar un agente a un cliente
+ */
+export async function asignarAgente(
+  clienteId: string,
+  agenteId: string | null
+): Promise<Cliente> {
+  const response = await fetch(`${API_BASE_URL}/api/clientes/${clienteId}/agente`, {
+    method: 'PATCH',
+    headers: getHeaders(),
+    body: JSON.stringify({ agenteId })
+  });
+
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.message || 'Error al asignar agente');
+  }
+
+  const result = await response.json();
+  return result.cliente;
+}
+
+/**
+ * Obtener clientes asignados a un agente específico
+ */
+export async function obtenerClientesPorAgente(agenteId: string): Promise<Cliente[]> {
+  const response = await fetch(`${API_BASE_URL}/api/clientes/por-agente/${agenteId}`, {
+    method: 'GET',
+    headers: getHeaders()
+  });
+
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.message || 'Error al obtener clientes por agente');
+  }
+
+  const data = await response.json();
+  return data.clientes;
+}
+
+/**
+ * Obtener clientes sin agente asignado
+ */
+export async function obtenerClientesSinAgente(): Promise<Cliente[]> {
+  const response = await fetch(`${API_BASE_URL}/api/clientes/sin-agente`, {
+    method: 'GET',
+    headers: getHeaders()
+  });
+
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.message || 'Error al obtener clientes sin agente');
+  }
+
+  const data = await response.json();
+  return data.clientes;
 }

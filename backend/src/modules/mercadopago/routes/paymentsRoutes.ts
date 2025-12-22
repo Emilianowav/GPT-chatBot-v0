@@ -210,7 +210,7 @@ router.get('/:paymentId', async (req, res) => {
 /**
  * GET /payments/history/:empresaId
  * Lista el historial de pagos de una empresa
- * Busca por internalId del seller (empresaId) en lugar de userId de MP
+ * Filtra directamente por empresaId del pago
  */
 router.get('/history/:empresaId', async (req, res): Promise<void> => {
   const { empresaId } = req.params;
@@ -219,23 +219,46 @@ router.get('/history/:empresaId', async (req, res): Promise<void> => {
   console.log(`📊 [MP Payments] Buscando historial para empresaId: "${empresaId}"`);
   
   try {
-    // Buscar el seller por internalId (puede ser nombre o ObjectId)
-    let seller = await Seller.findOne({ internalId: empresaId });
+    // Primero intentar filtrar directamente por empresaId en los pagos
+    let query: any = { empresaId: empresaId };
     
-    // Si no se encuentra, buscar por nombre de empresa usando el ObjectId
-    if (!seller) {
-      const { EmpresaModel } = await import('../../../models/Empresa.js');
-      const empresa = await EmpresaModel.findById(empresaId);
-      if (empresa) {
-        console.log(`📊 [MP Payments] Buscando seller por nombre: ${empresa.nombre}`);
-        seller = await Seller.findOne({ internalId: empresa.nombre });
+    // Contar pagos con empresaId directo
+    let total = await Payment.countDocuments(query);
+    
+    // Si no hay pagos con empresaId directo, buscar por seller (compatibilidad hacia atrás)
+    if (total === 0) {
+      console.log(`📊 [MP Payments] No hay pagos con empresaId directo, buscando por seller...`);
+      
+      // Buscar el seller por internalId (puede ser nombre o ObjectId)
+      let seller = await Seller.findOne({ internalId: empresaId });
+      
+      // Si no se encuentra, buscar por nombre de empresa usando el ObjectId
+      if (!seller) {
+        const { EmpresaModel } = await import('../../../models/Empresa.js');
+        const empresa = await EmpresaModel.findById(empresaId);
+        if (empresa) {
+          console.log(`📊 [MP Payments] Buscando seller por nombre: ${empresa.nombre}`);
+          seller = await Seller.findOne({ internalId: empresa.nombre });
+          
+          // También buscar pagos por nombre de empresa
+          if (!seller) {
+            query = { empresaId: empresa.nombre };
+            total = await Payment.countDocuments(query);
+          }
+        }
+      }
+      
+      if (seller) {
+        console.log(`📊 [MP Payments] Seller encontrado:`, { internalId: seller.internalId, userId: seller.userId });
+        query = { sellerId: seller.userId };
+        total = await Payment.countDocuments(query);
       }
     }
     
-    console.log(`📊 [MP Payments] Seller encontrado:`, seller ? { internalId: seller.internalId, userId: seller.userId } : 'NO ENCONTRADO');
+    console.log(`📊 [MP Payments] Query final:`, query, `Total: ${total}`);
     
-    if (!seller) {
-      console.log(`📊 [MP Payments] No hay seller para "${empresaId}", retornando lista vacía`);
+    if (total === 0) {
+      console.log(`📊 [MP Payments] No hay pagos para "${empresaId}"`);
       res.json({
         success: true,
         payments: [],
@@ -246,10 +269,6 @@ router.get('/history/:empresaId', async (req, res): Promise<void> => {
       return;
     }
     
-    // Buscar pagos por el userId de MP del seller
-    const query: any = { sellerId: seller.userId };
-    console.log(`📊 [MP Payments] Query de pagos:`, query);
-    
     if (status && typeof status === 'string') {
       query.status = status;
     }
@@ -258,8 +277,6 @@ router.get('/history/:empresaId', async (req, res): Promise<void> => {
       .sort({ createdAt: -1 })
       .skip(parseInt(offset as string))
       .limit(parseInt(limit as string));
-    
-    const total = await Payment.countDocuments(query);
     
     res.json({
       success: true,
@@ -277,25 +294,39 @@ router.get('/history/:empresaId', async (req, res): Promise<void> => {
 /**
  * GET /payments/stats/:empresaId
  * Estadísticas de pagos de una empresa
- * Busca por internalId del seller (empresaId)
+ * Filtra directamente por empresaId del pago
  */
 router.get('/stats/:empresaId', async (req, res): Promise<void> => {
   const { empresaId } = req.params;
   
   try {
-    // Buscar el seller por internalId (puede ser nombre o ObjectId)
-    let seller = await Seller.findOne({ internalId: empresaId });
+    // Construir query - primero intentar por empresaId directo
+    let query: any = { empresaId: empresaId };
+    let total = await Payment.countDocuments(query);
     
-    // Si no se encuentra, buscar por nombre de empresa usando el ObjectId
-    if (!seller) {
-      const { EmpresaModel } = await import('../../../models/Empresa.js');
-      const empresa = await EmpresaModel.findById(empresaId);
-      if (empresa) {
-        seller = await Seller.findOne({ internalId: empresa.nombre });
+    // Si no hay pagos con empresaId directo, buscar por seller (compatibilidad)
+    if (total === 0) {
+      let seller = await Seller.findOne({ internalId: empresaId });
+      
+      if (!seller) {
+        const { EmpresaModel } = await import('../../../models/Empresa.js');
+        const empresa = await EmpresaModel.findById(empresaId);
+        if (empresa) {
+          seller = await Seller.findOne({ internalId: empresa.nombre });
+          if (!seller) {
+            query = { empresaId: empresa.nombre };
+            total = await Payment.countDocuments(query);
+          }
+        }
+      }
+      
+      if (seller) {
+        query = { sellerId: seller.userId };
       }
     }
     
-    if (!seller) {
+    // Si no hay pagos, retornar stats vacías
+    if (total === 0 && !(await Payment.countDocuments(query))) {
       res.json({
         success: true,
         stats: {
@@ -309,40 +340,38 @@ router.get('/stats/:empresaId', async (req, res): Promise<void> => {
       return;
     }
     
-    const sellerId = seller.userId;
-    
     const hoy = new Date();
     hoy.setHours(0, 0, 0, 0);
     const inicioMes = new Date(hoy.getFullYear(), hoy.getMonth(), 1);
     
     // Total de pagos aprobados
     const pagosAprobados = await Payment.countDocuments({ 
-      sellerId, 
+      ...query, 
       status: 'approved' 
     });
     
     // Ingresos totales
     const ingresosTotales = await Payment.aggregate([
-      { $match: { sellerId, status: 'approved' } },
+      { $match: { ...query, status: 'approved' } },
       { $group: { _id: null, total: { $sum: '$amount' } } }
     ]);
     
     // Pagos del mes
     const pagosDelMes = await Payment.countDocuments({
-      sellerId,
+      ...query,
       status: 'approved',
       createdAt: { $gte: inicioMes }
     });
     
     // Ingresos del mes
     const ingresosDelMes = await Payment.aggregate([
-      { $match: { sellerId, status: 'approved', createdAt: { $gte: inicioMes } } },
+      { $match: { ...query, status: 'approved', createdAt: { $gte: inicioMes } } },
       { $group: { _id: null, total: { $sum: '$amount' } } }
     ]);
     
     // Pagos pendientes
     const pagosPendientes = await Payment.countDocuments({
-      sellerId,
+      ...query,
       status: { $in: ['pending', 'in_process'] }
     });
     

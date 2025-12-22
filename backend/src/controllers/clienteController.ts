@@ -1,6 +1,7 @@
 // 👤 Controlador de Clientes
 import type { Request, Response } from 'express';
 import * as clienteService from '../services/clienteService.js';
+import { AgenteModel } from '../modules/calendar/models/Agente.js';
 
 /**
  * POST /api/clientes
@@ -248,6 +249,114 @@ export const eliminarCliente = async (req: Request, res: Response): Promise<void
     res.status(400).json({
       success: false,
       message: error.message || 'Error al eliminar cliente'
+    });
+  }
+}
+
+/**
+ * PATCH /api/clientes/:id/agente
+ * Asignar o desasignar un agente a un cliente
+ */
+export const asignarAgente = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const empresaId = (req as any).user?.empresaId;
+    if (!empresaId) {
+      res.status(401).json({
+        success: false,
+        message: 'No autenticado'
+      });
+      return;
+    }
+
+    const { id } = req.params;
+    const { agenteId } = req.body;
+
+    // Si se proporciona agenteId, verificar que el agente existe y pertenece a la empresa
+    if (agenteId) {
+      const agente = await AgenteModel.findOne({ _id: agenteId, empresaId });
+      if (!agente) {
+        res.status(404).json({
+          success: false,
+          message: 'Agente no encontrado'
+        });
+        return;
+      }
+    }
+
+    const cliente = await clienteService.asignarAgente(id, empresaId, agenteId || null);
+
+    res.json({
+      success: true,
+      cliente,
+      message: agenteId ? 'Agente asignado correctamente' : 'Agente desasignado correctamente'
+    });
+  } catch (error: any) {
+    console.error('Error al asignar agente:', error);
+    res.status(400).json({
+      success: false,
+      message: error.message || 'Error al asignar agente'
+    });
+  }
+}
+
+/**
+ * GET /api/clientes/por-agente/:agenteId
+ * Obtener clientes asignados a un agente específico
+ */
+export const obtenerClientesPorAgente = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const empresaId = (req as any).user?.empresaId;
+    if (!empresaId) {
+      res.status(401).json({
+        success: false,
+        message: 'No autenticado'
+      });
+      return;
+    }
+
+    const { agenteId } = req.params;
+
+    const clientes = await clienteService.obtenerClientesPorAgente(empresaId, agenteId);
+
+    res.json({
+      success: true,
+      clientes
+    });
+  } catch (error: any) {
+    console.error('Error al obtener clientes por agente:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error al obtener clientes'
+    });
+  }
+}
+
+/**
+ * GET /api/clientes/sin-agente
+ * Obtener clientes sin agente asignado
+ */
+export const obtenerClientesSinAgente = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const empresaId = (req as any).user?.empresaId;
+    if (!empresaId) {
+      res.status(401).json({
+        success: false,
+        message: 'No autenticado'
+      });
+      return;
+    }
+
+    const clientes = await clienteService.obtenerClientesSinAgente(empresaId);
+
+    res.json({
+      success: true,
+      clientes
+    });
+  } catch (error: any) {
+    console.error('Error al obtener clientes sin agente:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error al obtener clientes'
     });
   }
 }
