@@ -116,27 +116,46 @@ export const getHistorialUsuario = async (req: Request, res: Response): Promise<
     // Formatear mensajes del historial
     const historial = contacto.conversaciones?.historial || [];
     const mensajes = historial.map((msg: string, index: number) => {
-      // Determinar el rol: índice par = user, índice impar = assistant
-      let rol = index % 2 === 0 ? 'user' : 'assistant';
+      let rol = 'user';
       let contenido = msg;
       
-      // Parsear si es JSON string (formato antiguo)
+      // Detectar rol por prefijo del mensaje
       if (typeof msg === 'string') {
-        try {
-          const parsed = JSON.parse(msg);
-          if (parsed.content) {
-            contenido = parsed.content;
-            rol = parsed.role || rol;
+        // Mensajes de operador (intervención manual)
+        if (msg.startsWith('Operador (') || msg.startsWith('Operador:')) {
+          rol = 'assistant';
+          // Remover prefijo "Operador (username): " del contenido
+          contenido = msg.replace(/^Operador\s*\([^)]*\):\s*/, '').replace(/^Operador:\s*/, '');
+        }
+        // Mensajes del cliente (intervención)
+        else if (msg.startsWith('Cliente:')) {
+          rol = 'user';
+          contenido = msg.replace(/^Cliente:\s*/, '');
+        }
+        // Mensajes del bot/asistente
+        else if (msg.startsWith('Bot:') || msg.startsWith('Asistente:')) {
+          rol = 'assistant';
+          contenido = msg.replace(/^(Bot|Asistente):\s*/, '');
+        }
+        // Intentar parsear JSON (formato antiguo)
+        else {
+          try {
+            const parsed = JSON.parse(msg);
+            if (parsed.content) {
+              contenido = parsed.content;
+              rol = parsed.role || 'user';
+            }
+          } catch (e) {
+            // No es JSON - usar heurística de índice como fallback
+            rol = index % 2 === 0 ? 'user' : 'assistant';
           }
-        } catch (e) {
-          // No es JSON, usar como está
         }
       }
 
       return {
         id: `${contacto._id}-msg-${index}`,
         contenido: contenido,
-        rol: rol, // 'user' o 'assistant'
+        rol: rol,
         fecha: contacto.conversaciones?.ultimaConversacion || contacto.metricas.ultimaInteraccion,
         leido: true
       };
