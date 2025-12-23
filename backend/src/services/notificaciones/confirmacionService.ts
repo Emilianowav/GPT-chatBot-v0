@@ -13,24 +13,17 @@ export async function procesarNotificacionesConfirmacion() {
     const ahora = new Date();
     const horaActual = ahora.getUTCHours();
     const minutoActual = ahora.getUTCMinutes();
-    const horaFormateada = `${String(horaActual).padStart(2, '0')}:${String(minutoActual).padStart(2, '0')}`;
-    
-    console.log(`\n⏰ [${horaFormateada}] Verificando notificaciones de confirmación...`);
     
     const configuraciones = await ConfiguracionModuloModel.find({
       'plantillasMeta.confirmacionTurnos.activa': true
     });
     
-    console.log(`   📋 Configuraciones activas: ${configuraciones.length}`);
-    
     if (configuraciones.length === 0) {
-      console.log(`   ℹ️ No hay empresas con confirmación activa\n`);
       return;
     }
     
     for (const config of configuraciones) {
       try {
-        console.log(`   🏢 Procesando: ${config.empresaId}`);
         
         const notifConfig = config.plantillasMeta?.confirmacionTurnos;
         if (!notifConfig) continue;
@@ -69,7 +62,6 @@ export async function procesarNotificacionesConfirmacion() {
         }
         
         if (debeEnviar && fechaInicio! && fechaFin!) {
-          console.log(`⏰ Enviando confirmaciones para ${config.empresaId}`);
           await enviarConfirmacionesPorEmpresa(config, fechaInicio!, fechaFin!);
         }
         
@@ -93,10 +85,7 @@ async function enviarConfirmacionesPorEmpresa(
   
   if (!notifConfig || !notifConfig.activa) return;
   
-  console.log(`   🔍 Buscando turnos entre:`);
-  console.log(`      Inicio: ${fechaInicio.toISOString()}`);
-  console.log(`      Fin: ${fechaFin.toISOString()}`);
-  console.log(`      Estados: ${notifConfig.programacion?.filtroEstado || ['no_confirmado', 'pendiente']}`);
+  // Logs reducidos - solo mostrar cuando hay turnos
   
   const hace12Horas = new Date(Date.now() - 12 * 60 * 60 * 1000);
   
@@ -121,11 +110,10 @@ async function enviarConfirmacionesPorEmpresa(
   });
   
   if (turnos.length === 0) {
-    console.log(`ℹ️ No hay turnos para confirmar`);
     return;
   }
   
-  console.log(`📤 Enviando confirmaciones para ${turnos.length} turnos`);
+  console.log(`📤 [Confirmaciones] Enviando a ${turnos.length} turnos de ${empresaId}`);
   
   const turnosPorCliente = new Map<string, any[]>();
   const { ContactoEmpresaModel } = await import('../../models/ContactoEmpresa.js');
@@ -176,11 +164,7 @@ async function enviarConfirmacionesPorEmpresa(
       const cliente = turnosData[0].cliente;
       const turnos = turnosData.map(td => td.turno);
       
-      console.log(`   🔍 Validando cliente ${clienteId}:`);
-      console.log(`      - Existe: ${!!cliente}`);
-      console.log(`      - Tiene telefono: ${!!cliente?.telefono}`);
-      console.log(`      - Valor telefono: "${cliente?.telefono}"`);
-      console.log(`      - Tipo telefono: ${typeof cliente?.telefono}`);
+      // Validación silenciosa
       
       if (!cliente) {
         console.error(`❌ Cliente no existe: ${clienteId}`);
@@ -193,9 +177,7 @@ async function enviarConfirmacionesPorEmpresa(
         continue;
       }
       
-      console.log(`📤 Enviando a: ${cliente.nombre} ${cliente.apellido} (${cliente.telefono})`);
       await enviarConfirmacionConTurnos(cliente, turnos, config);
-      console.log(`✅ Enviado a ${cliente.nombre}`);
       
       // ✅ INICIAR FLUJO DE CONFIRMACIÓN
       const { ConversationStateModel } = await import('../../models/ConversationState.js');
@@ -221,7 +203,6 @@ async function enviarConfirmacionesPorEmpresa(
         { upsert: true, new: true }
       );
       
-      console.log(`🔄 Flujo de confirmación iniciado para ${cliente.telefono}`);
       
       // Marcar turnos como notificados
       for (const turno of turnos) {

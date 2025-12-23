@@ -130,19 +130,19 @@ function formatearFechaParaApi(fecha: Date): string {
 
 async function obtenerConfigApi(empresaId: string): Promise<ApiConfig | null> {
   try {
+    // Buscar solo por nombre, ya que empresaId puede venir como nombre de empresa
     const apiConfig = await ApiConfigurationModel.findOne({
-      empresaId,
       nombre: { $regex: /mis canchas/i },
       estado: 'activo'
     });
     
-    if (!apiConfig || !apiConfig.autenticacion?.configuracion?.token) {
+    if (!apiConfig || !apiConfig.autenticacion?.configuracion?.apiKey) {
       return null;
     }
     
     return {
       baseUrl: apiConfig.baseUrl,
-      apiKey: apiConfig.autenticacion.configuracion.token
+      apiKey: apiConfig.autenticacion.configuracion.apiKey
     };
   } catch (error) {
     console.error('❌ [ReservaCanchas] Error obteniendo config API:', error);
@@ -168,7 +168,7 @@ async function llamarApiMisCanchas<T>(
     const options: RequestInit = {
       method,
       headers: {
-        'Authorization': `Bearer ${config.apiKey}`,
+        'X-API-Key': config.apiKey,
         'Content-Type': 'application/json',
         'ngrok-skip-browser-warning': 'true'
       }
