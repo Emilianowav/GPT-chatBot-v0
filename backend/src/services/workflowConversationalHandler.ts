@@ -167,14 +167,15 @@ export class WorkflowConversationalHandler {
               // Extraer opciones dinámicas
               let datosArray = resultadoAPI.data;
               
+              // Si tiene data anidado, extraerlo primero
+              if (datosArray.data && typeof datosArray.data === 'object') {
+                datosArray = datosArray.data;
+              }
+              
               // Usar arrayPath del config si está disponible
               if (primerPaso.endpointResponseConfig?.arrayPath) {
                 const arrayPath = primerPaso.endpointResponseConfig.arrayPath;
                 datosArray = datosArray[arrayPath] || datosArray;
-              }
-              // Si la respuesta tiene una propiedad "data", usarla
-              else if (datosArray.data && Array.isArray(datosArray.data)) {
-                datosArray = datosArray.data;
               }
               
               if (Array.isArray(datosArray) && datosArray.length > 0) {
