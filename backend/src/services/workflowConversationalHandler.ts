@@ -1228,186 +1228,85 @@ export class WorkflowConversationalHandler {
   ): Promise<WorkflowConversationalResult> {
     console.log('📋 Procesando confirmación...');
     
-    // Validar que sea una opción válida (1-5)
-    const opcion = mensaje.trim();
+    // Normalizar respuesta
+    const respuesta = mensaje.trim().toLowerCase();
     
-    if (!['1', '2', '3', '4', '5'].includes(opcion)) {
+    // Validar SI/NO
+    const esAfirmativo = ['si', 'sí', 's', 'yes', 'y', '1'].includes(respuesta);
+    const esNegativo = ['no', 'n', '0', 'cancelar'].includes(respuesta);
+    
+    if (!esAfirmativo && !esNegativo) {
       return {
         success: false,
-        response: '❌ Opción inválida. Por favor selecciona un número del 1 al 5.',
+        response: '❌ Por favor responde SI para confirmar o NO para cancelar.',
         completed: false,
-        error: 'Opción inválida'
+        error: 'Respuesta inválida'
       };
     }
     
-    console.log(`✅ Opción seleccionada: ${opcion}`);
-    
-    // Opción 1: Confirmar y continuar
-    if (opcion === '1') {
-      console.log('✅ Usuario confirmó, continuando al paso final...');
+    // Usuario confirmó
+    if (esAfirmativo) {
+      console.log('✅ Usuario confirmó, continuando al siguiente paso...');
       
-      // Avanzar al siguiente paso (que debería ser EJECUTAR)
+      // Avanzar al siguiente paso
       await workflowConversationManager.avanzarPaso(contactoId, {
-        [paso.nombreVariable]: opcion
+        [paso.nombreVariable]: 'SI'
       });
       
       const siguientePaso = workflow.steps.find(s => s.orden === paso.orden + 1);
       
-      if (siguientePaso && siguientePaso.tipo === 'consulta_filtrada') {
-        return await this.procesarPasoEjecucion(
-          siguientePaso,
-          contactoId,
-          workflow,
-          { ...workflowState, pasoActual: paso.orden },
-          apiConfig
-        );
+      if (siguientePaso) {
+        // Si el siguiente paso es de ejecución, ejecutarlo
+        if (siguientePaso.tipo === 'consulta_filtrada') {
+          return await this.procesarPasoEjecucion(
+            siguientePaso,
+            contactoId,
+            workflow,
+            { ...workflowState, pasoActual: paso.orden },
+            apiConfig
+          );
+        }
+        
+        // Si es otro tipo de paso, mostrar su pregunta
+        if (siguientePaso.tipo === 'recopilar' || siguientePaso.tipo === 'input') {
+          const estadoActual = await workflowConversationManager.getWorkflowState(contactoId);
+          const datosRecopilados = estadoActual?.datosRecopilados || {};
+          
+          return {
+            success: true,
+            response: this.reemplazarVariables(siguientePaso.pregunta, datosRecopilados),
+            completed: false,
+            currentStep: siguientePaso.orden,
+            totalSteps: workflow.steps.length
+          };
+        }
       }
       
       return {
         success: false,
-        response: '❌ Error: No se encontró el paso de ejecución',
+        response: '❌ Error: No se encontró el siguiente paso',
         completed: true,
-        error: 'Paso de ejecución no encontrado'
+        error: 'Siguiente paso no encontrado'
       };
     }
     
-    // Opción 5: Cancelar
-    if (opcion === '5') {
-      console.log('🚫 Usuario canceló el flujo');
+    // Usuario canceló
+    if (esNegativo) {
+      console.log('🚫 Usuario canceló la reserva');
       await workflowConversationManager.abandonarWorkflow(contactoId);
       
       return {
         success: true,
-        response: '🚫 Búsqueda cancelada. Si necesitas ayuda, escribe "productos" o "buscar".',
+        response: '🚫 Reserva cancelada. Si querés hacer una nueva reserva, escribí "reservar".',
         completed: true
-      };
-    }
-    
-    // Opciones 2-4: Cambiar un dato
-    const cambios: Record<string, { paso: number; variable: string; nombre: string }> = {
-      '2': { paso: 0, variable: 'sucursal_id', nombre: 'sucursal' },
-      '3': { paso: 1, variable: 'categoria_id', nombre: 'categoría' },
-      '4': { paso: 2, variable: 'nombre_producto', nombre: 'producto' }
-    };
-    
-    const cambio = cambios[opcion];
-    
-    if (cambio) {
-      console.log(`🔄 Usuario quiere cambiar: ${cambio.nombre}`);
-      
-      // Retroceder al paso correspondiente y limpiar la variable
-      await workflowConversationManager.retrocederAPaso(
-        contactoId,
-        cambio.paso,
-        cambio.variable
-      );
-      
-      // También limpiar la variable _nombre si existe
-      const estadoActual = await workflowConversationManager.getWorkflowState(contactoId);
-      if (estadoActual?.datosRecopilados) {
-        const variableNombre = `${cambio.variable}_nombre`;
-        if (estadoActual.datosRecopilados[variableNombre]) {
-          await workflowConversationManager.actualizarDato(contactoId, variableNombre, undefined);
-        }
-      }
-      
-      // Obtener el paso al que retrocedimos
-      const pasoRetroceso = workflow.steps.find(s => s.orden === cambio.paso + 1);
-      
-      if (!pasoRetroceso) {
-        return {
-          success: false,
-          response: '❌ Error al retroceder',
-          completed: true,
-          error: 'Paso no encontrado'
-        };
-      }
-      
-      // Construir respuesta con la pregunta del paso
-      let response = `🔄 Cambiando ${cambio.nombre}...\n\n`;
-      
-      if (pasoRetroceso.pregunta) {
-        const estadoActualizado = await workflowConversationManager.getWorkflowState(contactoId);
-        const datosRecopilados = estadoActualizado?.datosRecopilados || {};
-        response += this.reemplazarVariables(pasoRetroceso.pregunta, datosRecopilados);
-        
-        // Si el paso tiene endpoint, llamar a la API
-        if (pasoRetroceso.endpointId) {
-          try {
-            // Mapear parámetros
-            const params: any = {};
-            if (pasoRetroceso.mapeoParametros) {
-              for (const [paramName, varName] of Object.entries(pasoRetroceso.mapeoParametros)) {
-                if (datosRecopilados[varName] !== undefined) {
-                  if (!params.query) params.query = {};
-                  params.query[paramName] = datosRecopilados[varName];
-                }
-              }
-            }
-            
-            // Llamar al endpoint
-            const resultadoAPI = await apiExecutor.ejecutar(
-              apiConfig._id.toString(),
-              pasoRetroceso.endpointId,
-              params,
-              { metadata: { contactoId } }
-            );
-            
-            if (resultadoAPI.success && resultadoAPI.data) {
-              // Guardar datos
-              await workflowConversationManager.guardarDatosEjecutados(
-                contactoId,
-                pasoRetroceso.endpointId,
-                resultadoAPI.data
-              );
-              
-              let datosArray = resultadoAPI.data;
-              if (datosArray.data && Array.isArray(datosArray.data)) {
-                datosArray = datosArray.data;
-              }
-              
-              if (Array.isArray(datosArray) && datosArray.length > 0) {
-                if (pasoRetroceso.endpointResponseConfig) {
-                  const opciones = this.extraerOpcionesDinamicas(
-                    datosArray,
-                    pasoRetroceso.endpointResponseConfig
-                  );
-                  
-                  if (opciones.length > 0) {
-                    response += '\n\n' + workflowConversationManager.formatearOpciones(opciones);
-                  }
-                }
-              }
-            }
-          } catch (error) {
-            console.error('❌ Error llamando a la API:', error);
-          }
-        }
-        // Si tiene opciones estáticas
-        else if (pasoRetroceso.validacion?.tipo === 'opcion' && pasoRetroceso.validacion.opciones) {
-          response += '\n\n' + workflowConversationManager.formatearOpciones(
-            pasoRetroceso.validacion.opciones
-          );
-        }
-      }
-      
-      return {
-        success: true,
-        response,
-        completed: false,
-        metadata: {
-          workflowName: workflow.nombre,
-          pasoActual: cambio.paso,
-          totalPasos: workflow.steps.length
-        }
       };
     }
     
     return {
       success: false,
-      response: '❌ Opción no reconocida',
-      completed: false,
-      error: 'Opción no reconocida'
+      response: '❌ Error inesperado',
+      completed: true,
+      error: 'Error inesperado'
     };
   }
   
@@ -1423,11 +1322,14 @@ export class WorkflowConversationalHandler {
     
     for (const match of matches) {
       const nombreVariable = match[1].trim();
-      const valor = datos[nombreVariable];
+      let valor = datos[nombreVariable];
       
       if (valor !== undefined && valor !== null) {
-        resultado = resultado.replace(match[0], String(valor));
-        console.log(`🔄 Variable reemplazada: {{${nombreVariable}}} → "${valor}"`);
+        // Formatear valores especiales
+        let valorFormateado = this.formatearValorVariable(nombreVariable, valor);
+        
+        resultado = resultado.replace(match[0], valorFormateado);
+        console.log(`🔄 Variable reemplazada: {{${nombreVariable}}} → "${valorFormateado}"`);
       } else {
         console.log(`⚠️ Variable no encontrada: {{${nombreVariable}}}`);
         // Dejar la variable sin reemplazar si no existe
@@ -1435,6 +1337,58 @@ export class WorkflowConversationalHandler {
     }
     
     return resultado;
+  }
+
+  /**
+   * Formatea el valor de una variable según su tipo
+   */
+  private formatearValorVariable(nombreVariable: string, valor: any): string {
+    // Si es un objeto (turno_seleccionado, etc.)
+    if (typeof valor === 'object' && valor !== null) {
+      // Si es turno_seleccionado de disponibilidad
+      if (nombreVariable === 'turno_seleccionado' && valor.canchas_disponibles) {
+        const canchas = valor.canchas_disponibles;
+        if (Array.isArray(canchas) && canchas.length > 0) {
+          const cancha = canchas[0];
+          return `${cancha.nombre || 'Cancha disponible'}`;
+        }
+        return 'Cancha disponible';
+      }
+      
+      // Si tiene propiedad nombre
+      if (valor.nombre) return valor.nombre;
+      
+      // Si es un array, mostrar primer elemento
+      if (Array.isArray(valor) && valor.length > 0) {
+        return valor[0].nombre || valor[0].id || String(valor[0]);
+      }
+      
+      // Fallback: JSON stringify
+      return JSON.stringify(valor);
+    }
+    
+    // Formatear duración: "1" → "60 minutos (1 hora)"
+    if (nombreVariable === 'duracion') {
+      const duracionMap: Record<string, string> = {
+        '1': '60 minutos (1 hora)',
+        '2': '90 minutos (1 hora y media)',
+        '3': '120 minutos (2 horas)',
+        '60': '60 minutos (1 hora)',
+        '90': '90 minutos (1 hora y media)',
+        '120': '120 minutos (2 horas)'
+      };
+      return duracionMap[String(valor)] || `${valor} minutos`;
+    }
+    
+    // Formatear fecha: "hoy" → "Hoy" (capitalizar)
+    if (nombreVariable === 'fecha') {
+      const valorStr = String(valor).toLowerCase();
+      if (valorStr === 'hoy') return 'Hoy';
+      if (valorStr === 'mañana' || valorStr === 'manana') return 'Mañana';
+      return String(valor);
+    }
+    
+    return String(valor);
   }
   
   /**
