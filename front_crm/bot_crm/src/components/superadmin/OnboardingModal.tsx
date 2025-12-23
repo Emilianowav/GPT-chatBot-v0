@@ -274,17 +274,6 @@ export default function OnboardingModal({ isOpen, onClose, onSuccess }: Onboardi
               </div>
 
               <div className={styles.formGroup}>
-                <label>📱 Teléfono (opcional)</label>
-                <input
-                  type="tel"
-                  value={formData.telefono}
-                  onChange={(e) => setFormData({ ...formData, telefono: e.target.value })}
-                  placeholder="+5493794123456"
-                />
-                <span className={styles.hint}>Formato: +54 seguido del código de área y número</span>
-              </div>
-
-              <div className={styles.formGroup}>
                 <label>🏷️ Categoría</label>
                 <select
                   value={formData.categoria}
@@ -597,6 +586,17 @@ export default function OnboardingModal({ isOpen, onClose, onSuccess }: Onboardi
 
               {!skipMeta && (
                 <>
+                  <div className={styles.formGroup}>
+                    <label>📱 Teléfono de WhatsApp</label>
+                    <input
+                      type="tel"
+                      value={formData.telefono}
+                      onChange={(e) => setFormData({ ...formData, telefono: e.target.value })}
+                      placeholder="+5493794123456"
+                    />
+                    <span className={styles.hint}>Número de teléfono de WhatsApp Business (formato: +54 seguido del código de área y número)</span>
+                  </div>
+
                   <div className={styles.formGroup}>
                     <label>📱 Phone Number ID *</label>
                     <input

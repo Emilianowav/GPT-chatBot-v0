@@ -205,3 +205,57 @@ export const generarPrompt = async (req: Request, res: Response): Promise<void> 
     });
   }
 };
+
+/**
+ * PUT /api/sa/empresas/:id
+ * Actualiza los datos de una empresa (incluyendo configuración de WhatsApp)
+ */
+export const actualizarEmpresa = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { id } = req.params;
+    const {
+      telefono,
+      email,
+      categoria,
+      plan,
+      prompt,
+      modelo,
+      phoneNumberId,
+      accessToken,
+      businessAccountId,
+      appId,
+      appSecret,
+      limites,
+      estadoFacturacion
+    } = req.body;
+
+    const result = await superAdminService.actualizarEmpresa(id, {
+      telefono,
+      email,
+      categoria,
+      plan,
+      prompt,
+      modelo,
+      phoneNumberId,
+      accessToken,
+      businessAccountId,
+      appId,
+      appSecret,
+      limites,
+      estadoFacturacion
+    });
+
+    if (!result.success) {
+      res.status(400).json(result);
+      return;
+    }
+
+    res.status(200).json(result);
+  } catch (error) {
+    console.error('❌ Error en actualizarEmpresa controller:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error en el servidor'
+    });
+  }
+};

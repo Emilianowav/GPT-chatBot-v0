@@ -572,3 +572,119 @@ export async function eliminarEmpresa(empresaId: string) {
     };
   }
 }
+
+/**
+ * Actualiza los datos de una empresa (incluyendo configuración de WhatsApp)
+ */
+export async function actualizarEmpresa(empresaId: string, data: {
+  // Datos generales
+  telefono?: string;
+  email?: string;
+  categoria?: string;
+  plan?: string;
+  prompt?: string;
+  modelo?: string;
+  
+  // Configuración de WhatsApp/Meta
+  phoneNumberId?: string;
+  accessToken?: string;
+  businessAccountId?: string;
+  appId?: string;
+  appSecret?: string;
+  
+  // Límites
+  limites?: {
+    mensajesMensuales?: number;
+    usuariosActivos?: number;
+    almacenamiento?: number;
+    integraciones?: number;
+    exportacionesMensuales?: number;
+    agentesSimultaneos?: number;
+    maxUsuarios?: number;
+    maxAdmins?: number;
+  };
+  
+  // Facturación
+  estadoFacturacion?: string;
+}) {
+  try {
+    // Verificar que la empresa existe
+    const empresa = await EmpresaModel.findOne({ nombre: empresaId });
+    if (!empresa) {
+      return {
+        success: false,
+        message: 'Empresa no encontrada'
+      };
+    }
+
+    // Construir objeto de actualización
+    const updateData: any = {
+      updatedAt: new Date()
+    };
+
+    // Datos generales
+    if (data.telefono !== undefined) updateData.telefono = data.telefono;
+    if (data.email !== undefined) updateData.email = data.email;
+    if (data.categoria !== undefined) updateData.categoria = data.categoria;
+    if (data.plan !== undefined) updateData.plan = data.plan;
+    if (data.prompt !== undefined) updateData.prompt = data.prompt;
+    if (data.modelo !== undefined) updateData.modelo = data.modelo;
+
+    // Configuración de WhatsApp/Meta
+    if (data.phoneNumberId !== undefined) updateData.phoneNumberId = data.phoneNumberId;
+    if (data.accessToken !== undefined) updateData.accessToken = data.accessToken;
+    if (data.businessAccountId !== undefined) updateData.businessAccountId = data.businessAccountId;
+    if (data.appId !== undefined) updateData.appId = data.appId;
+    if (data.appSecret !== undefined) updateData.appSecret = data.appSecret;
+
+    // Límites (actualización parcial)
+    if (data.limites) {
+      if (data.limites.mensajesMensuales !== undefined) {
+        updateData['limites.mensajesMensuales'] = data.limites.mensajesMensuales;
+      }
+      if (data.limites.usuariosActivos !== undefined) {
+        updateData['limites.usuariosActivos'] = data.limites.usuariosActivos;
+      }
+      if (data.limites.almacenamiento !== undefined) {
+        updateData['limites.almacenamiento'] = data.limites.almacenamiento;
+      }
+      if (data.limites.integraciones !== undefined) {
+        updateData['limites.integraciones'] = data.limites.integraciones;
+      }
+      if (data.limites.exportacionesMensuales !== undefined) {
+        updateData['limites.exportacionesMensuales'] = data.limites.exportacionesMensuales;
+      }
+      if (data.limites.agentesSimultaneos !== undefined) {
+        updateData['limites.agentesSimultaneos'] = data.limites.agentesSimultaneos;
+      }
+      if (data.limites.maxUsuarios !== undefined) {
+        updateData['limites.maxUsuarios'] = data.limites.maxUsuarios;
+      }
+      if (data.limites.maxAdmins !== undefined) {
+        updateData['limites.maxAdmins'] = data.limites.maxAdmins;
+      }
+    }
+
+    // Estado de facturación
+    if (data.estadoFacturacion !== undefined) {
+      updateData['facturacion.estado'] = data.estadoFacturacion;
+    }
+
+    // Aplicar actualización
+    await EmpresaModel.updateOne({ nombre: empresaId }, { $set: updateData });
+
+    console.log('✅ Empresa actualizada por SuperAdmin:', empresaId);
+
+    return {
+      success: true,
+      message: 'Empresa actualizada exitosamente'
+    };
+  } catch (error) {
+    console.error('❌ Error al actualizar empresa:', error);
+    return {
+      success: false,
+      message: 'Error al actualizar empresa'
+    };
+  }
+}
+

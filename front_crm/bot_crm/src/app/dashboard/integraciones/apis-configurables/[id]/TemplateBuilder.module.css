@@ -1,4 +1,4 @@
-/* Template Builder - Visual */
+/* Template Builder - SaaS Theme */
 
 .builder {
   display: flex;
@@ -7,9 +7,9 @@
 }
 
 .variablesInfo {
-  background: rgba(255, 107, 74, 0.1);
-  border: 1px solid rgba(255, 107, 74, 0.3);
-  border-radius: 8px;
+  background: #F8FAFC;
+  border: 1px solid #E2E8F0;
+  border-radius: 10px;
   padding: 1rem;
   margin-bottom: 1rem;
 }
@@ -21,8 +21,8 @@
 .variablesHeader strong {
   display: block;
   font-size: 0.875rem;
-  color: #FF6B4A;
-  font-family: 'Consolas', monospace;
+  color: #1E3A5F;
+  font-family: 'Monaco', 'Menlo', monospace;
 }
 
 .variablesTabs {
@@ -38,30 +38,30 @@
   align-items: center;
   gap: 0.25rem;
   padding: 0.75rem 1rem;
-  background: rgba(0, 0, 0, 0.3);
-  border: 2px solid rgba(255, 107, 74, 0.3);
+  background: #FFFFFF;
+  border: 1px solid #E2E8F0;
   border-radius: 8px;
-  color: #fff;
+  color: #1E3A5F;
   cursor: pointer;
   transition: all 0.2s ease;
   min-width: 120px;
 }
 
 .variableTab:hover {
-  background: rgba(255, 107, 74, 0.15);
+  background: rgba(255, 107, 74, 0.08);
   border-color: #FF6B4A;
   transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(255, 107, 74, 0.2);
+  box-shadow: 0 4px 12px rgba(30, 58, 95, 0.1);
 }
 
 .variableName {
   font-weight: 600;
   font-size: 0.875rem;
-  color: #fff;
+  color: #1E3A5F;
 }
 
 .variablePreview {
-  font-family: 'Consolas', monospace;
+  font-family: 'Monaco', 'Menlo', monospace;
   font-size: 0.75rem;
   color: #FF6B4A;
   background: rgba(255, 107, 74, 0.1);
@@ -71,10 +71,10 @@
 
 .helpText {
   font-size: 0.8125rem;
-  color: rgba(255, 255, 255, 0.7);
+  color: #64748B;
   padding: 0.5rem;
-  background: rgba(0, 0, 0, 0.2);
-  border-radius: 4px;
+  background: #FFFFFF;
+  border-radius: 6px;
   border-left: 3px solid #FF6B4A;
 }
 
@@ -144,10 +144,10 @@
 }
 
 .block {
-  background: rgba(0, 0, 0, 0.2);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-left: 2px solid #FF6B4A;
-  border-radius: 4px;
+  background: #FFFFFF;
+  border: 1px solid #E2E8F0;
+  border-left: 3px solid #FF6B4A;
+  border-radius: 8px;
   overflow: hidden;
 }
 
@@ -156,8 +156,8 @@
   justify-content: space-between;
   align-items: center;
   padding: 0.5rem 0.75rem;
-  background: rgba(0, 0, 0, 0.3);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  background: #F8FAFC;
+  border-bottom: 1px solid #E2E8F0;
 }
 
 .blockType {
@@ -165,15 +165,15 @@
   align-items: center;
   gap: 0.375rem;
   font-size: 0.75rem;
-  color: rgba(255, 255, 255, 0.6);
-  font-family: 'Consolas', monospace;
+  color: #64748B;
+  font-family: 'Monaco', 'Menlo', monospace;
   text-transform: uppercase;
 }
 
 .removeBtn {
   background: none;
   border: none;
-  color: rgba(255, 255, 255, 0.4);
+  color: #94A3B8;
   cursor: pointer;
   padding: 0.25rem;
   display: flex;
@@ -182,7 +182,7 @@
 }
 
 .removeBtn:hover {
-  color: #FF6B4A;
+  color: #DC2626;
 }
 
 .textInput {
@@ -190,7 +190,7 @@
   padding: 0.75rem;
   background: transparent;
   border: none;
-  color: #fff;
+  color: #1E3A5F;
   font-size: 0.875rem;
   font-family: inherit;
   resize: vertical;
@@ -198,23 +198,23 @@
 
 .textInput:focus {
   outline: none;
-  background: rgba(255, 255, 255, 0.02);
+  background: #F8FAFC;
 }
 
 .select {
   width: 100%;
   padding: 0.75rem;
-  background: rgba(0, 0, 0, 0.3);
+  background: #F8FAFC;
   border: none;
-  color: #fff;
+  color: #1E3A5F;
   font-size: 0.875rem;
-  font-family: 'Consolas', monospace;
+  font-family: 'Monaco', 'Menlo', monospace;
   cursor: pointer;
 }
 
 .select:focus {
   outline: none;
-  background: rgba(0, 0, 0, 0.4);
+  background: #FFFFFF;
 }
 
 .arrayConfig {
@@ -333,28 +333,28 @@
 }
 
 .preview {
-  background: rgba(0, 0, 0, 0.3);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 4px;
+  background: #F8FAFC;
+  border: 1px solid #E2E8F0;
+  border-radius: 8px;
   padding: 0.75rem;
 }
 
 .preview label {
   display: block;
   font-size: 0.75rem;
-  color: rgba(255, 255, 255, 0.6);
+  color: #64748B;
   margin-bottom: 0.5rem;
-  font-family: 'Consolas', monospace;
+  font-family: 'Monaco', 'Menlo', monospace;
 }
 
 .previewCode {
   margin: 0;
   padding: 0.75rem;
-  background: rgba(0, 0, 0, 0.5);
-  border-radius: 3px;
-  color: #ddd;
+  background: #1E3A5F;
+  border-radius: 6px;
+  color: #E2E8F0;
   font-size: 0.75rem;
-  font-family: 'Consolas', monospace;
+  font-family: 'Monaco', 'Menlo', monospace;
   white-space: pre-wrap;
   word-break: break-word;
   max-height: 200px;
@@ -379,33 +379,33 @@
 
 .templateLabel {
   font-size: 0.875rem;
-  color: rgba(255, 255, 255, 0.8);
-  font-family: 'Consolas', monospace;
+  color: #1E3A5F;
+  font-family: 'Monaco', 'Menlo', monospace;
 }
 
 .templateTextarea {
   width: 100%;
   padding: 1rem;
-  background: rgba(0, 0, 0, 0.3);
-  border: 2px solid rgba(255, 255, 255, 0.1);
+  background: #F8FAFC;
+  border: 1px solid #E2E8F0;
   border-radius: 8px;
-  color: #fff;
+  color: #1E3A5F;
   font-size: 0.875rem;
-  font-family: 'SF Mono', 'Monaco', 'Consolas', monospace;
+  font-family: 'Monaco', 'Menlo', monospace;
   line-height: 1.5;
   resize: vertical;
-  transition: border-color 0.2s ease;
+  transition: all 0.2s ease;
 }
 
 .templateTextarea:focus {
   outline: none;
   border-color: #FF6B4A;
-  background: rgba(0, 0, 0, 0.4);
+  background: #FFFFFF;
   box-shadow: 0 0 0 3px rgba(255, 107, 74, 0.1);
 }
 
 .templateTextarea::placeholder {
-  color: rgba(255, 255, 255, 0.4);
+  color: #94A3B8;
   font-style: italic;
 }
 
@@ -417,9 +417,9 @@
 }
 
 .helpSection {
-  background: rgba(0, 0, 0, 0.2);
-  border: 1px solid rgba(255, 255, 255, 0.05);
-  border-radius: 6px;
+  background: #FFFFFF;
+  border: 1px solid #E2E8F0;
+  border-radius: 8px;
   padding: 0.75rem;
 }
 
@@ -428,14 +428,14 @@
   font-size: 0.8125rem;
   color: #FF6B4A;
   margin-bottom: 0.5rem;
-  font-family: 'Consolas', monospace;
+  font-family: 'Monaco', 'Menlo', monospace;
 }
 
 .helpSection ul {
   margin: 0;
   padding-left: 1rem;
   font-size: 0.75rem;
-  color: rgba(255, 255, 255, 0.6);
+  color: #64748B;
   line-height: 1.4;
 }
 
@@ -448,7 +448,7 @@
   color: #FF6B4A;
   padding: 0.125rem 0.25rem;
   border-radius: 3px;
-  font-family: 'Consolas', monospace;
+  font-family: 'Monaco', 'Menlo', monospace;
   font-size: 0.7rem;
 }
 

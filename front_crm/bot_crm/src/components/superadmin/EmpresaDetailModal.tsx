@@ -38,6 +38,7 @@ export default function EmpresaDetailModal({ isOpen, empresaId, onClose, onUpdat
   });
 
   const [metaConfig, setMetaConfig] = useState({
+    telefono: '',
     phoneNumberId: '',
     accessToken: '',
     businessAccountId: '',
@@ -85,6 +86,7 @@ export default function EmpresaDetailModal({ isOpen, empresaId, onClose, onUpdat
           maxAdmins: emp.limites.maxAdmins,
         });
         setMetaConfig({
+          telefono: emp.telefono || '',
           phoneNumberId: emp.phoneNumberId || '',
           accessToken: emp.accessToken || '',
           businessAccountId: emp.businessAccountId || '',
@@ -104,22 +106,39 @@ export default function EmpresaDetailModal({ isOpen, empresaId, onClose, onUpdat
   };
 
   const handleGuardar = async () => {
+    if (!empresa) return;
+    
     try {
       setSaving(true);
       setError('');
       setSuccess('');
 
-      // Aquí iría la llamada al API para actualizar la empresa
-      // Por ahora solo simulamos
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      const response = await apiClient.superAdminActualizarEmpresa(empresa.nombre, {
+        plan: formData.plan,
+        estadoFacturacion: formData.estadoFacturacion,
+        limites: {
+          mensajesMensuales: formData.limitesMensajes,
+          usuariosActivos: formData.limiteUsuarios,
+          almacenamiento: formData.limiteAlmacenamiento,
+          integraciones: formData.limiteIntegraciones,
+          exportacionesMensuales: formData.limiteExportaciones,
+          agentesSimultaneos: formData.limiteAgentes,
+          maxUsuarios: formData.maxUsuarios,
+          maxAdmins: formData.maxAdmins,
+        }
+      });
       
-      setSuccess('Cambios guardados exitosamente');
-      setEditMode(false);
-      onUpdate();
-      
-      setTimeout(() => {
-        setSuccess('');
-      }, 3000);
+      if (response.success) {
+        setSuccess('Cambios guardados exitosamente');
+        setEditMode(false);
+        onUpdate();
+        
+        setTimeout(() => {
+          setSuccess('');
+        }, 3000);
+      } else {
+        setError(response.message || 'Error al guardar cambios');
+      }
     } catch (err: any) {
       setError(err.message || 'Error al guardar cambios');
     } finally {
@@ -178,22 +197,33 @@ export default function EmpresaDetailModal({ isOpen, empresaId, onClose, onUpdat
   };
 
   const handleGuardarMeta = async () => {
+    if (!empresa) return;
+    
     try {
       setSaving(true);
       setError('');
       setSuccess('');
 
-      // Aquí iría la llamada al API para actualizar las credenciales de Meta
-      // Por ahora solo simulamos
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      const response = await apiClient.superAdminActualizarEmpresa(empresa.nombre, {
+        telefono: metaConfig.telefono,
+        phoneNumberId: metaConfig.phoneNumberId,
+        accessToken: metaConfig.accessToken,
+        businessAccountId: metaConfig.businessAccountId,
+        appId: metaConfig.appId,
+        appSecret: metaConfig.appSecret,
+      });
       
-      setSuccess('Credenciales de WhatsApp guardadas exitosamente');
-      setEditMode(false);
-      onUpdate();
-      
-      setTimeout(() => {
-        setSuccess('');
-      }, 3000);
+      if (response.success) {
+        setSuccess('Credenciales de WhatsApp guardadas exitosamente');
+        setEditMode(false);
+        onUpdate();
+        
+        setTimeout(() => {
+          setSuccess('');
+        }, 3000);
+      } else {
+        setError(response.message || 'Error al guardar credenciales');
+      }
     } catch (err: any) {
       setError(err.message || 'Error al guardar credenciales');
     } finally {
@@ -641,6 +671,18 @@ export default function EmpresaDetailModal({ isOpen, empresaId, onClose, onUpdat
                     </p>
 
                     <form className={styles.form} onSubmit={(e) => { e.preventDefault(); handleGuardarMeta(); }}>
+                      <div className={styles.formGroup}>
+                        <label>📱 Teléfono de WhatsApp</label>
+                        <input
+                          type="tel"
+                          value={metaConfig.telefono}
+                          onChange={(e) => setMetaConfig({ ...metaConfig, telefono: e.target.value })}
+                          disabled={!editMode}
+                          placeholder="+5493794123456"
+                        />
+                        <span className={styles.hint}>Número de teléfono de WhatsApp Business (formato: +54 seguido del código de área y número)</span>
+                      </div>
+
                       <div className={styles.formGroup}>
                         <label>📱 Phone Number ID</label>
                         <input

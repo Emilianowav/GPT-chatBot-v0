@@ -1,4 +1,4 @@
-// 🏟️ Flujo de Reserva de Canchas Deportivas
+// 🏟️ Flujo de Reserva de Canchas Deportivas - Integrado con API Mis Canchas
 import type { Flow, FlowContext, FlowResult } from './types.js';
 import { enviarMensajeWhatsAppTexto } from '../services/metaService.js';
 import { ConfiguracionBotModel } from '../modules/calendar/models/ConfiguracionBot.js';
@@ -6,24 +6,64 @@ import { ConfiguracionModuloModel } from '../modules/calendar/models/Configuraci
 import { TurnoModel } from '../modules/calendar/models/Turno.js';
 import { AgenteModel } from '../modules/calendar/models/Agente.js';
 import { buscarOCrearContacto } from '../services/contactoService.js';
+import { ApiConfigurationModel } from '../modules/integrations/models/ApiConfiguration.js';
 
 // Tipos para el flujo
 interface DatosReserva {
   fecha?: Date;
   fechaTexto?: string;
+  fechaApi?: string; // Formato YYYY-MM-DD para la API
   horaInicio?: string;
   duracion?: number;
   canchaId?: string;
   canchaNombre?: string;
   nombreCliente?: string;
   telefonoCliente?: string;
-  canchasDisponibles?: Array<{ id: string; nombre: string }>;
+  canchasDisponibles?: Array<CanchaDisponible>;
+  deporteId?: string;
+  deporteNombre?: string;
+  deportes?: Array<{ id: string; nombre: string; icono: string }>;
+  precioTotal?: number;
+  reservaId?: string; // ID de pre-reserva en Mis Canchas
+  usaApiExterna?: boolean; // Flag para saber si usa API de Mis Canchas
+}
+
+interface CanchaDisponible {
+  id: string;
+  nombre: string;
+  tipo?: string;
+  horarios_disponibles?: Array<{ hora: string; duraciones: number[] }>;
+  precio_hora?: number | string;
+  precio_hora_y_media?: number | string;
+  precio_dos_horas?: number | string;
+}
+
+interface ApiConfig {
+  baseUrl: string;
+  apiKey: string;
 }
 
 // Helpers
+
+// Obtener fecha actual en zona horaria de Argentina
+function obtenerFechaArgentina(): Date {
+  // Crear fecha en UTC y ajustar a Argentina (UTC-3)
+  const ahora = new Date();
+  const offsetArgentina = -3 * 60; // Argentina es UTC-3 (en minutos)
+  const offsetLocal = ahora.getTimezoneOffset(); // Offset del servidor en minutos
+  const diferenciaMinutos = offsetLocal + offsetArgentina;
+  
+  // Ajustar la fecha
+  const fechaArgentina = new Date(ahora.getTime() + diferenciaMinutos * 60 * 1000);
+  return fechaArgentina;
+}
+
 function parsearFecha(texto: string): Date | null {
   const textoLower = texto.toLowerCase().trim();
-  const hoy = new Date();
+  const hoy = obtenerFechaArgentina();
+  
+  // Resetear hora a medianoche para comparaciones de fecha
+  hoy.setHours(0, 0, 0, 0);
   
   if (textoLower === 'hoy') {
     return hoy;
@@ -77,6 +117,142 @@ function formatearFecha(fecha: Date): string {
 
 function formatearHora(hora: number, minuto: number): string {
   return `${hora.toString().padStart(2, '0')}:${minuto.toString().padStart(2, '0')}`;
+}
+
+function formatearFechaParaApi(fecha: Date): string {
+  const year = fecha.getFullYear();
+  const month = String(fecha.getMonth() + 1).padStart(2, '0');
+  const day = String(fecha.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
+
+// ========== FUNCIONES PARA API MIS CANCHAS ==========
+
+async function obtenerConfigApi(empresaId: string): Promise<ApiConfig | null> {
+  try {
+    const apiConfig = await ApiConfigurationModel.findOne({
+      empresaId,
+      nombre: { $regex: /mis canchas/i },
+      estado: 'activo'
+    });
+    
+    if (!apiConfig || !apiConfig.autenticacion?.configuracion?.token) {
+      return null;
+    }
+    
+    return {
+      baseUrl: apiConfig.baseUrl,
+      apiKey: apiConfig.autenticacion.configuracion.token
+    };
+  } catch (error) {
+    console.error('❌ [ReservaCanchas] Error obteniendo config API:', error);
+    return null;
+  }
+}
+
+async function llamarApiMisCanchas<T>(
+  config: ApiConfig,
+  method: 'GET' | 'POST' | 'PUT' | 'DELETE',
+  path: string,
+  body?: any,
+  queryParams?: Record<string, string>
+): Promise<T | null> {
+  try {
+    let url = `${config.baseUrl}${path}`;
+    
+    if (queryParams && Object.keys(queryParams).length > 0) {
+      const params = new URLSearchParams(queryParams);
+      url += `?${params.toString()}`;
+    }
+    
+    const options: RequestInit = {
+      method,
+      headers: {
+        'Authorization': `Bearer ${config.apiKey}`,
+        'Content-Type': 'application/json',
+        'ngrok-skip-browser-warning': 'true'
+      }
+    };
+    
+    if (body && (method === 'POST' || method === 'PUT')) {
+      options.body = JSON.stringify(body);
+    }
+    
+    console.log(`🌐 [MisCanchasAPI] ${method} ${url}`);
+    
+    const response = await fetch(url, options);
+    
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error(`❌ [MisCanchasAPI] Error ${response.status}: ${errorText}`);
+      return null;
+    }
+    
+    return await response.json() as T;
+  } catch (error) {
+    console.error('❌ [MisCanchasAPI] Error en request:', error);
+    return null;
+  }
+}
+
+async function obtenerDeportesApi(config: ApiConfig): Promise<Array<{ id: string; nombre: string; icono: string }>> {
+  const response = await llamarApiMisCanchas<{ success: boolean; deportes: Array<{ id: string; nombre: string; icono: string }> }>(
+    config, 'GET', '/deportes'
+  );
+  return response?.deportes || [];
+}
+
+async function consultarDisponibilidadApi(
+  config: ApiConfig,
+  fecha: string,
+  deporte: string,
+  duracion: number
+): Promise<{ success: boolean; canchas_disponibles: CanchaDisponible[] } | null> {
+  return await llamarApiMisCanchas<{ success: boolean; canchas_disponibles: CanchaDisponible[] }>(
+    config,
+    'GET',
+    '/disponibilidad',
+    undefined,
+    { fecha, deporte, duracion: duracion.toString() }
+  );
+}
+
+async function preCrearReservaApi(
+  config: ApiConfig,
+  canchaId: string,
+  fecha: string,
+  horaInicio: string,
+  duracion: number,
+  cliente: { nombre: string; telefono: string }
+): Promise<{
+  success: boolean;
+  reserva_id?: string;
+  estado?: string;
+  expira_en?: number;
+  detalle?: {
+    cancha: string;
+    fecha: string;
+    hora_inicio: string;
+    hora_fin: string;
+    duracion: number;
+    precio_total: number;
+    seña_requerida: number;
+  };
+  error?: { code: string; message: string };
+} | null> {
+  return await llamarApiMisCanchas(
+    config,
+    'POST',
+    '/reservas/pre-crear',
+    {
+      cancha_id: canchaId,
+      fecha,
+      hora_inicio: horaInicio,
+      duracion,
+      cliente,
+      origen: 'whatsapp'
+    }
+  );
 }
 
 // Verificar disponibilidad de slot
@@ -238,9 +414,45 @@ export const reservaCanchasFlow: Flow = {
     try {
       // Obtener configuración
       const configModulo = await ConfiguracionModuloModel.findOne({ empresaId });
-      const nombreEmpresa = configModulo?.variablesDinamicas?.nombre_empresa || empresaId;
+      const nombreEmpresa = configModulo?.variablesDinamicas?.nombre_empresa || 'Club Juventus';
       
-      const mensajeBienvenida = `¡Hola! 👋
+      // Verificar si tiene API de Mis Canchas configurada
+      const apiConfig = await obtenerConfigApi(empresaId);
+      
+      if (apiConfig) {
+        // ===== FLUJO CON API MIS CANCHAS =====
+        console.log(`🌐 [ReservaCanchas] Usando API Mis Canchas para ${empresaId}`);
+        
+        // Obtener deportes de la API
+        const deportes = await obtenerDeportesApi(apiConfig);
+        
+        if (deportes.length === 0) {
+          await enviarMensajeWhatsAppTexto(
+            telefono,
+            '❌ No hay deportes disponibles en este momento. Por favor, intentá más tarde.',
+            phoneNumberId
+          );
+          return { success: true, end: true };
+        }
+        
+        let mensajeBienvenida = `¡Hola! 👋\nBienvenido a *${nombreEmpresa}* 🏟️\n\nTe ayudo a reservar tu cancha en pocos pasos.\n\n🏆 *¿Qué deporte querés jugar?*\n\n`;
+        
+        deportes.forEach((deporte, i) => {
+          mensajeBienvenida += `${i + 1}️⃣ ${deporte.icono} ${deporte.nombre}\n`;
+        });
+        
+        mensajeBienvenida += `\nEscribí el número de la opción.`;
+        
+        await enviarMensajeWhatsAppTexto(telefono, mensajeBienvenida, phoneNumberId);
+        
+        return {
+          success: true,
+          nextState: 'esperando_deporte',
+          data: { usaApiExterna: true, deportes }
+        };
+      } else {
+        // ===== FLUJO LOCAL (sin API) =====
+        const mensajeBienvenida = `¡Hola! 👋
 Bienvenido a *${nombreEmpresa}* 🎾
 
 Te ayudo a reservar tu cancha en pocos pasos.
@@ -249,14 +461,15 @@ Te ayudo a reservar tu cancha en pocos pasos.
 
 Escribí la fecha en formato DD/MM/AAAA
 o escribí "hoy" o "mañana"`;
-      
-      await enviarMensajeWhatsAppTexto(telefono, mensajeBienvenida, phoneNumberId);
-      
-      return {
-        success: true,
-        nextState: 'esperando_fecha',
-        data: {}
-      };
+        
+        await enviarMensajeWhatsAppTexto(telefono, mensajeBienvenida, phoneNumberId);
+        
+        return {
+          success: true,
+          nextState: 'esperando_fecha',
+          data: { usaApiExterna: false }
+        };
+      }
     } catch (error) {
       console.error('❌ [ReservaCanchas] Error iniciando:', error);
       return { success: false, error: String(error) };
@@ -268,6 +481,39 @@ o escribí "hoy" o "mañana"`;
     const reservaData = data as DatosReserva;
     
     console.log(`📥 [ReservaCanchas] Estado: ${state}, Mensaje: ${mensaje}`);
+    
+    // ========== ESTADO: ESPERANDO DEPORTE (API MIS CANCHAS) ==========
+    if (state === 'esperando_deporte') {
+      const opcion = parseInt(mensaje.trim()) - 1;
+      const deportes = reservaData.deportes || [];
+      
+      if (opcion < 0 || opcion >= deportes.length) {
+        await enviarMensajeWhatsAppTexto(
+          telefono,
+          '❌ Opción inválida. Por favor, elegí un número de la lista.',
+          phoneNumberId
+        );
+        return { success: true, nextState: 'esperando_deporte', data };
+      }
+      
+      const deporteSeleccionado = deportes[opcion];
+      
+      await enviarMensajeWhatsAppTexto(
+        telefono,
+        `${deporteSeleccionado.icono} Perfecto, *${deporteSeleccionado.nombre}*!\n\n📅 *¿Para qué fecha querés reservar?*\n\nEscribí la fecha en formato DD/MM/AAAA\no escribí "hoy" o "mañana"`,
+        phoneNumberId
+      );
+      
+      return {
+        success: true,
+        nextState: 'esperando_fecha',
+        data: { 
+          ...reservaData, 
+          deporteId: deporteSeleccionado.id, 
+          deporteNombre: deporteSeleccionado.nombre 
+        }
+      };
+    }
     
     // ========== ESTADO: ESPERANDO FECHA ==========
     if (state === 'esperando_fecha') {
@@ -295,7 +541,24 @@ o escribí "hoy" o "mañana"`;
       }
       
       const fechaFormateada = formatearFecha(fecha);
+      const fechaApi = formatearFechaParaApi(fecha);
       
+      // Si usa API externa, preguntar duración primero (para consultar disponibilidad)
+      if (reservaData.usaApiExterna) {
+        await enviarMensajeWhatsAppTexto(
+          telefono,
+          `Perfecto 👍\nFecha: *${fechaFormateada}*\n\n⏳ *¿Cuánto tiempo querés jugar?*\n\n1️⃣ 1 hora\n2️⃣ 1 hora 30 minutos\n3️⃣ 2 horas\n\nEscribí el número de la opción.`,
+          phoneNumberId
+        );
+        
+        return {
+          success: true,
+          nextState: 'esperando_duracion',
+          data: { ...reservaData, fecha, fechaTexto: mensaje, fechaApi }
+        };
+      }
+      
+      // Flujo local: preguntar hora
       await enviarMensajeWhatsAppTexto(
         telefono,
         `Perfecto 👍\nFecha seleccionada: *${fechaFormateada}*\n\n⏰ *¿A qué hora querés comenzar?*\n\nEscribí la hora en formato 24hs (ej: 19:00)\nHorario disponible: 08:00 a 23:00`,
@@ -305,7 +568,7 @@ o escribí "hoy" o "mañana"`;
       return {
         success: true,
         nextState: 'esperando_hora',
-        data: { ...reservaData, fecha, fechaTexto: mensaje }
+        data: { ...reservaData, fecha, fechaTexto: mensaje, fechaApi }
       };
     }
     
@@ -367,7 +630,75 @@ o escribí "hoy" o "mañana"`;
           return { success: true, nextState: 'esperando_duracion', data };
       }
       
-      // Verificar disponibilidad
+      const duracionTexto = duracion === 60 ? '1 hora' : duracion === 90 ? '1 hora 30 min' : '2 horas';
+      
+      // ===== FLUJO CON API MIS CANCHAS =====
+      if (reservaData.usaApiExterna) {
+        const apiConfig = await obtenerConfigApi(empresaId);
+        
+        if (!apiConfig) {
+          await enviarMensajeWhatsAppTexto(
+            telefono,
+            '❌ Error de configuración. Por favor, intentá más tarde.',
+            phoneNumberId
+          );
+          return { success: true, end: true };
+        }
+        
+        // Consultar disponibilidad a la API
+        const disponibilidad = await consultarDisponibilidadApi(
+          apiConfig,
+          reservaData.fechaApi!,
+          reservaData.deporteId!,
+          duracion
+        );
+        
+        if (!disponibilidad || !disponibilidad.success || disponibilidad.canchas_disponibles.length === 0) {
+          await enviarMensajeWhatsAppTexto(
+            telefono,
+            `⚠️ No hay canchas disponibles para *${reservaData.deporteNombre}* el *${formatearFecha(reservaData.fecha!)}* por *${duracionTexto}*.\n\n1️⃣ Cambiar fecha\n2️⃣ Cambiar deporte\n3️⃣ Cancelar\n\nEscribí el número de la opción.`,
+            phoneNumberId
+          );
+          
+          return {
+            success: true,
+            nextState: 'sin_disponibilidad_api',
+            data: { ...reservaData, duracion }
+          };
+        }
+        
+        // Mostrar canchas disponibles con horarios y precios
+        let mensajeCanchas = `🏟️ *Canchas disponibles para ${reservaData.deporteNombre}:*\n\n`;
+        
+        disponibilidad.canchas_disponibles.forEach((cancha, i) => {
+          const precio = duracion === 60 ? cancha.precio_hora : 
+                        duracion === 90 ? cancha.precio_hora_y_media : cancha.precio_dos_horas;
+          const precioNum = typeof precio === 'string' ? parseFloat(precio) : precio;
+          
+          // Obtener horarios disponibles para esta duración
+          const horariosDisp = cancha.horarios_disponibles
+            ?.filter(h => h.duraciones.includes(duracion))
+            .map(h => h.hora)
+            .slice(0, 5) // Máximo 5 horarios
+            .join(', ') || 'Consultar';
+          
+          mensajeCanchas += `${i + 1}️⃣ *${cancha.nombre}* (${cancha.tipo || 'techada'})\n`;
+          mensajeCanchas += `   💰 $${precioNum?.toLocaleString('es-AR') || 'N/A'}\n`;
+          mensajeCanchas += `   ⏰ ${horariosDisp}\n\n`;
+        });
+        
+        mensajeCanchas += `Escribí el número de la cancha que querés.`;
+        
+        await enviarMensajeWhatsAppTexto(telefono, mensajeCanchas, phoneNumberId);
+        
+        return {
+          success: true,
+          nextState: 'esperando_cancha_api',
+          data: { ...reservaData, duracion, canchasDisponibles: disponibilidad.canchas_disponibles }
+        };
+      }
+      
+      // ===== FLUJO LOCAL (sin API) =====
       const resultado = await verificarDisponibilidad(
         empresaId,
         reservaData.fecha!,
@@ -528,6 +859,300 @@ o escribí "hoy" o "mañana"`;
         phoneNumberId
       );
       return { success: true, nextState: 'sin_disponibilidad', data };
+    }
+    
+    // ========== ESTADO: SIN DISPONIBILIDAD API ==========
+    if (state === 'sin_disponibilidad_api') {
+      const opcion = mensaje.trim();
+      
+      if (opcion === '1') {
+        // Cambiar fecha
+        await enviarMensajeWhatsAppTexto(
+          telefono,
+          '📅 *¿Para qué fecha querés reservar?*\n\nEscribí la fecha en formato DD/MM/AAAA\no escribí "hoy" o "mañana"',
+          phoneNumberId
+        );
+        return { success: true, nextState: 'esperando_fecha', data: { ...reservaData, fecha: undefined, fechaApi: undefined } };
+      }
+      
+      if (opcion === '2') {
+        // Cambiar deporte - volver a mostrar deportes
+        const apiConfig = await obtenerConfigApi(empresaId);
+        if (apiConfig) {
+          const deportes = await obtenerDeportesApi(apiConfig);
+          let mensajeDeportes = '🏆 *¿Qué deporte querés jugar?*\n\n';
+          deportes.forEach((deporte, i) => {
+            mensajeDeportes += `${i + 1}️⃣ ${deporte.icono} ${deporte.nombre}\n`;
+          });
+          mensajeDeportes += `\nEscribí el número de la opción.`;
+          
+          await enviarMensajeWhatsAppTexto(telefono, mensajeDeportes, phoneNumberId);
+          return { success: true, nextState: 'esperando_deporte', data: { usaApiExterna: true, deportes } };
+        }
+        return { success: true, end: true };
+      }
+      
+      if (opcion === '3') {
+        await enviarMensajeWhatsAppTexto(
+          telefono,
+          'Reserva cancelada. Si querés hacer otra reserva, escribí "reservar".',
+          phoneNumberId
+        );
+        return { success: true, end: true };
+      }
+      
+      await enviarMensajeWhatsAppTexto(
+        telefono,
+        '❌ Opción inválida. Por favor, escribí 1, 2 o 3.',
+        phoneNumberId
+      );
+      return { success: true, nextState: 'sin_disponibilidad_api', data };
+    }
+    
+    // ========== ESTADO: ESPERANDO CANCHA API ==========
+    if (state === 'esperando_cancha_api') {
+      const opcion = parseInt(mensaje.trim()) - 1;
+      const canchas = reservaData.canchasDisponibles || [];
+      
+      if (opcion < 0 || opcion >= canchas.length) {
+        await enviarMensajeWhatsAppTexto(
+          telefono,
+          '❌ Opción inválida. Por favor, elegí un número de la lista.',
+          phoneNumberId
+        );
+        return { success: true, nextState: 'esperando_cancha_api', data };
+      }
+      
+      const canchaSeleccionada = canchas[opcion];
+      
+      // Mostrar horarios disponibles para esta cancha
+      const horariosDisp = canchaSeleccionada.horarios_disponibles
+        ?.filter(h => h.duraciones.includes(reservaData.duracion!))
+        .map(h => h.hora) || [];
+      
+      if (horariosDisp.length === 0) {
+        await enviarMensajeWhatsAppTexto(
+          telefono,
+          '⚠️ Esta cancha no tiene horarios disponibles para la duración seleccionada. Por favor, elegí otra cancha.',
+          phoneNumberId
+        );
+        return { success: true, nextState: 'esperando_cancha_api', data };
+      }
+      
+      let mensajeHorarios = `🎾 *${canchaSeleccionada.nombre}*\n\n⏰ *Horarios disponibles:*\n\n`;
+      horariosDisp.forEach((hora, i) => {
+        mensajeHorarios += `${i + 1}️⃣ ${hora}\n`;
+      });
+      mensajeHorarios += `\nEscribí el número del horario que querés.`;
+      
+      await enviarMensajeWhatsAppTexto(telefono, mensajeHorarios, phoneNumberId);
+      
+      // Calcular precio
+      const precio = reservaData.duracion === 60 ? canchaSeleccionada.precio_hora : 
+                    reservaData.duracion === 90 ? canchaSeleccionada.precio_hora_y_media : 
+                    canchaSeleccionada.precio_dos_horas;
+      const precioNum = typeof precio === 'string' ? parseFloat(precio) : precio;
+      
+      return {
+        success: true,
+        nextState: 'esperando_hora_api',
+        data: { 
+          ...reservaData, 
+          canchaId: canchaSeleccionada.id, 
+          canchaNombre: canchaSeleccionada.nombre,
+          precioTotal: precioNum,
+          horariosDisponibles: horariosDisp
+        }
+      };
+    }
+    
+    // ========== ESTADO: ESPERANDO HORA API ==========
+    if (state === 'esperando_hora_api') {
+      const opcion = parseInt(mensaje.trim()) - 1;
+      const horarios = (reservaData as any).horariosDisponibles || [];
+      
+      if (opcion < 0 || opcion >= horarios.length) {
+        await enviarMensajeWhatsAppTexto(
+          telefono,
+          '❌ Opción inválida. Por favor, elegí un número de la lista.',
+          phoneNumberId
+        );
+        return { success: true, nextState: 'esperando_hora_api', data };
+      }
+      
+      const horaSeleccionada = horarios[opcion];
+      const duracionTexto = reservaData.duracion === 60 ? '1 hora' : 
+                           reservaData.duracion === 90 ? '1 hora 30 min' : '2 horas';
+      
+      // Calcular hora fin
+      const [hora, minuto] = horaSeleccionada.split(':').map(Number);
+      const horaFinMinutos = hora * 60 + minuto + reservaData.duracion!;
+      const horaFin = `${Math.floor(horaFinMinutos / 60).toString().padStart(2, '0')}:${(horaFinMinutos % 60).toString().padStart(2, '0')}`;
+      
+      // Mostrar resumen y pedir confirmación
+      const resumen = `✅ *Revisá tu reserva:*
+
+🏆 Deporte: ${reservaData.deporteNombre}
+📅 Fecha: ${formatearFecha(reservaData.fecha!)}
+🕒 Horario: ${horaSeleccionada} a ${horaFin}
+⏳ Duración: ${duracionTexto}
+🏟️ Cancha: ${reservaData.canchaNombre}
+💰 Precio: $${reservaData.precioTotal?.toLocaleString('es-AR')}
+
+*¿Confirmamos la reserva?*
+
+1️⃣ Sí, confirmar y pagar
+2️⃣ Cambiar algo
+3️⃣ Cancelar`;
+      
+      await enviarMensajeWhatsAppTexto(telefono, resumen, phoneNumberId);
+      
+      return {
+        success: true,
+        nextState: 'esperando_confirmacion_api',
+        data: { ...reservaData, horaInicio: horaSeleccionada }
+      };
+    }
+    
+    // ========== ESTADO: ESPERANDO CONFIRMACIÓN API ==========
+    if (state === 'esperando_confirmacion_api') {
+      const opcion = mensaje.trim();
+      
+      if (opcion === '1') {
+        // Confirmar - crear pre-reserva en la API
+        const apiConfig = await obtenerConfigApi(empresaId);
+        
+        if (!apiConfig) {
+          await enviarMensajeWhatsAppTexto(
+            telefono,
+            '❌ Error de configuración. Por favor, intentá más tarde.',
+            phoneNumberId
+          );
+          return { success: true, end: true };
+        }
+        
+        // Crear pre-reserva
+        const preReserva = await preCrearReservaApi(
+          apiConfig,
+          reservaData.canchaId!,
+          reservaData.fechaApi!,
+          reservaData.horaInicio!,
+          reservaData.duracion!,
+          {
+            nombre: profileName || 'Cliente WhatsApp',
+            telefono: telefono
+          }
+        );
+        
+        if (!preReserva || !preReserva.success) {
+          const errorMsg = preReserva?.error?.message || 'El horario ya no está disponible';
+          await enviarMensajeWhatsAppTexto(
+            telefono,
+            `❌ No se pudo crear la reserva: ${errorMsg}\n\nPor favor, intentá con otro horario.`,
+            phoneNumberId
+          );
+          return { success: true, nextState: 'esperando_fecha', data: { ...reservaData, fecha: undefined } };
+        }
+        
+        // Reserva pre-creada exitosamente
+        const duracionTexto = reservaData.duracion === 60 ? '1 hora' : 
+                             reservaData.duracion === 90 ? '1 hora 30 min' : '2 horas';
+        
+        await enviarMensajeWhatsAppTexto(
+          telefono,
+          `🎉 *¡Reserva pre-confirmada!*
+
+📋 *Código:* ${preReserva.reserva_id?.substring(0, 8).toUpperCase()}
+
+🏆 ${reservaData.deporteNombre}
+📅 ${formatearFecha(reservaData.fecha!)}
+🕒 ${preReserva.detalle?.hora_inicio} a ${preReserva.detalle?.hora_fin}
+🏟️ ${preReserva.detalle?.cancha || reservaData.canchaNombre}
+💰 Total: $${preReserva.detalle?.precio_total?.toLocaleString('es-AR')}
+💳 Seña: $${preReserva.detalle?.seña_requerida?.toLocaleString('es-AR')}
+
+⏳ *Tenés ${Math.floor((preReserva.expira_en || 600) / 60)} minutos para completar el pago.*
+
+📱 Te enviaremos el link de pago en breve.
+
+¡Gracias por reservar en *Club Juventus*! 🏟️`,
+          phoneNumberId
+        );
+        
+        // TODO: Aquí se debería generar el link de Mercado Pago y enviarlo
+        // Por ahora, guardamos la reserva localmente también
+        try {
+          const contacto = await buscarOCrearContacto({
+            telefono,
+            profileName: profileName || 'Cliente WhatsApp',
+            empresaId
+          });
+          
+          const [hora, minuto] = reservaData.horaInicio!.split(':').map(Number);
+          const fechaInicio = new Date(Date.UTC(
+            reservaData.fecha!.getFullYear(),
+            reservaData.fecha!.getMonth(),
+            reservaData.fecha!.getDate(),
+            hora,
+            minuto
+          ));
+          
+          const fechaFin = new Date(fechaInicio);
+          fechaFin.setMinutes(fechaFin.getMinutes() + reservaData.duracion!);
+          
+          await TurnoModel.create({
+            empresaId,
+            agenteId: reservaData.canchaId,
+            clienteId: contacto._id.toString(),
+            fechaInicio,
+            fechaFin,
+            duracion: reservaData.duracion,
+            estado: 'pendiente',
+            tipoReserva: 'cancha',
+            datos: {
+              cancha: reservaData.canchaNombre,
+              deporte: reservaData.deporteNombre,
+              reservaIdExterno: preReserva.reserva_id,
+              precioTotal: preReserva.detalle?.precio_total,
+              seña: preReserva.detalle?.seña_requerida
+            },
+            notas: `Reservado vía WhatsApp - API Mis Canchas - ID: ${preReserva.reserva_id}`,
+            creadoPor: 'bot'
+          });
+          
+          console.log(`✅ [ReservaCanchas] Pre-reserva creada: ${preReserva.reserva_id}`);
+        } catch (error) {
+          console.error('❌ [ReservaCanchas] Error guardando turno local:', error);
+        }
+        
+        return { success: true, end: true };
+      }
+      
+      if (opcion === '2') {
+        // Cambiar algo - volver al inicio
+        await enviarMensajeWhatsAppTexto(
+          telefono,
+          '📅 *¿Para qué fecha querés reservar?*\n\nEscribí la fecha en formato DD/MM/AAAA\no escribí "hoy" o "mañana"',
+          phoneNumberId
+        );
+        return { success: true, nextState: 'esperando_fecha', data: { usaApiExterna: true, deporteId: reservaData.deporteId, deporteNombre: reservaData.deporteNombre, deportes: reservaData.deportes } };
+      }
+      
+      if (opcion === '3') {
+        await enviarMensajeWhatsAppTexto(
+          telefono,
+          'Reserva cancelada. Si querés hacer otra reserva, escribí "reservar".',
+          phoneNumberId
+        );
+        return { success: true, end: true };
+      }
+      
+      await enviarMensajeWhatsAppTexto(
+        telefono,
+        '❌ Opción inválida. Por favor, escribí 1, 2 o 3.',
+        phoneNumberId
+      );
+      return { success: true, nextState: 'esperando_confirmacion_api', data };
     }
     
     // ========== ESTADO: ESPERANDO CANCHA ==========

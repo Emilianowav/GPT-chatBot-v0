@@ -18,6 +18,9 @@ router.get('/empresas', controller.obtenerEmpresas);
 // GET /api/sa/empresas/:id - Detalle completo de empresa + métricas
 router.get('/empresas/:id', controller.obtenerDetalleEmpresa);
 
+// PUT /api/sa/empresas/:id - Actualizar empresa (WhatsApp, límites, etc.)
+router.put('/empresas/:id', controller.actualizarEmpresa);
+
 // POST /api/sa/empresas/:id/user - Crear usuario admin para empresa
 router.post('/empresas/:id/user', controller.crearUsuarioAdmin);
 

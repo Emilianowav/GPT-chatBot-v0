@@ -6,6 +6,16 @@ import { TurnoModel } from '../modules/calendar/models/Turno.js';
 import { AgenteModel } from '../modules/calendar/models/Agente.js';
 import { buscarOCrearContacto, incrementarTurnos } from '../services/contactoService.js';
 
+// Obtener fecha actual en zona horaria de Argentina
+function obtenerFechaArgentina(): Date {
+  const ahora = new Date();
+  const offsetArgentina = -3 * 60; // Argentina es UTC-3 (en minutos)
+  const offsetLocal = ahora.getTimezoneOffset();
+  const diferenciaMinutos = offsetLocal + offsetArgentina;
+  const fechaArgentina = new Date(ahora.getTime() + diferenciaMinutos * 60 * 1000);
+  return fechaArgentina;
+}
+
 export const menuPrincipalFlow: Flow = {
   name: 'menu_principal',
   priority: 'normal',
@@ -211,11 +221,13 @@ export const menuPrincipalFlow: Flow = {
       const fechaTexto = mensaje.trim().toLowerCase();
       let fecha: Date;
       
-      // Procesar fecha
+      // Procesar fecha usando zona horaria de Argentina
       if (fechaTexto === 'hoy') {
-        fecha = new Date();
+        fecha = obtenerFechaArgentina();
+        fecha.setHours(0, 0, 0, 0);
       } else if (fechaTexto === 'mañana' || fechaTexto === 'manana') {
-        fecha = new Date();
+        fecha = obtenerFechaArgentina();
+        fecha.setHours(0, 0, 0, 0);
         fecha.setDate(fecha.getDate() + 1);
       } else {
         // Intentar parsear DD/MM/AAAA

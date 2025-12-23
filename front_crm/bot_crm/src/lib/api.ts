@@ -248,6 +248,39 @@ export class ApiClient {
     });
   }
 
+  async superAdminActualizarEmpresa(empresaId: string, data: {
+    telefono?: string;
+    email?: string;
+    categoria?: string;
+    plan?: string;
+    prompt?: string;
+    modelo?: string;
+    phoneNumberId?: string;
+    accessToken?: string;
+    businessAccountId?: string;
+    appId?: string;
+    appSecret?: string;
+    limites?: {
+      mensajesMensuales?: number;
+      usuariosActivos?: number;
+      almacenamiento?: number;
+      integraciones?: number;
+      exportacionesMensuales?: number;
+      agentesSimultaneos?: number;
+      maxUsuarios?: number;
+      maxAdmins?: number;
+    };
+    estadoFacturacion?: string;
+  }) {
+    return this.request<{
+      success: boolean;
+      message: string;
+    }>(`/api/sa/empresas/${encodeURIComponent(empresaId)}`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    });
+  }
+
   // Método genérico DELETE
   async delete(endpoint: string) {
     return this.request(`${endpoint}`, {

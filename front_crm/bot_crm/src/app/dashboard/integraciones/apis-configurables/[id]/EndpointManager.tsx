@@ -15,6 +15,7 @@ interface Endpoint {
   parametros?: any; // Puede ser array (frontend) u objeto (backend)
   headers?: Record<string, string>;
   body?: any;
+  bodyPrueba?: string; // JSON de prueba para POST/PUT/PATCH
   respuestaEjemplo?: any;
 }
 
@@ -53,6 +54,7 @@ export default function EndpointManager({ api, onUpdate, onTest }: Props) {
       path: '',
       parametros: [],
       headers: {},
+      bodyPrueba: '',
     });
     setShowForm(true);
   };
@@ -70,7 +72,8 @@ export default function EndpointManager({ api, onUpdate, onTest }: Props) {
     
     setFormData({
       ...endpoint,
-      parametros: parametrosArray
+      parametros: parametrosArray,
+      bodyPrueba: endpoint.bodyPrueba || ''
     });
     setShowForm(true);
   };
@@ -380,6 +383,31 @@ export default function EndpointManager({ api, onUpdate, onTest }: Props) {
                   rows={2}
                 />
               </div>
+
+              {/* Body de Prueba - Solo para POST/PUT/PATCH */}
+              {['POST', 'PUT', 'PATCH'].includes(formData.metodo) && (
+                <div className={styles.formGroup}>
+                  <label>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ marginRight: '0.5rem', verticalAlign: 'middle' }}>
+                      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                      <polyline points="14 2 14 8 20 8"/>
+                    </svg>
+                    Body de Prueba (JSON)
+                  </label>
+                  <textarea
+                    value={formData.bodyPrueba || ''}
+                    onChange={(e) => setFormData({ ...formData, bodyPrueba: e.target.value })}
+                    placeholder={`{\n  "campo": "valor",\n  "otro_campo": 123\n}`}
+                    rows={8}
+                    style={{ 
+                      fontFamily: 'Monaco, Menlo, monospace', 
+                      fontSize: '0.8rem',
+                      lineHeight: '1.5'
+                    }}
+                  />
+                  <small>JSON que se pre-cargará automáticamente al probar este endpoint</small>
+                </div>
+              )}
 
               {/* Parámetros */}
               <div className={styles.parametersSection}>
