@@ -380,9 +380,30 @@ export const reservaCanchasFlow: Flow = {
   version: '1.0.0',
   
   async shouldActivate(context: FlowContext): Promise<boolean> {
-    // DESACTIVADO: Este flujo ya no se usa, ahora se usan workflows de API
-    // El workflow de Juventus está configurado en api_configurations
-    return false;
+    const { mensaje, empresaId } = context;
+    const mensajeLower = mensaje.toLowerCase().trim();
+    
+    // Verificar si el bot de pasos está activo para esta empresa
+    const configBot = await ConfiguracionBotModel.findOne({ empresaId });
+    if (!configBot || !configBot.activo) {
+      return false;
+    }
+    
+    // Verificar si es una empresa de canchas
+    const configModulo = await ConfiguracionModuloModel.findOne({ empresaId });
+    if (!configModulo || configModulo.tipoNegocio !== 'canchas') {
+      return false;
+    }
+    
+    // Keywords para activar el flujo
+    const keywords = [
+      'hola', 'menu', 'menú', 'opciones', 'ayuda',
+      'reserva', 'reservar', 'cancha', 'canchas',
+      'turno', 'turnos', 'agendar', 'alquilar',
+      'padel', 'paddle', 'futbol', 'fútbol', 'tenis'
+    ];
+    
+    return keywords.some(kw => mensajeLower.includes(kw));
   },
   
   async start(context: FlowContext): Promise<FlowResult> {
