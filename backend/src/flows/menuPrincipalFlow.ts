@@ -39,7 +39,7 @@ export const menuPrincipalFlow: Flow = {
       const configModulo = await ConfiguracionModuloModel.findOne({ empresaId });
       console.log(`🔍 [MenuPrincipal] Verificando tipoNegocio para ${empresaId}: ${configModulo?.tipoNegocio}`);
       if (configModulo?.tipoNegocio === 'canchas') {
-        console.log(`⏭️ [MenuPrincipal] Empresa ${empresaId} es de tipo canchas, usar reservaCanchasFlow`);
+        console.log(`⏭️ [MenuPrincipal] Empresa ${empresaId} es de tipo canchas, usar workflow de API`);
         return false;
       }
     } catch (err) {
