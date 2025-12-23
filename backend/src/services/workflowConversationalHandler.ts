@@ -396,7 +396,7 @@ export class WorkflowConversationalHandler {
       [paso.nombreVariable]: validacion.valor
     };
     
-    // Si el paso tiene endpoint configurado, intentar extraer el nombre de la opción seleccionada
+    // Si el paso tiene endpoint configurado, intentar extraer el ID real de la opción seleccionada
     if (paso.endpointId && paso.endpointResponseConfig) {
       const estadoActual = await workflowConversationManager.getWorkflowState(contactoId);
       
@@ -405,23 +405,47 @@ export class WorkflowConversationalHandler {
         const datosAPI = estadoActual.datosEjecutados[paso.endpointId];
         let datosArray = datosAPI;
         
-        if (datosArray.data && Array.isArray(datosArray.data)) {
+        // Manejar doble anidación: {data: {deportes: [...]}} o {deportes: [...]}
+        if (datosArray.data && typeof datosArray.data === 'object') {
           datosArray = datosArray.data;
+        }
+        
+        // Usar arrayPath si está configurado
+        if (paso.endpointResponseConfig.arrayPath && datosArray[paso.endpointResponseConfig.arrayPath]) {
+          datosArray = datosArray[paso.endpointResponseConfig.arrayPath];
         }
         
         if (Array.isArray(datosArray)) {
           const idField = paso.endpointResponseConfig.idField || 'id';
           const displayField = paso.endpointResponseConfig.displayField || 'name';
           
-          // Buscar el item que coincida con el ID seleccionado
-          const itemSeleccionado = datosArray.find((item: any) => 
-            String(item[idField]) === String(validacion.valor)
-          );
+          // El usuario puede escribir el número de opción (1, 2, 3) o el ID real
+          const valorUsuario = String(validacion.valor).trim();
+          const numeroOpcion = parseInt(valorUsuario);
           
-          if (itemSeleccionado && itemSeleccionado[displayField]) {
+          let itemSeleccionado = null;
+          
+          // Si es un número, buscar por índice (1-based)
+          if (!isNaN(numeroOpcion) && numeroOpcion >= 1 && numeroOpcion <= datosArray.length) {
+            itemSeleccionado = datosArray[numeroOpcion - 1];
+            console.log(`✅ Usuario seleccionó opción ${numeroOpcion}, item:`, itemSeleccionado);
+          } else {
+            // Buscar por ID exacto
+            itemSeleccionado = datosArray.find((item: any) => 
+              String(item[idField]).toLowerCase() === valorUsuario.toLowerCase()
+            );
+          }
+          
+          if (itemSeleccionado) {
+            // Guardar el ID real en lugar del número de opción
+            datosNuevos[paso.nombreVariable] = itemSeleccionado[idField];
+            console.log(`✅ Guardando ID real: ${paso.nombreVariable} = "${itemSeleccionado[idField]}"`);
+            
             // Guardar también el nombre con sufijo _nombre
-            datosNuevos[`${paso.nombreVariable}_nombre`] = itemSeleccionado[displayField];
-            console.log(`✅ Guardando nombre: ${paso.nombreVariable}_nombre = "${itemSeleccionado[displayField]}"`);
+            if (itemSeleccionado[displayField]) {
+              datosNuevos[`${paso.nombreVariable}_nombre`] = itemSeleccionado[displayField];
+              console.log(`✅ Guardando nombre: ${paso.nombreVariable}_nombre = "${itemSeleccionado[displayField]}"`);
+            }
           }
         }
       }
@@ -736,12 +760,63 @@ export class WorkflowConversationalHandler {
         console.log('   Usando formato por defecto');
         // Formato por defecto
         if (workflow.mensajeFinal) {
-          response += workflow.mensajeFinal + '\n\n';
+          // Reemplazar variables en mensajeFinal
+          response += this.reemplazarVariables(workflow.mensajeFinal, datosRecopilados) + '\n\n';
         }
-        response += this.formatearRespuestaProductos(datosFiltrados);
+        // Solo agregar formateo de productos si hay datos
+        const productosFormateados = this.formatearRespuestaProductos(datosFiltrados);
+        if (productosFormateados && !productosFormateados.includes('No se encontraron')) {
+          response += productosFormateados;
+        }
       }
       
       console.log('📏 Longitud de respuesta antes de limitar:', response.length);
+      
+      // Verificar si hay más pasos después de este
+      const siguientePaso = workflow.steps.find(s => s.orden === paso.orden + 1);
+      
+      if (siguientePaso) {
+        console.log('➡️ Hay más pasos después de consulta_filtrada, continuando al paso:', siguientePaso.orden);
+        
+        // Guardar resultado de la API en datosRecopilados
+        await workflowConversationManager.avanzarPaso(contactoId, {
+          [paso.nombreVariable]: result.data
+        });
+        
+        // Si el siguiente paso es recopilar, mostrar su pregunta
+        if (siguientePaso.tipo === 'recopilar' || siguientePaso.tipo === 'input' || siguientePaso.tipo === 'confirmacion') {
+          let preguntaSiguiente = siguientePaso.pregunta || '';
+          preguntaSiguiente = this.reemplazarVariables(preguntaSiguiente, datosRecopilados);
+          
+          // Agregar opciones si las tiene
+          if (siguientePaso.validacion?.tipo === 'opcion' && siguientePaso.validacion.opciones) {
+            preguntaSiguiente += '\n\n' + workflowConversationManager.formatearOpciones(siguientePaso.validacion.opciones);
+          }
+          
+          return {
+            success: true,
+            response: preguntaSiguiente,
+            completed: false,
+            metadata: {
+              workflowName: workflow.nombre,
+              pasoActual: siguientePaso.orden,
+              totalPasos: workflow.steps.length,
+              datosRecopilados
+            }
+          };
+        }
+        
+        // Si el siguiente paso también es consulta_filtrada, ejecutarlo
+        if (siguientePaso.tipo === 'consulta_filtrada') {
+          return await this.procesarPasoEjecucion(
+            siguientePaso,
+            contactoId,
+            workflow,
+            { ...workflowState, pasoActual: paso.orden },
+            apiConfig
+          );
+        }
+      }
       
       // Verificar si hay repetición configurada (tiene prioridad sobre workflows siguientes)
       if (workflow.repetirWorkflow?.habilitado) {
@@ -779,7 +854,7 @@ export class WorkflowConversationalHandler {
         };
       }
       
-      // Finalizar workflow (solo si NO hay repetición configurada)
+      // Finalizar workflow (solo si NO hay más pasos y NO hay repetición configurada)
       await workflowConversationManager.finalizarWorkflow(contactoId);
       console.log('✅ Workflow finalizado (sin repetición)');
       
