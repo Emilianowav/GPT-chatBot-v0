@@ -50,10 +50,10 @@ async function crearWorkflowTiposValidos() {
       },
       mensajeInicial: '¡Hola! 👋\nBienvenido a Club Juventus 🎾\n\nTe ayudo a reservar tu cancha.',
       steps: [
-        // PASO 1: Consultar deportes disponibles (API)
+        // PASO 1: Consultar deportes disponibles (API GET)
         {
           orden: 1,
-          tipo: 'consulta_filtrada',
+          tipo: 'recopilar',
           nombreVariable: 'deporte',
           endpointId: ENDPOINT_IDS.deportes,
           pregunta: '🎾 ¿Qué deporte querés jugar?\n\n{{opciones}}\n\nEscribí el número',
@@ -61,6 +61,9 @@ async function crearWorkflowTiposValidos() {
             arrayPath: 'deportes',
             idField: 'id',
             displayField: 'nombre'
+          },
+          validacion: {
+            tipo: 'texto'
           },
           nombre: 'Elegir deporte'
         },
