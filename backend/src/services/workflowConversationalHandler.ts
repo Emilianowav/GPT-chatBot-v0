@@ -109,6 +109,57 @@ export class WorkflowConversationalHandler {
     };
     return emojis[num] || `${num}:`;
   }
+
+  /**
+   * Transforma parámetros antes de enviarlos a la API
+   */
+  private transformarParametro(paramName: string, valor: any, varName: string): any {
+    const valorStr = String(valor).trim();
+
+    // Transformar fecha: "hoy", "mañana" -> YYYY-MM-DD
+    if (paramName === 'fecha') {
+      const hoy = new Date();
+      
+      if (valorStr.toLowerCase() === 'hoy') {
+        return hoy.toISOString().split('T')[0];
+      }
+      
+      if (valorStr.toLowerCase() === 'mañana' || valorStr.toLowerCase() === 'manana') {
+        const manana = new Date(hoy);
+        manana.setDate(manana.getDate() + 1);
+        return manana.toISOString().split('T')[0];
+      }
+      
+      // Si ya está en formato YYYY-MM-DD o DD/MM/YYYY, convertir
+      if (valorStr.match(/^\d{2}\/\d{2}\/\d{4}$/)) {
+        const [dia, mes, anio] = valorStr.split('/');
+        return `${anio}-${mes}-${dia}`;
+      }
+      
+      return valorStr;
+    }
+
+    // Transformar duración: "1", "2", "3" -> 60, 90, 120
+    if (paramName === 'duracion') {
+      const duracionMap: Record<string, number> = {
+        '1': 60,
+        '2': 90,
+        '3': 120,
+        '60': 60,
+        '90': 90,
+        '120': 120
+      };
+      
+      return duracionMap[valorStr] || parseInt(valorStr) || 60;
+    }
+
+    // Normalizar strings
+    if (typeof valor === 'string') {
+      return valorStr;
+    }
+
+    return valor;
+  }
   
   /**
    * Inicia un nuevo workflow
@@ -689,20 +740,16 @@ export class WorkflowConversationalHandler {
             // Determinar dónde va el parámetro
             if (!params.query) params.query = {};
             
-            // Normalizar el valor (trim y lowercase para búsquedas de texto)
-            let valorNormalizado = valorVariable;
-            if (typeof valorVariable === 'string') {
-              valorNormalizado = valorVariable.trim();
-              
-              // Si es el parámetro de búsqueda, normalizar más
-              if (paramName === 'search' || paramName === 'q' || paramName === 'query') {
-                valorNormalizado = valorNormalizado.toLowerCase();
-                searchQuery = valorNormalizado;
-              }
-            }
+            // Transformar el valor según el parámetro
+            let valorTransformado = this.transformarParametro(paramName, valorVariable, varName);
             
-            params.query[paramName] = valorNormalizado;
-            console.log(`   ✅ ${paramName} = "${valorNormalizado}" (desde variable: ${varName})`);
+            params.query[paramName] = valorTransformado;
+            console.log(`   ✅ ${paramName} = "${valorTransformado}" (desde variable: ${varName})`);
+            
+            // Guardar searchQuery si es necesario
+            if (paramName === 'search' || paramName === 'q' || paramName === 'query') {
+              searchQuery = String(valorTransformado).toLowerCase();
+            }
           } else {
             console.log(`   ⚠️ Variable "${varName}" no encontrada en datos recopilados`);
           }
