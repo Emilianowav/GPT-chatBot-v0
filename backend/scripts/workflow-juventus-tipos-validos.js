@@ -58,7 +58,7 @@ async function crearWorkflowTiposValidos() {
           endpointId: ENDPOINT_IDS.deportes,
           pregunta: '🎾 ¿Qué deporte querés jugar?\n\n{{opciones}}\n\nEscribí el número',
           endpointResponseConfig: {
-            arrayPath: 'data',
+            arrayPath: 'deportes',
             idField: 'id',
             displayField: 'nombre'
           },
