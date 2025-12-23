@@ -166,17 +166,30 @@ export class WorkflowConversationalHandler {
               
               // Extraer opciones dinámicas
               let datosArray = resultadoAPI.data;
+              console.log('📦 Datos crudos de API:', JSON.stringify(datosArray).substring(0, 200));
               
-              // Si tiene data anidado, extraerlo primero
-              if (datosArray.data && typeof datosArray.data === 'object') {
+              // Usar arrayPath del config si está disponible (PRIMERO)
+              if (primerPaso.endpointResponseConfig?.arrayPath) {
+                const arrayPath = primerPaso.endpointResponseConfig.arrayPath;
+                console.log('🔍 Buscando arrayPath:', arrayPath);
+                
+                // Buscar en el nivel actual
+                if (datosArray[arrayPath]) {
+                  datosArray = datosArray[arrayPath];
+                  console.log('✅ Encontrado en nivel 1');
+                }
+                // Buscar en data.arrayPath (doble anidación)
+                else if (datosArray.data && datosArray.data[arrayPath]) {
+                  datosArray = datosArray.data[arrayPath];
+                  console.log('✅ Encontrado en data.' + arrayPath);
+                }
+              }
+              // Si no hay arrayPath, intentar extraer data
+              else if (datosArray.data && typeof datosArray.data === 'object') {
                 datosArray = datosArray.data;
               }
               
-              // Usar arrayPath del config si está disponible
-              if (primerPaso.endpointResponseConfig?.arrayPath) {
-                const arrayPath = primerPaso.endpointResponseConfig.arrayPath;
-                datosArray = datosArray[arrayPath] || datosArray;
-              }
+              console.log('📦 datosArray final:', Array.isArray(datosArray) ? `Array[${datosArray.length}]` : typeof datosArray);
               
               if (Array.isArray(datosArray) && datosArray.length > 0) {
                 console.log(`✅ ${datosArray.length} opciones encontradas`);
