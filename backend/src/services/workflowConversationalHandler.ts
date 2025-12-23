@@ -1276,8 +1276,11 @@ export class WorkflowConversationalHandler {
             success: true,
             response: this.reemplazarVariables(siguientePaso.pregunta, datosRecopilados),
             completed: false,
-            currentStep: siguientePaso.orden,
-            totalSteps: workflow.steps.length
+            metadata: {
+              workflowName: workflow.nombre,
+              pasoActual: siguientePaso.orden,
+              totalPasos: workflow.steps.length
+            }
           };
         }
       }
