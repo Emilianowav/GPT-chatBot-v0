@@ -184,7 +184,7 @@ async function crearWorkflowTiposValidos() {
           nombre: 'Generar link de pago'
         }
       ],
-      mensajeFinal: '✅ *¡Reserva confirmada!*\n\n🎾 {{deporte}}\n🏟️ {{turno_seleccionado}}\n📅 {{fecha}} a las {{hora_preferida}}\n💰 Seña: ${{reserva.precio}}\n\n💳 *Pagá la seña con este link:*\n{{pago.link}}\n\n⚠️ Tenés 15 minutos para completar el pago.\n\n¡Gracias por elegir Club Juventus! 🎾',
+      mensajeFinal: '✅ *¡Reserva pre-confirmada!*\n\n🎾 Deporte: {{deporte}}\n📅 Fecha: {{fecha}}\n⏰ Hora: {{hora_preferida}}\n⏱️ Duración: {{duracion}} minutos\n\n💳 *Pagá la seña con este link:*\n{{link_pago}}\n\n⚠️ Tenés 15 minutos para completar el pago.\n\n*La reserva se confirmará automáticamente cuando recibamos tu pago.*\n\n¡Gracias por elegir Club Juventus! 🎾',
       createdAt: new Date(),
       updatedAt: new Date()
     };

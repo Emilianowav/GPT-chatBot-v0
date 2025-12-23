@@ -607,9 +607,10 @@ export class WorkflowConversationalHandler {
       
       const datosRecopilados = state.datosRecopilados;
       console.log('📦 Datos recopilados:', datosRecopilados);
-      console.log('   → sucursal_id:', datosRecopilados?.sucursal_id);
-      console.log('   → categoria_id:', datosRecopilados?.categoria_id);
-      console.log('   → nombre_producto:', datosRecopilados?.nombre_producto);
+      console.log('   → deporte:', datosRecopilados?.deporte);
+      console.log('   → fecha:', datosRecopilados?.fecha);
+      console.log('   → duracion:', datosRecopilados?.duracion);
+      console.log('   → hora_preferida:', datosRecopilados?.hora_preferida);
       
       // Mapear parámetros
       const params: any = {};
