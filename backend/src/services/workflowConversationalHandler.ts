@@ -84,15 +84,30 @@ export class WorkflowConversationalHandler {
     }
     
     try {
-      return datos.map(item => {
+      return datos.map((item, index) => {
         const id = item[config.idField] || item.id;
         const display = item[config.displayField] || item.name || item.nombre;
-        return `${id}: ${display}`;
+        const emoji = item.icono || item.emoji || '';
+        
+        // Formato: "1️⃣ futbol ⚽" o "1: futbol ⚽"
+        const numero = this.numeroAEmoji(index + 1);
+        return `${numero} ${display} ${emoji}`.trim();
       });
     } catch (error) {
       console.error('❌ Error extrayendo opciones dinámicas:', error);
       return [];
     }
+  }
+  
+  /**
+   * Convierte un número a emoji
+   */
+  private numeroAEmoji(num: number): string {
+    const emojis: Record<number, string> = {
+      1: '1️⃣', 2: '2️⃣', 3: '3️⃣', 4: '4️⃣', 5: '5️⃣',
+      6: '6️⃣', 7: '7️⃣', 8: '8️⃣', 9: '9️⃣', 10: '🔟'
+    };
+    return emojis[num] || `${num}:`;
   }
   
   /**

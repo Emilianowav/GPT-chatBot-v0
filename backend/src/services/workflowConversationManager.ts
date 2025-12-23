@@ -378,6 +378,14 @@ export class WorkflowConversationManager {
   formatearOpciones(opciones: string[]): string {
     if (opciones.length === 0) return '';
     if (opciones.length === 1) return opciones[0];
+    
+    // Si las opciones tienen emojis numéricos (1️⃣, 2️⃣, etc.), mostrar en líneas
+    const tieneEmojisNumericos = opciones.some(op => /[1-9]️⃣|🔟/.test(op));
+    if (tieneEmojisNumericos) {
+      return opciones.join('\n');
+    }
+    
+    // Para opciones simples, usar formato "o"
     if (opciones.length === 2) return opciones.join(' o ');
     
     const ultimaOpcion = opciones[opciones.length - 1];
