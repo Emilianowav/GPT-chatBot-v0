@@ -18,7 +18,6 @@ export async function procesarNotificacionesDiariasAgentes() {
     const diaActual = ahoraArgentina.toISOString().split('T')[0];
     
     const horaFormateada = `${String(horaActual).padStart(2, '0')}:${String(minutoActual).padStart(2, '0')}`;
-    console.log(`\n⏰ [${horaFormateada}] Verificando notificaciones diarias de agentes...`);
     
     const configuraciones = await ConfiguracionModuloModel.find({
       'plantillasMeta.notificacionDiariaAgentes.activa': true
