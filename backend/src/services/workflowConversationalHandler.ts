@@ -181,6 +181,8 @@ export class WorkflowConversationalHandler {
               if (Array.isArray(datosArray) && datosArray.length > 0) {
                 console.log(`✅ ${datosArray.length} opciones encontradas`);
                 
+                let opcionesFormateadas = '';
+                
                 // Usar endpointResponseConfig si está configurado
                 if (primerPaso.endpointResponseConfig) {
                   const opciones = this.extraerOpcionesDinamicas(
@@ -189,7 +191,7 @@ export class WorkflowConversationalHandler {
                   );
                   
                   if (opciones.length > 0) {
-                    response += '\n\n' + workflowConversationManager.formatearOpciones(opciones);
+                    opcionesFormateadas = workflowConversationManager.formatearOpciones(opciones);
                   }
                 } else {
                   // Formato por defecto si no hay config
@@ -198,8 +200,18 @@ export class WorkflowConversationalHandler {
                     const nombre = item.name || item.nombre || item.title;
                     return `${id}: ${nombre}`;
                   });
-                  response += '\n\n' + workflowConversationManager.formatearOpciones(opciones);
+                  opcionesFormateadas = workflowConversationManager.formatearOpciones(opciones);
                 }
+                
+                // Reemplazar {{opciones}} en la respuesta o agregar al final
+                if (response.includes('{{opciones}}')) {
+                  response = response.replace('{{opciones}}', opcionesFormateadas);
+                } else {
+                  response += '\n\n' + opcionesFormateadas;
+                }
+              } else {
+                // Si no hay opciones, quitar el placeholder
+                response = response.replace('{{opciones}}', '(No hay opciones disponibles)');
               }
             } else {
               console.log('⚠️ No se obtuvieron datos de la API');
