@@ -857,7 +857,13 @@ export class WorkflowConversationalHandler {
         console.log('🔍 Mapeo de parámetros configurado:', paso.mapeoParametros);
         
         for (const [paramName, varName] of Object.entries(paso.mapeoParametros)) {
-          const valorVariable = datosRecopilados[varName];
+          let valorVariable = datosRecopilados[varName];
+          
+          // FALLBACK INTELIGENTE: Si el mapeo busca 'turno_seleccionado' pero existe 'cancha_id', usar ese
+          if (valorVariable === undefined && varName === 'turno_seleccionado' && datosRecopilados.cancha_id) {
+            console.log(`   🔄 Fallback: usando cancha_id en lugar de turno_seleccionado`);
+            valorVariable = datosRecopilados.cancha_id;
+          }
           
           if (valorVariable !== undefined) {
             // Determinar dónde va el parámetro
