@@ -3,6 +3,7 @@
 
 import { workflowConversationManager } from './workflowConversationManager.js';
 import { apiExecutor } from '../modules/integrations/services/apiExecutor.js';
+import mercadopagoService from '../modules/mercadopago/services/mercadopagoService.js';
 import type { IWorkflow, IWorkflowStep } from '../modules/integrations/types/api.types.js';
 
 /**
@@ -997,12 +998,55 @@ export class WorkflowConversationalHandler {
       console.log('   → Query category:', params.query?.category);
       console.log('   → Query search:', params.query?.search);
       
-      // Ejecutar endpoint
-      const result = await apiExecutor.ejecutar(
-        apiConfig._id.toString(),
-        paso.endpointId,
-        params
-      );
+      let result: any;
+      
+      // CASO ESPECIAL: pre-crear-reserva usa Mercado Pago directamente
+      if (paso.endpointId === 'generar-link-pago' || paso.endpointId === 'pre-crear-reserva') {
+        console.log('💳 Generando link de pago con Mercado Pago...');
+        
+        try {
+          const mpResult = await mercadopagoService.createPreference({
+            items: [{
+              title: params.body.title,
+              description: params.body.description,
+              unitPrice: params.body.unit_price,
+              quantity: params.body.quantity || 1,
+              categoryId: 'services'
+            }],
+            externalReference: `reserva-${Date.now()}-${datosRecopilados.cancha_id}`,
+            payer: {
+              email: `${datosRecopilados.cliente_telefono}@whatsapp.temp`,
+              firstName: datosRecopilados.cliente_nombre
+            },
+            statementDescriptor: 'CLUB JUVENTUS'
+          });
+          
+          console.log('✅ Preferencia de MP creada:', mpResult);
+          
+          result = {
+            success: true,
+            data: {
+              init_point: mpResult.initPoint,
+              sandbox_init_point: mpResult.sandboxInitPoint,
+              preference_id: mpResult.id,
+              external_reference: mpResult.externalReference
+            }
+          };
+        } catch (mpError: any) {
+          console.error('❌ Error creando preferencia de MP:', mpError);
+          result = {
+            success: false,
+            error: { mensaje: mpError.message || 'Error al generar link de pago' }
+          };
+        }
+      } else {
+        // Ejecutar endpoint normal
+        result = await apiExecutor.ejecutar(
+          apiConfig._id.toString(),
+          paso.endpointId,
+          params
+        );
+      }
       
       if (!result.success) {
         console.error('❌ Error ejecutando endpoint:', result.error);
