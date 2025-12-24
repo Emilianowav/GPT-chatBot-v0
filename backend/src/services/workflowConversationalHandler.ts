@@ -903,23 +903,34 @@ export class WorkflowConversationalHandler {
       const params: any = {};
       let searchQuery: string | null = null;
       
-      // CASO ESPECIAL: pre-crear-reserva debe enviar body JSON estructurado
-      if (paso.endpointId === 'pre-crear-reserva') {
-        console.log('🔄 Endpoint pre-crear-reserva detectado - construyendo body JSON');
+      // CASO ESPECIAL: generar-link-pago debe construir preferencia de Mercado Pago
+      if (paso.endpointId === 'generar-link-pago' || paso.endpointId === 'pre-crear-reserva') {
+        console.log('🔄 Endpoint de pago detectado - construyendo body para Mercado Pago');
+        
+        const precio = datosRecopilados.precio || '0';
+        const deporte = datosRecopilados.deporte_nombre || datosRecopilados.deporte || 'cancha';
+        const fecha = this.formatearValorVariable('fecha', datosRecopilados.fecha);
+        const hora = datosRecopilados.hora_preferida;
+        const cancha = datosRecopilados.cancha_nombre || 'Cancha';
         
         params.body = {
-          cancha_id: datosRecopilados.cancha_id,
-          fecha: this.transformarParametro('fecha', datosRecopilados.fecha, 'fecha'),
-          hora_inicio: datosRecopilados.hora_preferida,
-          duracion: this.transformarParametro('duracion', datosRecopilados.duracion, 'duracion'),
-          cliente: {
-            nombre: datosRecopilados.cliente_nombre,
-            telefono: datosRecopilados.cliente_telefono
-          },
-          origen: 'whatsapp'
+          title: `Reserva ${cancha} - ${deporte}`,
+          description: `Reserva para ${fecha} a las ${hora}`,
+          unit_price: parseFloat(precio),
+          quantity: 1,
+          metadata: {
+            cancha_id: datosRecopilados.cancha_id,
+            fecha: this.transformarParametro('fecha', datosRecopilados.fecha, 'fecha'),
+            hora_inicio: hora,
+            duracion: this.transformarParametro('duracion', datosRecopilados.duracion, 'duracion'),
+            deporte: datosRecopilados.deporte,
+            cliente_nombre: datosRecopilados.cliente_nombre,
+            cliente_telefono: datosRecopilados.cliente_telefono,
+            origen: 'whatsapp'
+          }
         };
         
-        console.log('📦 Body construido para pre-crear-reserva:', JSON.stringify(params.body, null, 2));
+        console.log('📦 Body construido para Mercado Pago:', JSON.stringify(params.body, null, 2));
       }
       // Mapeo normal para otros endpoints
       else if (paso.mapeoParametros) {
@@ -1115,18 +1126,26 @@ export class WorkflowConversationalHandler {
       console.log('   Template del workflow:', workflow.respuestaTemplate ? 'SÍ' : 'NO');
       console.log('   Endpoint ID:', paso.endpointId);
       
-      // OVERRIDE para paso de pre-crear-reserva: Mostrar mensaje de procesamiento
-      if (paso.endpointId === 'pre-crear-reserva' && result.success) {
-        console.log('   🔄 Override para pre-crear-reserva');
+      // OVERRIDE para generar link de pago: Mostrar link de Mercado Pago
+      if ((paso.endpointId === 'generar-link-pago' || paso.endpointId === 'pre-crear-reserva') && result.success) {
+        console.log('   🔄 Override para generar link de pago');
         const precio = datosRecopilados.precio || datosFiltrados.precio || datosFiltrados.total || '0';
-        response = `⏳ *Procesando tu reserva...*\n\n`;
+        const linkPago = datosFiltrados.init_point || datosFiltrados.link || datosFiltrados.url;
+        
+        response = `💳 *Link de pago generado*\n\n`;
         response += `🏟️ ${datosRecopilados.cancha_nombre || 'Cancha'}\n`;
         response += `📅 ${this.formatearValorVariable('fecha', datosRecopilados.fecha)}\n`;
         response += `⏰ ${datosRecopilados.hora_preferida}\n`;
         response += `⏱️ ${this.formatearValorVariable('duracion', datosRecopilados.duracion)}\n`;
         response += `💰 Total: $${precio}\n\n`;
-        response += `📲 *Te enviaremos el link de pago a continuación.*\n`;
-        response += `Una vez confirmado el pago, tu reserva quedará confirmada. ✅`;
+        
+        if (linkPago) {
+          response += `👉 *Completá el pago aquí:*\n${linkPago}\n\n`;
+          response += `⏰ Tenés 10 minutos para completar el pago.\n\n`;
+          response += `Una vez confirmado el pago, tu reserva quedará confirmada automáticamente. ✅`;
+        } else {
+          response += `⚠️ Error al generar el link de pago. Por favor intentá de nuevo.`;
+        }
       }
       // Prioridad: plantilla del paso > plantilla del workflow > formato por defecto
       else if (paso.plantillaRespuesta) {
