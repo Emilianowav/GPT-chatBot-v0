@@ -902,7 +902,27 @@ export class WorkflowConversationalHandler {
       // Mapear parámetros
       const params: any = {};
       let searchQuery: string | null = null;
-      if (paso.mapeoParametros) {
+      
+      // CASO ESPECIAL: pre-crear-reserva debe enviar body JSON estructurado
+      if (paso.endpointId === 'pre-crear-reserva') {
+        console.log('🔄 Endpoint pre-crear-reserva detectado - construyendo body JSON');
+        
+        params.body = {
+          cancha_id: datosRecopilados.cancha_id,
+          fecha: this.transformarParametro('fecha', datosRecopilados.fecha, 'fecha'),
+          hora_inicio: datosRecopilados.hora_preferida,
+          duracion: this.transformarParametro('duracion', datosRecopilados.duracion, 'duracion'),
+          cliente: {
+            nombre: datosRecopilados.cliente_nombre,
+            telefono: datosRecopilados.cliente_telefono
+          },
+          origen: 'whatsapp'
+        };
+        
+        console.log('📦 Body construido para pre-crear-reserva:', JSON.stringify(params.body, null, 2));
+      }
+      // Mapeo normal para otros endpoints
+      else if (paso.mapeoParametros) {
         console.log('🔍 Mapeo de parámetros configurado:', paso.mapeoParametros);
         
         for (const [paramName, varName] of Object.entries(paso.mapeoParametros)) {
