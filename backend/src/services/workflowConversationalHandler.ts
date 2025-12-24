@@ -1248,8 +1248,7 @@ export class WorkflowConversationalHandler {
           metadata: {
             workflowName: workflow.nombre,
             pasoActual: paso.orden,
-            totalPasos: workflow.steps.length,
-            esperandoPago: true
+            totalPasos: workflow.steps.length
           }
         };
       }
