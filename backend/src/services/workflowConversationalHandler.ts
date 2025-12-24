@@ -111,10 +111,133 @@ export class WorkflowConversationalHandler {
   }
 
   /**
+   * Hace matching inteligente de disponibilidad de canchas
+   * Busca exactamente lo que el usuario pidió (fecha, hora, duración)
+   */
+  private matchearDisponibilidad(
+    disponibilidad: any,
+    horaPreferida: string,
+    duracionMinutos: number
+  ): { 
+    encontrado: boolean; 
+    cancha?: any; 
+    alternativas?: { hora?: string; mensaje?: string } 
+  } {
+    console.log('🔍 Iniciando matching de disponibilidad...');
+    console.log('   Buscando: hora=' + horaPreferida + ', duración=' + duracionMinutos + ' min');
+
+    if (!disponibilidad || !disponibilidad.canchas_disponibles) {
+      return { encontrado: false };
+    }
+
+    const canchas = disponibilidad.canchas_disponibles;
+    
+    // Buscar cancha que tenga la hora exacta con la duración exacta
+    for (const cancha of canchas) {
+      if (!cancha.horarios_disponibles) continue;
+
+      for (const horario of cancha.horarios_disponibles) {
+        if (horario.hora === horaPreferida && 
+            Array.isArray(horario.duraciones) && 
+            horario.duraciones.includes(duracionMinutos)) {
+          
+          console.log(`✅ MATCH ENCONTRADO: ${cancha.nombre} a las ${horaPreferida} por ${duracionMinutos} min`);
+          return {
+            encontrado: true,
+            cancha: {
+              id: cancha.id,
+              nombre: cancha.nombre,
+              tipo: cancha.tipo,
+              hora: horaPreferida,
+              duracion: duracionMinutos,
+              precio: this.obtenerPrecioCancha(cancha, duracionMinutos)
+            }
+          };
+        }
+      }
+    }
+
+    console.log('❌ No se encontró match exacto');
+
+    // No hay match exacto - buscar alternativas en el mismo día
+    const horariosAlternativos: string[] = [];
+    for (const cancha of canchas) {
+      if (!cancha.horarios_disponibles) continue;
+      
+      for (const horario of cancha.horarios_disponibles) {
+        if (Array.isArray(horario.duraciones) && 
+            horario.duraciones.includes(duracionMinutos) &&
+            !horariosAlternativos.includes(horario.hora)) {
+          horariosAlternativos.push(horario.hora);
+        }
+      }
+    }
+
+    if (horariosAlternativos.length > 0) {
+      // Ordenar horarios y tomar los primeros 3
+      horariosAlternativos.sort();
+      const primeraAlternativa = horariosAlternativos[0];
+      
+      console.log(`💡 Alternativas encontradas: ${horariosAlternativos.slice(0, 3).join(', ')}`);
+      
+      return {
+        encontrado: false,
+        alternativas: {
+          hora: primeraAlternativa,
+          mensaje: `No hay canchas disponibles a las ${horaPreferida}. ¿Te gustaría reservar a las ${primeraAlternativa}?`
+        }
+      };
+    }
+
+    // No hay alternativas en el día
+    console.log('❌ No hay alternativas en el día');
+    return {
+      encontrado: false,
+      alternativas: {
+        mensaje: `No hay canchas disponibles para esa duración hoy.\n\n¿Qué preferís?\nA) Buscar en otro día\nB) Buscar con otra duración`
+      }
+    };
+  }
+
+  /**
+   * Obtiene el precio de una cancha según la duración
+   */
+  private obtenerPrecioCancha(cancha: any, duracionMinutos: number): string {
+    if (duracionMinutos === 60 && cancha.precio_hora) {
+      return cancha.precio_hora;
+    }
+    if (duracionMinutos === 90 && cancha.precio_hora_y_media) {
+      return String(cancha.precio_hora_y_media);
+    }
+    if (duracionMinutos === 120 && cancha.precio_dos_horas) {
+      return String(cancha.precio_dos_horas);
+    }
+    return cancha.precio_hora || '0';
+  }
+
+  /**
    * Transforma parámetros antes de enviarlos a la API
    */
   private transformarParametro(paramName: string, valor: any, varName: string): any {
     const valorStr = String(valor).trim();
+
+    // Transformar turno_id: extraer ID de cancha del objeto turno_seleccionado
+    if (paramName === 'turno_id' && typeof valor === 'object' && valor !== null) {
+      // Si es el objeto completo de disponibilidad, extraer el ID de la primera cancha
+      if (valor.canchas_disponibles && Array.isArray(valor.canchas_disponibles)) {
+        const primeraCancha = valor.canchas_disponibles[0];
+        if (primeraCancha && primeraCancha.id) {
+          console.log(`🔄 Extrayendo ID de cancha: ${primeraCancha.id} (${primeraCancha.nombre})`);
+          return primeraCancha.id;
+        }
+      }
+      // Si ya es un objeto con id directo
+      if (valor.id) {
+        return valor.id;
+      }
+      // Fallback: convertir a string
+      return JSON.stringify(valor);
+    }
 
     // Transformar fecha: "hoy", "mañana" -> YYYY-MM-DD
     if (paramName === 'fecha') {
@@ -783,6 +906,66 @@ export class WorkflowConversationalHandler {
       
       console.log('✅ Endpoint ejecutado exitosamente');
       console.log('📊 Datos recibidos de la API:', JSON.stringify(result.data, null, 2).substring(0, 500) + '...');
+      
+      // MATCHING INTELIGENTE para disponibilidad de canchas
+      if (paso.endpointId === 'consultar-disponibilidad' && result.data) {
+        const horaPreferida = datosRecopilados.hora_preferida;
+        const duracionStr = datosRecopilados.duracion;
+        const duracionMinutos = duracionStr === '1' ? 60 : duracionStr === '2' ? 90 : duracionStr === '3' ? 120 : parseInt(duracionStr);
+        
+        const matching = this.matchearDisponibilidad(result.data, horaPreferida, duracionMinutos);
+        
+        if (matching.encontrado && matching.cancha) {
+          // ✅ MATCH ENCONTRADO - Guardar cancha y continuar automáticamente
+          console.log('🎯 Match encontrado - asignando cancha automáticamente');
+          
+          await workflowConversationManager.avanzarPaso(contactoId, {
+            turno_seleccionado: matching.cancha,
+            cancha_id: matching.cancha.id,
+            cancha_nombre: matching.cancha.nombre,
+            precio: matching.cancha.precio
+          });
+          
+          // Continuar al siguiente paso (solicitar nombre)
+          const siguientePaso = workflow.steps.find(s => s.orden === paso.orden + 1);
+          if (siguientePaso && (siguientePaso.tipo === 'recopilar' || siguientePaso.tipo === 'input')) {
+            const estadoActual = await workflowConversationManager.getWorkflowState(contactoId);
+            const datosActualizados = estadoActual?.datosRecopilados || {};
+            
+            return {
+              success: true,
+              response: `✅ ¡Perfecto! Encontré disponibilidad:\n\n🏟️ ${matching.cancha.nombre}\n⏰ ${matching.cancha.hora}\n⏱️ ${matching.cancha.duracion} minutos\n💰 $${matching.cancha.precio}\n\n${this.reemplazarVariables(siguientePaso.pregunta, datosActualizados)}`,
+              completed: false,
+              metadata: {
+                workflowName: workflow.nombre,
+                pasoActual: siguientePaso.orden,
+                totalPasos: workflow.steps.length
+              }
+            };
+          }
+        } else if (matching.alternativas) {
+          // ❌ NO HAY MATCH - Ofrecer alternativas
+          console.log('💡 No hay match - ofreciendo alternativas');
+          
+          if (matching.alternativas.hora) {
+            // Hay alternativa de hora en el mismo día
+            return {
+              success: false,
+              response: matching.alternativas.mensaje + '\n\nEscribí SI para reservar a esa hora, o NO para cancelar.',
+              completed: false,
+              error: 'Sin disponibilidad en hora solicitada'
+            };
+          } else {
+            // No hay alternativas en el día - ofrecer cambiar día o duración
+            return {
+              success: false,
+              response: matching.alternativas.mensaje,
+              completed: false,
+              error: 'Sin disponibilidad en el día'
+            };
+          }
+        }
+      }
       
       // Si hay término de búsqueda, aplicar un filtrado extra por tokens sobre el nombre
       let datosFiltrados = result.data;
