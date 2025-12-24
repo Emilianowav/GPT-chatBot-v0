@@ -1250,6 +1250,11 @@ export class WorkflowConversationalHandler {
           };
           
           console.log('📦 Creando reserva con body:', JSON.stringify(reservaBody, null, 2));
+          console.log('📍 URL:', 'https://web-production-934d4.up.railway.app/api/v1/bookings');
+          console.log('🔑 Headers:', {
+            'Content-Type': 'application/json',
+            'X-API-Key': 'mc_3f9580c86f9529a6f74d48bdacd1764c236bd5c449a40f6510991e6363bc268a'
+          });
           
           // Llamar directamente a la API de Mis Canchas
           const axios = (await import('axios')).default;
@@ -1264,6 +1269,12 @@ export class WorkflowConversationalHandler {
             }
           );
           
+          console.log('✅ Respuesta de API:', {
+            status: reservaResponse.status,
+            statusText: reservaResponse.statusText,
+            data: reservaResponse.data
+          });
+          
           if (reservaResponse.data?.success) {
             console.log('✅ Reserva creada exitosamente:', reservaResponse.data);
             response += `\n\n🎉 *¡Reserva confirmada!*\n`;
@@ -1272,7 +1283,15 @@ export class WorkflowConversationalHandler {
             console.error('❌ Error creando reserva:', reservaResponse.data);
           }
         } catch (reservaError: any) {
-          console.error('❌ Error al crear reserva:', reservaError.response?.data || reservaError.message);
+          console.error('❌ Error al crear reserva:', {
+            message: reservaError.message,
+            status: reservaError.response?.status,
+            statusText: reservaError.response?.statusText,
+            data: reservaError.response?.data,
+            url: reservaError.config?.url,
+            method: reservaError.config?.method,
+            headers: reservaError.config?.headers
+          });
         }
         
         // Marcar workflow como completado
