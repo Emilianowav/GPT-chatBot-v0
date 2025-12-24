@@ -900,6 +900,21 @@ export class WorkflowConversationalHandler {
             valorVariable = datosRecopilados.cancha_id;
           }
           
+          // Si no se encuentra la variable, verificar si es un valor literal
+          if (valorVariable === undefined) {
+            // Valores literales comunes: 'whatsapp', 'web', 'api', etc.
+            // Si el varName no existe como variable, usarlo como literal
+            const esLiteral = typeof varName === 'string' && 
+                            !varName.includes('_') && 
+                            varName.toLowerCase() === varName &&
+                            varName.length < 20;
+            
+            if (esLiteral) {
+              console.log(`   🔄 Usando "${varName}" como valor literal para ${paramName}`);
+              valorVariable = varName;
+            }
+          }
+          
           if (valorVariable !== undefined) {
             // Determinar dónde va el parámetro
             if (!params.query) params.query = {};
