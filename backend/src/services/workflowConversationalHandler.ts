@@ -732,6 +732,20 @@ export class WorkflowConversationalHandler {
       
       response = this.reemplazarVariables(siguientePaso.pregunta, datosRecopilados);
       
+      // OVERRIDE para paso de confirmación: Aclarar que es verificación de datos, no confirmación de reserva
+      if (siguientePaso.tipo === 'confirmacion' && siguientePaso.nombreVariable === 'confirmacion') {
+        // Reemplazar el mensaje para aclarar que la reserva se confirma después del pago
+        response = response.replace(
+          /¿Confirmás la reserva\?/gi,
+          '¿Los datos son correctos?'
+        );
+        
+        // Agregar aclaración sobre el pago
+        if (!response.includes('pago') && !response.includes('Mercado Pago')) {
+          response += '\n\n💳 *Importante:* La reserva se confirmará una vez que completes el pago. Te enviaremos el link de pago a continuación.';
+        }
+      }
+      
       // RECOPILAR llama a la API si tiene endpoint configurado
       if (siguientePaso.endpointId) {
         console.log('🌐 Llamando a API para siguiente paso...');
@@ -1079,9 +1093,23 @@ export class WorkflowConversationalHandler {
       console.log('🎨 Formateando respuesta...');
       console.log('   Template del paso:', paso.plantillaRespuesta ? 'SÍ' : 'NO');
       console.log('   Template del workflow:', workflow.respuestaTemplate ? 'SÍ' : 'NO');
+      console.log('   Endpoint ID:', paso.endpointId);
       
+      // OVERRIDE para paso de pre-crear-reserva: Mostrar mensaje de procesamiento
+      if (paso.endpointId === 'pre-crear-reserva' && result.success) {
+        console.log('   🔄 Override para pre-crear-reserva');
+        const precio = datosRecopilados.precio || datosFiltrados.precio || datosFiltrados.total || '0';
+        response = `⏳ *Procesando tu reserva...*\n\n`;
+        response += `🏟️ ${datosRecopilados.cancha_nombre || 'Cancha'}\n`;
+        response += `📅 ${this.formatearValorVariable('fecha', datosRecopilados.fecha)}\n`;
+        response += `⏰ ${datosRecopilados.hora_preferida}\n`;
+        response += `⏱️ ${this.formatearValorVariable('duracion', datosRecopilados.duracion)}\n`;
+        response += `💰 Total: $${precio}\n\n`;
+        response += `📲 *Te enviaremos el link de pago a continuación.*\n`;
+        response += `Una vez confirmado el pago, tu reserva quedará confirmada. ✅`;
+      }
       // Prioridad: plantilla del paso > plantilla del workflow > formato por defecto
-      if (paso.plantillaRespuesta) {
+      else if (paso.plantillaRespuesta) {
         console.log('   Usando plantilla del paso');
         response = this.formatearRespuestaConPlantilla(datosFiltrados, paso.plantillaRespuesta, datosRecopilados);
       } else if (workflow.respuestaTemplate) {
