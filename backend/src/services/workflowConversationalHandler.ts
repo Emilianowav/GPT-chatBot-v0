@@ -1251,22 +1251,23 @@ export class WorkflowConversationalHandler {
           
           console.log('📦 Creando reserva con body:', JSON.stringify(reservaBody, null, 2));
           console.log('📍 URL:', 'https://web-production-934d4.up.railway.app/api/v1/reservas/pre-crear');
-          console.log('🔑 Headers:', {
+          
+          const apiKey = 'mc_3f9580c86f9529a6f74d48bdacd1764c236bd5c449a40f6510991e6363bc268a';
+          const headers = {
             'Content-Type': 'application/json',
-            'X-API-Key': 'mc_3f9580c86f9529a6f74d48bdacd1764c236bd5c449a40f6510991e6363bc268a'
-          });
+            'X-API-Key': apiKey,
+            'x-api-key': apiKey, // Probar lowercase también
+            'Authorization': `Bearer ${apiKey}` // Probar con Bearer también
+          };
+          
+          console.log('🔑 Headers:', headers);
           
           // Llamar directamente a la API de Mis Canchas
           const axios = (await import('axios')).default;
           const reservaResponse = await axios.post(
             'https://web-production-934d4.up.railway.app/api/v1/reservas/pre-crear',
             reservaBody,
-            {
-              headers: {
-                'Content-Type': 'application/json',
-                'X-API-Key': 'mc_3f9580c86f9529a6f74d48bdacd1764c236bd5c449a40f6510991e6363bc268a'
-              }
-            }
+            { headers }
           );
           
           console.log('✅ Respuesta de API:', {
