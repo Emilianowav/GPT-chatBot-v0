@@ -907,16 +907,23 @@ export class WorkflowConversationalHandler {
       if (paso.endpointId === 'generar-link-pago' || paso.endpointId === 'pre-crear-reserva') {
         console.log('🔄 Endpoint de pago detectado - construyendo body para Mercado Pago');
         
-        const precio = datosRecopilados.precio || '0';
+        const precioTotal = parseFloat(datosRecopilados.precio || '0');
+        const seña = Math.round(precioTotal * 0.5); // 50% del precio total
         const deporte = datosRecopilados.deporte_nombre || datosRecopilados.deporte || 'cancha';
         const fecha = this.formatearValorVariable('fecha', datosRecopilados.fecha);
         const hora = datosRecopilados.hora_preferida;
         const cancha = datosRecopilados.cancha_nombre || 'Cancha';
         
+        // Guardar la seña en los datos recopilados para usarla en el mensaje
+        await workflowConversationManager.avanzarPaso(contactoId, {
+          seña: seña,
+          precio_total: precioTotal
+        });
+        
         params.body = {
-          title: `Reserva ${cancha} - ${deporte}`,
-          description: `Reserva para ${fecha} a las ${hora}`,
-          unit_price: parseFloat(precio),
+          title: `Seña - Reserva ${cancha}`,
+          description: `Seña (50%) para reserva de ${deporte} - ${fecha} a las ${hora}`,
+          unit_price: seña,
           quantity: 1,
           metadata: {
             cancha_id: datosRecopilados.cancha_id,
@@ -926,11 +933,14 @@ export class WorkflowConversationalHandler {
             deporte: datosRecopilados.deporte,
             cliente_nombre: datosRecopilados.cliente_nombre,
             cliente_telefono: datosRecopilados.cliente_telefono,
+            precio_total: precioTotal,
+            seña: seña,
             origen: 'whatsapp'
           }
         };
         
         console.log('📦 Body construido para Mercado Pago:', JSON.stringify(params.body, null, 2));
+        console.log(`   💰 Precio total: $${precioTotal} | Seña (50%): $${seña}`);
       }
       // Mapeo normal para otros endpoints
       else if (paso.mapeoParametros) {
@@ -1129,20 +1139,29 @@ export class WorkflowConversationalHandler {
       // OVERRIDE para generar link de pago: Mostrar link de Mercado Pago
       if ((paso.endpointId === 'generar-link-pago' || paso.endpointId === 'pre-crear-reserva') && result.success) {
         console.log('   🔄 Override para generar link de pago');
-        const precio = datosRecopilados.precio || datosFiltrados.precio || datosFiltrados.total || '0';
+        
+        // Obtener datos actualizados con la seña
+        const estadoActualizado = await workflowConversationManager.getWorkflowState(contactoId);
+        const datosActualizados = estadoActualizado?.datosRecopilados || datosRecopilados;
+        
+        const precioTotal = datosActualizados.precio_total || datosActualizados.precio || '0';
+        const seña = datosActualizados.seña || Math.round(parseFloat(precioTotal) * 0.5);
         const linkPago = datosFiltrados.init_point || datosFiltrados.link || datosFiltrados.url;
         
         response = `💳 *Link de pago generado*\n\n`;
-        response += `🏟️ ${datosRecopilados.cancha_nombre || 'Cancha'}\n`;
-        response += `📅 ${this.formatearValorVariable('fecha', datosRecopilados.fecha)}\n`;
-        response += `⏰ ${datosRecopilados.hora_preferida}\n`;
-        response += `⏱️ ${this.formatearValorVariable('duracion', datosRecopilados.duracion)}\n`;
-        response += `💰 Total: $${precio}\n\n`;
+        response += `📋 *Resumen de tu reserva:*\n`;
+        response += `🏟️ ${datosActualizados.cancha_nombre || 'Cancha'}\n`;
+        response += `📅 ${this.formatearValorVariable('fecha', datosActualizados.fecha)}\n`;
+        response += `⏰ ${datosActualizados.hora_preferida}\n`;
+        response += `⏱️ ${this.formatearValorVariable('duracion', datosActualizados.duracion)}\n\n`;
+        response += `💵 *Precio total:* $${precioTotal}\n`;
+        response += `💰 *Seña a pagar (50%):* $${seña}\n\n`;
         
         if (linkPago) {
-          response += `👉 *Completá el pago aquí:*\n${linkPago}\n\n`;
+          response += `👉 *Completá el pago de la seña aquí:*\n${linkPago}\n\n`;
           response += `⏰ Tenés 10 minutos para completar el pago.\n\n`;
-          response += `Una vez confirmado el pago, tu reserva quedará confirmada automáticamente. ✅`;
+          response += `✅ Una vez confirmado el pago, tu reserva quedará confirmada automáticamente.\n`;
+          response += `💡 El resto ($${parseFloat(precioTotal) - seña}) se abona al llegar a la cancha.`;
         } else {
           response += `⚠️ Error al generar el link de pago. Por favor intentá de nuevo.`;
         }
