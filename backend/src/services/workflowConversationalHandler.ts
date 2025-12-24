@@ -1245,8 +1245,7 @@ export class WorkflowConversationalHandler {
             cliente: {
               nombre: datosRecopilados.cliente_nombre,
               telefono: datosRecopilados.cliente_telefono
-            },
-            origen: 'whatsapp'
+            }
           };
           
           console.log('📦 Creando reserva con body:', JSON.stringify(reservaBody, null, 2));
