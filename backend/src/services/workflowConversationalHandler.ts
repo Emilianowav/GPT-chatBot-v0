@@ -1193,11 +1193,6 @@ export class WorkflowConversationalHandler {
         const linkPago = datosFiltrados.init_point || datosFiltrados.link || datosFiltrados.url;
         
         response = `💳 *Link de pago generado*\n\n`;
-        response += `📋 *Resumen de tu reserva:*\n`;
-        response += `🏟️ ${datosActualizados.cancha_nombre || 'Cancha'}\n`;
-        response += `📅 ${this.formatearValorVariable('fecha', datosActualizados.fecha)}\n`;
-        response += `⏰ ${datosActualizados.hora_preferida}\n`;
-        response += `⏱️ ${this.formatearValorVariable('duracion', datosActualizados.duracion)}\n\n`;
         response += `💵 *Precio total:* $${precioTotal}\n`;
         response += `💰 *Seña a pagar (50%):* $${seña}\n\n`;
         
@@ -1233,12 +1228,54 @@ export class WorkflowConversationalHandler {
       
       console.log('📏 Longitud de respuesta antes de limitar:', response.length);
       
-      // CASO ESPECIAL: Si es el paso de generar link de pago, completar el workflow aquí
-      // El siguiente paso (confirmación de pago) se ejecutará cuando llegue el webhook de MP
+      // CASO ESPECIAL: Si es el paso de generar link de pago, crear reserva y completar workflow
       if (paso.endpointId === 'generar-link-pago' || paso.endpointId === 'pre-crear-reserva') {
-        console.log('✅ Workflow de reserva completado - esperando confirmación de pago via webhook');
+        console.log('✅ Link de pago generado - creando reserva en API de Mis Canchas...');
         
-        // Marcar workflow como completado (esperando pago)
+        // Esperar 2 segundos antes de crear la reserva (simulación de confirmación de pago)
+        await new Promise(resolve => setTimeout(resolve, 2000));
+        
+        // Crear la reserva en la API de Mis Canchas
+        try {
+          const reservaBody = {
+            cancha_id: datosRecopilados.cancha_id,
+            fecha: this.transformarParametro('fecha', datosRecopilados.fecha, 'fecha'),
+            hora_inicio: datosRecopilados.hora_preferida,
+            duracion: this.transformarParametro('duracion', datosRecopilados.duracion, 'duracion'),
+            cliente: {
+              nombre: datosRecopilados.cliente_nombre,
+              telefono: datosRecopilados.cliente_telefono
+            },
+            origen: 'whatsapp'
+          };
+          
+          console.log('📦 Creando reserva con body:', JSON.stringify(reservaBody, null, 2));
+          
+          // Llamar directamente a la API de Mis Canchas
+          const axios = (await import('axios')).default;
+          const reservaResponse = await axios.post(
+            'https://web-production-934d4.up.railway.app/api/v1/bookings',
+            reservaBody,
+            {
+              headers: {
+                'Content-Type': 'application/json',
+                'X-API-Key': 'mc_3f9580c86f9529a6f74d48bdacd1764c236bd5c449a40f6510991e6363bc268a'
+              }
+            }
+          );
+          
+          if (reservaResponse.data?.success) {
+            console.log('✅ Reserva creada exitosamente:', reservaResponse.data);
+            response += `\n\n🎉 *¡Reserva confirmada!*\n`;
+            response += `Tu código de reserva es: *${reservaResponse.data?.data?.id || 'CONFIRMADA'}*`;
+          } else {
+            console.error('❌ Error creando reserva:', reservaResponse.data);
+          }
+        } catch (reservaError: any) {
+          console.error('❌ Error al crear reserva:', reservaError.response?.data || reservaError.message);
+        }
+        
+        // Marcar workflow como completado
         await workflowConversationManager.abandonarWorkflow(contactoId);
         
         return {
