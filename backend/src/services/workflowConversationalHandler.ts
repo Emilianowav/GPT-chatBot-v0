@@ -1235,7 +1235,7 @@ export class WorkflowConversationalHandler {
         // Esperar 2 segundos antes de crear la reserva (simulación de confirmación de pago)
         await new Promise(resolve => setTimeout(resolve, 2000));
         
-        // Crear la reserva en la API de Mis Canchas
+        // Crear la reserva usando apiExecutor - IGUAL que el botón "Ejecutar Prueba"
         try {
           const reservaBody = {
             cancha_id: datosRecopilados.cancha_id,
@@ -1249,59 +1249,34 @@ export class WorkflowConversationalHandler {
           };
           
           console.log('📦 Creando reserva con body:', JSON.stringify(reservaBody, null, 2));
-          console.log('📍 URL:', 'https://web-production-934d4.up.railway.app/api/v1/reservas/pre-crear');
           
-          const apiKey = 'mc_3f9580c86f9529a6f74d48bdacd1764c236bd5c449a40f6510991e6363bc268a';
-          const headers = {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${apiKey}`
-          };
+          // Buscar el endpoint de pre-crear-reserva
+          const preCrearEndpoint = apiConfig.endpoints.find((ep: any) => ep.id === 'pre-crear-reserva');
+          if (!preCrearEndpoint) {
+            throw new Error('Endpoint pre-crear-reserva no encontrado');
+          }
           
-          console.log('🔑 Headers:', headers);
+          console.log('🎯 Ejecutando endpoint via apiExecutor:', preCrearEndpoint.nombre);
           
-          // Llamar directamente a la API de Mis Canchas
-          const axios = (await import('axios')).default;
-          
-          // Agregar interceptor para ver la request exacta
-          const instance = axios.create();
-          instance.interceptors.request.use(request => {
-            console.log('📤 Request completa enviada a API:');
-            console.log('   URL:', request.url);
-            console.log('   Method:', request.method);
-            console.log('   Headers:', JSON.stringify(request.headers, null, 2));
-            console.log('   Data:', JSON.stringify(request.data, null, 2));
-            return request;
-          });
-          
-          const reservaResponse = await instance.post(
-            'https://web-production-934d4.up.railway.app/api/v1/reservas/pre-crear',
-            reservaBody,
-            { headers }
+          // Usar apiExecutor como lo hace el dashboard
+          const { apiExecutor } = await import('../modules/integrations/services/apiExecutor.js');
+          const reservaResponse = await apiExecutor.ejecutar(
+            apiConfig._id.toString(),
+            'pre-crear-reserva',
+            { body: reservaBody }
           );
           
-          console.log('✅ Respuesta de API:', {
-            status: reservaResponse.status,
-            statusText: reservaResponse.statusText,
-            data: reservaResponse.data
-          });
+          console.log('✅ Respuesta de apiExecutor:', reservaResponse);
           
-          if (reservaResponse.data?.success) {
+          if (reservaResponse.success && reservaResponse.data?.success) {
             console.log('✅ Reserva creada exitosamente:', reservaResponse.data);
             response += `\n\n🎉 *¡Reserva confirmada!*\n`;
             response += `Tu código de reserva es: *${reservaResponse.data?.data?.id || 'CONFIRMADA'}*`;
           } else {
-            console.error('❌ Error creando reserva:', reservaResponse.data);
+            console.error('❌ Error creando reserva:', reservaResponse);
           }
         } catch (reservaError: any) {
-          console.error('❌ Error al crear reserva:', {
-            message: reservaError.message,
-            status: reservaError.response?.status,
-            statusText: reservaError.response?.statusText,
-            data: reservaError.response?.data,
-            url: reservaError.config?.url,
-            method: reservaError.config?.method,
-            headers: reservaError.config?.headers
-          });
+          console.error('❌ Error al crear reserva:', reservaError);
         }
         
         // Marcar workflow como completado
