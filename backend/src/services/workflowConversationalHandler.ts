@@ -1254,9 +1254,7 @@ export class WorkflowConversationalHandler {
           const apiKey = 'mc_3f9580c86f9529a6f74d48bdacd1764c236bd5c449a40f6510991e6363bc268a';
           const headers = {
             'Content-Type': 'application/json',
-            'X-API-Key': apiKey,
-            'x-api-key': apiKey, // Probar lowercase también
-            'Authorization': `Bearer ${apiKey}` // Probar con Bearer también
+            'Authorization': `Bearer ${apiKey}`
           };
           
           console.log('🔑 Headers:', headers);
