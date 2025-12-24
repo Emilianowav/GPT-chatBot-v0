@@ -1233,6 +1233,27 @@ export class WorkflowConversationalHandler {
       
       console.log('📏 Longitud de respuesta antes de limitar:', response.length);
       
+      // CASO ESPECIAL: Si es el paso de generar link de pago, completar el workflow aquí
+      // El siguiente paso (confirmación de pago) se ejecutará cuando llegue el webhook de MP
+      if (paso.endpointId === 'generar-link-pago' || paso.endpointId === 'pre-crear-reserva') {
+        console.log('✅ Workflow de reserva completado - esperando confirmación de pago via webhook');
+        
+        // Marcar workflow como completado (esperando pago)
+        await workflowConversationManager.abandonarWorkflow(contactoId);
+        
+        return {
+          success: true,
+          response,
+          completed: true,
+          metadata: {
+            workflowName: workflow.nombre,
+            pasoActual: paso.orden,
+            totalPasos: workflow.steps.length,
+            esperandoPago: true
+          }
+        };
+      }
+      
       // Verificar si hay más pasos después de este
       const siguientePaso = workflow.steps.find(s => s.orden === paso.orden + 1);
       
