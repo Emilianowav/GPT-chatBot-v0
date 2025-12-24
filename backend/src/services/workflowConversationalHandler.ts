@@ -1254,7 +1254,7 @@ export class WorkflowConversationalHandler {
           // Llamar directamente a la API de Mis Canchas
           const axios = (await import('axios')).default;
           const reservaResponse = await axios.post(
-            'https://web-production-934d4.up.railway.app/api/v1/bookings',
+            'https://web-production-934d4.up.railway.app/api/v1/reservas/crear',
             reservaBody,
             {
               headers: {
