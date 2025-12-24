@@ -481,6 +481,41 @@ export class WorkflowConversationalHandler {
         };
       }
       
+      // VERIFICAR SI ESTÁ ESPERANDO CONFIRMACIÓN DE ALTERNATIVA
+      const state = await workflowConversationManager.getWorkflowState(contactoId);
+      if (state?.datosRecopilados?.esperando_confirmacion_alternativa) {
+        console.log('🔄 Usuario respondiendo a alternativa de horario');
+        
+        const respuestaNormalizada = mensajeNormalizado.replace(/[^a-z]/g, '');
+        
+        if (respuestaNormalizada === 'si' || respuestaNormalizada === 'sí') {
+          // Usuario acepta la alternativa - actualizar hora_preferida y volver a ejecutar paso 5
+          const horaAlternativa = state.datosRecopilados.hora_alternativa;
+          console.log(`✅ Usuario acepta alternativa: ${horaAlternativa}`);
+          
+          await workflowConversationManager.avanzarPaso(contactoId, {
+            hora_preferida: horaAlternativa,
+            esperando_confirmacion_alternativa: false,
+            hora_alternativa: undefined
+          });
+          
+          // Volver a ejecutar el paso 5 (consultar disponibilidad) con la nueva hora
+          const paso5 = workflow.steps.find(s => s.orden === 5);
+          if (paso5) {
+            return await this.procesarPasoEjecucion(paso5, contactoId, workflow, workflowState, apiConfig);
+          }
+        } else if (respuestaNormalizada === 'no') {
+          // Usuario rechaza - cancelar workflow
+          console.log('❌ Usuario rechaza alternativa - cancelando workflow');
+          await workflowConversationManager.abandonarWorkflow(contactoId);
+          return {
+            success: true,
+            response: '🚫 Reserva cancelada. Si querés intentar con otra fecha u horario, escribí "Hola" para empezar de nuevo.',
+            completed: true
+          };
+        }
+      }
+      
       // Verificar si está esperando decisión de repetición
       const esperandoRepeticion = await workflowConversationManager.estaEsperandoRepeticion(contactoId);
       console.log('🔍 [DEBUG] Estado de repetición:', {
@@ -954,7 +989,12 @@ export class WorkflowConversationalHandler {
           console.log('💡 No hay match - ofreciendo alternativas');
           
           if (matching.alternativas.hora) {
-            // Hay alternativa de hora en el mismo día
+            // Hay alternativa de hora en el mismo día - guardar en estado temporal
+            await workflowConversationManager.avanzarPaso(contactoId, {
+              hora_alternativa: matching.alternativas.hora,
+              esperando_confirmacion_alternativa: true
+            });
+            
             return {
               success: false,
               response: matching.alternativas.mensaje + '\n\nEscribí SI para reservar a esa hora, o NO para cancelar.',
