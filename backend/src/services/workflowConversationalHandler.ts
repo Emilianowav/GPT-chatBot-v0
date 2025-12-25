@@ -1270,8 +1270,7 @@ export class WorkflowConversationalHandler {
           
           if (reservaResponse.success && reservaResponse.data?.success) {
             console.log('✅ Reserva creada exitosamente:', reservaResponse.data);
-            response += `\n\n🎉 *¡Reserva confirmada!*\n`;
-            response += `Tu código de reserva es: *${reservaResponse.data?.data?.id || 'CONFIRMADA'}*`;
+            response += `\n\n🎉 *¡Reserva confirmada!*`;
           } else {
             console.error('❌ Error creando reserva:', reservaResponse);
           }
