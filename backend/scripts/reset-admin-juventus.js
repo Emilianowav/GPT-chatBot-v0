@@ -28,8 +28,9 @@ async function resetAdminJuventus() {
     console.log('   ID:', empresa._id);
 
     // 2. Buscar usuario admin de esta empresa en la colección correcta
+    // IMPORTANTE: empresaId debe ser el NOMBRE de la empresa, no el ObjectId
     let admin = await db.collection('usuarios_empresa').findOne({
-      empresaId: empresa._id.toString(),
+      empresaId: empresa.nombre,
       rol: 'admin'
     });
 
@@ -49,7 +50,7 @@ async function resetAdminJuventus() {
         nombre: 'Admin',
         apellido: 'Juventus',
         rol: 'admin',
-        empresaId: empresa._id.toString(),
+        empresaId: empresa.nombre, // Usar NOMBRE de la empresa, no ObjectId
         permisos: [],
         activo: true,
         createdBy: 'system',
