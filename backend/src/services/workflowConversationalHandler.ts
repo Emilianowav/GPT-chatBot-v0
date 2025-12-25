@@ -1180,6 +1180,9 @@ export class WorkflowConversationalHandler {
       console.log('   Template del workflow:', workflow.respuestaTemplate ? 'SÍ' : 'NO');
       console.log('   Endpoint ID:', paso.endpointId);
       
+      // Variable para almacenar el link de pago (necesaria fuera del scope)
+      let linkPago: string | undefined;
+      
       // OVERRIDE para generar link de pago: Mostrar link de Mercado Pago
       if ((paso.endpointId === 'generar-link-pago' || paso.endpointId === 'pre-crear-reserva') && result.success) {
         console.log('   🔄 Override para generar link de pago');
@@ -1190,7 +1193,7 @@ export class WorkflowConversationalHandler {
         
         const precioTotal = datosActualizados.precio_total || datosActualizados.precio || '0';
         const seña = datosActualizados.seña || Math.round(parseFloat(precioTotal) * 0.5);
-        const linkPago = datosFiltrados.init_point || datosFiltrados.link || datosFiltrados.url;
+        linkPago = datosFiltrados.init_point || datosFiltrados.link || datosFiltrados.url;
         
         response = `💳 *Link de pago generado*\n\n`;
         response += `💵 *Precio total:* $${precioTotal}\n`;
@@ -1252,9 +1255,7 @@ export class WorkflowConversationalHandler {
         console.log('💾 Guardando reserva pendiente para confirmar después del pago:', reservaPendiente);
         
         // Guardar en el estado del workflow para procesarlo después
-        await workflowConversationManager.actualizarDatos(contactoId, {
-          reserva_pendiente: reservaPendiente
-        });
+        await workflowConversationManager.actualizarDato(contactoId, 'reserva_pendiente', reservaPendiente);
         
         // Marcar workflow como completado
         await workflowConversationManager.abandonarWorkflow(contactoId);

@@ -174,10 +174,14 @@ export type WorkflowStepType = 'recopilar' | 'input' | 'confirmacion' | 'consult
  * Tipo de validación para datos recopilados
  */
 export interface IStepValidation {
-  tipo: 'texto' | 'numero' | 'opcion' | 'regex';
+  tipo: 'texto' | 'numero' | 'opcion' | 'regex' | 'telefono' | 'email' | 'fecha' | 'hora';
   opciones?: string[];  // Para tipo 'opcion'
   regex?: string;       // Para tipo 'regex'
   mensajeError?: string;
+  min?: number;         // Para tipo 'numero' - valor mínimo
+  max?: number;         // Para tipo 'numero' - valor máximo
+  minLength?: number;   // Para tipo 'texto' - longitud mínima
+  maxLength?: number;   // Para tipo 'texto' - longitud máxima
 }
 
 /**
