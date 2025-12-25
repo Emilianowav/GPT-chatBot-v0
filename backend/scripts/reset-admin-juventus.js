@@ -27,9 +27,9 @@ async function resetAdminJuventus() {
     console.log('   Nombre:', empresa.nombre);
     console.log('   ID:', empresa._id);
 
-    // 2. Buscar usuario admin de esta empresa
-    let admin = await db.collection('usuarios').findOne({
-      empresaId: empresa._id,
+    // 2. Buscar usuario admin de esta empresa en la colección correcta
+    let admin = await db.collection('usuarios_empresa').findOne({
+      empresaId: empresa._id.toString(),
       rol: 'admin'
     });
 
@@ -43,28 +43,33 @@ async function resetAdminJuventus() {
       // Crear nuevo usuario admin
       const nuevoAdmin = {
         _id: new mongoose.Types.ObjectId(),
+        username: 'juventus_admin',
         email: 'admin@juventus.com',
         password: hashedPassword,
-        nombre: 'Admin Juventus',
+        nombre: 'Admin',
+        apellido: 'Juventus',
         rol: 'admin',
-        empresaId: empresa._id,
+        empresaId: empresa._id.toString(),
+        permisos: [],
         activo: true,
+        createdBy: 'system',
         createdAt: new Date(),
         updatedAt: new Date()
       };
 
-      await db.collection('usuarios').insertOne(nuevoAdmin);
+      await db.collection('usuarios_empresa').insertOne(nuevoAdmin);
       admin = nuevoAdmin;
       
       console.log('\n✅ USUARIO ADMIN CREADO:');
     } else {
       console.log('\n👤 ADMIN ENCONTRADO:');
+      console.log('   Username:', admin.username);
       console.log('   Email:', admin.email);
       console.log('   Nombre:', admin.nombre);
       console.log('   ID:', admin._id);
 
       // Actualizar contraseña
-      await db.collection('usuarios').updateOne(
+      await db.collection('usuarios_empresa').updateOne(
         { _id: admin._id },
         { 
           $set: { 
@@ -78,7 +83,7 @@ async function resetAdminJuventus() {
     }
 
     console.log('\n📋 CREDENCIALES DE ACCESO:');
-    console.log('   Email:', admin.email);
+    console.log('   Usuario:', admin.username);
     console.log('   Contraseña:', nuevaContraseña);
     console.log('\n🔗 URL de acceso: http://localhost:3001/login');
 
