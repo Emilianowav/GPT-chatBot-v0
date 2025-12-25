@@ -289,7 +289,7 @@ export class WorkflowConversationManager {
       return { valido: true, valor: input };
     }
     
-    const { tipo, opciones, regex, mensajeError } = step.validacion;
+    const { tipo, opciones, regex, mensajeError, min, max, minLength, maxLength } = step.validacion;
     
     switch (tipo) {
       case 'texto':
@@ -299,7 +299,26 @@ export class WorkflowConversationManager {
             mensaje: mensajeError || 'Por favor ingresa un texto válido'
           };
         }
-        return { valido: true, valor: input.trim() };
+        
+        const textoTrim = input.trim();
+        
+        // Validar longitud mínima
+        if (minLength && textoTrim.length < minLength) {
+          return {
+            valido: false,
+            mensaje: mensajeError || `El texto debe tener al menos ${minLength} caracteres`
+          };
+        }
+        
+        // Validar longitud máxima
+        if (maxLength && textoTrim.length > maxLength) {
+          return {
+            valido: false,
+            mensaje: mensajeError || `El texto no puede tener más de ${maxLength} caracteres`
+          };
+        }
+        
+        return { valido: true, valor: textoTrim };
       
       case 'numero':
         const numero = parseFloat(input);
@@ -309,7 +328,96 @@ export class WorkflowConversationManager {
             mensaje: mensajeError || 'Por favor ingresa un número válido'
           };
         }
+        
+        // Validar rango mínimo
+        if (min !== undefined && numero < min) {
+          return {
+            valido: false,
+            mensaje: mensajeError || `El número debe ser mayor o igual a ${min}`
+          };
+        }
+        
+        // Validar rango máximo
+        if (max !== undefined && numero > max) {
+          return {
+            valido: false,
+            mensaje: mensajeError || `El número debe ser menor o igual a ${max}`
+          };
+        }
+        
         return { valido: true, valor: numero };
+      
+      case 'telefono':
+        // Validar formato de teléfono (acepta varios formatos)
+        const telefonoLimpio = input.replace(/[\s\-\(\)]/g, '');
+        const regexTelefono = /^[\+]?[0-9]{10,15}$/;
+        
+        if (!regexTelefono.test(telefonoLimpio)) {
+          return {
+            valido: false,
+            mensaje: mensajeError || 'Por favor ingresa un número de teléfono válido (10-15 dígitos)'
+          };
+        }
+        
+        return { valido: true, valor: telefonoLimpio };
+      
+      case 'email':
+        // Validar formato de email
+        const regexEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        
+        if (!regexEmail.test(input.trim())) {
+          return {
+            valido: false,
+            mensaje: mensajeError || 'Por favor ingresa un email válido'
+          };
+        }
+        
+        return { valido: true, valor: input.trim().toLowerCase() };
+      
+      case 'fecha':
+        // Validar formato de fecha (acepta varios formatos)
+        const fechaInput = input.trim().toLowerCase();
+        
+        // Palabras clave relativas
+        if (['hoy', 'mañana', 'pasado mañana'].includes(fechaInput)) {
+          return { valido: true, valor: fechaInput };
+        }
+        
+        // Formato DD/MM/YYYY o DD-MM-YYYY
+        const regexFecha = /^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})$/;
+        const matchFecha = fechaInput.match(regexFecha);
+        
+        if (matchFecha) {
+          const [, dia, mes, anio] = matchFecha;
+          const fecha = new Date(parseInt(anio), parseInt(mes) - 1, parseInt(dia));
+          
+          if (isNaN(fecha.getTime())) {
+            return {
+              valido: false,
+              mensaje: mensajeError || 'Fecha inválida. Usa formato DD/MM/YYYY o escribe "hoy", "mañana"'
+            };
+          }
+          
+          return { valido: true, valor: fechaInput };
+        }
+        
+        return {
+          valido: false,
+          mensaje: mensajeError || 'Formato de fecha inválido. Usa DD/MM/YYYY o escribe "hoy", "mañana"'
+        };
+      
+      case 'hora':
+        // Validar formato de hora HH:MM
+        const regexHora = /^([0-1]?[0-9]|2[0-3]):([0-5][0-9])$/;
+        
+        if (!regexHora.test(input.trim())) {
+          return {
+            valido: false,
+            mensaje: mensajeError || 'Formato de hora inválido. Usa formato HH:MM (ej: 14:30)'
+          };
+        }
+        
+        return { valido: true, valor: input.trim() };
       
       case 'opcion':
         if (!opciones || opciones.length === 0) {
