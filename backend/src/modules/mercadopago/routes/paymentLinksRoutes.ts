@@ -3,6 +3,7 @@ import { Router, Request, Response } from 'express';
 import { MercadoPagoConfig, Preference } from 'mercadopago';
 import paymentLinksService from '../services/paymentLinksService.js';
 import { Seller } from '../models/Seller.js';
+import { EmpresaModel } from '../../../models/Empresa.js';
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
@@ -13,19 +14,41 @@ const __dirname = path.dirname(__filename);
 const router = Router();
 
 /**
- * GET /payment-links?sellerId=xxx
- * Lista todos los links de un vendedor
+ * GET /payment-links?empresaId=xxx
+ * Lista todos los links de una empresa
  */
 router.get('/', async (req: Request, res: Response): Promise<void> => {
   try {
-    const { sellerId } = req.query;
+    const { empresaId } = req.query;
     
-    if (!sellerId || typeof sellerId !== 'string') {
-      res.status(400).json({ error: 'sellerId es requerido' });
+    if (!empresaId || typeof empresaId !== 'string') {
+      res.status(400).json({ error: 'empresaId es requerido' });
       return;
     }
 
-    const links = await paymentLinksService.getLinksBySeller(sellerId);
+    console.log(`📋 [Payment Links] Buscando links para empresaId: "${empresaId}"`);
+
+    // Buscar el seller por internalId (puede ser nombre o ObjectId)
+    let seller = await Seller.findOne({ internalId: empresaId });
+    
+    // Si no se encuentra, buscar por nombre de empresa usando el ObjectId
+    if (!seller) {
+      const empresa = await EmpresaModel.findById(empresaId);
+      if (empresa) {
+        console.log(`📋 [Payment Links] Buscando seller por nombre: ${empresa.nombre}`);
+        seller = await Seller.findOne({ internalId: empresa.nombre });
+      }
+    }
+
+    if (!seller) {
+      console.log(`📋 [Payment Links] No hay seller para "${empresaId}"`);
+      res.json({ success: true, links: [] });
+      return;
+    }
+
+    console.log(`📋 [Payment Links] Seller encontrado:`, { internalId: seller.internalId, userId: seller.userId });
+
+    const links = await paymentLinksService.getLinksBySeller(seller.userId);
     
     // Agregar paymentUrl a cada link
     const baseUrl = process.env.MP_MODULE_URL || `${req.protocol}://${req.get('host')}`;

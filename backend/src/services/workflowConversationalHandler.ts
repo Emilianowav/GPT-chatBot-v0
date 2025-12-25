@@ -1232,51 +1232,29 @@ export class WorkflowConversationalHandler {
       if (paso.endpointId === 'generar-link-pago' || paso.endpointId === 'pre-crear-reserva') {
         console.log('✅ Link de pago generado - creando reserva en API de Mis Canchas...');
         
-        // Esperar 2 segundos antes de crear la reserva (simulación de confirmación de pago)
-        await new Promise(resolve => setTimeout(resolve, 2000));
+        // Guardar datos de la reserva pendiente en el estado del workflow
+        // La reserva se creará cuando el webhook de MP confirme el pago
+        const reservaPendiente = {
+          cancha_id: datosRecopilados.cancha_id,
+          fecha: this.transformarParametro('fecha', datosRecopilados.fecha, 'fecha'),
+          hora_inicio: datosRecopilados.hora_preferida,
+          duracion: this.transformarParametro('duracion', datosRecopilados.duracion, 'duracion'),
+          cliente: {
+            nombre: datosRecopilados.cliente_nombre,
+            telefono: datosRecopilados.cliente_telefono
+          },
+          apiConfigId: apiConfig._id.toString(),
+          empresaId: apiConfig.empresaId,
+          linkPago: linkPago,
+          timestamp: new Date().toISOString()
+        };
         
-        // Crear la reserva usando apiExecutor - IGUAL que el botón "Ejecutar Prueba"
-        try {
-          const reservaBody = {
-            cancha_id: datosRecopilados.cancha_id,
-            fecha: this.transformarParametro('fecha', datosRecopilados.fecha, 'fecha'),
-            hora_inicio: datosRecopilados.hora_preferida,
-            duracion: this.transformarParametro('duracion', datosRecopilados.duracion, 'duracion'),
-            cliente: {
-              nombre: datosRecopilados.cliente_nombre,
-              telefono: datosRecopilados.cliente_telefono
-            }
-          };
-          
-          console.log('📦 Creando reserva con body:', JSON.stringify(reservaBody, null, 2));
-          
-          // Buscar el endpoint de pre-crear-reserva
-          const preCrearEndpoint = apiConfig.endpoints.find((ep: any) => ep.id === 'pre-crear-reserva');
-          if (!preCrearEndpoint) {
-            throw new Error('Endpoint pre-crear-reserva no encontrado');
-          }
-          
-          console.log('🎯 Ejecutando endpoint via apiExecutor:', preCrearEndpoint.nombre);
-          
-          // Usar apiExecutor como lo hace el dashboard
-          const { apiExecutor } = await import('../modules/integrations/services/apiExecutor.js');
-          const reservaResponse = await apiExecutor.ejecutar(
-            apiConfig._id.toString(),
-            'pre-crear-reserva',
-            { body: reservaBody }
-          );
-          
-          console.log('✅ Respuesta de apiExecutor:', reservaResponse);
-          
-          if (reservaResponse.success && reservaResponse.data?.success) {
-            console.log('✅ Reserva creada exitosamente:', reservaResponse.data);
-            response += `\n\n🎉 *¡Reserva confirmada!*`;
-          } else {
-            console.error('❌ Error creando reserva:', reservaResponse);
-          }
-        } catch (reservaError: any) {
-          console.error('❌ Error al crear reserva:', reservaError);
-        }
+        console.log('💾 Guardando reserva pendiente para confirmar después del pago:', reservaPendiente);
+        
+        // Guardar en el estado del workflow para procesarlo después
+        await workflowConversationManager.actualizarDatos(contactoId, {
+          reserva_pendiente: reservaPendiente
+        });
         
         // Marcar workflow como completado
         await workflowConversationManager.abandonarWorkflow(contactoId);

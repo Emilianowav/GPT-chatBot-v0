@@ -355,25 +355,27 @@ async function processPaymentNotification(paymentId: string): Promise<void> {
       );
       console.log(`[MP Webhook] PaymentLink ${paymentLinkId} actualizado con nuevo pago`);
       
-      // Notificar al cliente por WhatsApp si el pago fue aprobado
+      // Notificar al cliente por WhatsApp y crear reserva si el pago fue aprobado
       // Prioridad: teléfono del external_reference > teléfono de MP > buscar por email
-      await notifyPaymentApproved(
+      await notifyPaymentApprovedAndCreateReservation(
         sellerId,
         mpPayment.transaction_amount || 0,
         mpPayment.currency_id || 'ARS',
         mpPayment.payer?.email,
-        clientePhoneFromRef || mpPayment.payer?.phone?.number
+        clientePhoneFromRef || mpPayment.payer?.phone?.number,
+        empresaId
       );
     }
     
-    // Si el pago fue aprobado sin PaymentLink, también notificar
+    // Si el pago fue aprobado sin PaymentLink, también notificar y crear reserva
     if (status === PaymentStatus.APPROVED && !paymentLinkId && !existingPayment) {
-      await notifyPaymentApproved(
+      await notifyPaymentApprovedAndCreateReservation(
         sellerId,
         mpPayment.transaction_amount || 0,
         mpPayment.currency_id || 'ARS',
         mpPayment.payer?.email,
-        clientePhoneFromRef || mpPayment.payer?.phone?.number
+        clientePhoneFromRef || mpPayment.payer?.phone?.number,
+        empresaId
       );
     }
     
@@ -383,14 +385,15 @@ async function processPaymentNotification(paymentId: string): Promise<void> {
 }
 
 /**
- * Notifica al cliente que su pago fue aprobado
+ * Notifica al cliente que su pago fue aprobado y crea la reserva
  */
-async function notifyPaymentApproved(
+async function notifyPaymentApprovedAndCreateReservation(
   sellerId: string,
   amount: number,
   currency: string,
   payerEmail?: string,
-  payerPhone?: string
+  payerPhone?: string,
+  empresaId?: string
 ): Promise<void> {
   try {
     console.log(`[MP Webhook] Intentando notificar pago aprobado...`);
@@ -436,10 +439,81 @@ async function notifyPaymentApproved(
       return;
     }
     
+    // Buscar el contacto por teléfono y empresa
+    const { ContactoEmpresaModel } = await import('../../../models/ContactoEmpresa.js');
+    const contacto = await ContactoEmpresaModel.findOne({
+      telefono: clientePhone,
+      empresaId: empresa._id.toString()
+    });
+    
+    if (!contacto) {
+      console.log(`[MP Webhook] ⚠️ No se encontró contacto para ${clientePhone}`);
+      // Enviar solo notificación de pago sin crear reserva
+      const mensaje = `✅ *¡Pago recibido!*\n\n` +
+        `Hemos recibido tu pago de *$${amount.toLocaleString()} ${currency}*.\n\n` +
+        `Gracias por tu compra.`;
+      
+      await enviarMensajeWhatsAppTexto(clientePhone, mensaje, empresa.phoneNumberId);
+      return;
+    }
+    
+    // Verificar si hay una reserva pendiente en el workflowState
+    const workflowState = contacto.workflowState as any;
+    const reservaPendiente = workflowState?.datosRecopilados?.reserva_pendiente;
+    
+    let codigoReserva: string | null = null;
+    
+    if (reservaPendiente) {
+      console.log(`[MP Webhook] 📋 Reserva pendiente encontrada, creando reserva...`);
+      
+      try {
+        // Crear la reserva usando apiExecutor
+        const { apiExecutor } = await import('../../integrations/services/apiExecutor.js');
+        
+        const reservaBody = {
+          cancha_id: reservaPendiente.cancha_id,
+          fecha: reservaPendiente.fecha,
+          hora_inicio: reservaPendiente.hora_inicio,
+          duracion: reservaPendiente.duracion,
+          cliente: reservaPendiente.cliente
+        };
+        
+        console.log(`[MP Webhook] 📦 Creando reserva:`, reservaBody);
+        
+        const reservaResponse = await apiExecutor.ejecutar(
+          reservaPendiente.apiConfigId,
+          'pre-crear-reserva',
+          { body: reservaBody }
+        );
+        
+        if (reservaResponse.success && reservaResponse.data?.success) {
+          codigoReserva = reservaResponse.data?.data?.id || 'CONFIRMADA';
+          console.log(`[MP Webhook] ✅ Reserva creada exitosamente: ${codigoReserva}`);
+          
+          // Limpiar reserva pendiente del estado
+          await ContactoEmpresaModel.updateOne(
+            { _id: contacto._id },
+            { $unset: { 'workflowState.datosRecopilados.reserva_pendiente': '' } }
+          );
+        } else {
+          console.error(`[MP Webhook] ❌ Error creando reserva:`, reservaResponse);
+        }
+      } catch (reservaError: any) {
+        console.error(`[MP Webhook] ❌ Error al crear reserva:`, reservaError.message);
+      }
+    }
+    
     // Formatear mensaje de confirmación
-    const mensaje = `✅ *¡Pago recibido!*\n\n` +
-      `Hemos recibido tu pago de *$${amount.toLocaleString()} ${currency}*.\n\n` +
-      `Gracias por tu compra. Si tienes alguna consulta, no dudes en escribirnos.`;
+    let mensaje = `✅ *¡Pago recibido!*\n\n` +
+      `Hemos recibido tu pago de *$${amount.toLocaleString()} ${currency}*.\n\n`;
+    
+    if (codigoReserva) {
+      mensaje += `🎉 *¡Reserva confirmada!*\n` +
+        `Tu código de reserva es: *${codigoReserva}*\n\n` +
+        `Gracias por tu reserva. Te esperamos!`;
+    } else {
+      mensaje += `Gracias por tu compra.`;
+    }
     
     // Enviar mensaje de WhatsApp
     await enviarMensajeWhatsAppTexto(
@@ -448,26 +522,14 @@ async function notifyPaymentApproved(
       empresa.phoneNumberId
     );
     
-    console.log(`[MP Webhook] ✅ Notificación de pago enviada a ${clientePhone}`);
+    console.log(`[MP Webhook] ✅ Notificación enviada a ${clientePhone}`);
     
     // Guardar mensaje en el historial de conversación
     try {
-      // Buscar el contacto por teléfono y empresa
-      const contacto = await ClienteModel.findOne({
-        telefono: clientePhone,
-        empresaId: seller.internalId
-      });
-      
-      if (contacto) {
-        // Actualizar historial con el mensaje del bot
-        await actualizarHistorialConversacion(contacto._id.toString(), mensaje);
-        console.log(`[MP Webhook] ✅ Mensaje guardado en historial de conversación`);
-      } else {
-        console.log(`[MP Webhook] ⚠️ No se encontró contacto para guardar en historial`);
-      }
+      await actualizarHistorialConversacion(contacto._id.toString(), mensaje);
+      console.log(`[MP Webhook] ✅ Mensaje guardado en historial`);
     } catch (historialError: any) {
       console.error(`[MP Webhook] Error guardando en historial:`, historialError.message);
-      // No lanzar error, solo loguear
     }
     
   } catch (error: any) {
