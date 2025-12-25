@@ -14,43 +14,61 @@ const __dirname = path.dirname(__filename);
 const router = Router();
 
 /**
- * GET /payment-links?empresaId=xxx
+ * GET /payment-links?sellerId=xxx OR ?empresaId=xxx
  * Lista todos los links de una empresa
+ * Acepta sellerId (userId de MP) o empresaId (ObjectId de empresa)
  */
 router.get('/', async (req: Request, res: Response): Promise<void> => {
   try {
-    const { empresaId } = req.query;
+    const { sellerId, empresaId } = req.query;
     
-    if (!empresaId || typeof empresaId !== 'string') {
-      res.status(400).json({ error: 'empresaId es requerido' });
+    console.log(`📋 [Payment Links] Query params:`, { sellerId, empresaId });
+
+    let finalSellerId: string | null = null;
+
+    // CASO 1: Si viene sellerId directamente (userId de MP)
+    if (sellerId && typeof sellerId === 'string') {
+      console.log(`📋 [Payment Links] Usando sellerId directo: ${sellerId}`);
+      finalSellerId = sellerId;
+    }
+    // CASO 2: Si viene empresaId (ObjectId de empresa)
+    else if (empresaId && typeof empresaId === 'string') {
+      console.log(`📋 [Payment Links] Buscando seller por empresaId: "${empresaId}"`);
+
+      // Buscar la empresa para obtener su nombre
+      const empresa = await EmpresaModel.findById(empresaId).catch(() => null);
+      
+      if (!empresa) {
+        console.log(`📋 [Payment Links] Empresa no encontrada con ID: "${empresaId}"`);
+        res.json({ success: true, links: [] });
+        return;
+      }
+
+      console.log(`📋 [Payment Links] Empresa encontrada: ${empresa.nombre}`);
+
+      // Buscar el seller por nombre de empresa (internalId)
+      const seller = await Seller.findOne({ internalId: empresa.nombre });
+
+      if (!seller) {
+        console.log(`📋 [Payment Links] No hay seller para empresa "${empresa.nombre}"`);
+        res.json({ success: true, links: [] });
+        return;
+      }
+
+      console.log(`📋 [Payment Links] Seller encontrado:`, { internalId: seller.internalId, userId: seller.userId });
+      finalSellerId = seller.userId;
+    }
+    else {
+      res.status(400).json({ error: 'sellerId o empresaId es requerido' });
       return;
     }
 
-    console.log(`📋 [Payment Links] Buscando links para empresaId: "${empresaId}"`);
-
-    // Primero buscar la empresa para obtener su nombre
-    const empresa = await EmpresaModel.findById(empresaId).catch(() => null);
-    
-    if (!empresa) {
-      console.log(`📋 [Payment Links] Empresa no encontrada con ID: "${empresaId}"`);
+    if (!finalSellerId) {
       res.json({ success: true, links: [] });
       return;
     }
 
-    console.log(`📋 [Payment Links] Empresa encontrada: ${empresa.nombre}`);
-
-    // Buscar el seller por nombre de empresa (internalId)
-    const seller = await Seller.findOne({ internalId: empresa.nombre });
-
-    if (!seller) {
-      console.log(`📋 [Payment Links] No hay seller para empresa "${empresa.nombre}"`);
-      res.json({ success: true, links: [] });
-      return;
-    }
-
-    console.log(`📋 [Payment Links] Seller encontrado:`, { internalId: seller.internalId, userId: seller.userId });
-
-    const links = await paymentLinksService.getLinksBySeller(seller.userId);
+    const links = await paymentLinksService.getLinksBySeller(finalSellerId);
     
     // Agregar paymentUrl a cada link
     const baseUrl = process.env.MP_MODULE_URL || `${req.protocol}://${req.get('host')}`;
