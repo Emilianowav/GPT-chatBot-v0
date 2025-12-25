@@ -219,41 +219,44 @@ router.get('/history/:empresaId', async (req, res): Promise<void> => {
   console.log(`📊 [MP Payments] Buscando historial para empresaId: "${empresaId}"`);
   
   try {
-    // Primero intentar filtrar directamente por empresaId en los pagos
-    let query: any = { empresaId: empresaId };
+    // Buscar la empresa para obtener su nombre
+    const { EmpresaModel } = await import('../../../models/Empresa.js');
+    const empresa = await EmpresaModel.findById(empresaId).catch(() => null);
     
-    // Contar pagos con empresaId directo
-    let total = await Payment.countDocuments(query);
-    
-    // Si no hay pagos con empresaId directo, buscar por seller (compatibilidad hacia atrás)
-    if (total === 0) {
-      console.log(`📊 [MP Payments] No hay pagos con empresaId directo, buscando por seller...`);
-      
-      // Buscar el seller por internalId (puede ser nombre o ObjectId)
-      let seller = await Seller.findOne({ internalId: empresaId });
-      
-      // Si no se encuentra, buscar por nombre de empresa usando el ObjectId
-      if (!seller) {
-        const { EmpresaModel } = await import('../../../models/Empresa.js');
-        const empresa = await EmpresaModel.findById(empresaId);
-        if (empresa) {
-          console.log(`📊 [MP Payments] Buscando seller por nombre: ${empresa.nombre}`);
-          seller = await Seller.findOne({ internalId: empresa.nombre });
-          
-          // También buscar pagos por nombre de empresa
-          if (!seller) {
-            query = { empresaId: empresa.nombre };
-            total = await Payment.countDocuments(query);
-          }
-        }
-      }
-      
-      if (seller) {
-        console.log(`📊 [MP Payments] Seller encontrado:`, { internalId: seller.internalId, userId: seller.userId });
-        query = { sellerId: seller.userId };
-        total = await Payment.countDocuments(query);
-      }
+    if (!empresa) {
+      console.log(`📊 [MP Payments] Empresa no encontrada con ID: "${empresaId}"`);
+      res.json({
+        success: true,
+        payments: [],
+        total: 0,
+        limit: parseInt(limit as string),
+        offset: parseInt(offset as string)
+      });
+      return;
     }
+
+    console.log(`📊 [MP Payments] Empresa encontrada: ${empresa.nombre}`);
+
+    // Buscar el seller por nombre de empresa
+    const seller = await Seller.findOne({ internalId: empresa.nombre });
+    
+    if (!seller) {
+      console.log(`📊 [MP Payments] No hay seller para empresa "${empresa.nombre}"`);
+      res.json({
+        success: true,
+        payments: [],
+        total: 0,
+        limit: parseInt(limit as string),
+        offset: parseInt(offset as string)
+      });
+      return;
+    }
+
+    console.log(`📊 [MP Payments] Seller encontrado:`, { internalId: seller.internalId, userId: seller.userId });
+
+    // Buscar pagos por sellerId
+    let query: any = { sellerId: seller.userId };
+    const total = await Payment.countDocuments(query);
     
     console.log(`📊 [MP Payments] Query final:`, query, `Total: ${total}`);
     
@@ -300,33 +303,11 @@ router.get('/stats/:empresaId', async (req, res): Promise<void> => {
   const { empresaId } = req.params;
   
   try {
-    // Construir query - primero intentar por empresaId directo
-    let query: any = { empresaId: empresaId };
-    let total = await Payment.countDocuments(query);
+    // Buscar la empresa para obtener su nombre
+    const { EmpresaModel } = await import('../../../models/Empresa.js');
+    const empresa = await EmpresaModel.findById(empresaId).catch(() => null);
     
-    // Si no hay pagos con empresaId directo, buscar por seller (compatibilidad)
-    if (total === 0) {
-      let seller = await Seller.findOne({ internalId: empresaId });
-      
-      if (!seller) {
-        const { EmpresaModel } = await import('../../../models/Empresa.js');
-        const empresa = await EmpresaModel.findById(empresaId);
-        if (empresa) {
-          seller = await Seller.findOne({ internalId: empresa.nombre });
-          if (!seller) {
-            query = { empresaId: empresa.nombre };
-            total = await Payment.countDocuments(query);
-          }
-        }
-      }
-      
-      if (seller) {
-        query = { sellerId: seller.userId };
-      }
-    }
-    
-    // Si no hay pagos, retornar stats vacías
-    if (total === 0 && !(await Payment.countDocuments(query))) {
+    if (!empresa) {
       res.json({
         success: true,
         stats: {
@@ -339,6 +320,26 @@ router.get('/stats/:empresaId', async (req, res): Promise<void> => {
       });
       return;
     }
+
+    // Buscar el seller por nombre de empresa
+    const seller = await Seller.findOne({ internalId: empresa.nombre });
+    
+    if (!seller) {
+      res.json({
+        success: true,
+        stats: {
+          pagosAprobados: 0,
+          ingresosTotales: 0,
+          pagosDelMes: 0,
+          ingresosDelMes: 0,
+          pagosPendientes: 0
+        }
+      });
+      return;
+    }
+
+    // Construir query por sellerId
+    const query: any = { sellerId: seller.userId };
     
     const hoy = new Date();
     hoy.setHours(0, 0, 0, 0);

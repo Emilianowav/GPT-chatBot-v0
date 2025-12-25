@@ -28,20 +28,22 @@ router.get('/', async (req: Request, res: Response): Promise<void> => {
 
     console.log(`📋 [Payment Links] Buscando links para empresaId: "${empresaId}"`);
 
-    // Buscar el seller por internalId (puede ser nombre o ObjectId)
-    let seller = await Seller.findOne({ internalId: empresaId });
+    // Primero buscar la empresa para obtener su nombre
+    const empresa = await EmpresaModel.findById(empresaId).catch(() => null);
     
-    // Si no se encuentra, buscar por nombre de empresa usando el ObjectId
-    if (!seller) {
-      const empresa = await EmpresaModel.findById(empresaId);
-      if (empresa) {
-        console.log(`📋 [Payment Links] Buscando seller por nombre: ${empresa.nombre}`);
-        seller = await Seller.findOne({ internalId: empresa.nombre });
-      }
+    if (!empresa) {
+      console.log(`📋 [Payment Links] Empresa no encontrada con ID: "${empresaId}"`);
+      res.json({ success: true, links: [] });
+      return;
     }
 
+    console.log(`📋 [Payment Links] Empresa encontrada: ${empresa.nombre}`);
+
+    // Buscar el seller por nombre de empresa (internalId)
+    const seller = await Seller.findOne({ internalId: empresa.nombre });
+
     if (!seller) {
-      console.log(`📋 [Payment Links] No hay seller para "${empresaId}"`);
+      console.log(`📋 [Payment Links] No hay seller para empresa "${empresa.nombre}"`);
       res.json({ success: true, links: [] });
       return;
     }
