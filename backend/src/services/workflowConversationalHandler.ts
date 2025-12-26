@@ -948,7 +948,13 @@ export class WorkflowConversationalHandler {
         const mapeo = paso.mapeoParametros || paso.parametros;
         console.log('🔍 Mapeo de parámetros configurado:', mapeo);
         
-        for (const [paramName, varName] of Object.entries(mapeo as Record<string, string>)) {
+        for (const [paramName, varNameOrTemplate] of Object.entries(mapeo as Record<string, string>)) {
+          // Si el valor es una plantilla {{variable}}, extraer el nombre de la variable
+          let varName = varNameOrTemplate;
+          if (varNameOrTemplate.startsWith('{{') && varNameOrTemplate.endsWith('}}')) {
+            varName = varNameOrTemplate.slice(2, -2);
+          }
+          
           let valorVariable = datosRecopilados[varName as string];
           
           // FALLBACK INTELIGENTE: Si el mapeo busca 'turno_seleccionado' pero existe 'cancha_id', usar ese
