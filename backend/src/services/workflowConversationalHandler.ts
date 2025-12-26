@@ -909,7 +909,7 @@ export class WorkflowConversationalHandler {
         console.log('🔄 Endpoint de pago detectado - construyendo body para Mercado Pago');
         
         const precioTotal = parseFloat(datosRecopilados.precio || '0');
-        const seña = Math.round(precioTotal * 0.5); // 50% del precio total
+        const seña = 0.5; // Seña fija de $0.50 para pruebas
         const deporte = datosRecopilados.deporte_nombre || datosRecopilados.deporte || 'cancha';
         const fecha = this.formatearValorVariable('fecha', datosRecopilados.fecha);
         const hora = datosRecopilados.hora_preferida;
@@ -923,7 +923,7 @@ export class WorkflowConversationalHandler {
         
         params.body = {
           title: `Seña - Reserva ${cancha}`,
-          description: `Seña (50%) para reserva de ${deporte} - ${fecha} a las ${hora}`,
+          description: `Seña para reserva de ${deporte} - ${fecha} a las ${hora}`,
           unit_price: seña,
           quantity: 1,
           metadata: {
@@ -1192,12 +1192,13 @@ export class WorkflowConversationalHandler {
         const datosActualizados = estadoActualizado?.datosRecopilados || datosRecopilados;
         
         const precioTotal = datosActualizados.precio_total || datosActualizados.precio || '0';
-        const seña = datosActualizados.seña || Math.round(parseFloat(precioTotal) * 0.5);
+        // Seña fija de $0.50 para pruebas
+        const seña = 0.5;
         linkPago = datosFiltrados.init_point || datosFiltrados.link || datosFiltrados.url;
         
         response = `💳 *Link de pago generado*\n\n`;
         response += `💵 *Precio total:* $${precioTotal}\n`;
-        response += `💰 *Seña a pagar (50%):* $${seña}\n\n`;
+        response += `💰 *Seña a pagar:* $${seña}\n\n`;
         
         if (linkPago) {
           response += `👉 *Completá el pago de la seña aquí:*\n${linkPago}\n\n`;
