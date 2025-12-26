@@ -1002,9 +1002,51 @@ export class WorkflowConversationalHandler {
       
       // CASO ESPECIAL: pre-crear-reserva usa Mercado Pago directamente
       if (paso.endpointId === 'generar-link-pago' || paso.endpointId === 'pre-crear-reserva') {
-        console.log('💳 Generando link de pago con Mercado Pago...');
+        console.log('💳 Generando PaymentLink único con datos de reserva...');
         
         try {
+          // 1. Crear PaymentLink único en BD con datos de reserva pendiente
+          const { PaymentLink } = await import('../modules/mercadopago/models/PaymentLink.js');
+          const { Seller } = await import('../modules/mercadopago/models/Seller.js');
+          const { EmpresaModel } = await import('../models/Empresa.js');
+          
+          // Obtener nombre de la empresa
+          const empresa = await EmpresaModel.findById(apiConfig.empresaId);
+          if (!empresa) {
+            throw new Error('No se encontró la empresa');
+          }
+          
+          // Buscar seller de la empresa
+          const seller = await Seller.findOne({ internalId: empresa.nombre });
+          if (!seller) {
+            throw new Error('No se encontró seller de Mercado Pago para la empresa');
+          }
+
+          // Crear PaymentLink con datos de reserva
+          const paymentLink = new PaymentLink({
+            sellerId: seller.userId,
+            empresaId: apiConfig.empresaId,
+            slug: `reserva-${Date.now()}-${Math.random().toString(36).substring(7)}`,
+            title: params.body.title,
+            description: params.body.description,
+            unitPrice: params.body.unit_price,
+            priceType: 'fixed',
+            category: 'services',
+            currency: 'ARS',
+            active: true,
+            pendingBooking: {
+              contactoId: contactoId,
+              clientePhone: datosRecopilados.cliente_telefono,
+              bookingData: params.body.metadata,
+              apiConfigId: apiConfig._id.toString(),
+              endpointId: 'crear-reserva' // Endpoint para crear reserva después del pago
+            }
+          });
+
+          await paymentLink.save();
+          console.log('✅ PaymentLink creado:', paymentLink._id);
+
+          // 2. Crear preferencia de MP con external_reference apuntando al PaymentLink
           const mpResult = await mercadopagoService.createPreference({
             items: [{
               title: params.body.title,
@@ -1013,15 +1055,19 @@ export class WorkflowConversationalHandler {
               quantity: params.body.quantity || 1,
               categoryId: 'services'
             }],
-            externalReference: `reserva-${Date.now()}-${datosRecopilados.cancha_id}`,
+            externalReference: `link_${paymentLink._id}|phone:${datosRecopilados.cliente_telefono}`,
             payer: {
               email: `${datosRecopilados.cliente_telefono}@whatsapp.temp`,
               firstName: datosRecopilados.cliente_nombre
             },
-            statementDescriptor: 'CLUB JUVENTUS'
+            statementDescriptor: empresa.nombre.substring(0, 22)
           });
           
-          console.log('✅ Preferencia de MP creada:', mpResult);
+          // 3. Guardar preference_id en el PaymentLink
+          paymentLink.mpPreferenceId = mpResult.id;
+          await paymentLink.save();
+          
+          console.log('✅ Preferencia de MP creada y asociada al PaymentLink');
           
           result = {
             success: true,
@@ -1029,11 +1075,12 @@ export class WorkflowConversationalHandler {
               init_point: mpResult.initPoint,
               sandbox_init_point: mpResult.sandboxInitPoint,
               preference_id: mpResult.id,
-              external_reference: mpResult.externalReference
+              payment_link_id: paymentLink._id.toString(),
+              external_reference: `link_${paymentLink._id}`
             }
           };
         } catch (mpError: any) {
-          console.error('❌ Error creando preferencia de MP:', mpError);
+          console.error('❌ Error creando PaymentLink y preferencia de MP:', mpError);
           result = {
             success: false,
             error: { mensaje: mpError.message || 'Error al generar link de pago' }

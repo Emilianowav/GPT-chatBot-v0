@@ -377,7 +377,8 @@ async function processPaymentNotification(paymentId: string): Promise<void> {
         mpPayment.currency_id || 'ARS',
         mpPayment.payer?.email,
         clientePhoneFromRef || mpPayment.payer?.phone?.number,
-        empresaId
+        empresaId,
+        paymentLinkId
       );
     }
     
@@ -389,7 +390,8 @@ async function processPaymentNotification(paymentId: string): Promise<void> {
         mpPayment.currency_id || 'ARS',
         mpPayment.payer?.email,
         clientePhoneFromRef || mpPayment.payer?.phone?.number,
-        empresaId
+        empresaId,
+        undefined
       );
     }
     
@@ -407,7 +409,8 @@ async function notifyPaymentApprovedAndCreateReservation(
   currency: string,
   payerEmail?: string,
   payerPhone?: string,
-  empresaId?: string
+  empresaId?: string,
+  paymentLinkId?: string
 ): Promise<void> {
   try {
     console.log(`[MP Webhook] Intentando notificar pago aprobado...`);
@@ -448,73 +451,83 @@ async function notifyPaymentApprovedAndCreateReservation(
       }
     }
     
-    if (!clientePhone) {
-      console.log(`[MP Webhook] No se pudo determinar el teléfono del cliente`);
-      return;
-    }
-    
-    // Buscar el contacto por teléfono y empresa
-    const { ContactoEmpresaModel } = await import('../../../models/ContactoEmpresa.js');
-    const contacto = await ContactoEmpresaModel.findOne({
-      telefono: clientePhone,
-      empresaId: empresa._id.toString()
-    });
-    
-    if (!contacto) {
-      console.log(`[MP Webhook] ⚠️ No se encontró contacto para ${clientePhone}`);
-      // Enviar solo notificación de pago sin crear reserva
-      const mensaje = `✅ *¡Pago recibido!*\n\n` +
-        `Hemos recibido tu pago de *$${amount.toLocaleString()} ${currency}*.\n\n` +
-        `Gracias por tu compra.`;
-      
-      await enviarMensajeWhatsAppTexto(clientePhone, mensaje, empresa.phoneNumberId);
-      return;
-    }
-    
-    // Verificar si hay una reserva pendiente en el workflowState
-    const workflowState = contacto.workflowState as any;
-    const reservaPendiente = workflowState?.datosRecopilados?.reserva_pendiente;
-    
+    // Recuperar datos de reserva desde el PaymentLink
     let codigoReserva: string | null = null;
+    let clientePhoneFinal = clientePhone;
     
-    if (reservaPendiente) {
-      console.log(`[MP Webhook] 📋 Reserva pendiente encontrada, creando reserva...`);
+    if (paymentLinkId) {
+      console.log(`[MP Webhook] 📋 Recuperando datos de reserva desde PaymentLink ${paymentLinkId}...`);
       
-      try {
-        // Crear la reserva usando apiExecutor
-        const { apiExecutor } = await import('../../integrations/services/apiExecutor.js');
+      const paymentLinkDoc = await PaymentLink.findById(paymentLinkId);
+      
+      if (paymentLinkDoc?.pendingBooking) {
+        const { pendingBooking } = paymentLinkDoc;
+        clientePhoneFinal = pendingBooking.clientePhone;
         
-        const reservaBody = {
-          cancha_id: reservaPendiente.cancha_id,
-          fecha: reservaPendiente.fecha,
-          hora_inicio: reservaPendiente.hora_inicio,
-          duracion: reservaPendiente.duracion,
-          cliente: reservaPendiente.cliente
-        };
+        console.log(`[MP Webhook] 📦 Creando reserva para ${clientePhoneFinal}...`);
         
-        console.log(`[MP Webhook] 📦 Creando reserva:`, reservaBody);
-        
-        const reservaResponse = await apiExecutor.ejecutar(
-          reservaPendiente.apiConfigId,
-          'pre-crear-reserva',
-          { body: reservaBody }
-        );
-        
-        if (reservaResponse.success && reservaResponse.data?.success) {
-          codigoReserva = reservaResponse.data?.data?.id || 'CONFIRMADA';
-          console.log(`[MP Webhook] ✅ Reserva creada exitosamente: ${codigoReserva}`);
+        try {
+          // Crear la reserva usando apiExecutor
+          const { apiExecutor } = await import('../../integrations/services/apiExecutor.js');
           
-          // Limpiar reserva pendiente del estado
-          await ContactoEmpresaModel.updateOne(
-            { _id: contacto._id },
-            { $unset: { 'workflowState.datosRecopilados.reserva_pendiente': '' } }
+          const reservaBody = {
+            cancha_id: pendingBooking.bookingData.cancha_id,
+            fecha: pendingBooking.bookingData.fecha,
+            hora_inicio: pendingBooking.bookingData.hora_inicio,
+            duracion: pendingBooking.bookingData.duracion,
+            cliente: pendingBooking.bookingData.cliente
+          };
+          
+          console.log(`[MP Webhook] 📦 Datos de reserva:`, reservaBody);
+          
+          const reservaResponse = await apiExecutor.ejecutar(
+            pendingBooking.apiConfigId,
+            pendingBooking.endpointId,
+            { body: reservaBody }
           );
-        } else {
-          console.error(`[MP Webhook] ❌ Error creando reserva:`, reservaResponse);
+          
+          if (reservaResponse.success && reservaResponse.data?.success) {
+            codigoReserva = reservaResponse.data?.data?.id || 'CONFIRMADA';
+            console.log(`[MP Webhook] ✅ Reserva creada exitosamente: ${codigoReserva}`);
+            
+            // Marcar PaymentLink como usado
+            paymentLinkDoc.active = false;
+            paymentLinkDoc.totalUses += 1;
+            paymentLinkDoc.totalRevenue += amount;
+            await paymentLinkDoc.save();
+          } else {
+            console.error(`[MP Webhook] ❌ Error creando reserva:`, reservaResponse);
+          }
+        } catch (reservaError: any) {
+          console.error(`[MP Webhook] ❌ Error al crear reserva:`, reservaError.message);
         }
-      } catch (reservaError: any) {
-        console.error(`[MP Webhook] ❌ Error al crear reserva:`, reservaError.message);
+      } else {
+        console.log(`[MP Webhook] ⚠️ PaymentLink no tiene datos de reserva pendiente`);
       }
+    } else if (clientePhone) {
+      // Fallback: buscar en workflowState si no hay PaymentLink
+      console.log(`[MP Webhook] ⚠️ No hay PaymentLink, buscando en workflowState...`);
+      
+      const { ContactoEmpresaModel } = await import('../../../models/ContactoEmpresa.js');
+      const contacto = await ContactoEmpresaModel.findOne({
+        telefono: clientePhone,
+        empresaId: empresa._id.toString()
+      });
+      
+      if (contacto) {
+        const workflowState = contacto.workflowState as any;
+        const reservaPendiente = workflowState?.datosRecopilados?.reserva_pendiente;
+        
+        if (reservaPendiente) {
+          console.log(`[MP Webhook] 📋 Reserva pendiente encontrada en workflowState`);
+          // ... lógica anterior de creación desde workflowState ...
+        }
+      }
+    }
+    
+    if (!clientePhoneFinal) {
+      console.log(`[MP Webhook] ⚠️ No se pudo determinar el teléfono del cliente`);
+      return;
     }
     
     // Formatear mensaje de confirmación

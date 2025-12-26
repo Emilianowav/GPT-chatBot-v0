@@ -17,6 +17,15 @@ export interface IPaymentLink extends Document {
   active: boolean;          // Si está activo
   totalUses: number;        // Cantidad de usos
   totalRevenue: number;     // Ingresos totales
+  // Datos de reserva pendiente (para workflow de reservas)
+  pendingBooking?: {
+    contactoId: string;     // ID del contacto que hizo la reserva
+    clientePhone: string;   // Teléfono del cliente
+    bookingData: any;       // Datos completos de la reserva para crear en API
+    apiConfigId: string;    // ID de la configuración API
+    endpointId: string;     // ID del endpoint para crear reserva
+  };
+  mpPreferenceId?: string;  // ID de la preferencia de MP generada
   createdAt: Date;
   updatedAt: Date;
 }
@@ -83,6 +92,20 @@ const PaymentLinkSchema = new Schema<IPaymentLink>({
   totalRevenue: { 
     type: Number, 
     default: 0 
+  },
+  pendingBooking: {
+    type: {
+      contactoId: String,
+      clientePhone: String,
+      bookingData: Schema.Types.Mixed,
+      apiConfigId: String,
+      endpointId: String
+    },
+    required: false
+  },
+  mpPreferenceId: {
+    type: String,
+    required: false
   }
 }, {
   timestamps: true
