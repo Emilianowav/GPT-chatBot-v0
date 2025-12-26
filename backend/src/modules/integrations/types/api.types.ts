@@ -182,6 +182,7 @@ export interface IStepValidation {
   max?: number;         // Para tipo 'numero' - valor máximo
   minLength?: number;   // Para tipo 'texto' - longitud mínima
   maxLength?: number;   // Para tipo 'texto' - longitud máxima
+  mapeo?: Record<string, string>;  // Para tipo 'opcion' - mapeo de valores (ej: {"1": "paddle", "2": "futbol"})
 }
 
 /**
