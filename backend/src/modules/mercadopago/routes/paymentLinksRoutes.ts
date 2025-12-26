@@ -4,6 +4,7 @@ import paymentLinksService from '../services/paymentLinksService.js';
 import { Seller } from '../models/Seller.js';
 import { PaymentLink } from '../models/PaymentLink.js';
 import { EmpresaModel } from '../../../models/Empresa.js';
+import { MercadoPagoConfig, Preference } from 'mercadopago';
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
