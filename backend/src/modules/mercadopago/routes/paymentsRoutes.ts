@@ -189,12 +189,17 @@ router.get('/history/:empresaId', async (req, res): Promise<void> => {
   console.log(`📊 [MP Payments] Buscando historial para empresaId: "${empresaId}"`);
   
   try {
-    // Buscar la empresa para obtener su nombre
+    // Buscar la empresa por ObjectId o por nombre
     const { EmpresaModel } = await import('../../../models/Empresa.js');
-    const empresa = await EmpresaModel.findById(empresaId).catch(() => null);
+    let empresa = await EmpresaModel.findById(empresaId).catch(() => null);
+    
+    // Si no se encuentra por ID, buscar por nombre
+    if (!empresa) {
+      empresa = await EmpresaModel.findOne({ nombre: empresaId });
+    }
     
     if (!empresa) {
-      console.log(`📊 [MP Payments] Empresa no encontrada con ID: "${empresaId}"`);
+      console.log(`📊 [MP Payments] Empresa no encontrada con ID o nombre: "${empresaId}"`);
       res.json({
         success: true,
         payments: [],
@@ -204,6 +209,11 @@ router.get('/history/:empresaId', async (req, res): Promise<void> => {
       });
       return;
     }
+    
+    console.log(`📊 [MP Payments] Empresa encontrada: ${empresa.nombre} (${empresa._id})`);
+    
+    // Usar el ObjectId real para la query
+    const empresaObjectId = empresa._id.toString();
 
     console.log(`📊 [MP Payments] Empresa encontrada: ${empresa.nombre}`);
 
@@ -227,14 +237,14 @@ router.get('/history/:empresaId', async (req, res): Promise<void> => {
     // Buscar pagos por sellerId Y empresaId (filtrado dual)
     let query: any = { 
       sellerId: seller.userId,
-      empresaId: empresaId  // Filtrar también por empresaId para soportar mismo seller en múltiples empresas
+      empresaId: empresaObjectId  // Usar el ObjectId real
     };
     const total = await Payment.countDocuments(query);
     
     console.log(`📊 [MP Payments] Query final (dual):`, query, `Total: ${total}`);
     
     if (total === 0) {
-      console.log(`📊 [MP Payments] No hay pagos para "${empresaId}"`);
+      console.log(`📊 [MP Payments] No hay pagos para "${empresaObjectId}"`);
       res.json({
         success: true,
         payments: [],
@@ -276,9 +286,14 @@ router.get('/stats/:empresaId', async (req, res): Promise<void> => {
   const { empresaId } = req.params;
   
   try {
-    // Buscar la empresa para obtener su nombre
+    // Buscar la empresa por ObjectId o por nombre
     const { EmpresaModel } = await import('../../../models/Empresa.js');
-    const empresa = await EmpresaModel.findById(empresaId).catch(() => null);
+    let empresa = await EmpresaModel.findById(empresaId).catch(() => null);
+    
+    // Si no se encuentra por ID, buscar por nombre
+    if (!empresa) {
+      empresa = await EmpresaModel.findOne({ nombre: empresaId });
+    }
     
     if (!empresa) {
       res.json({
@@ -293,6 +308,9 @@ router.get('/stats/:empresaId', async (req, res): Promise<void> => {
       });
       return;
     }
+    
+    // Usar el ObjectId real para la query
+    const empresaObjectId = empresa._id.toString();
 
     // Buscar el seller por nombre de empresa
     const seller = await Seller.findOne({ internalId: empresa.nombre });
@@ -314,7 +332,7 @@ router.get('/stats/:empresaId', async (req, res): Promise<void> => {
     // Construir query por sellerId Y empresaId (filtrado dual)
     const query: any = { 
       sellerId: seller.userId,
-      empresaId: empresaId  // Filtrar también por empresaId
+      empresaId: empresaObjectId  // Usar el ObjectId real
     };
     
     const hoy = new Date();
