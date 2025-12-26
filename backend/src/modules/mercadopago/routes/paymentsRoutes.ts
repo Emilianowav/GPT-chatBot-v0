@@ -254,11 +254,14 @@ router.get('/history/:empresaId', async (req, res): Promise<void> => {
 
     console.log(`📊 [MP Payments] Seller encontrado:`, { internalId: seller.internalId, userId: seller.userId });
 
-    // Buscar pagos por sellerId
-    let query: any = { sellerId: seller.userId };
+    // Buscar pagos por sellerId Y empresaId (filtrado dual)
+    let query: any = { 
+      sellerId: seller.userId,
+      empresaId: empresaId  // Filtrar también por empresaId para soportar mismo seller en múltiples empresas
+    };
     const total = await Payment.countDocuments(query);
     
-    console.log(`📊 [MP Payments] Query final:`, query, `Total: ${total}`);
+    console.log(`📊 [MP Payments] Query final (dual):`, query, `Total: ${total}`);
     
     if (total === 0) {
       console.log(`📊 [MP Payments] No hay pagos para "${empresaId}"`);
@@ -338,8 +341,11 @@ router.get('/stats/:empresaId', async (req, res): Promise<void> => {
       return;
     }
 
-    // Construir query por sellerId
-    const query: any = { sellerId: seller.userId };
+    // Construir query por sellerId Y empresaId (filtrado dual)
+    const query: any = { 
+      sellerId: seller.userId,
+      empresaId: empresaId  // Filtrar también por empresaId
+    };
     
     const hoy = new Date();
     hoy.setHours(0, 0, 0, 0);

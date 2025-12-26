@@ -3,6 +3,7 @@ import mongoose, { Schema, Document } from 'mongoose';
 
 export interface IPaymentLink extends Document {
   sellerId: string;         // userId de MP del vendedor
+  empresaId?: string;       // ID de la empresa (para filtrado cuando mismo seller en múltiples empresas)
   slug: string;             // URL amigable única
   title: string;            // Nombre del producto/servicio
   description?: string;     // Descripción opcional
@@ -25,6 +26,10 @@ const PaymentLinkSchema = new Schema<IPaymentLink>({
     type: String, 
     required: true,
     index: true 
+  },
+  empresaId: {
+    type: String,
+    index: true
   },
   slug: { 
     type: String, 
@@ -83,8 +88,9 @@ const PaymentLinkSchema = new Schema<IPaymentLink>({
   timestamps: true
 });
 
-// Índice compuesto
+// Índices compuestos para filtrado eficiente
 PaymentLinkSchema.index({ sellerId: 1, active: 1 });
+PaymentLinkSchema.index({ sellerId: 1, empresaId: 1 });
 
 export const PaymentLink = mongoose.model<IPaymentLink>('MPPaymentLink', PaymentLinkSchema);
 export default PaymentLink;

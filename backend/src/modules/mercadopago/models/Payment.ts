@@ -112,11 +112,13 @@ const PaymentSchema = new Schema<IPayment>({
   timestamps: true
 });
 
-// Índices compuestos
+// Índices compuestos para filtrado eficiente
 PaymentSchema.index({ sellerId: 1, status: 1 });
 PaymentSchema.index({ sellerId: 1, createdAt: -1 });
 PaymentSchema.index({ empresaId: 1, status: 1 });
 PaymentSchema.index({ empresaId: 1, createdAt: -1 });
+// Índice dual para cuando mismo seller tiene múltiples empresas
+PaymentSchema.index({ sellerId: 1, empresaId: 1, status: 1 });
 
 export const Payment = mongoose.model<IPayment>('MPPayment', PaymentSchema);
 export default Payment;

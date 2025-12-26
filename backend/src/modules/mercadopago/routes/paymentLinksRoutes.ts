@@ -1,8 +1,8 @@
 // 💳 Rutas de Payment Links de Mercado Pago
 import { Router, Request, Response } from 'express';
-import { MercadoPagoConfig, Preference } from 'mercadopago';
 import paymentLinksService from '../services/paymentLinksService.js';
 import { Seller } from '../models/Seller.js';
+import { PaymentLink } from '../models/PaymentLink.js';
 import { EmpresaModel } from '../../../models/Empresa.js';
 import fs from 'fs';
 import path from 'path';
@@ -68,7 +68,18 @@ router.get('/', async (req: Request, res: Response): Promise<void> => {
       return;
     }
 
-    const links = await paymentLinksService.getLinksBySeller(finalSellerId);
+    // Si vino empresaId, filtrar por AMBOS (sellerId Y empresaId)
+    let links;
+    if (empresaId && typeof empresaId === 'string') {
+      console.log(`📋 [Payment Links] Filtrando por sellerId=${finalSellerId} Y empresaId=${empresaId}`);
+      links = await PaymentLink.find({ 
+        sellerId: finalSellerId,
+        empresaId: empresaId 
+      }).sort({ createdAt: -1 });
+    } else {
+      // Si solo vino sellerId, usar el servicio normal
+      links = await paymentLinksService.getLinksBySeller(finalSellerId);
+    }
     
     // Agregar paymentUrl a cada link
     const baseUrl = process.env.MP_MODULE_URL || `${req.protocol}://${req.get('host')}`;
@@ -100,7 +111,7 @@ router.get('/', async (req: Request, res: Response): Promise<void> => {
  */
 router.post('/', async (req: Request, res: Response): Promise<void> => {
   try {
-    const { sellerId, title, unitPrice, description, priceType, category } = req.body;
+    const { sellerId, empresaId, title, unitPrice, description, priceType, category } = req.body;
 
     if (!sellerId || !title || !unitPrice) {
       res.status(400).json({ 
@@ -120,6 +131,7 @@ router.post('/', async (req: Request, res: Response): Promise<void> => {
 
     const link = await paymentLinksService.createPaymentLink({
       sellerId,
+      empresaId: empresaId || seller.internalId, // Usar empresaId del body o internalId del seller
       title,
       unitPrice: Number(unitPrice),
       description,

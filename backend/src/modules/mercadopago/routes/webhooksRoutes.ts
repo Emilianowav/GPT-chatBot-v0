@@ -276,18 +276,25 @@ async function processPaymentNotification(paymentId: string): Promise<void> {
     if (externalRef.startsWith('link_')) {
       paymentLinkId = externalRef.replace('link_', '').split('|')[0]; // Quitar el phone si existe
       
-      // Buscar el PaymentLink para obtener el sellerId
+      // Buscar el PaymentLink para obtener el sellerId Y empresaId
       const paymentLink = await PaymentLink.findById(paymentLinkId);
       if (paymentLink) {
         sellerId = paymentLink.sellerId;
+        // Si el PaymentLink tiene empresaId, usarlo directamente
+        if (paymentLink.empresaId) {
+          empresaId = paymentLink.empresaId;
+          console.log(`[MP Webhook] EmpresaId obtenido del PaymentLink: ${empresaId}`);
+        }
       }
     }
     
-    // Buscar el seller para obtener el empresaId (internalId)
-    const seller = await Seller.findOne({ userId: sellerId });
-    if (seller && seller.internalId) {
-      empresaId = seller.internalId;
-      console.log(`[MP Webhook] EmpresaId encontrado: ${empresaId}`);
+    // Si no se obtuvo empresaId del PaymentLink, buscar el seller para obtenerlo
+    if (!empresaId) {
+      const seller = await Seller.findOne({ userId: sellerId });
+      if (seller && seller.internalId) {
+        empresaId = seller.internalId;
+        console.log(`[MP Webhook] EmpresaId obtenido del Seller: ${empresaId}`);
+      }
     }
     
     // Mapear status de MP a nuestro enum

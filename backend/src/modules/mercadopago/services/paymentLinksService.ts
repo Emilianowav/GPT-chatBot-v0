@@ -41,6 +41,7 @@ export async function getLinkByIdOrSlug(identifier: string): Promise<IPaymentLin
  */
 export async function createPaymentLink(data: {
   sellerId: string;
+  empresaId?: string;
   title: string;
   unitPrice: number;
   description?: string;
@@ -61,6 +62,7 @@ export async function createPaymentLink(data: {
 
   const link = new PaymentLink({
     sellerId: data.sellerId,
+    empresaId: data.empresaId,
     slug,
     title: data.title,
     unitPrice: data.unitPrice,
