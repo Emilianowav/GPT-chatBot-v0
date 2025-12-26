@@ -224,6 +224,7 @@ export interface IWorkflowStep {
   // Para pasos de ejecución
   endpointId?: string;            // ID del endpoint a ejecutar
   mapeoParametros?: Record<string, string>;  // Mapeo de variables a parámetros
+  parametros?: Record<string, string>;       // Alias de mapeoParametros (soporta ambos)
   plantillaRespuesta?: string;    // Plantilla para formatear respuesta del endpoint
   endpointsRelacionados?: IEndpointRelacionado[];  // Endpoints para enriquecer cada resultado
   
