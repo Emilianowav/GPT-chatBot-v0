@@ -94,14 +94,11 @@ const PaymentLinkSchema = new Schema<IPaymentLink>({
     default: 0 
   },
   pendingBooking: {
-    type: {
-      contactoId: String,
-      clientePhone: String,
-      bookingData: Schema.Types.Mixed,
-      apiConfigId: String,
-      endpointId: String
-    },
-    required: false
+    contactoId: { type: String, required: false },
+    clientePhone: { type: String, required: false },
+    bookingData: { type: Schema.Types.Mixed, required: false },
+    apiConfigId: { type: String, required: false },
+    endpointId: { type: String, required: false }
   },
   mpPreferenceId: {
     type: String,
