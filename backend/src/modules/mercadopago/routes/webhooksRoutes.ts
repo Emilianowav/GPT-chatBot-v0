@@ -288,12 +288,19 @@ async function processPaymentNotification(paymentId: string): Promise<void> {
       }
     }
     
-    // Si no se obtuvo empresaId del PaymentLink, buscar el seller para obtenerlo
+    // Si no se obtuvo empresaId del PaymentLink, buscar el seller y luego la empresa
     if (!empresaId) {
       const seller = await Seller.findOne({ userId: sellerId });
       if (seller && seller.internalId) {
-        empresaId = seller.internalId;
-        console.log(`[MP Webhook] EmpresaId obtenido del Seller: ${empresaId}`);
+        // Buscar la empresa por nombre para obtener su ObjectId
+        const { EmpresaModel } = await import('../../../models/Empresa.js');
+        const empresa = await EmpresaModel.findOne({ nombre: seller.internalId });
+        if (empresa) {
+          empresaId = empresa._id.toString();
+          console.log(`[MP Webhook] EmpresaId (ObjectId) obtenido: ${empresaId} para empresa: ${seller.internalId}`);
+        } else {
+          console.log(`[MP Webhook] ⚠️ No se encontró empresa con nombre: ${seller.internalId}`);
+        }
       }
     }
     

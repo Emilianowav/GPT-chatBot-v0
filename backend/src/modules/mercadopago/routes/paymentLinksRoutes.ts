@@ -130,9 +130,19 @@ router.post('/', async (req: Request, res: Response): Promise<void> => {
       return;
     }
 
+    // Si no viene empresaId, buscar la empresa por nombre del seller para obtener ObjectId
+    let finalEmpresaId = empresaId;
+    if (!finalEmpresaId && seller.internalId) {
+      const empresa = await EmpresaModel.findOne({ nombre: seller.internalId });
+      if (empresa) {
+        finalEmpresaId = empresa._id.toString();
+        console.log(`[Payment Links] EmpresaId (ObjectId) obtenido: ${finalEmpresaId} para empresa: ${seller.internalId}`);
+      }
+    }
+
     const link = await paymentLinksService.createPaymentLink({
       sellerId,
-      empresaId: empresaId || seller.internalId, // Usar empresaId del body o internalId del seller
+      empresaId: finalEmpresaId,
       title,
       unitPrice: Number(unitPrice),
       description,
