@@ -944,10 +944,11 @@ export class WorkflowConversationalHandler {
         console.log(`   💰 Precio total: $${precioTotal} | Seña (50%): $${seña}`);
       }
       // Mapeo normal para otros endpoints
-      else if (paso.mapeoParametros) {
-        console.log('🔍 Mapeo de parámetros configurado:', paso.mapeoParametros);
+      else if (paso.mapeoParametros || paso.parametros) {
+        const mapeo = paso.mapeoParametros || paso.parametros;
+        console.log('🔍 Mapeo de parámetros configurado:', mapeo);
         
-        for (const [paramName, varName] of Object.entries(paso.mapeoParametros)) {
+        for (const [paramName, varName] of Object.entries(mapeo)) {
           let valorVariable = datosRecopilados[varName];
           
           // FALLBACK INTELIGENTE: Si el mapeo busca 'turno_seleccionado' pero existe 'cancha_id', usar ese
