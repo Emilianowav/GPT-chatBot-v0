@@ -1023,6 +1023,19 @@ export class WorkflowConversationalHandler {
           }
 
           // Crear PaymentLink con datos de reserva
+          // Construir bookingData con la estructura que espera la API de Mis Canchas
+          const bookingData = {
+            cancha_id: datosRecopilados.cancha_id,
+            fecha: this.transformarParametro('fecha', datosRecopilados.fecha, 'fecha'),
+            hora_inicio: datosRecopilados.hora_preferida,
+            duracion: this.transformarParametro('duracion', datosRecopilados.duracion, 'duracion'),
+            cliente: {
+              nombre: datosRecopilados.cliente_nombre,
+              telefono: datosRecopilados.cliente_telefono,
+              email: `${datosRecopilados.cliente_telefono}@whatsapp.temp`
+            }
+          };
+
           const paymentLink = new PaymentLink({
             sellerId: seller.userId,
             empresaId: apiConfig.empresaId,
@@ -1037,9 +1050,9 @@ export class WorkflowConversationalHandler {
             pendingBooking: {
               contactoId: contactoId,
               clientePhone: datosRecopilados.cliente_telefono,
-              bookingData: params.body.metadata,
+              bookingData: bookingData,
               apiConfigId: apiConfig._id.toString(),
-              endpointId: 'crear-reserva' // Endpoint para crear reserva después del pago
+              endpointId: 'crear-reserva'
             }
           });
 
