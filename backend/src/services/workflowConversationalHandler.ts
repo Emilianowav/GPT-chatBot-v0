@@ -943,10 +943,10 @@ export class WorkflowConversationalHandler {
         console.log('📦 Body construido para Mercado Pago:', JSON.stringify(params.body, null, 2));
         console.log(`   💰 Precio total: $${precioTotal} | Seña (50%): $${seña}`);
       }
-      // Mapeo normal para otros endpoints
+      // Mapeo normal para otros endpoints (soporta mapeoParametros y parametros)
       else if (paso.mapeoParametros || paso.parametros) {
         const mapeo = paso.mapeoParametros || paso.parametros;
-        console.log('🔍 Mapeo de parámetros configurado:', mapeo);
+        console.log('🔍 [NUEVO] Mapeo de parámetros configurado:', mapeo);
         
         for (const [paramName, varNameOrTemplate] of Object.entries(mapeo as Record<string, string>)) {
           // Si el valor es una plantilla {{variable}}, extraer el nombre de la variable

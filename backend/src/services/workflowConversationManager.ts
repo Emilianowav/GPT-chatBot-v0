@@ -442,7 +442,14 @@ export class WorkflowConversationManager {
           };
         }
         
-        return { valido: true, valor: opcionEncontrada };
+        // Aplicar mapeo si existe
+        let valorFinal = opcionEncontrada;
+        if (step.validacion.mapeo && step.validacion.mapeo[opcionEncontrada]) {
+          valorFinal = step.validacion.mapeo[opcionEncontrada];
+          console.log(`🔄 Mapeo aplicado: "${opcionEncontrada}" → "${valorFinal}"`);
+        }
+        
+        return { valido: true, valor: valorFinal };
       
       case 'regex':
         if (!regex) {
