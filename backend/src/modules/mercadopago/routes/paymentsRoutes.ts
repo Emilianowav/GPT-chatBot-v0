@@ -178,36 +178,6 @@ router.post('/create-split-preference', async (req, res) => {
 });
 
 /**
- * GET /payments/:paymentId
- * Obtiene información de un pago
- */
-router.get('/:paymentId', async (req, res) => {
-  const { paymentId } = req.params;
-  const { sellerId } = req.query;
-  
-  try {
-    let accessToken = null;
-    
-    if (sellerId && typeof sellerId === 'string') {
-      const seller = await sellersService.getSellerByUserId(sellerId);
-      if (seller) {
-        accessToken = seller.accessToken;
-      }
-    }
-    
-    const payment = await mpService.getPayment(paymentId, accessToken);
-    
-    res.json({
-      success: true,
-      payment,
-    });
-  } catch (err: any) {
-    console.error('❌ [MP Payments] Error obteniendo pago:', err.message);
-    res.status(500).json({ error: err.message });
-  }
-});
-
-/**
  * GET /payments/history/:empresaId
  * Lista el historial de pagos de una empresa
  * Filtra directamente por empresaId del pago
@@ -394,6 +364,37 @@ router.get('/stats/:empresaId', async (req, res): Promise<void> => {
     });
   } catch (err: any) {
     console.error('❌ [MP Payments] Error obteniendo stats:', err.message);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+/**
+ * GET /payments/:paymentId
+ * Obtiene información de un pago
+ * IMPORTANTE: Esta ruta debe estar AL FINAL para no capturar /history y /stats
+ */
+router.get('/:paymentId', async (req, res) => {
+  const { paymentId } = req.params;
+  const { sellerId } = req.query;
+  
+  try {
+    let accessToken = null;
+    
+    if (sellerId && typeof sellerId === 'string') {
+      const seller = await sellersService.getSellerByUserId(sellerId);
+      if (seller) {
+        accessToken = seller.accessToken;
+      }
+    }
+    
+    const payment = await mpService.getPayment(paymentId, accessToken);
+    
+    res.json({
+      success: true,
+      payment,
+    });
+  } catch (err: any) {
+    console.error('❌ [MP Payments] Error obteniendo pago:', err.message);
     res.status(500).json({ error: err.message });
   }
 });
