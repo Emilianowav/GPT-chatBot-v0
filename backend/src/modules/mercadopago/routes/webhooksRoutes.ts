@@ -544,20 +544,12 @@ async function notifyPaymentApprovedAndCreateReservation(
     
     // Enviar mensaje de WhatsApp
     await enviarMensajeWhatsAppTexto(
-      clientePhone,
+      clientePhoneFinal,
       mensaje,
       empresa.phoneNumberId
     );
     
-    console.log(`[MP Webhook] ✅ Notificación enviada a ${clientePhone}`);
-    
-    // Guardar mensaje en el historial de conversación
-    try {
-      await actualizarHistorialConversacion(contacto._id.toString(), mensaje);
-      console.log(`[MP Webhook] ✅ Mensaje guardado en historial`);
-    } catch (historialError: any) {
-      console.error(`[MP Webhook] Error guardando en historial:`, historialError.message);
-    }
+    console.log(`[MP Webhook] ✅ Notificación enviada a ${clientePhoneFinal}`);
     
   } catch (error: any) {
     console.error(`[MP Webhook] Error notificando pago:`, error.message);
