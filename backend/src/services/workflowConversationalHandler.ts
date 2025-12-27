@@ -419,12 +419,11 @@ export class WorkflowConversationalHandler {
                   opcionesFormateadas = workflowConversationManager.formatearOpciones(opciones);
                 }
                 
-                // Reemplazar {{opciones}} en la respuesta o agregar al final
+                // Reemplazar {{opciones}} en la respuesta SOLO si existe el placeholder
                 if (response.includes('{{opciones}}')) {
                   response = response.replace('{{opciones}}', opcionesFormateadas);
-                } else {
-                  response += '\n\n' + opcionesFormateadas;
                 }
+                // NO agregar opciones automáticamente al final - ya están en el mensaje del paso
               } else {
                 // Si no hay opciones, quitar el placeholder
                 response = response.replace('{{opciones}}', '(No hay opciones disponibles)');
