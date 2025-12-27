@@ -1080,7 +1080,7 @@ export class WorkflowConversationalHandler {
               clientePhone: datosRecopilados.cliente_telefono,
               bookingData: bookingData,
               apiConfigId: apiConfig._id.toString(),
-              endpointId: 'crear-reserva'
+              endpointId: 'pre-crear-reserva'
             }
           });
 
