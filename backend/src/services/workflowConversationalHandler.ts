@@ -891,7 +891,8 @@ export class WorkflowConversationalHandler {
         console.log('🔄 Endpoint de pago detectado - construyendo body para Mercado Pago');
         
         const precioTotal = parseFloat(datosRecopilados.precio || '0');
-        const seña = 1; // Seña mínima de $1 (mínimo de Mercado Pago)
+        // Obtener seña desde configuración del workflow, con fallback a $1 (mínimo de Mercado Pago)
+        const seña = workflow.configPago?.seña || 1;
         const deporte = datosRecopilados.deporte_nombre || datosRecopilados.deporte || 'cancha';
         const fecha = this.formatearValorVariable('fecha', datosRecopilados.fecha);
         const hora = datosRecopilados.hora_preferida;
@@ -967,13 +968,8 @@ export class WorkflowConversationalHandler {
             // Transformar el valor según el parámetro
             let valorTransformado = this.transformarParametro(paramName, valorVariable, varName);
             
-            // MAPEO ESPECIAL: deporte numérico a nombre
-            if (paramName === 'deporte' && (valorTransformado === '1' || valorTransformado === '2')) {
-              const mapeoDeporte: Record<string, string> = { '1': 'paddle', '2': 'futbol' };
-              const deporteOriginal = valorTransformado;
-              valorTransformado = mapeoDeporte[valorTransformado] || valorTransformado;
-              console.log(`   🔄 Mapeo deporte: "${deporteOriginal}" → "${valorTransformado}"`);
-            }
+            // El mapeo de deporte (1→paddle, 2→futbol) se hace en validacion.mapeo de la BD
+            // No necesitamos fallback hardcodeado aquí
             
             params.query[paramName] = valorTransformado;
             console.log(`   ✅ ${paramName} = "${valorTransformado}" (desde variable: ${varName})`);
@@ -1257,21 +1253,34 @@ export class WorkflowConversationalHandler {
         const datosActualizados = estadoActualizado?.datosRecopilados || datosRecopilados;
         
         const precioTotal = datosActualizados.precio_total || datosActualizados.precio || '0';
-        // Seña mínima de $1 (mínimo de Mercado Pago)
-        const seña = 1;
+        // Obtener seña desde configuración del workflow, con fallback a $1 (mínimo de Mercado Pago)
+        const seña = workflow.configPago?.seña || 1;
+        const tiempoExpiracion = workflow.configPago?.tiempoExpiracion || 10;
         linkPago = datosFiltrados.init_point || datosFiltrados.link || datosFiltrados.url;
         
-        response = `💳 *Link de pago generado*\n\n`;
-        response += `💵 *Precio total:* $${precioTotal}\n`;
-        response += `💰 *Seña a pagar:* $${seña}\n\n`;
-        
-        if (linkPago) {
-          response += `👉 *Completá el pago de la seña aquí:*\n${linkPago}\n\n`;
-          response += `⏰ Tenés 10 minutos para completar el pago.\n\n`;
-          response += `✅ Una vez confirmado el pago, tu reserva quedará confirmada automáticamente.\n`;
-          response += `💡 El resto ($${parseFloat(precioTotal) - seña}) se abona al llegar a la cancha.`;
+        // Usar plantilla del paso si existe, sino usar formato por defecto
+        if (paso.mensajeExito && linkPago) {
+          response = this.reemplazarVariables(paso.mensajeExito, {
+            ...datosActualizados,
+            precio_total: precioTotal,
+            seña: seña,
+            link_pago: linkPago,
+            tiempo_expiracion: tiempoExpiracion,
+            resto: parseFloat(precioTotal) - seña
+          });
         } else {
-          response += `⚠️ Error al generar el link de pago. Por favor intentá de nuevo.`;
+          response = `💳 *Link de pago generado*\n\n`;
+          response += `💵 *Precio total:* $${precioTotal}\n`;
+          response += `💰 *Seña a pagar:* $${seña}\n\n`;
+          
+          if (linkPago) {
+            response += `👉 *Completá el pago de la seña aquí:*\n${linkPago}\n\n`;
+            response += `⏰ Tenés ${tiempoExpiracion} minutos para completar el pago.\n\n`;
+            response += `✅ Una vez confirmado el pago, tu reserva quedará confirmada automáticamente.\n`;
+            response += `💡 El resto ($${parseFloat(precioTotal) - seña}) se abona al llegar a la cancha.`;
+          } else {
+            response += `⚠️ Error al generar el link de pago. Por favor intentá de nuevo.`;
+          }
         }
       }
       // Prioridad: plantilla del paso > plantilla del workflow > formato por defecto
