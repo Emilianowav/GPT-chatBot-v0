@@ -1181,9 +1181,11 @@ export class WorkflowConversationalHandler {
             const estadoActual = await workflowConversationManager.getWorkflowState(contactoId);
             const datosActualizados = estadoActual?.datosRecopilados || {};
             
+            // El mensaje del siguiente paso ya incluye "¡Perfecto! Encontré disponibilidad"
+            // Solo agregamos la info de la cancha encontrada
             return {
               success: true,
-              response: `✅ ¡Perfecto! Encontré disponibilidad:\n\n🏟️ ${matching.cancha.nombre}\n⏰ ${matching.cancha.hora}\n⏱️ ${matching.cancha.duracion} minutos\n💰 $${matching.cancha.precio}\n\n${this.reemplazarVariables(siguientePaso.pregunta, datosActualizados)}`,
+              response: `✅ Disponibilidad encontrada:\n\n🏟️ ${matching.cancha.nombre}\n⏰ ${matching.cancha.hora}\n⏱️ ${matching.cancha.duracion} minutos\n💰 $${matching.cancha.precio}\n\n${this.reemplazarVariables(siguientePaso.pregunta, datosActualizados)}`,
               completed: false,
               metadata: {
                 workflowName: workflow.nombre,
@@ -1383,10 +1385,8 @@ export class WorkflowConversationalHandler {
           let preguntaSiguiente = siguientePaso.pregunta || '';
           preguntaSiguiente = this.reemplazarVariables(preguntaSiguiente, datosRecopilados);
           
-          // Agregar opciones si las tiene
-          if (siguientePaso.validacion?.tipo === 'opcion' && siguientePaso.validacion.opciones) {
-            preguntaSiguiente += '\n\n' + workflowConversationManager.formatearOpciones(siguientePaso.validacion.opciones);
-          }
+          // NO agregar opciones automáticamente - ya están en el mensaje del paso
+          // Las opciones solo se usan para validación, no para mostrar
           
           return {
             success: true,
