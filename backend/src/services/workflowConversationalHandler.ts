@@ -436,12 +436,7 @@ export class WorkflowConversationalHandler {
             console.error('❌ Error llamando a la API:', error);
           }
         }
-        // Si tiene opciones estáticas, mostrarlas
-        else if (primerPaso.validacion?.tipo === 'opcion' && primerPaso.validacion.opciones) {
-          response += '\n\n' + workflowConversationManager.formatearOpciones(
-            primerPaso.validacion.opciones
-          );
-        }
+        // NO agregar opciones automáticamente - ya están en el mensaje del paso
       }
       
       return {
@@ -816,27 +811,7 @@ export class WorkflowConversationalHandler {
                   siguientePaso.endpointResponseConfig
                 );
                 
-                if (opciones.length > 0) {
-                  // Si hay plantilla personalizada, usarla
-                  if (siguientePaso.plantillaOpciones) {
-                    const opcionesFormateadas = this.formatearOpcionesConPlantilla(
-                      datosArray,
-                      siguientePaso.plantillaOpciones,
-                      siguientePaso.endpointResponseConfig
-                    );
-                    response += '\n\n' + opcionesFormateadas;
-                  } else {
-                    response += '\n\n' + workflowConversationManager.formatearOpciones(opciones);
-                  }
-                }
-              } else {
-                // Formato por defecto
-                const opciones = datosArray.map((item: any) => {
-                  const id = item.id || item.code;
-                  const nombre = item.name || item.nombre || item.title;
-                  return `${id}: ${nombre}`;
-                });
-                response += '\n\n' + workflowConversationManager.formatearOpciones(opciones);
+                // NO agregar opciones automáticamente - ya están en el mensaje del paso
               }
             }
           }
@@ -844,12 +819,7 @@ export class WorkflowConversationalHandler {
           console.error('❌ Error llamando a la API:', error);
         }
       }
-      // Si tiene opciones estáticas, mostrarlas
-      else if (siguientePaso.validacion?.tipo === 'opcion' && siguientePaso.validacion.opciones) {
-        response += '\n\n' + workflowConversationManager.formatearOpciones(
-          siguientePaso.validacion.opciones
-        );
-      }
+      // NO agregar opciones automáticamente - ya están en el mensaje del paso
     } else if (siguientePaso.tipo === 'consulta_filtrada') {
       // El siguiente paso es consulta filtrada, hacerlo ahora
       return await this.procesarPasoEjecucion(
@@ -1288,8 +1258,8 @@ export class WorkflowConversationalHandler {
         const datosActualizados = estadoActualizado?.datosRecopilados || datosRecopilados;
         
         const precioTotal = datosActualizados.precio_total || datosActualizados.precio || '0';
-        // Seña fija de $0.50 para pruebas
-        const seña = 0.5;
+        // Seña mínima de $1 (mínimo de Mercado Pago)
+        const seña = 1;
         linkPago = datosFiltrados.init_point || datosFiltrados.link || datosFiltrados.url;
         
         response = `💳 *Link de pago generado*\n\n`;
@@ -1983,9 +1953,7 @@ export class WorkflowConversationalHandler {
                   datosArray,
                   pasoDestino.endpointResponseConfig
                 );
-                if (opciones.length > 0) {
-                  response += '\n\n' + workflowConversationManager.formatearOpciones(opciones);
-                }
+                  // NO agregar opciones automáticamente
               }
             }
           } catch (error) {
