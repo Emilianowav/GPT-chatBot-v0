@@ -126,12 +126,25 @@ export class WorkflowConversationalHandler {
   } {
     console.log('🔍 Iniciando matching de disponibilidad...');
     console.log('   Buscando: hora=' + horaPreferida + ', duración=' + duracionMinutos + ' min');
+    console.log('   Estructura recibida:', JSON.stringify(disponibilidad, null, 2).substring(0, 300));
 
-    if (!disponibilidad || !disponibilidad.canchas_disponibles) {
+    // Extraer canchas_disponibles de la estructura de respuesta
+    let canchas = null;
+    
+    if (disponibilidad?.canchas_disponibles) {
+      canchas = disponibilidad.canchas_disponibles;
+    } else if (disponibilidad?.data?.canchas_disponibles) {
+      canchas = disponibilidad.data.canchas_disponibles;
+    } else if (Array.isArray(disponibilidad)) {
+      canchas = disponibilidad;
+    }
+    
+    if (!canchas || !Array.isArray(canchas) || canchas.length === 0) {
+      console.log('❌ No se encontraron canchas en la respuesta');
       return { encontrado: false };
     }
 
-    const canchas = disponibilidad.canchas_disponibles;
+    console.log(`📊 ${canchas.length} canchas encontradas en la respuesta`);
     
     // Buscar cancha que tenga la hora exacta con la duración exacta
     for (const cancha of canchas) {
