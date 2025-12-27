@@ -922,7 +922,7 @@ export class WorkflowConversationalHandler {
         console.log('🔄 Endpoint de pago detectado - construyendo body para Mercado Pago');
         
         const precioTotal = parseFloat(datosRecopilados.precio || '0');
-        const seña = 0.5; // Seña fija de $0.50 para pruebas
+        const seña = 1; // Seña mínima de $1 (mínimo de Mercado Pago)
         const deporte = datosRecopilados.deporte_nombre || datosRecopilados.deporte || 'cancha';
         const fecha = this.formatearValorVariable('fecha', datosRecopilados.fecha);
         const hora = datosRecopilados.hora_preferida;
@@ -997,6 +997,14 @@ export class WorkflowConversationalHandler {
             
             // Transformar el valor según el parámetro
             let valorTransformado = this.transformarParametro(paramName, valorVariable, varName);
+            
+            // MAPEO ESPECIAL: deporte numérico a nombre
+            if (paramName === 'deporte' && (valorTransformado === '1' || valorTransformado === '2')) {
+              const mapeoDeporte: Record<string, string> = { '1': 'paddle', '2': 'futbol' };
+              const deporteOriginal = valorTransformado;
+              valorTransformado = mapeoDeporte[valorTransformado] || valorTransformado;
+              console.log(`   🔄 Mapeo deporte: "${deporteOriginal}" → "${valorTransformado}"`);
+            }
             
             params.query[paramName] = valorTransformado;
             console.log(`   ✅ ${paramName} = "${valorTransformado}" (desde variable: ${varName})`);
