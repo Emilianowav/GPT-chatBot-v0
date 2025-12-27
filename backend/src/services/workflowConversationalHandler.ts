@@ -1140,13 +1140,19 @@ export class WorkflowConversationalHandler {
       }
       
       console.log('✅ Endpoint ejecutado exitosamente');
-      console.log('📊 Datos recibidos de la API:', JSON.stringify(result.data, null, 2).substring(0, 500) + '...');
+      console.log('📊 Datos COMPLETOS recibidos de la API:');
+      console.log(JSON.stringify(result.data, null, 2));
       
       // MATCHING INTELIGENTE para disponibilidad de canchas
       if (paso.endpointId === 'consultar-disponibilidad' && result.data) {
         const horaPreferida = datosRecopilados.hora_preferida;
         const duracionStr = datosRecopilados.duracion;
         const duracionMinutos = duracionStr === '1' ? 60 : duracionStr === '2' ? 90 : duracionStr === '3' ? 120 : parseInt(duracionStr);
+        
+        console.log('🔍 Parámetros de búsqueda:');
+        console.log('   - Hora preferida:', horaPreferida);
+        console.log('   - Duración string:', duracionStr);
+        console.log('   - Duración minutos:', duracionMinutos);
         
         const matching = this.matchearDisponibilidad(result.data, horaPreferida, duracionMinutos);
         
