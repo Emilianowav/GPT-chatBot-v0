@@ -92,8 +92,11 @@ export class UniversalRouter {
     
     // 1. Evaluar workflows (prioridad 3 - mayor que keywords simples)
     const workflowMatch = await this.evaluateWorkflowTriggers(context);
+    console.log('🔍 [DEBUG] workflowMatch resultado:', workflowMatch ? 'ENCONTRADO' : 'NULL');
     if (workflowMatch) {
       console.log('✅ Match de Workflow detectado');
+      console.log('📋 [DEBUG] Workflow:', workflowMatch.workflow?.nombre);
+      console.log('📋 [DEBUG] API:', workflowMatch.apiConfig?.nombre);
       return {
         action: 'start_workflow',
         priority: FlowPriority.API_WORKFLOW,
@@ -101,6 +104,7 @@ export class UniversalRouter {
         metadata: workflowMatch
       };
     }
+    console.log('⏭️ [DEBUG] No se encontró workflow match, continuando...');
     
     // 2. Evaluar triggers de API (prioridad 4)
     const apiMatch = await this.evaluateApiTriggers(context);
@@ -195,13 +199,19 @@ export class UniversalRouter {
    */
   private async evaluateWorkflowTriggers(context: MessageContext): Promise<WorkflowMatch | null> {
     try {
+      console.log('🔍 [evaluateWorkflowTriggers] Iniciando evaluación...');
+      console.log('🔍 [evaluateWorkflowTriggers] empresaId:', context.empresaId);
+      
       // 1. Buscar chatbot de la empresa
       const chatbot = await ChatbotModel.findOne({
         empresaId: context.empresaId,
         activo: true
       });
       
+      console.log('🔍 [evaluateWorkflowTriggers] Chatbot encontrado:', chatbot ? chatbot.nombre : 'NULL');
+      
       if (!chatbot) {
+        console.log('❌ [evaluateWorkflowTriggers] No hay chatbot activo, retornando null');
         return null;
       }
       
