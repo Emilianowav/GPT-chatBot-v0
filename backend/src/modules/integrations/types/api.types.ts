@@ -233,6 +233,7 @@ export interface IWorkflowStep {
   nombre?: string;
   descripcion?: string;
   mensajeError?: string;          // Mensaje si falla la validación
+  mensajeExito?: string;          // Mensaje cuando el paso se completa exitosamente
   intentosMaximos?: number;       // Máximo de intentos para validación
 }
 
@@ -289,6 +290,14 @@ export interface IWorkflow {
   // Configuración
   permitirAbandonar?: boolean;    // Si el usuario puede salir con "cancelar"
   timeoutMinutos?: number;        // Timeout de inactividad
+  
+  // Configuración de pago (para workflows con Mercado Pago)
+  configPago?: {
+    seña: number;                 // Monto de seña o pago total
+    porcentajeSeña?: number;      // Porcentaje del total (0.5 = 50%, 1.0 = 100%)
+    tiempoExpiracion?: number;    // Minutos para completar el pago
+    moneda?: string;              // Moneda (ARS, USD, etc)
+  };
   
   createdAt?: Date;
   updatedAt?: Date;
