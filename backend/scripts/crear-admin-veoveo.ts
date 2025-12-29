@@ -9,7 +9,7 @@ const EMPRESA_ID = 'Veo Veo';
 
 // Credenciales del admin
 const ADMIN_USERNAME = 'veoveo_admin';
-const ADMIN_PASSWORD = 'VeoVeo2024!';
+const ADMIN_PASSWORD = 'VeoVeo2025!Admin';
 const ADMIN_EMAIL = 'admin@veoveo.com';
 
 async function crearAdmin() {
