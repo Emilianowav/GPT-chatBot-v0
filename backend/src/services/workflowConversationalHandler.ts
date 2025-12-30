@@ -1347,11 +1347,34 @@ export class WorkflowConversationalHandler {
         };
       }
       
-      // Verificar si hay más pasos después de este
+      // Si el paso tiene pregunta, significa que espera input del usuario
+      // (ej: listar productos y pedir que seleccione uno)
+      if (paso.pregunta) {
+        console.log('⏸️ Paso consulta_filtrada con pregunta - esperando input del usuario');
+        
+        // Guardar resultado de la API en datosRecopilados para uso posterior
+        await workflowConversationManager.actualizarDato(contactoId, paso.nombreVariable, result.data);
+        
+        // Retornar con la respuesta formateada (productos + pregunta)
+        // El workflow se queda en este paso esperando input
+        return {
+          success: true,
+          response,
+          completed: false,
+          metadata: {
+            workflowName: workflow.nombre,
+            pasoActual: paso.orden,
+            totalPasos: workflow.steps.length,
+            datosRecopilados
+          }
+        };
+      }
+      
+      // Si NO tiene pregunta, avanzar automáticamente al siguiente paso
       const siguientePaso = workflow.steps.find(s => s.orden === paso.orden + 1);
       
       if (siguientePaso) {
-        console.log('➡️ Hay más pasos después de consulta_filtrada, continuando al paso:', siguientePaso.orden);
+        console.log('➡️ Paso consulta_filtrada sin pregunta - avanzando automáticamente al paso:', siguientePaso.orden);
         
         // Guardar resultado de la API en datosRecopilados
         await workflowConversationManager.avanzarPaso(contactoId, {
@@ -1362,9 +1385,6 @@ export class WorkflowConversationalHandler {
         if (siguientePaso.tipo === 'recopilar' || siguientePaso.tipo === 'input' || siguientePaso.tipo === 'confirmacion') {
           let preguntaSiguiente = siguientePaso.pregunta || '';
           preguntaSiguiente = this.reemplazarVariables(preguntaSiguiente, datosRecopilados);
-          
-          // NO agregar opciones automáticamente - ya están en el mensaje del paso
-          // Las opciones solo se usan para validación, no para mostrar
           
           return {
             success: true,
