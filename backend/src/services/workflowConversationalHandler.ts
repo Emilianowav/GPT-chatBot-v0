@@ -706,7 +706,6 @@ export class WorkflowConversationalHandler {
             const stockField = paso.endpointResponseConfig.stockField || 'stock_quantity';
             if (itemSeleccionado[stockField] !== undefined) {
               datosNuevos[`${baseNombre}_stock`] = itemSeleccionado[stockField];
-              console.log(`✅ Guardando stock: ${baseNombre}_stock = "${itemSeleccionado[stockField]}"`);
             }
           }
         }
