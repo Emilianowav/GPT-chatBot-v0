@@ -201,14 +201,22 @@ export class ApiExecutor {
         }
         
       } else if (auth.tipo === 'basic') {
-        const username = decrypt(auth.configuracion.username || '');
-        const password = decrypt(auth.configuracion.password || '');
+        // Si las credenciales están en texto plano, usarlas directamente
+        let username, password;
+        if (auth.configuracion.plainText) {
+          username = auth.configuracion.username || '';
+          password = auth.configuracion.password || '';
+        } else {
+          username = decrypt(auth.configuracion.username || '');
+          password = decrypt(auth.configuracion.password || '');
+        }
         
         // WooCommerce: detectar por baseUrl y siempre usar query string
         const isWooCommerce = apiConfig.baseUrl?.includes('wp-json/wc');
         
         console.log('🔐 [DEBUG] Basic Auth config:', {
           isWooCommerce,
+          plainText: auth.configuracion.plainText,
           useQueryString: auth.configuracion.useQueryString,
           hasUsername: !!username,
           hasPassword: !!password
