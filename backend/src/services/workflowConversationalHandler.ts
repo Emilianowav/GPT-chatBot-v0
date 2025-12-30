@@ -1502,11 +1502,20 @@ export class WorkflowConversationalHandler {
         // Guardar resultado de la API en datosRecopilados para uso posterior
         await workflowConversationManager.actualizarDato(contactoId, paso.nombreVariable, result.data);
         
-        // Retornar con la respuesta formateada (productos + pregunta)
+        // Reemplazar {{opciones}} en la pregunta con los productos formateados
+        const productosFormateados = this.formatearRespuestaProductos(datosFiltrados);
+        let preguntaConOpciones = paso.pregunta.replace(/{{opciones}}/g, productosFormateados);
+        
+        // Reemplazar otras variables en la pregunta
+        preguntaConOpciones = this.reemplazarVariables(preguntaConOpciones, datosRecopilados);
+        
+        console.log('📝 Pregunta con opciones formateada');
+        
+        // Retornar con la pregunta completa (productos + texto de la pregunta)
         // El workflow se queda en este paso esperando input
         return {
           success: true,
-          response,
+          response: preguntaConOpciones,
           completed: false,
           metadata: {
             workflowName: workflow.nombre,
