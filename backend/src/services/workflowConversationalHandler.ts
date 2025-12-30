@@ -1596,8 +1596,8 @@ export class WorkflowConversationalHandler {
           };
         }
         
-        // Guardar resultado de la API en datosRecopilados para uso posterior
-        await workflowConversationManager.actualizarDato(contactoId, paso.nombreVariable, result.data);
+        // CRÍTICO: Guardar el array FILTRADO (no el completo) para que la selección sea correcta
+        await workflowConversationManager.actualizarDato(contactoId, paso.nombreVariable, datosFiltrados);
         
         // Reemplazar {{opciones}} en la pregunta con los productos formateados
         const productosFormateados = this.formatearRespuestaProductos(datosFiltrados);
