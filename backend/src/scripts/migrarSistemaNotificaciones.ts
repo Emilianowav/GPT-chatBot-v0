@@ -30,8 +30,6 @@ async function migrarSistemaNotificaciones() {
 
     for (const config of configuraciones) {
       try {
-        console.log(`\n🏢 Procesando: ${config.empresaId}`);
-        console.log('─────────────────────────────────────');
 
         // Verificar si ya tiene plantillasMeta
         if (config.plantillasMeta?.notificacionDiariaAgentes?.activa || 

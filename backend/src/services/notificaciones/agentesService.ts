@@ -23,7 +23,6 @@ export async function procesarNotificacionesDiariasAgentes() {
       'plantillasMeta.notificacionDiariaAgentes.activa': true
     });
     
-    console.log(`   📋 Configuraciones activas: ${configuraciones.length}`);
     
     if (configuraciones.length === 0) {
       console.log(`   ℹ️ No hay empresas con notificación diaria activa\n`);
@@ -32,7 +31,6 @@ export async function procesarNotificacionesDiariasAgentes() {
     
     for (let config of configuraciones) {
       try {
-        console.log(`   🏢 Procesando: ${config.empresaId}`);
         
         config = await ConfiguracionModuloModel.findById(config._id) || config;
         
@@ -48,9 +46,6 @@ export async function procesarNotificacionesDiariasAgentes() {
           const horaEnvio = programacion.horaEnvio || '06:00';
           const [horaConfig, minutoConfig] = horaEnvio.split(':').map(Number);
           
-          console.log(`      📅 Verificando envío:`);
-          console.log(`         Hora configurada: ${horaEnvio}`);
-          console.log(`         Hora actual: ${horaFormateada}`);
           
           const diferenciaMinutos = Math.abs((horaActual * 60 + minutoActual) - (horaConfig * 60 + minutoConfig));
           console.log(`         Diferencia minutos: ${diferenciaMinutos}`);

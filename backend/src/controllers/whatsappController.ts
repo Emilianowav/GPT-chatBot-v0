@@ -40,8 +40,6 @@ const paymentLinkTool = {
 
 export const recibirMensaje = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
-    console.log('\n🔔 [WEBHOOK] Mensaje recibido en /api/whatsapp/webhook');
-    console.log('🔔 [WEBHOOK] Body:', JSON.stringify(req.body, null, 2));
     
     const entrada = req.body;
     const messages = entrada?.entry?.[0]?.changes?.[0]?.value?.messages;
