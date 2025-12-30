@@ -203,8 +203,16 @@ export class ApiExecutor {
       } else if (auth.tipo === 'basic') {
         const username = decrypt(auth.configuracion.username || '');
         const password = decrypt(auth.configuracion.password || '');
-        const credentials = Buffer.from(`${username}:${password}`).toString('base64');
-        headers['Authorization'] = `Basic ${credentials}`;
+        
+        // WooCommerce: usar query string si está configurado (para servidores que no parsean bien el header)
+        if (auth.configuracion.useQueryString) {
+          parametros.query = parametros.query || {};
+          parametros.query['consumer_key'] = username;
+          parametros.query['consumer_secret'] = password;
+        } else {
+          const credentials = Buffer.from(`${username}:${password}`).toString('base64');
+          headers['Authorization'] = `Basic ${credentials}`;
+        }
       }
       
       // Custom headers
