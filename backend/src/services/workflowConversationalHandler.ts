@@ -1007,13 +1007,22 @@ export class WorkflowConversationalHandler {
       }
       // Mapeo normal para otros endpoints (soporta mapeoParametros y parametros)
       else if (paso.mapeoParametros || paso.parametros) {
-        const mapeo = paso.mapeoParametros || paso.parametros;
+        let mapeo = paso.mapeoParametros;
+        
+        // Si usa parametros.query, extraer el objeto query
+        if (!mapeo && paso.parametros && (paso.parametros as any).query) {
+          mapeo = (paso.parametros as any).query;
+          console.log('🔍 Usando parametros.query como mapeo');
+        } else if (!mapeo) {
+          mapeo = paso.parametros;
+        }
+        
         console.log('🔍 [NUEVO] Mapeo de parámetros configurado:', mapeo);
         
         for (const [paramName, varNameOrTemplate] of Object.entries(mapeo as Record<string, string>)) {
           // Si el valor es una plantilla {{variable}}, extraer el nombre de la variable
           let varName = varNameOrTemplate;
-          if (varNameOrTemplate.startsWith('{{') && varNameOrTemplate.endsWith('}}')) {
+          if (typeof varNameOrTemplate === 'string' && varNameOrTemplate.startsWith('{{') && varNameOrTemplate.endsWith('}}')) {
             varName = varNameOrTemplate.slice(2, -2);
           }
           
@@ -1056,6 +1065,7 @@ export class WorkflowConversationalHandler {
             // Guardar searchQuery si es necesario
             if (paramName === 'search' || paramName === 'q' || paramName === 'query') {
               searchQuery = String(valorTransformado).toLowerCase();
+              console.log(`   🔍 searchQuery capturado: "${searchQuery}"`);
             }
           } else {
             console.log(`   ⚠️ Variable "${varName}" no encontrada en datos recopilados`);
