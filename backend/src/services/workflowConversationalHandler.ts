@@ -570,6 +570,24 @@ export class WorkflowConversationalHandler {
           apiConfig
         );
       } else if (pasoActual.tipo === 'consulta_filtrada') {
+        // CASO ESPECIAL: Si el paso consulta_filtrada tiene pregunta Y ya fue ejecutado (datos en datosRecopilados),
+        // procesarlo como recopilar para capturar la selección del usuario
+        const datosRecopilados = workflowState.datosRecopilados || {};
+        const yaEjecutado = datosRecopilados[pasoActual.nombreVariable] !== undefined;
+        
+        if (pasoActual.pregunta && yaEjecutado) {
+          console.log('🔄 Paso consulta_filtrada ya ejecutado - procesando como recopilar');
+          return await this.procesarPasoRecopilacion(
+            mensaje,
+            pasoActual,
+            contactoId,
+            workflow,
+            workflowState,
+            apiConfig
+          );
+        }
+        
+        // Si no tiene pregunta o no fue ejecutado, ejecutar el endpoint
         return await this.procesarPasoEjecucion(
           pasoActual,
           contactoId,
