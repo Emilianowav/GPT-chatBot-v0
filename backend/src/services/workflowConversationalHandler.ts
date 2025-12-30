@@ -1044,6 +1044,12 @@ export class WorkflowConversationalHandler {
       console.log('   Tiene mapeoParametros:', !!paso.mapeoParametros);
       console.log('   Tiene parametros:', !!paso.parametros);
       
+      // SOLUCIÓN DIRECTA: Para buscar-productos, capturar searchQuery desde titulo
+      if (paso.endpointId === 'buscar-productos' && datosRecopilados.titulo) {
+        searchQuery = String(datosRecopilados.titulo).toLowerCase();
+        console.log(`🔍 [DIRECTO] searchQuery capturado desde titulo: "${searchQuery}"`);
+      }
+      
       // CASO ESPECIAL: generar-link-pago debe construir preferencia de Mercado Pago
       if (paso.endpointId === 'generar-link-pago' || paso.endpointId === 'pre-crear-reserva') {
         console.log('🔄 Endpoint de pago detectado - construyendo body para Mercado Pago');
