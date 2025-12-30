@@ -1353,6 +1353,11 @@ export class WorkflowConversationalHandler {
       
       // Si hay término de búsqueda, aplicar un filtrado extra por tokens sobre el nombre
       let datosFiltrados = result.data;
+      
+      console.log('🔍 [FILTRO] Verificando condiciones para aplicar filtro:');
+      console.log('   searchQuery:', searchQuery);
+      console.log('   datosFiltrados existe:', !!datosFiltrados);
+      
       if (searchQuery && datosFiltrados) {
         try {
           console.log('🔎 searchQuery para filtro local:', searchQuery);
