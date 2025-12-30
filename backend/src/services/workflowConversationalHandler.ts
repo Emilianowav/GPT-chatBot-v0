@@ -1058,41 +1058,74 @@ export class WorkflowConversationalHandler {
       if (paso.endpointId === 'generar-link-pago' || paso.endpointId === 'pre-crear-reserva') {
         console.log('🔄 Endpoint de pago detectado - construyendo body para Mercado Pago');
         
-        const precioTotal = parseFloat(datosRecopilados.precio || '0');
-        // Obtener seña desde configuración del workflow, con fallback a $1 (mínimo de Mercado Pago)
-        const seña = workflow.configPago?.seña || 1;
-        const deporte = datosRecopilados.deporte_nombre || datosRecopilados.deporte || 'cancha';
-        const fecha = this.formatearValorVariable('fecha', datosRecopilados.fecha);
-        const hora = datosRecopilados.hora_preferida;
-        const cancha = datosRecopilados.cancha_nombre || 'Cancha';
+        // Detectar si es Veo Veo (librería) o Juventus (cancha)
+        const esVeoVeo = datosRecopilados.producto_nombre !== undefined || datosRecopilados.subtotal !== undefined;
         
-        // Guardar la seña en los datos recopilados para usarla en el mensaje
-        await workflowConversationManager.avanzarPaso(contactoId, {
-          seña: seña,
-          precio_total: precioTotal
-        });
-        
-        params.body = {
-          title: `Seña - Reserva ${cancha}`,
-          description: `Seña para reserva de ${deporte} - ${fecha} a las ${hora}`,
-          unit_price: seña,
-          quantity: 1,
-          metadata: {
-            cancha_id: datosRecopilados.cancha_id,
-            fecha: this.transformarParametro('fecha', datosRecopilados.fecha, 'fecha'),
-            hora_inicio: hora,
-            duracion: this.transformarParametro('duracion', datosRecopilados.duracion, 'duracion'),
-            deporte: datosRecopilados.deporte,
-            cliente_nombre: datosRecopilados.cliente_nombre,
-            cliente_telefono: datosRecopilados.cliente_telefono,
-            precio_total: precioTotal,
+        if (esVeoVeo) {
+          // VEO VEO: Venta de libros - cobrar precio total
+          console.log('📚 Veo Veo detectado - cobrando precio total del libro');
+          
+          const subtotal = parseFloat(datosRecopilados.subtotal || '0');
+          const productoNombre = datosRecopilados.producto_nombre || 'Libro';
+          const cantidad = datosRecopilados.cantidad || 1;
+          
+          params.body = {
+            title: `Compra - ${productoNombre}`,
+            description: `Compra de ${cantidad} ejemplar(es) de ${productoNombre}`,
+            unit_price: subtotal,
+            quantity: 1,
+            metadata: {
+              producto_id: datosRecopilados.productos_encontrados,
+              producto_nombre: productoNombre,
+              cantidad: cantidad,
+              precio_unitario: datosRecopilados.producto_precio,
+              subtotal: subtotal,
+              origen: 'whatsapp',
+              tipo: 'venta_libro'
+            }
+          };
+          
+          console.log('📦 Body construido para Veo Veo:', JSON.stringify(params.body, null, 2));
+          console.log(`   💰 Total a pagar: $${subtotal}`);
+        } else {
+          // JUVENTUS: Reserva de cancha - cobrar seña
+          console.log('🏟️ Juventus detectado - cobrando seña de reserva');
+          
+          const precioTotal = parseFloat(datosRecopilados.precio || '0');
+          const seña = workflow.configPago?.seña || 1;
+          const deporte = datosRecopilados.deporte_nombre || datosRecopilados.deporte || 'cancha';
+          const fecha = this.formatearValorVariable('fecha', datosRecopilados.fecha);
+          const hora = datosRecopilados.hora_preferida;
+          const cancha = datosRecopilados.cancha_nombre || 'Cancha';
+          
+          // Guardar la seña en los datos recopilados para usarla en el mensaje
+          await workflowConversationManager.avanzarPaso(contactoId, {
             seña: seña,
-            origen: 'whatsapp'
-          }
-        };
-        
-        console.log('📦 Body construido para Mercado Pago:', JSON.stringify(params.body, null, 2));
-        console.log(`   💰 Precio total: $${precioTotal} | Seña (50%): $${seña}`);
+            precio_total: precioTotal
+          });
+          
+          params.body = {
+            title: `Seña - Reserva ${cancha}`,
+            description: `Seña para reserva de ${deporte} - ${fecha} a las ${hora}`,
+            unit_price: seña,
+            quantity: 1,
+            metadata: {
+              cancha_id: datosRecopilados.cancha_id,
+              fecha: this.transformarParametro('fecha', datosRecopilados.fecha, 'fecha'),
+              hora_inicio: hora,
+              duracion: this.transformarParametro('duracion', datosRecopilados.duracion, 'duracion'),
+              deporte: datosRecopilados.deporte,
+              cliente_nombre: datosRecopilados.cliente_nombre,
+              cliente_telefono: datosRecopilados.cliente_telefono,
+              precio_total: precioTotal,
+              seña: seña,
+              origen: 'whatsapp'
+            }
+          };
+          
+          console.log('📦 Body construido para Juventus:', JSON.stringify(params.body, null, 2));
+          console.log(`   💰 Precio total: $${precioTotal} | Seña (50%): $${seña}`);
+        }
       }
       // Mapeo normal para otros endpoints (soporta mapeoParametros y parametros)
       else if (paso.mapeoParametros || paso.parametros) {
