@@ -1451,19 +1451,83 @@ export class WorkflowConversationalHandler {
       await workflowConversationManager.finalizarWorkflow(contactoId);
       console.log('✅ Workflow finalizado (sin repetición)');
       
-      // Agregar workflows siguientes si están configurados (y no hay repetición)
+      // Si hay workflows siguientes configurados, iniciar el workflow correspondiente automáticamente
       if (workflow.workflowsSiguientes && workflow.workflowsSiguientes.workflows.length > 0) {
         console.log('🔗 Workflows encadenados configurados');
-        response += '\n\n';
-        if (workflow.workflowsSiguientes.pregunta) {
-          response += workflow.workflowsSiguientes.pregunta + '\n\n';
-        } else {
-          response += '¿Qué te gustaría hacer?\n\n';
-        }
         
-        workflow.workflowsSiguientes.workflows.forEach((wf, index) => {
-          response += `${index + 1}: ${wf.opcion}\n`;
-        });
+        // Obtener la última variable recopilada (la opción del menú)
+        const ultimaVariable = paso.nombreVariable;
+        const opcionElegida = datosRecopilados[ultimaVariable];
+        
+        console.log(`🔍 Buscando workflow para opción: "${opcionElegida}"`);
+        
+        // Buscar el workflow correspondiente a la opción elegida
+        const workflowSiguiente = workflow.workflowsSiguientes.workflows.find(
+          wf => wf.opcion === opcionElegida
+        );
+        
+        if (workflowSiguiente) {
+          console.log(`✅ Workflow siguiente encontrado: ${workflowSiguiente.workflowId}`);
+          
+          // Buscar el workflow en la configuración de la API
+          const workflowConfig = apiConfig.workflows.find(
+            (w: any) => w.id === workflowSiguiente.workflowId
+          );
+          
+          if (workflowConfig) {
+            console.log(`🚀 Iniciando workflow: ${workflowConfig.nombre}`);
+            
+            // Iniciar el nuevo workflow
+            await workflowConversationManager.iniciarWorkflow(
+              contactoId,
+              workflowSiguiente.workflowId,
+              apiConfig._id.toString()
+            );
+            
+            // Obtener el primer paso del nuevo workflow
+            const primerPaso = workflowConfig.steps.find((s: any) => s.orden === 1);
+            
+            if (primerPaso) {
+              // Si el primer paso es un mensaje directo, mostrarlo
+              if (primerPaso.tipo === 'mensaje' && primerPaso.mensaje) {
+                response = this.reemplazarVariables(primerPaso.mensaje, datosRecopilados);
+                
+                // Avanzar al siguiente paso
+                await workflowConversationManager.avanzarPaso(contactoId, {});
+                
+                return {
+                  success: true,
+                  response,
+                  completed: false,
+                  metadata: {
+                    workflowName: workflowConfig.nombre,
+                    pasoActual: 1,
+                    totalPasos: workflowConfig.steps.length
+                  }
+                };
+              }
+              // Si el primer paso es recopilar, mostrar la pregunta
+              else if ((primerPaso.tipo === 'recopilar' || primerPaso.tipo === 'input') && primerPaso.pregunta) {
+                response = this.reemplazarVariables(primerPaso.pregunta, datosRecopilados);
+                
+                return {
+                  success: true,
+                  response,
+                  completed: false,
+                  metadata: {
+                    workflowName: workflowConfig.nombre,
+                    pasoActual: 0,
+                    totalPasos: workflowConfig.steps.length
+                  }
+                };
+              }
+            }
+          } else {
+            console.log(`⚠️ Workflow ${workflowSiguiente.workflowId} no encontrado en la configuración`);
+          }
+        } else {
+          console.log(`⚠️ No se encontró workflow para la opción: "${opcionElegida}"`);
+        }
       }
       
       // Limitar a 4000 caracteres para WhatsApp
