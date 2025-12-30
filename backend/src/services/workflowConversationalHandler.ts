@@ -1399,9 +1399,9 @@ export class WorkflowConversationalHandler {
                   }
                 });
                 
-                // Bonus si coincide la frase completa
+                // Bonus GRANDE si coincide la frase completa
                 if (nombreNormalizado.includes(queryNormalizada)) {
-                  score += 20;
+                  score += 50;
                 }
                 
                 // Bonus si tiene stock
@@ -1412,18 +1412,25 @@ export class WorkflowConversationalHandler {
                 return {
                   ...item,
                   _score: score,
-                  _tokensEncontrados: tokensEncontrados
+                  _tokensEncontrados: tokensEncontrados,
+                  _porcentajeCoincidencia: tokensEncontrados / tokens.length
                 };
               });
 
-              // Filtrar productos con al menos 1 token encontrado
+              // Filtrar productos: TODOS los tokens deben estar presentes O coincidencia de frase completa
               const filtrados = productosConScore
-                .filter((item: any) => item._tokensEncontrados > 0)
+                .filter((item: any) => {
+                  // Prioridad 1: Coincidencia de frase completa
+                  if (item._score >= 50) return true;
+                  
+                  // Prioridad 2: Al menos 70% de los tokens deben coincidir
+                  return item._porcentajeCoincidencia >= 0.7;
+                })
                 .sort((a: any, b: any) => b._score - a._score) // Ordenar por score descendente
                 .slice(0, 10) // Limitar a 10 resultados
                 .map((item: any) => {
                   // Eliminar propiedades temporales
-                  const { _score, _tokensEncontrados, ...producto } = item;
+                  const { _score, _tokensEncontrados, _porcentajeCoincidencia, ...producto } = item;
                   return producto;
                 });
 
