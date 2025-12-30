@@ -743,8 +743,12 @@ export class WorkflowConversationalHandler {
     // Calcular subtotal si es el paso de cantidad
     if (paso.nombreVariable === 'cantidad') {
       const estadoActual = await workflowConversationManager.getWorkflowState(contactoId);
+      console.log('🔍 [CANTIDAD] Estado actual:', JSON.stringify(estadoActual?.datosRecopilados, null, 2));
+      
       const precio = estadoActual?.datosRecopilados?.productos_encontrados_precio;
       const cantidad = validacion.valor;
+      
+      console.log(`🔍 [CANTIDAD] precio=${precio}, cantidad=${cantidad}`);
       
       if (precio && cantidad) {
         const subtotal = parseFloat(precio) * parseInt(cantidad);
@@ -754,10 +758,25 @@ export class WorkflowConversationalHandler {
         datosNuevos['producto_precio'] = precio;
         console.log(`💰 Subtotal calculado: ${subtotal} (${precio} x ${cantidad})`);
         console.log(`📝 Variables guardadas: producto_nombre="${datosNuevos['producto_nombre']}", producto_precio="${precio}", subtotal="${subtotal}"`);
+      } else {
+        console.log('❌ [CANTIDAD] No se pudo calcular subtotal - precio o cantidad faltante');
       }
     }
     
     await workflowConversationManager.avanzarPaso(contactoId, datosNuevos);
+    
+    // CASO ESPECIAL: Si es el paso "continuar_compra" y el usuario elige "2", ir directo al paso de generar link de pago
+    if (paso.nombreVariable === 'continuar_compra' && validacion.valor === '2') {
+      console.log('🛒 Usuario eligió finalizar compra - saltando a generar link de pago');
+      
+      // Buscar el paso de generar link de pago (último paso del workflow)
+      const pasoGenerarPago = workflow.steps.find(s => s.nombreVariable === 'pago' || s.endpointId === 'generar-link-pago');
+      
+      if (pasoGenerarPago) {
+        console.log(`✅ Saltando al paso ${pasoGenerarPago.orden}: ${pasoGenerarPago.nombre}`);
+        return await this.procesarPaso(pasoGenerarPago, contactoId, workflow, workflowState, apiConfig);
+      }
+    }
     
     // Verificar si hay más pasos
     const siguientePaso = workflow.steps.find(s => s.orden === paso.orden + 1);
