@@ -1581,7 +1581,7 @@ export class WorkflowConversationalHandler {
             `Escribí el título del libro que buscás o escribí "cancelar" para volver al menú principal.`;
           
           // Volver al paso 1 (título) para que el usuario busque de nuevo
-          await workflowConversationManager.retrocederPaso(contactoId, 1);
+          await workflowConversationManager.retrocederAPaso(contactoId, 1);
           
           return {
             success: true,
