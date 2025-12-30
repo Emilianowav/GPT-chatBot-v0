@@ -88,8 +88,16 @@ export class ApiExecutor {
         });
 
         // PAGINACIÓN AUTOMÁTICA: Detectar si hay más páginas (WooCommerce)
+        console.log('🔍 [PAGINACIÓN] Headers recibidos:', {
+          'x-wp-total': response.headers['x-wp-total'],
+          'x-wp-totalpages': response.headers['x-wp-totalpages'],
+          'link': response.headers['link']?.substring(0, 100)
+        });
+        
         const totalPages = parseInt(response.headers['x-wp-totalpages'] || '1');
         const currentPage = parseInt(requestConfig.params?.page || '1');
+        
+        console.log(`🔍 [PAGINACIÓN] totalPages: ${totalPages}, currentPage: ${currentPage}`);
         
         if (totalPages > 1 && currentPage === 1) {
           console.log(`📄 Paginación detectada: ${totalPages} páginas totales`);

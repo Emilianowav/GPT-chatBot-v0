@@ -65,9 +65,7 @@ function aplicarFiltroInteligente(productos, searchQuery) {
 
 async function testBusquedas() {
   const busquedas = [
-    'EL PAÍS EN TERO',
-    'CUENTOS DE TERROR PARA FRANCO 7',
-    'POR QUE POR QUÉ?'
+    'la enfermedad como camina'
   ];
   
   console.log('🔍 TESTEANDO FILTRO DE BÚSQUEDA\n');
