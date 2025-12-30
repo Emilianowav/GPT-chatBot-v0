@@ -774,7 +774,16 @@ export class WorkflowConversationalHandler {
       
       if (pasoGenerarPago) {
         console.log(`✅ Saltando al paso ${pasoGenerarPago.orden}: ${pasoGenerarPago.nombre}`);
-        return await this.procesarPaso(pasoGenerarPago, contactoId, workflow, workflowState, apiConfig);
+        
+        // Actualizar el paso actual al paso de generar pago
+        const estadoActual = await workflowConversationManager.getWorkflowState(contactoId);
+        if (estadoActual) {
+          estadoActual.pasoActual = pasoGenerarPago.orden - 1;
+          await workflowConversationManager.actualizarEstado(contactoId, estadoActual);
+        }
+        
+        // Ejecutar el paso de generar link de pago
+        return await this.procesarPasoEjecucion(pasoGenerarPago, contactoId, workflow, workflowState, apiConfig);
       }
     }
     
