@@ -329,7 +329,7 @@ const WorkflowSchema = new Schema(
     activo: { type: Boolean, default: true },
     
     // Configuración de activación
-    trigger: { type: WorkflowTriggerSchema, required: true },
+    trigger: { type: WorkflowTriggerSchema, required: false },
     prioridad: { type: Number, default: 0 },
     
     // Pasos del workflow
