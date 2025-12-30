@@ -204,15 +204,19 @@ export class ApiExecutor {
         const username = decrypt(auth.configuracion.username || '');
         const password = decrypt(auth.configuracion.password || '');
         
+        // WooCommerce: detectar por baseUrl y siempre usar query string
+        const isWooCommerce = apiConfig.baseUrl?.includes('wp-json/wc');
+        
         console.log('🔐 [DEBUG] Basic Auth config:', {
+          isWooCommerce,
           useQueryString: auth.configuracion.useQueryString,
           hasUsername: !!username,
           hasPassword: !!password
         });
         
-        // WooCommerce: usar query string si está configurado (para servidores que no parsean bien el header)
-        if (auth.configuracion.useQueryString) {
-          console.log('✅ [DEBUG] Usando query string para WooCommerce');
+        // WooCommerce siempre usa query string (muchos servidores no parsean bien el header)
+        if (isWooCommerce || auth.configuracion.useQueryString) {
+          console.log('✅ [DEBUG] Usando query string (WooCommerce)');
           parametros.query = parametros.query || {};
           parametros.query['consumer_key'] = username;
           parametros.query['consumer_secret'] = password;
