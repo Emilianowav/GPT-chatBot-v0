@@ -1478,7 +1478,7 @@ export class WorkflowConversationalHandler {
             console.log(`🚀 Iniciando workflow: ${workflowConfig.nombre}`);
             
             // Iniciar el nuevo workflow
-            await workflowConversationManager.iniciarWorkflow(
+            await workflowConversationManager.startWorkflow(
               contactoId,
               workflowSiguiente.workflowId,
               apiConfig._id.toString()
