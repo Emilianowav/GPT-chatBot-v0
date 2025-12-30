@@ -1086,7 +1086,9 @@ export class WorkflowConversationalHandler {
       }
       // Mapeo normal para otros endpoints (soporta mapeoParametros y parametros)
       else if (paso.mapeoParametros || paso.parametros) {
+        console.log('✅ [DEBUG] Entrando en bloque de mapeo normal');
         let mapeo = paso.mapeoParametros;
+        console.log('   mapeo inicial:', mapeo);
         
         // Si usa parametros.query, extraer el objeto query
         if (!mapeo && paso.parametros && (paso.parametros as any).query) {
@@ -1094,18 +1096,23 @@ export class WorkflowConversationalHandler {
           console.log('🔍 Usando parametros.query como mapeo');
         } else if (!mapeo) {
           mapeo = paso.parametros;
+          console.log('🔍 Usando paso.parametros como mapeo');
         }
         
-        console.log('🔍 [NUEVO] Mapeo de parámetros configurado:', mapeo);
+        console.log('🔍 [NUEVO] Mapeo de parámetros configurado:', JSON.stringify(mapeo, null, 2));
         
         for (const [paramName, varNameOrTemplate] of Object.entries(mapeo as Record<string, string>)) {
+          console.log(`   🔍 Procesando parámetro: ${paramName} = ${JSON.stringify(varNameOrTemplate)}`);
+          
           // Si el valor es una plantilla {{variable}}, extraer el nombre de la variable
           let varName = varNameOrTemplate;
           if (typeof varNameOrTemplate === 'string' && varNameOrTemplate.startsWith('{{') && varNameOrTemplate.endsWith('}}')) {
             varName = varNameOrTemplate.slice(2, -2);
           }
           
+          console.log(`   🔍 Variable a buscar: ${varName}`);
           let valorVariable = datosRecopilados[varName as string];
+          console.log(`   🔍 Valor encontrado: ${valorVariable}`);
           
           // FALLBACK INTELIGENTE: Si el mapeo busca 'turno_seleccionado' pero existe 'cancha_id', usar ese
           if (valorVariable === undefined && varName === 'turno_seleccionado' && datosRecopilados.cancha_id) {
