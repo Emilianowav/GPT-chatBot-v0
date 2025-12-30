@@ -124,9 +124,6 @@ export class WorkflowConversationalHandler {
     cancha?: any; 
     alternativas?: { hora?: string; mensaje?: string } 
   } {
-    console.log('🔍 Iniciando matching de disponibilidad...');
-    console.log('   Buscando: hora=' + horaPreferida + ', duración=' + duracionMinutos + ' min');
-    console.log('   Estructura recibida:', JSON.stringify(disponibilidad, null, 2).substring(0, 300));
 
     // Extraer canchas_disponibles de la estructura de respuesta
     let canchas = null;
@@ -140,11 +137,9 @@ export class WorkflowConversationalHandler {
     }
     
     if (!canchas || !Array.isArray(canchas) || canchas.length === 0) {
-      console.log('❌ No se encontraron canchas en la respuesta');
       return { encontrado: false };
     }
 
-    console.log(`📊 ${canchas.length} canchas encontradas en la respuesta`);
     
     // Buscar cancha que tenga la hora exacta con la duración exacta
     for (const cancha of canchas) {
@@ -155,7 +150,6 @@ export class WorkflowConversationalHandler {
             Array.isArray(horario.duraciones) && 
             horario.duraciones.includes(duracionMinutos)) {
           
-          console.log(`✅ MATCH ENCONTRADO: ${cancha.nombre} a las ${horaPreferida} por ${duracionMinutos} min`);
           return {
             encontrado: true,
             cancha: {
@@ -171,7 +165,6 @@ export class WorkflowConversationalHandler {
       }
     }
 
-    console.log('❌ No se encontró match exacto');
 
     // No hay match exacto - buscar alternativas en el mismo día
     const horariosAlternativos: string[] = [];
@@ -192,7 +185,6 @@ export class WorkflowConversationalHandler {
       horariosAlternativos.sort();
       const primeraAlternativa = horariosAlternativos[0];
       
-      console.log(`💡 Alternativas encontradas: ${horariosAlternativos.slice(0, 3).join(', ')}`);
       
       return {
         encontrado: false,
@@ -204,7 +196,6 @@ export class WorkflowConversationalHandler {
     }
 
     // No hay alternativas en el día
-    console.log('❌ No hay alternativas en el día');
     return {
       encontrado: false,
       alternativas: {
@@ -241,7 +232,6 @@ export class WorkflowConversationalHandler {
       if (valor.canchas_disponibles && Array.isArray(valor.canchas_disponibles)) {
         const primeraCancha = valor.canchas_disponibles[0];
         if (primeraCancha && primeraCancha.id) {
-          console.log(`🔄 Extrayendo ID de cancha: ${primeraCancha.id} (${primeraCancha.nombre})`);
           return primeraCancha.id;
         }
       }
@@ -308,10 +298,6 @@ export class WorkflowConversationalHandler {
     try {
       const { workflow, apiConfig } = metadata;
       
-      console.log('\n🔄 ========== INICIANDO WORKFLOW ==========');
-      console.log('📋 Workflow:', workflow.nombre);
-      console.log('👤 Contacto:', contactoId);
-      console.log('📊 Total pasos:', workflow.steps.length);
       
       // Iniciar workflow
       await workflowConversationManager.startWorkflow(
@@ -339,7 +325,6 @@ export class WorkflowConversationalHandler {
         };
       }
       
-      console.log('📋 Primer paso:', primerPaso.nombre);
       
       // RECOPILAR hace TODO: llamar API + mostrar opciones
       if (primerPaso.pregunta) {
@@ -347,7 +332,6 @@ export class WorkflowConversationalHandler {
         
         // Si tiene endpoint configurado, llamar a la API
         if (primerPaso.endpointId) {
-          console.log('🌐 Llamando a API para obtener opciones...');
           
           try {
             // Llamar al endpoint (sin filtros en el primer paso)
@@ -359,7 +343,6 @@ export class WorkflowConversationalHandler {
             );
             
             if (resultadoAPI.success && resultadoAPI.data) {
-              console.log('✅ Datos obtenidos de la API');
               
               await workflowConversationManager.guardarDatosEjecutados(
                 contactoId,
@@ -369,22 +352,18 @@ export class WorkflowConversationalHandler {
               
               // Extraer opciones dinámicas
               let datosArray = resultadoAPI.data;
-              console.log('📦 Datos crudos de API:', JSON.stringify(datosArray).substring(0, 200));
               
               // Usar arrayPath del config si está disponible (PRIMERO)
               if (primerPaso.endpointResponseConfig?.arrayPath) {
                 const arrayPath = primerPaso.endpointResponseConfig.arrayPath;
-                console.log('🔍 Buscando arrayPath:', arrayPath);
                 
                 // Buscar en el nivel actual
                 if (datosArray[arrayPath]) {
                   datosArray = datosArray[arrayPath];
-                  console.log('✅ Encontrado en nivel 1');
                 }
                 // Buscar en data.arrayPath (doble anidación)
                 else if (datosArray.data && datosArray.data[arrayPath]) {
                   datosArray = datosArray.data[arrayPath];
-                  console.log('✅ Encontrado en data.' + arrayPath);
                 }
               }
               // Si no hay arrayPath, intentar extraer data
@@ -392,10 +371,8 @@ export class WorkflowConversationalHandler {
                 datosArray = datosArray.data;
               }
               
-              console.log('📦 datosArray final:', Array.isArray(datosArray) ? `Array[${datosArray.length}]` : typeof datosArray);
               
               if (Array.isArray(datosArray) && datosArray.length > 0) {
-                console.log(`✅ ${datosArray.length} opciones encontradas`);
                 
                 let opcionesFormateadas = '';
                 
@@ -429,7 +406,6 @@ export class WorkflowConversationalHandler {
                 response = response.replace('{{opciones}}', '(No hay opciones disponibles)');
               }
             } else {
-              console.log('⚠️ No se obtuvieron datos de la API');
             }
           } catch (error) {
             console.error('❌ Error llamando a la API:', error);
@@ -470,10 +446,6 @@ export class WorkflowConversationalHandler {
     try {
       const { contactoId, workflowState, workflow, apiConfig } = metadata;
       
-      console.log('\n🔄 ========== CONTINUANDO WORKFLOW ==========');
-      console.log('📋 Workflow:', workflow.nombre);
-      console.log('📍 Paso actual:', workflowState.pasoActual);
-      console.log('💬 Mensaje usuario:', mensaje);
       
       // Verificar si el usuario quiere cancelar
       const mensajeNormalizado = mensaje.toLowerCase().trim();
@@ -492,14 +464,12 @@ export class WorkflowConversationalHandler {
       // VERIFICAR SI ESTÁ ESPERANDO CONFIRMACIÓN DE ALTERNATIVA
       const state = await workflowConversationManager.getWorkflowState(contactoId);
       if (state?.datosRecopilados?.esperando_confirmacion_alternativa) {
-        console.log('🔄 Usuario respondiendo a alternativa de horario');
         
         const respuestaNormalizada = mensajeNormalizado.replace(/[^a-z]/g, '');
         
         if (respuestaNormalizada === 'si' || respuestaNormalizada === 'sí') {
           // Usuario acepta la alternativa - actualizar hora_preferida y volver a ejecutar paso 5
           const horaAlternativa = state.datosRecopilados.hora_alternativa;
-          console.log(`✅ Usuario acepta alternativa: ${horaAlternativa}`);
           
           await workflowConversationManager.avanzarPaso(contactoId, {
             hora_preferida: horaAlternativa,
@@ -514,7 +484,6 @@ export class WorkflowConversationalHandler {
           }
         } else if (respuestaNormalizada === 'no') {
           // Usuario rechaza - cancelar workflow
-          console.log('❌ Usuario rechaza alternativa - cancelando workflow');
           await workflowConversationManager.abandonarWorkflow(contactoId);
           return {
             success: true,
@@ -526,14 +495,8 @@ export class WorkflowConversationalHandler {
       
       // Verificar si está esperando decisión de repetición
       const esperandoRepeticion = await workflowConversationManager.estaEsperandoRepeticion(contactoId);
-      console.log('🔍 [DEBUG] Estado de repetición:', {
-        esperandoRepeticion,
-        repetirWorkflowHabilitado: workflow.repetirWorkflow?.habilitado,
-        workflowStateCompleto: JSON.stringify(workflowState)
-      });
       
       if (esperandoRepeticion && workflow.repetirWorkflow?.habilitado) {
-        console.log('✅ [DEBUG] Entrando a procesarDecisionRepeticion');
         return await this.procesarDecisionRepeticion(
           mensaje,
           contactoId,
@@ -675,21 +638,15 @@ export class WorkflowConversationalHandler {
     if (paso.endpointId && paso.endpointResponseConfig) {
       const estadoActual = await workflowConversationManager.getWorkflowState(contactoId);
       
-      console.log(`🔍 [SELECCIÓN-DEBUG] Buscando datos para endpoint: ${paso.endpointId}`);
-      console.log(`🔍 [SELECCIÓN-DEBUG] nombreVariable: ${paso.nombreVariable}`);
-      console.log(`🔍 [SELECCIÓN-DEBUG] datosEjecutados existe:`, !!estadoActual?.datosEjecutados);
-      console.log(`🔍 [SELECCIÓN-DEBUG] datosRecopilados[${paso.nombreVariable}] existe:`, !!estadoActual?.datosRecopilados?.[paso.nombreVariable]);
       
       // Buscar primero en datosRecopilados (donde se guardan los resultados de consulta_filtrada)
       let datosAPI = null;
       if (estadoActual?.datosRecopilados && estadoActual.datosRecopilados[paso.nombreVariable]) {
         datosAPI = estadoActual.datosRecopilados[paso.nombreVariable];
-        console.log(`✅ [SELECCIÓN-DEBUG] Datos encontrados en datosRecopilados`);
       }
       // Si no, buscar en datosEjecutados
       else if (estadoActual?.datosEjecutados && estadoActual.datosEjecutados[paso.endpointId]) {
         datosAPI = estadoActual.datosEjecutados[paso.endpointId];
-        console.log(`✅ [SELECCIÓN-DEBUG] Datos encontrados en datosEjecutados`);
       }
       
       if (datosAPI) {
@@ -706,8 +663,6 @@ export class WorkflowConversationalHandler {
         }
         
         if (Array.isArray(datosArray)) {
-          console.log(`🔍 [SELECCIÓN] datosArray length: ${datosArray.length}`);
-          console.log(`🔍 [SELECCIÓN] Primer item:`, datosArray[0]);
           
           const idField = paso.endpointResponseConfig.idField || 'id';
           const displayField = paso.endpointResponseConfig.displayField || 'name';
@@ -715,14 +670,12 @@ export class WorkflowConversationalHandler {
           // El usuario puede escribir el número de opción (1, 2, 3) o el ID real
           const valorUsuario = String(validacion.valor).trim();
           const numeroOpcion = parseInt(valorUsuario);
-          console.log(`🔍 [SELECCIÓN] valorUsuario: "${valorUsuario}", numeroOpcion: ${numeroOpcion}`);
           
           let itemSeleccionado = null;
           
           // Si es un número, buscar por índice (1-based)
           if (!isNaN(numeroOpcion) && numeroOpcion >= 1 && numeroOpcion <= datosArray.length) {
             itemSeleccionado = datosArray[numeroOpcion - 1];
-            console.log(`✅ Usuario seleccionó opción ${numeroOpcion}, item:`, itemSeleccionado);
           } else {
             // Buscar por ID exacto
             itemSeleccionado = datosArray.find((item: any) => 
@@ -733,7 +686,6 @@ export class WorkflowConversationalHandler {
           if (itemSeleccionado) {
             // Guardar el ID real en lugar del número de opción
             datosNuevos[paso.nombreVariable] = itemSeleccionado[idField];
-            console.log(`✅ Guardando ID real: ${paso.nombreVariable} = "${itemSeleccionado[idField]}"`);
             
             // IMPORTANTE: Guardar con nombres que coincidan con las plantillas de mensajes
             // Para el paso "productos_encontrados", guardar como "producto_nombre", "producto_precio", etc.
@@ -742,14 +694,12 @@ export class WorkflowConversationalHandler {
             // Guardar también el nombre con sufijo _nombre
             if (itemSeleccionado[displayField]) {
               datosNuevos[`${baseNombre}_nombre`] = itemSeleccionado[displayField];
-              console.log(`✅ Guardando nombre: ${baseNombre}_nombre = "${itemSeleccionado[displayField]}"`);
             }
             
             // Guardar precio si está configurado
             const priceField = paso.endpointResponseConfig.priceField || 'price';
             if (itemSeleccionado[priceField]) {
               datosNuevos[`${baseNombre}_precio`] = itemSeleccionado[priceField];
-              console.log(`✅ Guardando precio: ${baseNombre}_precio = "${itemSeleccionado[priceField]}"`);
             }
             
             // Guardar stock si está configurado
@@ -766,23 +716,13 @@ export class WorkflowConversationalHandler {
     // Calcular subtotal si es el paso de cantidad
     if (paso.nombreVariable === 'cantidad') {
       const estadoActual = await workflowConversationManager.getWorkflowState(contactoId);
-      console.log('🔍 [CANTIDAD] Estado actual:', JSON.stringify(estadoActual?.datosRecopilados, null, 2));
-      
       // Buscar precio con el nombre correcto (producto_precio, no productos_encontrados_precio)
       const precio = estadoActual?.datosRecopilados?.producto_precio;
       const cantidad = validacion.valor;
       
-      console.log(`🔍 [CANTIDAD] precio=${precio}, cantidad=${cantidad}`);
-      
       if (precio && cantidad) {
         const subtotal = parseFloat(precio) * parseInt(cantidad);
         datosNuevos['subtotal'] = subtotal.toString();
-        console.log(`💰 Subtotal calculado: ${subtotal} (${precio} x ${cantidad})`);
-        console.log(`📝 Subtotal guardado: subtotal="${subtotal}"`);
-      } else {
-        console.log('❌ [CANTIDAD] No se pudo calcular subtotal - precio o cantidad faltante');
-        console.log(`   Precio encontrado: ${precio}`);
-        console.log(`   Cantidad: ${cantidad}`);
       }
     }
     
@@ -790,7 +730,6 @@ export class WorkflowConversationalHandler {
     
     // CASO ESPECIAL: Si es el paso "continuar_compra" y el usuario elige "2", ir directo al paso de generar link de pago
     if (paso.nombreVariable === 'continuar_compra' && validacion.valor === '2') {
-      console.log('🛒 Usuario eligió finalizar compra - saltando a generar link de pago');
       
       // Buscar el paso de generar link de pago (último paso del workflow)
       const pasoGenerarPago = workflow.steps.find(s => s.nombreVariable === 'pago' || s.endpointId === 'generar-link-pago');
