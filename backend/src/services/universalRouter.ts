@@ -218,8 +218,7 @@ export class UniversalRouter {
       // 2. Buscar APIs con workflows activos
       const apisConWorkflows = await ApiConfigurationModel.find({
         empresaId: context.empresaId,
-        'workflows.0': { $exists: true }, // Tiene al menos un workflow
-        'workflows.activo': true
+        'workflows.0': { $exists: true } // Tiene al menos un workflow
       });
       
       console.log(`🔄 APIs con workflows: ${apisConWorkflows.length}`);
