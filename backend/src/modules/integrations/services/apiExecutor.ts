@@ -69,9 +69,10 @@ export class ApiExecutor {
       // 3. Construir request
       const requestConfig = this.construirRequest(apiConfig, endpoint, parametros);
       
-      // 4. Ejecutar con reintentos
+      // 4. Ejecutar con reintentos y paginación automática
       let response: AxiosResponse;
       let error: any = null;
+      let allData: any = null;
       
       try {
         response = await this.ejecutarConReintentos(
@@ -85,6 +86,43 @@ export class ApiExecutor {
           headers: response.headers,
           data: typeof response.data === 'string' ? response.data.substring(0, 500) : response.data
         });
+
+        // PAGINACIÓN AUTOMÁTICA: Detectar si hay más páginas (WooCommerce)
+        const totalPages = parseInt(response.headers['x-wp-totalpages'] || '1');
+        const currentPage = parseInt(requestConfig.params?.page || '1');
+        
+        if (totalPages > 1 && currentPage === 1) {
+          console.log(`📄 Paginación detectada: ${totalPages} páginas totales`);
+          
+          // Combinar datos de todas las páginas
+          allData = Array.isArray(response.data) ? [...response.data] : response.data;
+          
+          // Traer el resto de las páginas
+          for (let page = 2; page <= totalPages; page++) {
+            console.log(`📄 Obteniendo página ${page}/${totalPages}...`);
+            
+            const nextPageConfig = {
+              ...requestConfig,
+              params: {
+                ...requestConfig.params,
+                page
+              }
+            };
+            
+            const nextResponse = await this.ejecutarConReintentos(
+              nextPageConfig,
+              apiConfig.configuracion
+            );
+            
+            if (Array.isArray(nextResponse.data)) {
+              allData = allData.concat(nextResponse.data);
+            }
+          }
+          
+          console.log(`✅ Paginación completa: ${allData.length} items totales`);
+        } else {
+          allData = response.data;
+        }
       } catch (err: any) {
         error = err;
         console.error('❌ Error en ejecución:', {
@@ -119,7 +157,7 @@ export class ApiExecutor {
       }
       
       // 7. Aplicar transformación si existe
-      let data = response!.data;
+      let data = allData;
       if (endpoint.mapeo?.salida) {
         data = this.transformarRespuesta(data, endpoint.mapeo.salida);
       }
