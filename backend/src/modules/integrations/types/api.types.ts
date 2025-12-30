@@ -192,6 +192,9 @@ export interface IEndpointResponseConfig {
   arrayPath: string;              // Ruta al array en la respuesta (ej: "data", "results")
   idField: string;                // Campo que contiene el ID (ej: "id", "codigo")
   displayField: string;           // Campo que se muestra al usuario (ej: "name", "descripcion")
+  priceField?: string;            // Campo que contiene el precio (ej: "price", "precio")
+  stockField?: string;            // Campo que contiene el stock (ej: "stock_quantity", "stock")
+  imageField?: string;            // Campo que contiene la imagen (ej: "image", "images[0].src")
 }
 
 /**

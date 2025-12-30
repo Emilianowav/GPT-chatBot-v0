@@ -259,7 +259,10 @@ const EndpointResponseConfigSchema = new Schema(
   {
     arrayPath: { type: String, required: true, default: 'data' },
     idField: { type: String, required: true, default: 'id' },
-    displayField: { type: String, required: true, default: 'name' }
+    displayField: { type: String, required: true, default: 'name' },
+    priceField: { type: String },
+    stockField: { type: String },
+    imageField: { type: String }
   },
   { _id: false }
 );
