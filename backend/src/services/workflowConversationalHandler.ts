@@ -748,36 +748,16 @@ export class WorkflowConversationalHandler {
       
       if (precio && cantidad) {
         const subtotal = parseFloat(precio) * parseInt(cantidad);
+        // Guardar con los nombres correctos que usan los mensajes
         datosNuevos['subtotal'] = subtotal.toString();
         datosNuevos['producto_nombre'] = estadoActual?.datosRecopilados?.productos_encontrados_nombre;
         datosNuevos['producto_precio'] = precio;
         console.log(`💰 Subtotal calculado: ${subtotal} (${precio} x ${cantidad})`);
+        console.log(`📝 Variables guardadas: producto_nombre="${datosNuevos['producto_nombre']}", producto_precio="${precio}", subtotal="${subtotal}"`);
       }
     }
     
     await workflowConversationManager.avanzarPaso(contactoId, datosNuevos);
-    
-    // CASO ESPECIAL: Si es el paso de "continuar_compra" y el usuario elige "2" (finalizar), terminar el workflow
-    if (paso.nombreVariable === 'continuar_compra' && validacion.valor === '2') {
-      console.log('🛒 Usuario eligió finalizar compra - cerrando carrito');
-      
-      const datosRecopilados = await workflowConversationManager.finalizarWorkflow(contactoId);
-      
-      // Mensaje de confirmación final
-      const mensajeFinal = `✅ *¡Perfecto!*\n\nTu pedido ha sido registrado:\n\n📘 ${datosRecopilados.producto_nombre || 'Producto'}\n📦 Cantidad: ${datosRecopilados.cantidad}\n💰 Total: $${datosRecopilados.subtotal}\n\n📞 *Un miembro de nuestro equipo se contactará contigo en breve para coordinar el retiro o envío de tu pedido.*\n\n¡Gracias por tu compra! 📚✨`;
-      
-      return {
-        success: true,
-        response: mensajeFinal,
-        completed: true,
-        metadata: {
-          workflowName: workflow.nombre,
-          pasoActual: paso.orden,
-          totalPasos: workflow.steps.length,
-          datosRecopilados
-        }
-      };
-    }
     
     // Verificar si hay más pasos
     const siguientePaso = workflow.steps.find(s => s.orden === paso.orden + 1);
