@@ -691,12 +691,16 @@ export class WorkflowConversationalHandler {
         }
         
         if (Array.isArray(datosArray)) {
+          console.log(`🔍 [SELECCIÓN] datosArray length: ${datosArray.length}`);
+          console.log(`🔍 [SELECCIÓN] Primer item:`, datosArray[0]);
+          
           const idField = paso.endpointResponseConfig.idField || 'id';
           const displayField = paso.endpointResponseConfig.displayField || 'name';
           
           // El usuario puede escribir el número de opción (1, 2, 3) o el ID real
           const valorUsuario = String(validacion.valor).trim();
           const numeroOpcion = parseInt(valorUsuario);
+          console.log(`🔍 [SELECCIÓN] valorUsuario: "${valorUsuario}", numeroOpcion: ${numeroOpcion}`);
           
           let itemSeleccionado = null;
           
