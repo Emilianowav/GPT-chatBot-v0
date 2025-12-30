@@ -716,24 +716,28 @@ export class WorkflowConversationalHandler {
             datosNuevos[paso.nombreVariable] = itemSeleccionado[idField];
             console.log(`✅ Guardando ID real: ${paso.nombreVariable} = "${itemSeleccionado[idField]}"`);
             
+            // IMPORTANTE: Guardar con nombres que coincidan con las plantillas de mensajes
+            // Para el paso "productos_encontrados", guardar como "producto_nombre", "producto_precio", etc.
+            const baseNombre = paso.nombreVariable === 'productos_encontrados' ? 'producto' : paso.nombreVariable;
+            
             // Guardar también el nombre con sufijo _nombre
             if (itemSeleccionado[displayField]) {
-              datosNuevos[`${paso.nombreVariable}_nombre`] = itemSeleccionado[displayField];
-              console.log(`✅ Guardando nombre: ${paso.nombreVariable}_nombre = "${itemSeleccionado[displayField]}"`);
+              datosNuevos[`${baseNombre}_nombre`] = itemSeleccionado[displayField];
+              console.log(`✅ Guardando nombre: ${baseNombre}_nombre = "${itemSeleccionado[displayField]}"`);
             }
             
             // Guardar precio si está configurado
             const priceField = paso.endpointResponseConfig.priceField || 'price';
             if (itemSeleccionado[priceField]) {
-              datosNuevos[`${paso.nombreVariable}_precio`] = itemSeleccionado[priceField];
-              console.log(`✅ Guardando precio: ${paso.nombreVariable}_precio = "${itemSeleccionado[priceField]}"`);
+              datosNuevos[`${baseNombre}_precio`] = itemSeleccionado[priceField];
+              console.log(`✅ Guardando precio: ${baseNombre}_precio = "${itemSeleccionado[priceField]}"`);
             }
             
             // Guardar stock si está configurado
             const stockField = paso.endpointResponseConfig.stockField || 'stock_quantity';
             if (itemSeleccionado[stockField] !== undefined) {
-              datosNuevos[`${paso.nombreVariable}_stock`] = itemSeleccionado[stockField];
-              console.log(`✅ Guardando stock: ${paso.nombreVariable}_stock = "${itemSeleccionado[stockField]}"`);
+              datosNuevos[`${baseNombre}_stock`] = itemSeleccionado[stockField];
+              console.log(`✅ Guardando stock: ${baseNombre}_stock = "${itemSeleccionado[stockField]}"`);
             }
           }
         }
@@ -745,21 +749,21 @@ export class WorkflowConversationalHandler {
       const estadoActual = await workflowConversationManager.getWorkflowState(contactoId);
       console.log('🔍 [CANTIDAD] Estado actual:', JSON.stringify(estadoActual?.datosRecopilados, null, 2));
       
-      const precio = estadoActual?.datosRecopilados?.productos_encontrados_precio;
+      // Buscar precio con el nombre correcto (producto_precio, no productos_encontrados_precio)
+      const precio = estadoActual?.datosRecopilados?.producto_precio;
       const cantidad = validacion.valor;
       
       console.log(`🔍 [CANTIDAD] precio=${precio}, cantidad=${cantidad}`);
       
       if (precio && cantidad) {
         const subtotal = parseFloat(precio) * parseInt(cantidad);
-        // Guardar con los nombres correctos que usan los mensajes
         datosNuevos['subtotal'] = subtotal.toString();
-        datosNuevos['producto_nombre'] = estadoActual?.datosRecopilados?.productos_encontrados_nombre;
-        datosNuevos['producto_precio'] = precio;
         console.log(`💰 Subtotal calculado: ${subtotal} (${precio} x ${cantidad})`);
-        console.log(`📝 Variables guardadas: producto_nombre="${datosNuevos['producto_nombre']}", producto_precio="${precio}", subtotal="${subtotal}"`);
+        console.log(`📝 Subtotal guardado: subtotal="${subtotal}"`);
       } else {
         console.log('❌ [CANTIDAD] No se pudo calcular subtotal - precio o cantidad faltante');
+        console.log(`   Precio encontrado: ${precio}`);
+        console.log(`   Cantidad: ${cantidad}`);
       }
     }
     
