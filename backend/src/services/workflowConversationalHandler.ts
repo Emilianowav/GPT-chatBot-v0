@@ -675,9 +675,24 @@ export class WorkflowConversationalHandler {
     if (paso.endpointId && paso.endpointResponseConfig) {
       const estadoActual = await workflowConversationManager.getWorkflowState(contactoId);
       
-      // Buscar en datosEjecutados si hay datos de este endpoint
-      if (estadoActual?.datosEjecutados && estadoActual.datosEjecutados[paso.endpointId]) {
-        const datosAPI = estadoActual.datosEjecutados[paso.endpointId];
+      console.log(`🔍 [SELECCIÓN-DEBUG] Buscando datos para endpoint: ${paso.endpointId}`);
+      console.log(`🔍 [SELECCIÓN-DEBUG] nombreVariable: ${paso.nombreVariable}`);
+      console.log(`🔍 [SELECCIÓN-DEBUG] datosEjecutados existe:`, !!estadoActual?.datosEjecutados);
+      console.log(`🔍 [SELECCIÓN-DEBUG] datosRecopilados[${paso.nombreVariable}] existe:`, !!estadoActual?.datosRecopilados?.[paso.nombreVariable]);
+      
+      // Buscar primero en datosRecopilados (donde se guardan los resultados de consulta_filtrada)
+      let datosAPI = null;
+      if (estadoActual?.datosRecopilados && estadoActual.datosRecopilados[paso.nombreVariable]) {
+        datosAPI = estadoActual.datosRecopilados[paso.nombreVariable];
+        console.log(`✅ [SELECCIÓN-DEBUG] Datos encontrados en datosRecopilados`);
+      }
+      // Si no, buscar en datosEjecutados
+      else if (estadoActual?.datosEjecutados && estadoActual.datosEjecutados[paso.endpointId]) {
+        datosAPI = estadoActual.datosEjecutados[paso.endpointId];
+        console.log(`✅ [SELECCIÓN-DEBUG] Datos encontrados en datosEjecutados`);
+      }
+      
+      if (datosAPI) {
         let datosArray = datosAPI;
         
         // Manejar doble anidación: {data: {deportes: [...]}} o {deportes: [...]}
