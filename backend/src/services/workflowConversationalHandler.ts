@@ -1489,39 +1489,20 @@ export class WorkflowConversationalHandler {
       if ((paso.endpointId === 'generar-link-pago' || paso.endpointId === 'pre-crear-reserva') && result.success) {
         console.log('   🔄 Override para generar link de pago');
         
-        // Obtener datos actualizados con la seña
+        // Obtener datos actualizados
         const estadoActualizado = await workflowConversationManager.getWorkflowState(contactoId);
         const datosActualizados = estadoActualizado?.datosRecopilados || datosRecopilados;
         
-        const precioTotal = datosActualizados.precio_total || datosActualizados.precio || '0';
-        // Obtener seña desde configuración del workflow, con fallback a $1 (mínimo de Mercado Pago)
-        const seña = workflow.configPago?.seña || 1;
-        const tiempoExpiracion = workflow.configPago?.tiempoExpiracion || 10;
         linkPago = datosFiltrados.init_point || datosFiltrados.link || datosFiltrados.url;
         
-        // Usar plantilla del paso si existe, sino usar formato por defecto
-        if (paso.mensajeExito && linkPago) {
-          response = this.reemplazarVariables(paso.mensajeExito, {
+        // USAR EL MENSAJE DEL PASO (paso.pregunta) en lugar de template hardcodeado
+        if (paso.pregunta && linkPago) {
+          response = this.reemplazarVariables(paso.pregunta, {
             ...datosActualizados,
-            precio_total: precioTotal,
-            seña: seña,
-            link_pago: linkPago,
-            tiempo_expiracion: tiempoExpiracion,
-            resto: parseFloat(precioTotal) - seña
+            link_pago: linkPago
           });
-        } else {
-          response = `💳 *Link de pago generado*\n\n`;
-          response += `💵 *Precio total:* $${precioTotal}\n`;
-          response += `💰 *Seña a pagar:* $${seña}\n\n`;
-          
-          if (linkPago) {
-            response += `👉 *Completá el pago de la seña aquí:*\n${linkPago}\n\n`;
-            response += `⏰ Tenés ${tiempoExpiracion} minutos para completar el pago.\n\n`;
-            response += `✅ Una vez confirmado el pago, tu reserva quedará confirmada automáticamente.\n`;
-            response += `💡 El resto ($${parseFloat(precioTotal) - seña}) se abona al llegar a la cancha.`;
-          } else {
-            response += `⚠️ Error al generar el link de pago. Por favor intentá de nuevo.`;
-          }
+        } else if (!linkPago) {
+          response = `⚠️ Error al generar el link de pago. Por favor intentá de nuevo.`;
         }
       }
       // Prioridad: plantilla del paso > plantilla del workflow > formato por defecto
