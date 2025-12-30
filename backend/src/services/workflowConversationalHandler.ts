@@ -1283,13 +1283,71 @@ export class WorkflowConversationalHandler {
           }
 
           if (Array.isArray(productos)) {
-            const tokens = searchQuery.split(/\s+/).filter(Boolean);
+            // Normalizar texto: eliminar acentos, convertir a minúsculas
+            const normalizar = (texto: string): string => {
+              return texto
+                .toLowerCase()
+                .normalize('NFD')
+                .replace(/[\u0300-\u036f]/g, '') // Eliminar acentos
+                .replace(/[^a-z0-9\s]/g, '') // Eliminar caracteres especiales
+                .trim();
+            };
+
+            const queryNormalizada = normalizar(searchQuery);
+            const tokens = queryNormalizada.split(/\s+/).filter(Boolean);
+            
+            console.log('🔍 Búsqueda normalizada:', queryNormalizada);
+            console.log('🔍 Tokens:', tokens);
+            
             if (tokens.length > 0) {
-              const filtrados = productos.filter((item: any) => {
-                const nombre = (item.name || item.nombre || item.title || '').toString().toLowerCase();
-                if (!nombre) return false;
-                return tokens.every(token => nombre.includes(token));
+              // Calcular score de relevancia para cada producto
+              const productosConScore = productos.map((item: any) => {
+                const nombre = (item.name || item.nombre || item.title || '').toString();
+                const nombreNormalizado = normalizar(nombre);
+                
+                // Calcular score basado en coincidencias de tokens
+                let score = 0;
+                let tokensEncontrados = 0;
+                
+                tokens.forEach(token => {
+                  if (nombreNormalizado.includes(token)) {
+                    tokensEncontrados++;
+                    // Bonus si el token está al inicio
+                    if (nombreNormalizado.startsWith(token)) {
+                      score += 10;
+                    } else {
+                      score += 5;
+                    }
+                  }
+                });
+                
+                // Bonus si coincide la frase completa
+                if (nombreNormalizado.includes(queryNormalizada)) {
+                  score += 20;
+                }
+                
+                // Bonus si tiene stock
+                if (item.stock_quantity && item.stock_quantity > 0) {
+                  score += 2;
+                }
+                
+                return {
+                  ...item,
+                  _score: score,
+                  _tokensEncontrados: tokensEncontrados
+                };
               });
+
+              // Filtrar productos con al menos 1 token encontrado
+              const filtrados = productosConScore
+                .filter((item: any) => item._tokensEncontrados > 0)
+                .sort((a: any, b: any) => b._score - a._score) // Ordenar por score descendente
+                .slice(0, 10) // Limitar a 10 resultados
+                .map((item: any) => {
+                  // Eliminar propiedades temporales
+                  const { _score, _tokensEncontrados, ...producto } = item;
+                  return producto;
+                });
 
               // Siempre aplicar el filtro, aunque no haya coincidencias
               if (datosFiltrados && typeof datosFiltrados === 'object') {
@@ -1304,7 +1362,7 @@ export class WorkflowConversationalHandler {
                 datosFiltrados = filtrados;
               }
 
-              console.log(`🔍 Filtro local aplicado por búsqueda="${searchQuery}": ${filtrados.length}/${productos.length} items`);
+              console.log(`🔍 Filtro inteligente aplicado: ${filtrados.length} productos relevantes de ${productos.length} totales`);
             }
           }
         } catch (error) {
