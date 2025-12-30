@@ -17,12 +17,24 @@ async function limpiarMiNumero() {
 
     console.log(`\n🧹 Limpiando estado para: ${MI_TELEFONO}\n`);
 
-    // 1. Limpiar workflowState en contactos
-    const resultContactos = await db.collection('contactos').updateMany(
+    // 1. Limpiar workflowState en contactos_empresa
+    const resultContactosEmpresa = await db.collection('contactos_empresa').updateMany(
       { telefono: MI_TELEFONO },
-      { $unset: { workflowState: '' } }
+      { 
+        $unset: { 
+          workflowState: '',
+          'conversaciones.historial': '',
+          'conversaciones.mensaje_ids': ''
+        },
+        $set: {
+          'conversaciones.saludado': false,
+          'conversaciones.despedido': false,
+          'conversaciones.contactoInformado': false,
+          'metricas.interacciones': 0
+        }
+      }
     );
-    console.log(`✅ Contactos: ${resultContactos.modifiedCount} actualizados`);
+    console.log(`✅ Contactos empresa: ${resultContactosEmpresa.modifiedCount} actualizados`);
 
     // 2. Limpiar conversation_states
     const resultConversation = await db.collection('conversation_states').deleteMany(
@@ -43,11 +55,12 @@ async function limpiarMiNumero() {
     console.log(`✅ Workflow states: ${resultWorkflowStates.deletedCount} eliminados`);
 
     // 5. Verificar estado final
-    const contacto = await db.collection('contactos').findOne({ telefono: MI_TELEFONO });
+    const contacto = await db.collection('contactos_empresa').findOne({ telefono: MI_TELEFONO });
     console.log('\n📋 ESTADO FINAL:');
     console.log('   Contacto existe:', !!contacto);
     console.log('   Tiene workflowState:', !!contacto?.workflowState);
     console.log('   Nombre:', contacto?.nombre);
+    console.log('   Interacciones:', contacto?.metricas?.interacciones);
 
     console.log('\n✅ Listo para empezar el flujo desde cero');
     console.log('   Escribí "hola" o "reservar" en WhatsApp');

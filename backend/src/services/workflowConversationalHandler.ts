@@ -1039,6 +1039,11 @@ export class WorkflowConversationalHandler {
       const params: any = {};
       let searchQuery: string | null = null;
       
+      console.log('🔍 [DEBUG MAPEO] Iniciando mapeo de parámetros');
+      console.log('   Endpoint ID:', paso.endpointId);
+      console.log('   Tiene mapeoParametros:', !!paso.mapeoParametros);
+      console.log('   Tiene parametros:', !!paso.parametros);
+      
       // CASO ESPECIAL: generar-link-pago debe construir preferencia de Mercado Pago
       if (paso.endpointId === 'generar-link-pago' || paso.endpointId === 'pre-crear-reserva') {
         console.log('🔄 Endpoint de pago detectado - construyendo body para Mercado Pago');
