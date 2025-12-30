@@ -1574,6 +1574,28 @@ export class WorkflowConversationalHandler {
       if (paso.pregunta) {
         console.log('⏸️ Paso consulta_filtrada con pregunta - esperando input del usuario');
         
+        // MANEJO DE SIN RESULTADOS: Si no hay productos, ofrecer buscar de nuevo
+        if (Array.isArray(datosFiltrados) && datosFiltrados.length === 0) {
+          const mensajeSinResultados = `❌ *No se encontraron productos con esos criterios.*\n\n` +
+            `💡 *¿Querés intentar con otra búsqueda?*\n\n` +
+            `Escribí el título del libro que buscás o escribí "cancelar" para volver al menú principal.`;
+          
+          // Volver al paso 1 (título) para que el usuario busque de nuevo
+          await workflowConversationManager.retrocederPaso(contactoId, 1);
+          
+          return {
+            success: true,
+            response: mensajeSinResultados,
+            completed: false,
+            metadata: {
+              workflowName: workflow.nombre,
+              pasoActual: 1,
+              totalPasos: workflow.steps.length,
+              datosRecopilados
+            }
+          };
+        }
+        
         // Guardar resultado de la API en datosRecopilados para uso posterior
         await workflowConversationManager.actualizarDato(contactoId, paso.nombreVariable, result.data);
         
