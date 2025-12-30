@@ -80,16 +80,34 @@ async function testBusquedas() {
   };
   
   try {
-    const response = await axios.get('https://www.veoveolibros.com.ar/wp-json/wc/v3/products', {
-      params: {
-        per_page: 100,
-        status: 'publish'
-      },
-      auth
-    });
+    // PAGINACIÓN COMPLETA: Traer TODOS los productos
+    let allProductos = [];
+    let page = 1;
+    let hasMore = true;
     
-    const productos = response.data;
-    console.log(`✅ ${productos.length} productos obtenidos\n`);
+    while (hasMore) {
+      console.log(`📄 Obteniendo página ${page}...`);
+      
+      const response = await axios.get('https://www.veoveolibros.com.ar/wp-json/wc/v3/products', {
+        params: {
+          per_page: 100,
+          status: 'publish',
+          page: page
+        },
+        auth
+      });
+      
+      const totalPages = parseInt(response.headers['x-wp-totalpages'] || '1');
+      allProductos = allProductos.concat(response.data);
+      
+      console.log(`   ✅ ${response.data.length} productos en página ${page}/${totalPages}`);
+      
+      hasMore = page < totalPages;
+      page++;
+    }
+    
+    const productos = allProductos;
+    console.log(`\n✅ TOTAL: ${productos.length} productos obtenidos de TODA la base de datos\n`);
     
     // Probar cada búsqueda
     for (const busqueda of busquedas) {
