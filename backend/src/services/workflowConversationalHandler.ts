@@ -671,6 +671,17 @@ export class WorkflowConversationalHandler {
           const valorUsuario = String(validacion.valor).trim();
           const numeroOpcion = parseInt(valorUsuario);
           
+          // OPCIÓN ESPECIAL: "0" para volver al menú principal
+          if (numeroOpcion === 0) {
+            await workflowConversationManager.finalizarWorkflow(contactoId);
+            
+            return {
+              success: true,
+              response: 'Volviendo al menú principal...',
+              completed: true
+            };
+          }
+          
           let itemSeleccionado = null;
           
           // Si es un número, buscar por índice (1-based)
@@ -1576,9 +1587,18 @@ export class WorkflowConversationalHandler {
         
         // MANEJO DE SIN RESULTADOS: Si no hay productos, ofrecer buscar de nuevo
         if (Array.isArray(datosFiltrados) && datosFiltrados.length === 0) {
-          const mensajeSinResultados = `❌ *No se encontraron productos con esos criterios.*\n\n` +
-            `💡 *¿Querés intentar con otra búsqueda?*\n\n` +
-            `Escribí el título del libro que buscás o escribí "cancelar" para volver al menú principal.`;
+          const mensajeSinResultados = `Lo sentimos, este libro parece no encontrarse en stock en este momento, de todas formas nos encontramos haciendo pedidos a las editoriales y puede que lo tengamos disponible en muy poco tiempo.
+
+Podés consultar si tu producto estará en stock pronto, en ese caso podés reservarlo.
+
+Para más información comunicarse a nuestro número de atención personalizada:
+👉 https://wa.me/5493794732177?text=Hola,%20quiero%20consultar%20disponibilidad%20de%20un%20libro
+
+👉 *Elegí una opción:*
+1️⃣ Buscar otro título
+2️⃣ Volver al menú principal
+
+Escribí el número`;
           
           // Volver al paso 1 (título) para que el usuario busque de nuevo
           await workflowConversationManager.retrocederAPaso(contactoId, 1);
