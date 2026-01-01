@@ -671,13 +671,15 @@ export class WorkflowConversationalHandler {
           const valorUsuario = String(validacion.valor).trim();
           const numeroOpcion = parseInt(valorUsuario);
           
-          // OPCIÓN ESPECIAL: "0" para volver al menú principal
-          if (numeroOpcion === 0) {
+          // OPCIÓN ESPECIAL: "0" para volver al menú principal (si está habilitado en configuración)
+          if (numeroOpcion === 0 && paso.permitirVolverAlMenu) {
             await workflowConversationManager.finalizarWorkflow(contactoId);
+            
+            const mensajeVolver = paso.mensajeVolverAlMenu || 'Volviendo al menú principal...';
             
             return {
               success: true,
-              response: 'Volviendo al menú principal...',
+              response: mensajeVolver,
               completed: true
             };
           }
@@ -1585,20 +1587,13 @@ export class WorkflowConversationalHandler {
       if (paso.pregunta) {
         console.log('⏸️ Paso consulta_filtrada con pregunta - esperando input del usuario');
         
-        // MANEJO DE SIN RESULTADOS: Si no hay productos, ofrecer buscar de nuevo
+        // MANEJO DE SIN RESULTADOS: Si no hay productos, usar mensaje configurado en BD
         if (Array.isArray(datosFiltrados) && datosFiltrados.length === 0) {
-          const mensajeSinResultados = `Lo sentimos, este libro parece no encontrarse en stock en este momento, de todas formas nos encontramos haciendo pedidos a las editoriales y puede que lo tengamos disponible en muy poco tiempo.
-
-Podés consultar si tu producto estará en stock pronto, en ese caso podés reservarlo.
-
-Para más información comunicarse a nuestro número de atención personalizada:
-👉 https://wa.me/5493794732177?text=Hola,%20quiero%20consultar%20disponibilidad%20de%20un%20libro
-
-👉 *Elegí una opción:*
-1️⃣ Buscar otro título
-2️⃣ Volver al menú principal
-
-Escribí el número`;
+          // Leer mensaje de la configuración del paso o usar mensaje por defecto
+          const mensajeSinResultados = paso.mensajeSinResultados || 
+            `❌ *No se encontraron resultados.*\n\n` +
+            `💡 *¿Querés intentar con otra búsqueda?*\n\n` +
+            `Escribí nuevamente tu búsqueda o escribí "cancelar" para volver al menú principal.`;
           
           // Volver al paso 1 (título) para que el usuario busque de nuevo
           await workflowConversationManager.retrocederAPaso(contactoId, 1);

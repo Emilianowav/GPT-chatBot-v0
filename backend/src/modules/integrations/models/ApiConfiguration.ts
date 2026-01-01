@@ -306,7 +306,12 @@ const WorkflowStepSchema = new Schema(
     nombre: String,
     descripcion: String,
     mensajeError: String,
-    intentosMaximos: { type: Number, default: 3 }
+    intentosMaximos: { type: Number, default: 3 },
+    
+    // Configuraciones especiales para consulta_filtrada
+    mensajeSinResultados: String,  // Mensaje cuando no hay resultados
+    permitirVolverAlMenu: { type: Boolean, default: false },  // Permitir opción "0"
+    mensajeVolverAlMenu: String  // Texto para la opción de volver
   },
   { _id: false }
 );

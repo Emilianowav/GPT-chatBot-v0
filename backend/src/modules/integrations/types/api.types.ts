@@ -238,6 +238,11 @@ export interface IWorkflowStep {
   mensajeError?: string;          // Mensaje si falla la validación
   mensajeExito?: string;          // Mensaje cuando el paso se completa exitosamente
   intentosMaximos?: number;       // Máximo de intentos para validación
+  
+  // Configuraciones especiales para consulta_filtrada
+  mensajeSinResultados?: string;  // Mensaje cuando no hay resultados
+  permitirVolverAlMenu?: boolean; // Permitir opción "0" para volver al menú
+  mensajeVolverAlMenu?: string;   // Texto para la opción de volver
 }
 
 /**
