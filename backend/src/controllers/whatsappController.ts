@@ -220,6 +220,33 @@ export const recibirMensaje = async (req: Request, res: Response, next: NextFunc
       console.log(`📊 Paso: ${workflowResult.metadata?.pasoActual}/${workflowResult.metadata?.totalPasos}`);
       console.log(`✅ Completado: ${workflowResult.completed}`);
       
+      // Si el workflow se completó, reiniciar automáticamente el menú principal
+      if (workflowResult.completed) {
+        console.log('🔄 Workflow completado - Reiniciando menú principal automáticamente...');
+        
+        // Buscar el workflow del menú principal
+        const { universalRouter } = await import('../services/universalRouter.js');
+        const menuDecision = await universalRouter.route({
+          mensaje: 'hola',
+          telefonoCliente: telefonoCliente,
+          empresaId: contacto.empresaId.toString(),
+          empresaNombre: contacto.empresaNombre
+        });
+        
+        if (menuDecision.action === 'start_workflow' && menuDecision.metadata) {
+          const menuResult = await workflowConversationalHandler.startWorkflow(
+            contacto._id.toString(),
+            menuDecision.metadata
+          );
+          
+          // Enviar menú principal
+          await enviarMensajeWhatsAppTexto(telefonoCliente, menuResult.response, phoneNumberId);
+          await actualizarHistorialConversacion(contacto._id.toString(), menuResult.response);
+          
+          console.log('✅ Menú principal reiniciado automáticamente');
+        }
+      }
+      
       res.sendStatus(200);
       return;
     }
