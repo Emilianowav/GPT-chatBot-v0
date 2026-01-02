@@ -1014,6 +1014,12 @@ export class WorkflowConversationalHandler {
       console.log('   Tiene mapeoParametros:', !!paso.mapeoParametros);
       console.log('   Tiene parametros:', !!paso.parametros);
       
+      // Obtener el endpoint para determinar el método HTTP
+      const endpoint = apiConfig.endpoints?.find((e: any) => e.id === paso.endpointId);
+      const metodoHTTP = endpoint?.metodo || endpoint?.method || 'GET';
+      const usarBody = metodoHTTP === 'POST' || metodoHTTP === 'PUT' || metodoHTTP === 'PATCH';
+      console.log('   Método HTTP:', metodoHTTP, '| Usar body:', usarBody);
+      
       // SOLUCIÓN DIRECTA: Para buscar-productos, capturar searchQuery desde titulo
       if (paso.endpointId === 'buscar-productos' && datosRecopilados.titulo) {
         searchQuery = String(datosRecopilados.titulo).toLowerCase();
@@ -1131,22 +1137,24 @@ export class WorkflowConversationalHandler {
           
           // Si no se encuentra la variable, verificar si es un valor literal
           if (valorVariable === undefined) {
-            // Valores literales comunes: 'whatsapp', 'web', 'api', etc.
-            // Si el varName no existe como variable, usarlo como literal
-            const esLiteral = typeof varName === 'string' && 
-                            !varName.includes('_') && 
-                            varName.toLowerCase() === varName &&
-                            varName.length < 20;
+            // Si el valor original no tiene {{ }}, es un valor literal directo
+            // Ejemplos: 'COMPRA', 'VENTA', 'whatsapp', 'CONTADO', 'MERCADO'
+            const esValorLiteral = typeof varNameOrTemplate === 'string' && 
+                                  !varNameOrTemplate.startsWith('{{') && 
+                                  !varNameOrTemplate.endsWith('}}');
             
-            if (esLiteral) {
-              console.log(`   🔄 Usando "${varName}" como valor literal para ${paramName}`);
-              valorVariable = varName;
+            if (esValorLiteral) {
+              console.log(`   🔄 Usando "${varNameOrTemplate}" como valor literal para ${paramName}`);
+              valorVariable = varNameOrTemplate;
+            } else {
+              console.log(`   ⚠️ Variable "${varName}" no encontrada en datos recopilados`);
             }
           }
           
           if (valorVariable !== undefined) {
-            // Determinar dónde va el parámetro
-            if (!params.query) params.query = {};
+            // Determinar dónde va el parámetro según el método HTTP
+            const destino = usarBody ? 'body' : 'query';
+            if (!params[destino]) params[destino] = {};
             
             // Transformar el valor según el parámetro
             let valorTransformado = this.transformarParametro(paramName, valorVariable, varName);
@@ -1154,8 +1162,8 @@ export class WorkflowConversationalHandler {
             // El mapeo de deporte (1→paddle, 2→futbol) se hace en validacion.mapeo de la BD
             // No necesitamos fallback hardcodeado aquí
             
-            params.query[paramName] = valorTransformado;
-            console.log(`   ✅ ${paramName} = "${valorTransformado}" (desde variable: ${varName})`);
+            params[destino][paramName] = valorTransformado;
+            console.log(`   ✅ ${paramName} = "${valorTransformado}" (${destino}, desde variable: ${varName})`);
             
             // Guardar searchQuery si es necesario
             if (paramName === 'search' || paramName === 'q' || paramName === 'query') {
