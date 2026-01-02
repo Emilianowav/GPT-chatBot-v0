@@ -76,7 +76,7 @@ export const recibirMensaje = async (req: Request, res: Response, next: NextFunc
     
     // Buscar el documento MongoDB de la empresa para obtener el _id
     const empresaDoc = await EmpresaModel.findOne({ nombre: empresa.nombre });
-    const empresaMongoId = empresaDoc?._id; // Mantener como ObjectId, NO convertir a string
+    const empresaMongoId = empresaDoc?._id;
     
     console.log('🆔 Empresa MongoDB ID:', empresaMongoId);
     
@@ -185,7 +185,7 @@ export const recibirMensaje = async (req: Request, res: Response, next: NextFunc
     const routerDecision = await universalRouter.route({
       mensaje,
       telefonoCliente,
-      empresaId: empresaMongoId || empresa.nombre, // ObjectId para buscar workflows
+      empresaId: empresa.nombre, // Nombre de empresa (String) para buscar chatbot
       empresaNombre: empresa.nombre, // Nombre para buscar contactos
       currentFlow: undefined // TODO: obtener flujo actual del contexto
     });

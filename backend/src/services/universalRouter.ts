@@ -203,7 +203,7 @@ export class UniversalRouter {
       console.log('🔍 [evaluateWorkflowTriggers] Iniciando evaluación...');
       console.log('🔍 [evaluateWorkflowTriggers] empresaId:', context.empresaId);
       
-      // 1. Buscar chatbot de la empresa
+      // 1. Buscar chatbot de la empresa (empresaId es String - nombre de empresa)
       const chatbot = await ChatbotModel.findOne({
         empresaId: context.empresaId,
         activo: true
@@ -216,9 +216,18 @@ export class UniversalRouter {
         return null;
       }
       
-      // 2. Buscar APIs con workflows activos
+      // 2. Obtener ObjectId de la empresa para buscar APIs
+      const { EmpresaModel } = await import('../models/Empresa.js');
+      const empresaDoc = await EmpresaModel.findOne({ nombre: context.empresaId });
+      
+      if (!empresaDoc) {
+        console.log('❌ [evaluateWorkflowTriggers] No se encontró documento de empresa');
+        return null;
+      }
+      
+      // 3. Buscar APIs con workflows activos (empresaId es ObjectId en APIs)
       const apisConWorkflows = await ApiConfigurationModel.find({
-        empresaId: context.empresaId,
+        empresaId: empresaDoc._id,
         'workflows.0': { $exists: true } // Tiene al menos un workflow
       });
       
@@ -334,7 +343,7 @@ export class UniversalRouter {
    */
   private async evaluateApiTriggers(context: MessageContext): Promise<KeywordMatch | null> {
     try {
-      // 1. Buscar chatbot de la empresa
+      // 1. Buscar chatbot de la empresa (empresaId es String - nombre de empresa)
       const chatbot = await ChatbotModel.findOne({
         empresaId: context.empresaId,
         activo: true
@@ -347,9 +356,18 @@ export class UniversalRouter {
       
       console.log('🤖 Chatbot encontrado:', chatbot.nombre);
       
-      // 2. Buscar APIs con integración habilitada para este chatbot
+      // 2. Obtener ObjectId de la empresa para buscar APIs
+      const { EmpresaModel } = await import('../models/Empresa.js');
+      const empresaDoc = await EmpresaModel.findOne({ nombre: context.empresaId });
+      
+      if (!empresaDoc) {
+        console.log('❌ No se encontró documento de empresa');
+        return null;
+      }
+      
+      // 3. Buscar APIs con integración habilitada para este chatbot (empresaId es ObjectId en APIs)
       const apisConIntegracion = await ApiConfigurationModel.find({
-        empresaId: context.empresaId,
+        empresaId: empresaDoc._id,
         'chatbotIntegration.habilitado': true,
         'chatbotIntegration.chatbotId': chatbot._id.toString()
       });
