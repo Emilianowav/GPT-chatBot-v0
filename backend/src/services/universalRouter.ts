@@ -6,6 +6,7 @@ import { ChatbotModel } from '../models/Chatbot.js';
 import { ContactoEmpresaModel } from '../models/ContactoEmpresa.js';
 import { primerMensajeService } from './primerMensajeService.js';
 import type { IApiConfiguracion, IKeywordConfig } from '../modules/integrations/types/api.types.js';
+import type { Types } from 'mongoose';
 
 /**
  * Tipos de flujos con sus prioridades
@@ -36,7 +37,7 @@ export interface RouterDecision {
 export interface MessageContext {
   mensaje: string;
   telefonoCliente: string;
-  empresaId: string;
+  empresaId: string | Types.ObjectId; // Acepta tanto string como ObjectId
   empresaNombre?: string; // Nombre de la empresa para buscar contactos
   chatbotId?: string;
   currentFlow?: string;
