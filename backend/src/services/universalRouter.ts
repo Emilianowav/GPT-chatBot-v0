@@ -145,7 +145,7 @@ export class UniversalRouter {
     try {
       // Buscar contacto por teléfono y empresa (usar nombre de empresa)
       const contacto = await ContactoEmpresaModel.findOne({
-        empresaId: context.empresaNombre || context.empresaId,
+        empresaId: context.empresaNombre || (typeof context.empresaId === 'string' ? context.empresaId : context.empresaId.toString()),
         telefono: context.telefonoCliente
       });
       
@@ -299,7 +299,7 @@ export class UniversalRouter {
           
           // Evaluar si es primer mensaje
           const evaluacion = await primerMensajeService.evaluatePrimerMensaje(
-            context.empresaNombre || context.empresaId,
+            context.empresaNombre || (typeof context.empresaId === 'string' ? context.empresaId : context.empresaId.toString()),
             context.telefonoCliente
           );
           
