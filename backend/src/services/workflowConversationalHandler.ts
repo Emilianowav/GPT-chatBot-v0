@@ -2173,6 +2173,22 @@ export class WorkflowConversationalHandler {
       const nombreVariable = match[1].trim();
       let valor = datos[nombreVariable];
       
+      // Si no se encuentra directamente, buscar en objetos anidados o calcular
+      if (valor === undefined || valor === null) {
+        // Buscar en validacion_usuario.data (para nombre, puede_operar, etc.)
+        if (datos.validacion_usuario?.data?.[nombreVariable]) {
+          valor = datos.validacion_usuario.data[nombreVariable];
+        }
+        // Calcular monto_estimado = cantidad * precio
+        else if (nombreVariable === 'monto_estimado' && datos.cantidad && datos.precio) {
+          valor = parseFloat(datos.cantidad) * parseFloat(datos.precio);
+        }
+        // Calcular monto_total (alias)
+        else if (nombreVariable === 'monto_total' && datos.cantidad && datos.precio) {
+          valor = parseFloat(datos.cantidad) * parseFloat(datos.precio);
+        }
+      }
+      
       if (valor !== undefined && valor !== null) {
         // Formatear valores especiales
         let valorFormateado = this.formatearValorVariable(nombreVariable, valor);
@@ -2192,6 +2208,11 @@ export class WorkflowConversationalHandler {
    * Formatea el valor de una variable según su tipo
    */
   private formatearValorVariable(nombreVariable: string, valor: any): string {
+    // Formatear montos con separadores de miles
+    if ((nombreVariable === 'monto_estimado' || nombreVariable === 'monto_total' || nombreVariable === 'precio') && typeof valor === 'number') {
+      return valor.toLocaleString('es-AR', { minimumFractionDigits: 0, maximumFractionDigits: 2 });
+    }
+    
     // Si es un objeto (turno_seleccionado, etc.)
     if (typeof valor === 'object' && valor !== null) {
       // Si es turno_seleccionado de disponibilidad
