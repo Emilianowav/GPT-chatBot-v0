@@ -1,0 +1,600 @@
+{
+  "_id": "695320fda03785dacc8d950b",
+  "nombre": "WooCommerce API - Veo Veo",
+  "descripcion": "API de WooCommerce para tienda de libros Veo Veo",
+  "baseUrl": "https://www.veoveolibros.com.ar/wp-json/wc/v3",
+  "activa": true,
+  "empresaId": "6940a9a181b92bfce970fdb5",
+  "autenticacion": {
+    "tipo": "basic",
+    "configuracion": {
+      "username": "ck_1f3a8bcc67796cf3d2d00ea950274bbe651da939",
+      "password": "cs_0170ad344d889ae6b305f3d41021f1af4dfd4a41",
+      "useQueryString": true,
+      "scope": [],
+      "plainText": true
+    }
+  },
+  "headers": {
+    "Content-Type": "application/json"
+  },
+  "endpoints": [
+    {
+      "id": "listar-productos",
+      "nombre": "Listar Productos",
+      "descripcion": "Lista todos los productos disponibles",
+      "method": "GET",
+      "path": "/products",
+      "parametros": {
+        "per_page": 100,
+        "status": "publish"
+      },
+      "metodo": "GET"
+    },
+    {
+      "id": "buscar-productos",
+      "nombre": "Buscar Productos",
+      "descripcion": "Busca productos por nombre o categoría",
+      "method": "GET",
+      "path": "/products",
+      "parametros": {
+        "search": "{{query}}",
+        "per_page": 100,
+        "status": "publish"
+      },
+      "metodo": "GET"
+    },
+    {
+      "id": "obtener-producto",
+      "nombre": "Obtener Producto",
+      "descripcion": "Obtiene detalles de un producto específico",
+      "method": "GET",
+      "path": "/products/{{product_id}}",
+      "metodo": "GET"
+    },
+    {
+      "id": "listar-categorias",
+      "nombre": "Listar Categorías",
+      "descripcion": "Lista todas las categorías de productos",
+      "method": "GET",
+      "path": "/products/categories",
+      "parametros": {
+        "per_page": 100
+      },
+      "metodo": "GET"
+    },
+    {
+      "id": "productos-por-categoria",
+      "nombre": "Productos por Categoría",
+      "descripcion": "Lista productos de una categoría específica",
+      "method": "GET",
+      "path": "/products",
+      "parametros": {
+        "category": "{{category_id}}",
+        "per_page": 20,
+        "status": "publish"
+      },
+      "metodo": "GET"
+    },
+    {
+      "id": "crear-pedido",
+      "nombre": "Crear Pedido",
+      "descripcion": "Crea un nuevo pedido en WooCommerce",
+      "method": "POST",
+      "path": "/orders",
+      "body": {
+        "payment_method": "mercadopago",
+        "payment_method_title": "Mercado Pago",
+        "set_paid": false,
+        "billing": {
+          "first_name": "{{cliente_nombre}}",
+          "phone": "{{cliente_telefono}}",
+          "email": "{{cliente_email}}"
+        },
+        "line_items": [
+          {
+            "product_id": "{{product_id}}",
+            "quantity": "{{cantidad}}"
+          }
+        ],
+        "meta_data": [
+          {
+            "key": "origen",
+            "value": "whatsapp"
+          }
+        ]
+      },
+      "metodo": "POST"
+    },
+    {
+      "id": "generar-link-pago",
+      "nombre": "Generar Link de Pago",
+      "descripcion": "Genera link de Mercado Pago para el pedido",
+      "method": "POST",
+      "path": "/mercadopago/payment-link",
+      "esInterno": true,
+      "metodo": "POST"
+    },
+    {
+      "id": "buscar-productos",
+      "nombre": "Buscar Productos",
+      "metodo": "GET",
+      "path": "/products",
+      "parametros": {
+        "per_page": 10,
+        "status": "publish",
+        "path": [],
+        "query": [
+          {
+            "nombre": "search",
+            "tipo": "string",
+            "requerido": false,
+            "descripcion": "Búsqueda por título"
+          },
+          {
+            "nombre": "per_page",
+            "tipo": "number",
+            "requerido": false,
+            "descripcion": "Cantidad de resultados"
+          },
+          {
+            "nombre": "status",
+            "tipo": "string",
+            "requerido": false,
+            "descripcion": "Estado del producto"
+          }
+        ]
+      }
+    }
+  ],
+  "workflows": [
+    {
+      "nombre": "Veo Veo - Menú Principal",
+      "descripcion": "Menú principal con todas las opciones",
+      "activo": true,
+      "trigger": {
+        "tipo": "keyword",
+        "keywords": [
+          "hola",
+          "menu",
+          "inicio",
+          "ayuda",
+          "consulta",
+          "libro",
+          "libros",
+          "comprar"
+        ]
+      },
+      "steps": [
+        {
+          "orden": 1,
+          "nombre": "Menú principal",
+          "tipo": "recopilar",
+          "pregunta": "👉 Por favor, selecciona un ítem de consulta:\n\n1️⃣ Libros escolares u otros títulos\n2️⃣ Libros de Inglés\n3️⃣ Soporte de ventas\n4️⃣ Información del local\n5️⃣ Promociones vigentes\n6️⃣ Consultas personalizadas\n\nEscribí el número",
+          "nombreVariable": "opcion_menu",
+          "validacion": {
+            "tipo": "opcion",
+            "opciones": [
+              "1",
+              "2",
+              "3",
+              "4",
+              "5",
+              "6"
+            ]
+          }
+        }
+      ],
+      "workflowsSiguientes": {
+        "pregunta": "",
+        "workflows": [
+          {
+            "workflowId": "consultar-libros",
+            "opcion": "1"
+          },
+          {
+            "workflowId": "libros-ingles",
+            "opcion": "2"
+          },
+          {
+            "workflowId": "soporte-ventas-menu",
+            "opcion": "3"
+          },
+          {
+            "workflowId": "info-local",
+            "opcion": "4"
+          },
+          {
+            "workflowId": "promociones",
+            "opcion": "5"
+          },
+          {
+            "workflowId": "atencion-personalizada",
+            "opcion": "6"
+          }
+        ]
+      },
+      "mensajeInicial": "Hola 👋\n¡Bienvenido/a a Librería Veo Veo! 📚✏️\nEstamos para ayudarte."
+    },
+    {
+      "id": "consultar-libros",
+      "nombre": "Veo Veo - Consultar Libros",
+      "activo": true,
+      "configPago": {
+        "seña": 1,
+        "porcentajeSeña": 1,
+        "tiempoExpiracion": 15,
+        "moneda": "ARS"
+      },
+      "steps": [
+        {
+          "orden": 1,
+          "tipo": "recopilar",
+          "nombre": "Solicitar título",
+          "nombreVariable": "titulo",
+          "pregunta": "Por favor, ingresa los siguientes datos:\n\n📖 *Título:*\n\n⚠️ *No enviar fotografía de libros, únicamente por escrito*",
+          "validacion": {
+            "tipo": "texto",
+            "requerido": true
+          }
+        },
+        {
+          "orden": 2,
+          "tipo": "recopilar",
+          "nombre": "Solicitar editorial",
+          "nombreVariable": "editorial",
+          "pregunta": "📚 *Editorial:*\n\n(Escribí \"omitir\" si no sabés)",
+          "validacion": {
+            "tipo": "texto",
+            "requerido": false
+          }
+        },
+        {
+          "orden": 3,
+          "tipo": "recopilar",
+          "nombre": "Solicitar edición",
+          "nombreVariable": "edicion",
+          "pregunta": "📝 *Edición:*\n\n(Escribí \"omitir\" si no sabés)",
+          "validacion": {
+            "tipo": "texto",
+            "requerido": false
+          }
+        },
+        {
+          "orden": 4,
+          "tipo": "consulta_filtrada",
+          "nombre": "Buscar productos",
+          "nombreVariable": "productos_encontrados",
+          "endpointId": "buscar-productos",
+          "pregunta": "Perfecto😊, estos son los resultados que coinciden con tu búsqueda:\n📚 *Resultados encontrados:*\n\n{{opciones}}\n\n💡 *¿Cuál libro querés agregar a tu compra?*\n\n➡️ Escribí el número del libro\n➡️ Escribí *0* para volver al menú principal",
+          "mapeoParametros": {
+            "search": {
+              "origen": "variable",
+              "nombreVariable": "titulo"
+            }
+          },
+          "endpointResponseConfig": {
+            "idField": "id",
+            "displayField": "name",
+            "priceField": "price",
+            "stockField": "stock_quantity",
+            "arrayPath": "data"
+          },
+          "validacion": {
+            "tipo": "numero",
+            "requerido": true
+          },
+          "mensajeSinResultados": "Lo sentimos, este libro parece no encontrarse en stock en este momento, de todas formas nos encontramos haciendo pedidos a las editoriales y puede que lo tengamos disponible en muy poco tiempo.\n\nPodés consultar si tu producto estará en stock pronto, en ese caso podés reservarlo.\n\nPara más información comunicarse a nuestro número de atención personalizada:\n👉 https://wa.me/5493794732177?text=Hola,%20quiero%20consultar%20disponibilidad%20de%20un%20libro\n\n👉 *Elegí una opción:*\n1️⃣ Buscar otro título\n2️⃣ Volver al menú principal\n\nEscribí el número",
+          "permitirVolverAlMenu": true,
+          "mensajeVolverAlMenu": "🔙 Volviendo al menú principal..."
+        },
+        {
+          "orden": 5,
+          "tipo": "recopilar",
+          "nombre": "Cantidad del libro",
+          "nombreVariable": "cantidad",
+          "pregunta": "📦 ¿Cuántos ejemplares de *{{producto_nombre}}* querés?\n\nEscribí la cantidad (1-10)",
+          "validacion": {
+            "tipo": "numero",
+            "requerido": true,
+            "min": 1,
+            "max": 10
+          }
+        },
+        {
+          "orden": 6,
+          "tipo": "recopilar",
+          "nombre": "Agregar más libros o finalizar",
+          "nombreVariable": "continuar_compra",
+          "pregunta": "✅ *Libro agregado a tu compra:*\n\n📘 {{producto_nombre}}\n📦 Cantidad: {{cantidad}}\n💰 Precio: ${{producto_precio}}\n💵 Subtotal: ${{subtotal}}\n\n¿Qué querés hacer?\n\n1️⃣ Agregar otro libro a mi compra\n2️⃣ Finalizar y generar link de pago\n\nEscribí el número",
+          "validacion": {
+            "tipo": "opcion",
+            "opciones": [
+              "1",
+              "2"
+            ],
+            "requerido": true
+          }
+        },
+        {
+          "orden": 7,
+          "tipo": "consulta_filtrada",
+          "nombre": "Generar link de pago",
+          "nombreVariable": "pago",
+          "endpointId": "generar-link-pago",
+          "pregunta": "💳 *Link de pago generado*\n\n📦 *Resumen de tu pedido:*\n📘 {{producto_nombre}}\n📦 Cantidad: {{cantidad}}\n💰 Total a pagar: ${{subtotal}}\n\n🔗 *Completá tu compra aquí:*\n{{link_pago}}\n\n⏰ Tenés 10 minutos para completar el pago.\n\n👉 Una vez realizado el pago, por favor envianos:\n   • 📸 Comprobante de pago\n   \nal siguiente número:\nhttps://wa.me/5493794732177?text=Hola,%20adjunto%20comprobante%20de%20pago\n\n⏰ *Retiro del pedido:* Podés pasar a retirarlo a partir de las 24hs de confirmado el pago.\n\nQuedamos atentos para ayudarte con cualquier otra consulta 📚✨"
+        }
+      ],
+      "createdAt": "2025-12-30T03:51:30.129Z",
+      "updatedAt": "2025-12-30T03:51:30.129Z",
+      "trigger": {
+        "tipo": "manual"
+      }
+    },
+    {
+      "id": "libros-ingles",
+      "nombre": "Veo Veo - Libros de Inglés",
+      "descripcion": "Información sobre pedidos de libros de inglés",
+      "activo": true,
+      "trigger": {
+        "tipo": "manual"
+      },
+      "steps": [
+        {
+          "orden": 1,
+          "nombre": "Información libros de inglés",
+          "tipo": "recopilar",
+          "pregunta": "Los libros de inglés se realizan únicamente a pedido con seña.\n\nPara realizar su pedido, comunicarse con un asesor de venta directo:\n\n👉 https://wa.me/5493794732177?text=Hola,%20estoy%20interesado%20en%20un%20libro%20de%20inglés%20a%20pedido\n\nEscribí *1* para volver al menú principal",
+          "nombreVariable": "volver_menu",
+          "validacion": {
+            "tipo": "opcion",
+            "opciones": [
+              "1"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "soporte-ventas-menu",
+      "nombre": "Veo Veo - Soporte de Ventas",
+      "descripcion": "Menú de atención post venta",
+      "activo": true,
+      "trigger": {
+        "tipo": "manual"
+      },
+      "steps": [
+        {
+          "orden": 1,
+          "nombre": "Menú soporte",
+          "tipo": "recopilar",
+          "pregunta": "👉 *Elegí una opción:*\n\n1️⃣ Compré mi libro y quiero retirarlo\n2️⃣ Compré un libro por error\n3️⃣ El libro que compré tiene fallas de fábrica\n4️⃣ Compré un libro y quiero que me lo envíen\n\nEscribí el número",
+          "nombreVariable": "opcion_soporte",
+          "validacion": {
+            "tipo": "opcion",
+            "opciones": [
+              "1",
+              "2",
+              "3",
+              "4"
+            ]
+          }
+        }
+      ],
+      "workflowsSiguientes": {
+        "pregunta": "",
+        "workflows": [
+          {
+            "workflowId": "soporte-retiro",
+            "opcion": "1"
+          },
+          {
+            "workflowId": "soporte-error",
+            "opcion": "2"
+          },
+          {
+            "workflowId": "soporte-fallas",
+            "opcion": "3"
+          },
+          {
+            "workflowId": "soporte-envio",
+            "opcion": "4"
+          }
+        ]
+      }
+    },
+    {
+      "id": "soporte-retiro",
+      "nombre": "Soporte - Retiro de libro",
+      "descripcion": "Información sobre retiro de libros",
+      "activo": true,
+      "trigger": {
+        "tipo": "manual"
+      },
+      "steps": [
+        {
+          "orden": 1,
+          "nombre": "Info retiro",
+          "tipo": "recopilar",
+          "pregunta": "📍 Podés retirar tu libro por *San Juan 1037*.\n\n🕗 Nuestro horario de atención es de 8:30 a 12:00hs y de 17:00 a 21:00hs\n\nPodés retirar tu libro después de las *24hs de realizada la compra* para que podamos corroborar y preparar tu pedido.\n\nEn el caso de querer recibirlo vía envío comunicate con nuestros asesores de venta:\n👉 https://wa.me/5493794732177?text=Hola,%20compré%20un%20libro%20y%20quiero%20que%20me%20lo%20envíen\n\nEscribí *1* para volver al menú principal",
+          "nombreVariable": "volver_menu",
+          "validacion": {
+            "tipo": "opcion",
+            "opciones": [
+              "1"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "soporte-error",
+      "nombre": "Soporte - Compra por error",
+      "descripcion": "Información sobre devoluciones y cambios",
+      "activo": true,
+      "trigger": {
+        "tipo": "manual"
+      },
+      "steps": [
+        {
+          "orden": 1,
+          "nombre": "Info error",
+          "tipo": "recopilar",
+          "pregunta": "Uy, qué mal! Para resolverlo te brindamos algunas opciones:\n\n✏️ Después de corroborar que el libro comprado está en el mismo estado en el cual lo recibiste, y con tu recibo de compra en mano:\n\n• Podemos enviarte una *nota de crédito* con el monto del libro para que elijas lo que quieras de nuestra tienda.\n\n• Podés *cambiar el libro* en el momento por otro del mismo valor.\n\n• También podés elegir uno de *mayor valor* y abonar la diferencia.\n\n• O uno de *menor valor* y te entregamos una nota de crédito por la diferencia.\n\n📍 Para completar la gestión acercate a nuestro local en *San Juan 1037*.\n\nEscribí *1* para volver al menú principal",
+          "nombreVariable": "volver_menu",
+          "validacion": {
+            "tipo": "opcion",
+            "opciones": [
+              "1"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "soporte-fallas",
+      "nombre": "Soporte - Fallas de fábrica",
+      "descripcion": "Información sobre productos con fallas",
+      "activo": true,
+      "trigger": {
+        "tipo": "manual"
+      },
+      "steps": [
+        {
+          "orden": 1,
+          "nombre": "Info fallas",
+          "tipo": "recopilar",
+          "pregunta": "Esto no es común pero suele suceder, hay fallas que se escapan de nuestras manos, por lo cual siempre sugerimos que luego de realizar la compra se debe revisar el producto.\n\nTe recomendamos acercarte al local con libro en mano en buenas condiciones (*Sin forrar o intervenir en el mismo*) y con tu recibo o ticket.\n\n📍 *San Juan 1037 - Corrientes Capital*\n🕗 Lunes a Viernes de 8:30 a 12:00hs y de 17:00 a 21:00hs\n\nEscribí *1* para volver al menú principal",
+          "nombreVariable": "volver_menu",
+          "validacion": {
+            "tipo": "opcion",
+            "opciones": [
+              "1"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "soporte-envio",
+      "nombre": "Soporte - Solicitar envío",
+      "descripcion": "Información sobre envíos",
+      "activo": true,
+      "trigger": {
+        "tipo": "manual"
+      },
+      "steps": [
+        {
+          "orden": 1,
+          "nombre": "Info envío",
+          "tipo": "recopilar",
+          "pregunta": "Los envíos son a cargo del cliente.\n\nSi querés cotización de envío dentro de la ciudad de Corrientes, comunicate con nuestros asesores de venta:\n\n👉 https://wa.me/5493794732177?text=Hola,%20compré%20un%20libro%20y%20quiero%20que%20me%20lo%20envíen\n\nEscribí *1* para volver al menú principal",
+          "nombreVariable": "volver_menu",
+          "validacion": {
+            "tipo": "opcion",
+            "opciones": [
+              "1"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "info-local",
+      "nombre": "Veo Veo - Información del Local",
+      "descripcion": "Dirección y horarios del local",
+      "activo": true,
+      "trigger": {
+        "tipo": "manual"
+      },
+      "steps": [
+        {
+          "orden": 1,
+          "nombre": "Información del local",
+          "tipo": "recopilar",
+          "pregunta": "Estamos en 📍*San Juan 1037 - Corrientes Capital.*\n\n🕗 *Horarios de atención:*\nDe Lunes a Viernes de 8:30 a 12:00hs y de 17:00 a 21:00hs\nSábados de 9:00 a 13:00hs y de 17:00 a 21:00hs\n\nTe esperamos! 🤗\n\nEscribí *1* para volver al menú principal",
+          "nombreVariable": "volver_menu",
+          "validacion": {
+            "tipo": "opcion",
+            "opciones": [
+              "1"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "promociones",
+      "nombre": "Veo Veo - Promociones Vigentes",
+      "descripcion": "Promociones bancarias vigentes",
+      "activo": true,
+      "trigger": {
+        "tipo": "manual"
+      },
+      "steps": [
+        {
+          "orden": 1,
+          "nombre": "Promociones vigentes",
+          "tipo": "recopilar",
+          "pregunta": "Nuestras promociones bancarias vigentes son:\n*LEER CON ATENCIÓN*\n\n*Banco de Corrientes:*\n👉🏽 Lunes y Miércoles: 3 cuotas sin interés y 20% de bonificación\n   Únicamente con la app +Banco, con tarjetas de crédito Visa y Mastercard vinculadas\n   Tope de reintegro $20.000\n\n👉🏻 TODOS LOS JUEVES: 30% Off 6 cuotas sin interés\n   *CON TARJETA DE CRÉDITO BONITA VISA*\n   Tope: $50.000\n\n*Banco Nación:*\n👉🏽 Sábados. Pagando con MODO BNA+, con tarjeta de Crédito Visa o Mastercard:\n   10% de reintegro y hasta 3 cuotas sin interés\n   Tope $10.000\n\n*Banco Hipotecario:*\n👉🏽 Todos los días: 6 cuotas fijas con tarjeta de crédito\n👉🏽 Miércoles: 25% off con tarjeta de débito (tope de reintegro $10.000)\n\n*LOCRED:*\n👉🏽 Todos los días: 3 y 6 cuotas sin interés\n\n*NaranjaX:*\n👉🏽 planZ: 3 cuotas sin interés\n👉🏽 6 cuotas sin interés\n\n*Go Cuotas:*\n👉🏽 Con tarjeta de Débito, hasta 3 cuotas sin interés\n   Para acceder a esta promo deberá registrarse en https://www.gocuotas.com/\n\n*Recordamos que las promociones son sobre el precio de lista*\n\nEscribí *1* para volver al menú principal",
+          "nombreVariable": "volver_menu",
+          "validacion": {
+            "tipo": "opcion",
+            "opciones": [
+              "1"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "atencion-personalizada",
+      "nombre": "Veo Veo - Consultas Personalizadas",
+      "descripcion": "Derivar a atención personalizada",
+      "activo": true,
+      "trigger": {
+        "tipo": "manual"
+      },
+      "steps": [
+        {
+          "orden": 1,
+          "nombre": "Consultas personalizadas",
+          "tipo": "recopilar",
+          "pregunta": "Escribinos al siguiente número para contactar a un asesor de ventas!\n\n👉 https://wa.me/5493794732177?text=Hola,%20quiero%20hacer%20una%20consulta%20personalizada\n\nEscribí *1* para volver al menú principal",
+          "nombreVariable": "volver_menu",
+          "validacion": {
+            "tipo": "opcion",
+            "opciones": [
+              "1"
+            ]
+          }
+        }
+      ]
+    }
+  ],
+  "createdAt": "2025-12-30T00:46:53.601Z",
+  "updatedAt": "2025-12-30T21:58:15.304Z",
+  "__v": 1,
+  "configuracion": {
+    "timeout": 30000,
+    "reintentos": 3,
+    "reintentarEn": [
+      1000,
+      2000,
+      4000
+    ],
+    "webhooks": []
+  },
+  "estadisticas": {
+    "totalLlamadas": 36,
+    "llamadasExitosas": 33,
+    "llamadasFallidas": 3,
+    "tiempoPromedioRespuesta": 9220.222222222223,
+    "ultimaLlamada": "2025-12-30T21:58:15.297Z"
+  },
+  "estado": "activo",
+  "tipo": "rest",
+  "menuPrincipal": {
+    "mensaje": "Hola 👋\n¡Bienvenido/a a Librería Veo Veo! 📚✏️\nEstamos para ayudarte.\n\n👉 Por favor, elegí una opción:\n\n1️⃣ Libros escolares u otros títulos\n2️⃣ Libros de Inglés\n3️⃣ Soporte de ventas\n4️⃣ Información del local\n5️⃣ Promociones vigentes\n6️⃣ Consultas personalizadas\n\nEscribí el número"
+  }
+}
