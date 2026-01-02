@@ -287,7 +287,10 @@ Escribí *1* para volver al menú principal`,
                 operacion: 'COMPRA',
                 symbol: 'symbol',
                 cantidad: 'cantidad',
-                precio: 'precio'
+                precio: 'precio',
+                plazo: 'CONTADO',
+                tipo_orden: 'MERCADO',
+                notas: 'Orden creada desde WhatsApp'
               },
               plantillaRespuesta: '✅ *¡Orden creada exitosamente!*\n\n' +
                 '📋 Orden #{{orden}}\n' +

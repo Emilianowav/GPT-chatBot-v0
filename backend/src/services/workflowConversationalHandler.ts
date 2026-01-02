@@ -226,6 +226,24 @@ export class WorkflowConversationalHandler {
   private transformarParametro(paramName: string, valor: any, varName: string): any {
     const valorStr = String(valor).trim();
 
+    // Transformar comitente a número (requerido por API Intercapital)
+    if (paramName === 'comitente') {
+      const num = parseInt(valorStr);
+      return isNaN(num) ? valorStr : num;
+    }
+
+    // Transformar cantidad a número (requerido por API Intercapital)
+    if (paramName === 'cantidad') {
+      const num = parseInt(valorStr);
+      return isNaN(num) ? valorStr : num;
+    }
+
+    // Transformar precio a número (requerido por API Intercapital)
+    if (paramName === 'precio') {
+      const num = parseFloat(valorStr);
+      return isNaN(num) ? valorStr : num;
+    }
+
     // Transformar turno_id: extraer ID de cancha del objeto turno_seleccionado
     if (paramName === 'turno_id' && typeof valor === 'object' && valor !== null) {
       // Si es el objeto completo de disponibilidad, extraer el ID de la primera cancha
