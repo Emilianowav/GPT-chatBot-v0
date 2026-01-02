@@ -76,7 +76,7 @@ export const recibirMensaje = async (req: Request, res: Response, next: NextFunc
     
     // Buscar el documento MongoDB de la empresa para obtener el _id
     const empresaDoc = await EmpresaModel.findOne({ nombre: empresa.nombre });
-    const empresaMongoId = empresaDoc?._id?.toString();
+    const empresaMongoId = empresaDoc?._id; // Mantener como ObjectId, NO convertir a string
     
     console.log('🆔 Empresa MongoDB ID:', empresaMongoId);
     
