@@ -1326,6 +1326,33 @@ export class WorkflowConversationalHandler {
       console.log('📊 Datos COMPLETOS recibidos de la API:');
       console.log(JSON.stringify(result.data, null, 2));
       
+      // Validar condicionContinuar si existe
+      if ((paso as any).condicionContinuar) {
+        const condicion = (paso as any).condicionContinuar;
+        const valorCampo = result.data?.[condicion.campo];
+        
+        console.log(`🔍 Validando condición: ${condicion.campo} === ${condicion.valor}`);
+        console.log(`   Valor recibido: ${valorCampo}`);
+        
+        if (valorCampo !== condicion.valor) {
+          console.log('❌ Condición no cumplida - deteniendo workflow');
+          await workflowConversationManager.abandonarWorkflow(contactoId);
+          
+          // Reemplazar variables en el mensaje de error
+          const datosParaMensaje = { ...datosRecopilados, ...result.data };
+          const mensajeError = this.reemplazarVariables(condicion.mensajeError, datosParaMensaje);
+          
+          return {
+            success: false,
+            response: mensajeError,
+            completed: true,
+            error: `Condición no cumplida: ${condicion.campo} !== ${condicion.valor}`
+          };
+        }
+        
+        console.log('✅ Condición cumplida - continuando workflow');
+      }
+      
       // MATCHING INTELIGENTE para disponibilidad de canchas
       if (paso.endpointId === 'consultar-disponibilidad' && result.data) {
         const horaPreferida = datosRecopilados.hora_preferida;

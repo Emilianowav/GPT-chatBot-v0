@@ -206,12 +206,25 @@ Escribí el número`,
               mapeoParametros: {
                 comitente: 'comitente'
               },
-              mensajeSinResultados: `❌ No encontramos tu número de comitente o tu cuenta no está activa.
+              condicionContinuar: {
+                campo: 'puede_operar',
+                valor: true,
+                mensajeError: `❌ Tu cuenta está en estado: {{estado}}
+
+⚠️ No puedes realizar operaciones en este momento.
+
+Por favor contacta con tu asesor de Intercapital para activar tu cuenta.
+
+📞 Contacto: +54 379 4044057
+
+Escribí *1* para volver al menú principal`
+              },
+              mensajeSinResultados: `❌ No encontramos tu número de comitente.
 
 Por favor verifica el número e intenta nuevamente.
 
 Escribí *1* para volver al menú principal`,
-              plantillaRespuesta: '✅ Hola {{nombre}}! Tu cuenta está activa y lista para operar.'
+              plantillaRespuesta: '✅ Hola {{nombre}}! Tu cuenta está verificada.'
             },
             {
               orden: 3,
