@@ -288,8 +288,35 @@ export class UniversalRouter {
           }
         }
         
-        // Trigger tipo "keyword" - solo keywords
+        // Trigger tipo "keyword" - keywords o primera respuesta
         if (wf.trigger.tipo === 'keyword') {
+          // Si tiene primeraRespuesta=true, evaluar si es primer mensaje
+          if (wf.trigger.primeraRespuesta) {
+            console.log(`   🕐 Evaluando primeraRespuesta para: "${wf.nombre}"`);
+            
+            const evaluacion = await primerMensajeService.evaluatePrimerMensaje(
+              context.empresaNombre || (typeof context.empresaId === 'string' ? context.empresaId : context.empresaId.toString()),
+              context.telefonoCliente
+            );
+            
+            if (evaluacion.shouldTrigger) {
+              console.log(`🔄 Workflow detectado por primera respuesta: "${wf.nombre}"`);
+              console.log(`   - Interacciones del contacto: ${evaluacion.interactionCount || 0}`);
+              
+              return {
+                workflow,
+                apiConfig: api,
+                extractedParams: {
+                  primer_mensaje_razon: evaluacion.reason
+                },
+                confidence: 1.0
+              };
+            } else {
+              console.log(`   ⏭️ No es primer mensaje (${evaluacion.interactionCount || 0} interacciones)`);
+            }
+          }
+          
+          // Si no es primer mensaje o no tiene primeraRespuesta, evaluar keywords
           if (keywordMatch) {
             console.log(`🔄 Workflow detectado por keyword en "${wf.nombre}"`);
             
