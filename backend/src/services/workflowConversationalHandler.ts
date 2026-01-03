@@ -1048,12 +1048,17 @@ export class WorkflowConversationalHandler {
       if (paso.endpointId === 'generar-link-pago' || paso.endpointId === 'pre-crear-reserva') {
         console.log('🔄 Endpoint de pago detectado - construyendo body para Mercado Pago');
         
-        // Detectar si es Veo Veo (librería) o Juventus (cancha)
-        const esVeoVeo = datosRecopilados.producto_nombre !== undefined || datosRecopilados.subtotal !== undefined;
+        // Determinar tipo de pago usando workflow.configPago (MODULAR)
+        const porcentajeSeña = workflow.configPago?.porcentajeSeña || 0.5;
+        const esVentaCompleta = porcentajeSeña >= 1.0;
         
-        if (esVeoVeo) {
-          // VEO VEO: Venta de libros - cobrar precio total
-          console.log('📚 Veo Veo detectado - cobrando precio total del libro');
+        // Detectar tipo de negocio por variables disponibles (fallback)
+        const tieneProducto = datosRecopilados.producto_nombre !== undefined || datosRecopilados.subtotal !== undefined;
+        const tieneCancha = datosRecopilados.cancha_nombre !== undefined || datosRecopilados.deporte !== undefined;
+        
+        if (esVentaCompleta || tieneProducto) {
+          // VENTA COMPLETA: Cobrar precio total (ej: Veo Veo - libros)
+          console.log('📦 Venta completa detectada - cobrando precio total');
           
           const subtotal = parseFloat(datosRecopilados.subtotal || '0');
           const productoNombre = datosRecopilados.producto_nombre || 'Libro';
@@ -1075,14 +1080,15 @@ export class WorkflowConversationalHandler {
             }
           };
           
-          console.log('📦 Body construido para Veo Veo:', JSON.stringify(params.body, null, 2));
+          console.log('📦 Body construido para venta completa:', JSON.stringify(params.body, null, 2));
           console.log(`   💰 Total a pagar: $${subtotal}`);
-        } else {
-          // JUVENTUS: Reserva de cancha - cobrar seña
-          console.log('🏟️ Juventus detectado - cobrando seña de reserva');
+        } else if (!esVentaCompleta || tieneCancha) {
+          // SEÑA/RESERVA: Cobrar porcentaje (ej: Juventus - canchas)
+          console.log('🏟️ Reserva detectada - cobrando seña');
           
           const precioTotal = parseFloat(datosRecopilados.precio || '0');
-          const seña = workflow.configPago?.seña || 1;
+          // Calcular seña usando porcentaje del workflow
+          const seña = workflow.configPago?.seña || (precioTotal * porcentajeSeña);
           const deporte = datosRecopilados.deporte_nombre || datosRecopilados.deporte || 'cancha';
           const fecha = this.formatearValorVariable('fecha', datosRecopilados.fecha);
           const hora = datosRecopilados.hora_preferida;
@@ -1113,8 +1119,8 @@ export class WorkflowConversationalHandler {
             }
           };
           
-          console.log('📦 Body construido para Juventus:', JSON.stringify(params.body, null, 2));
-          console.log(`   💰 Precio total: $${precioTotal} | Seña (50%): $${seña}`);
+          console.log('📦 Body construido para reserva:', JSON.stringify(params.body, null, 2));
+          console.log(`   💰 Precio total: $${precioTotal} | Seña (${porcentajeSeña * 100}%): $${seña}`);
         }
       }
       // Mapeo normal para otros endpoints (soporta mapeoParametros y parametros)

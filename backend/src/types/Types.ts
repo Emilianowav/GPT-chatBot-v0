@@ -88,6 +88,17 @@ export type Facturacion = {
   estado: 'activo' | 'suspendido' | 'prueba';
 };
 
+export type GPTConfig = {
+  antiLoopRules?: boolean;
+  searchInstructions?: string;
+  paymentInstructions?: string;
+  contextRules?: string[];
+  productExamples?: string[];
+  maxContextMessages?: number;
+  temperature?: number;
+  enableFunctionCalling?: boolean;
+};
+
 export type EmpresaConfig = {
   nombre: string;
   categoria: string;
@@ -101,6 +112,7 @@ export type EmpresaConfig = {
   saludos?: string[];
   email?: string;
   phoneNumberId?: string; // Opcional: ahora se obtiene del webhook
+  gptConfig?: GPTConfig;
   
   // Sistema de módulos
   plan?: string;

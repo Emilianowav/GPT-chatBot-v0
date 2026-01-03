@@ -81,7 +81,7 @@ export const obtenerRespuestaChat = async ({
   }
 
   return {
-    texto: textoRespuesta || "Sin respuesta del modelo.",
+    texto: textoRespuesta || (functionCall ? "" : "Sin respuesta del modelo."),
     costo: Number(costoTotal.toFixed(6)),
     tokens: tokensTotales,
     functionCall,

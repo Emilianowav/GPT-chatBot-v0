@@ -6,6 +6,13 @@ import { buscarOCrearContacto, actualizarHistorialConversacion, incrementarMetri
 import { EmpresaModel } from '../models/Empresa.js';
 import { generateDynamicPaymentLink } from '../services/paymentLinkService.js';
 import type { ChatCompletionMessageParam, ChatCompletionTool } from '../services/openaiService.js';
+import { 
+  tieneMercadoPagoActivo, 
+  obtenerSlugPrefix, 
+  obtenerInstruccionesBusqueda,
+  obtenerInstruccionesPago,
+  obtenerReglasAntiLoop
+} from '../utils/empresaHelpers.js';
 
 // Tool para generar link de pago
 const paymentLinkTool: ChatCompletionTool = {
@@ -34,8 +41,8 @@ const paymentLinkTool: ChatCompletionTool = {
   }
 };
 
-// Empresas con pagos habilitados (por ID o nombre)
-const EMPRESAS_CON_PAGOS = ['6940a9a181b92bfce970fdb5', 'Veo Veo'];
+// ELIMINADO: Lista hardcodeada de empresas con pagos
+// Ahora se usa empresa.modulos para verificar si tiene Mercado Pago activo
 
 export const gptFlow: Flow = {
   name: 'gpt_conversation',
@@ -79,22 +86,17 @@ export const gptFlow: Flow = {
         empresaTelefono: empresa.telefono
       });
       
-      // 3. Verificar si la empresa tiene pagos habilitados
+      // 3. Verificar si la empresa tiene pagos habilitados (usando módulos)
       const empresaIdStr = empresa._id?.toString() || '';
+      const tienePageosHabilitados = tieneMercadoPagoActivo(empresa);
       
-      // Verificar si tiene módulo de Mercado Pago habilitado
-      const moduloMP = empresa.modulos?.find((m: any) => m.id === 'mercadopago' && m.activo);
-      const tieneMPHabilitado = moduloMP ? true : false;
-      
-      // Fallback a lista hardcodeada para compatibilidad
-      const tienePageosHabilitados = tieneMPHabilitado || 
-                                      EMPRESAS_CON_PAGOS.includes(empresaIdStr) || 
-                                      EMPRESAS_CON_PAGOS.includes(empresa.nombre);
-      
-      console.log(`💳 [GPT] Empresa: ${empresa.nombre}, ID: ${empresaIdStr}, MP habilitado: ${tieneMPHabilitado}, Pagos habilitados: ${tienePageosHabilitados}`);
+      console.log(`💳 [GPT] Empresa: ${empresa.nombre}, ID: ${empresaIdStr}, MP habilitado: ${tienePageosHabilitados}`);
       
       // 4. Construir historial de mensajes para GPT
       let promptBase = empresa.prompt || 'Eres un asistente virtual amable y servicial.';
+      
+      // Agregar reglas anti-loop al prompt
+      promptBase += obtenerReglasAntiLoop(empresa);
       
       // Si tiene pagos habilitados, agregar instrucciones de pago al prompt
       if (tienePageosHabilitados) {
@@ -106,13 +108,8 @@ export const gptFlow: Flow = {
         let productosInfo = '';
         
         if (seller) {
-          // Determinar el prefijo del slug según la empresa
-          let slugPrefix = '';
-          if (empresa.nombre === 'JFC Techno') {
-            slugPrefix = 'jfc-';
-          } else if (empresa.nombre === 'Veo Veo') {
-            slugPrefix = 'veo-';
-          }
+          // Obtener prefijo de slug de forma dinámica
+          const slugPrefix = obtenerSlugPrefix(empresa);
           
           // Filtrar payment links por sellerId Y por prefijo de slug
           const query: any = { 
@@ -135,25 +132,9 @@ export const gptFlow: Flow = {
           }
         }
         
-        promptBase += `\n\n--- INSTRUCCIONES DE PAGO ---
-IMPORTANTE: Cuando el cliente mencione un producto o quiera pagar, DEBES:
-
-1. Si menciona un producto específico (mouse, teclado, etc.), confirma el producto y pregunta si quiere proceder al pago
-2. Cuando confirme que quiere pagar, USA LA FUNCIÓN generate_payment_link con:
-   - title: nombre del producto (ej: "Mouse Gamer RGB")
-   - amount: precio del producto (todos están a $1 ARS para pruebas)
-   - description: descripción breve del producto
-
-${productosInfo}
-
-TRIGGERS para generar link de pago:
-- "quiero pagar", "pagar", "sí quiero pagar", "confirmo", "listo", "proceder al pago", "comprar"
-
-IMPORTANTE: 
-- Cuando detectes intención de pago clara, USA LA FUNCIÓN generate_payment_link inmediatamente
-- NO pidas datos adicionales como email o dirección
-- El precio de prueba es $1 ARS para todos los productos
-- Sé directo y genera el link cuando el cliente confirme`;
+        // Agregar instrucciones de búsqueda y pago personalizadas
+        promptBase += '\n\n' + obtenerInstruccionesBusqueda(empresa);
+        promptBase += '\n\n' + obtenerInstruccionesPago(empresa, productosInfo);
       }
       
       const historialGPT: ChatCompletionMessageParam[] = [

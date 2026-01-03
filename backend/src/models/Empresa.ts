@@ -80,6 +80,18 @@ const EmpresaSchema = new Schema<IEmpresa>(
     ubicaciones: [UbicacionSchema],
     phoneNumberId: String,
     
+    // Configuración de GPT (opcional)
+    gptConfig: {
+      antiLoopRules: { type: Boolean, default: true },
+      searchInstructions: String,
+      paymentInstructions: String,
+      contextRules: [String],
+      productExamples: [String],
+      maxContextMessages: { type: Number, default: 10 },
+      temperature: { type: Number, default: 0.7 },
+      enableFunctionCalling: { type: Boolean, default: true }
+    },
+    
     // Sistema de módulos
     plan: {
       type: String,
@@ -144,6 +156,7 @@ EmpresaSchema.methods.toEmpresaConfig = function(): EmpresaConfig {
     saludos: obj.saludos,
     email: obj.email,
     phoneNumberId: obj.phoneNumberId,
+    gptConfig: obj.gptConfig,
     plan: obj.plan,
     modulos: obj.modulos,
     limites: obj.limites,

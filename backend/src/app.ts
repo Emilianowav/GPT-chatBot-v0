@@ -23,6 +23,7 @@ import afipRoutes from "./modules/afip/routes/index.js";
 import ocrRoutes from "./modules/ocr/routes/index.js";
 import usuarioEmpresaRoutes from "./routes/usuarioEmpresaRoutes.js";
 import flowRoutes from "./routes/flowRoutes.js";
+import nodeFlowRoutes from "./routes/nodeFlowRoutes.js";
 import superAdminRoutes from "./routes/superAdminRoutes.js";
 import chatbotRoutes from "./routes/chatbotRoutes.js";
 import intervencionRoutes from "./routes/intervencionRoutes.js";
@@ -126,6 +127,7 @@ console.log('🟢 [APP] Montando rutas de OCR en /api/modules/ocr');
 app.use("/api/modules/ocr", ocrRoutes);
 app.use("/api/flujos", flujosRoutes);
 app.use("/api/flows", flowRoutes);
+app.use("/api", nodeFlowRoutes); // Sistema de nodos configurables
 app.use("/api/chatbots", chatbotRoutes);
 app.use("/api/intervencion", intervencionRoutes);
 // app.use("/api/primer-mensaje", primerMensajeRoutes);

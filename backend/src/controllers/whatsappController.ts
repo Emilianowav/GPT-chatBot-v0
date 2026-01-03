@@ -6,7 +6,7 @@ import { verificarYEnviarResumen } from '../services/metricService.js';
 import { enviarMensajeWhatsAppTexto } from '../services/metaService.js';
 import { enviarConversacionPorEmail } from '../utils/conversacionReporter.js';
 import { wss } from '../app.js';
-import { buscarOCrearContacto, limpiarHistorial, incrementarMetricas } from '../services/contactoService.js';
+import { buscarOCrearContacto, limpiarHistorial, incrementarMetricas, actualizarHistorialConversacion } from '../services/contactoService.js';
 import { flowManager } from '../flows/index.js';
 import type { FlowContext } from '../flows/types.js';
 import { startTracking, endTracking } from '../services/conversationTracker.js';
@@ -14,11 +14,20 @@ import { EmpresaModel } from '../models/Empresa.js';
 import { universalRouter } from '../services/universalRouter.js';
 import { apiKeywordHandler } from '../services/apiKeywordHandler.js';
 import { generateDynamicPaymentLink } from '../services/paymentLinkService.js';
+import { 
+  tieneMercadoPagoActivo, 
+  obtenerSlugPrefix, 
+  obtenerInstruccionesBusqueda,
+  obtenerInstruccionesPago,
+  obtenerReglasAntiLoop
+} from '../utils/empresaHelpers.js';
+import { nodeEngine } from '../services/nodeEngine.js';
+import { FlowModel } from '../models/Flow.js';
 
 import type { EmpresaConfig } from '../types/Types.js';
 
-// Empresas con pagos habilitados (por ID o nombre)
-const EMPRESAS_CON_PAGOS = ['6940a9a181b92bfce970fdb5', 'Veo Veo'];
+// ELIMINADO: Lista hardcodeada de empresas con pagos
+// Ahora se usa empresa.modulos para verificar si tiene Mercado Pago activo
 
 // Tool para generar link de pago (para function calling de GPT)
 const paymentLinkTool = {
@@ -179,8 +188,60 @@ export const recibirMensaje = async (req: Request, res: Response, next: NextFunc
       return;
     }
 
+    // 🆕 SISTEMA DE NODOS: Verificar si existe flujo de nodos activo
+    console.log('\n🆕 ========== VERIFICANDO SISTEMA DE NODOS ==========');
+    
+    const flowNodos = await FlowModel.findOne({ 
+      empresaId: empresa.nombre, 
+      activo: true 
+    });
+
+    if (flowNodos) {
+      console.log(`✅ Flow de nodos encontrado: ${flowNodos.nombre} (${flowNodos.id})`);
+      
+      try {
+        // Verificar si hay sesión activa
+        const sesionActiva = nodeEngine.getSessionState(empresa.nombre, contacto._id.toString());
+        
+        let respuestaNodo: string;
+        
+        if (sesionActiva) {
+          // Continuar flujo existente
+          console.log(`🔄 Continuando flujo en nodo: ${sesionActiva.currentNode}`);
+          respuestaNodo = await nodeEngine.handleUserInput(empresa.nombre, contacto._id.toString(), mensaje);
+        } else {
+          // Iniciar nuevo flujo
+          console.log(`🎉 Iniciando nuevo flujo: ${flowNodos.id}`);
+          respuestaNodo = await nodeEngine.startFlow(empresa.nombre, contacto._id.toString(), flowNodos.id);
+        }
+        
+        // Enviar respuesta
+        await enviarMensajeWhatsAppTexto(telefonoCliente, respuestaNodo, phoneNumberId);
+        
+        // Actualizar historial y métricas
+        await actualizarHistorialConversacion(contacto._id.toString(), `Cliente: ${mensaje}`);
+        await actualizarHistorialConversacion(contacto._id.toString(), `Bot: ${respuestaNodo}`);
+        await incrementarMetricas(contacto._id.toString(), {
+          mensajesEnviados: 1,
+          mensajesRecibidos: 1,
+          interacciones: 1
+        });
+        
+        console.log('✅ Mensaje procesado con sistema de nodos');
+        res.sendStatus(200);
+        return;
+        
+      } catch (error: any) {
+        console.error('❌ Error en sistema de nodos:', error.message);
+        console.log('⚠️ Fallback a sistema legacy...');
+        // Continuar con sistema legacy si falla
+      }
+    } else {
+      console.log('⚠️ No hay flow de nodos activo, usando sistema legacy');
+    }
+    
     // 🎯 ROUTER UNIVERSAL: Evaluar triggers ANTES de decidir flujo
-    console.log('\n🎯 ========== ROUTER UNIVERSAL ==========');
+    console.log('\n🎯 ========== ROUTER UNIVERSAL (LEGACY) ==========');
     
     const routerDecision = await universalRouter.route({
       mensaje,
@@ -330,21 +391,12 @@ export const recibirMensaje = async (req: Request, res: Response, next: NextFunc
       // 🧠 USAR GPT CONVERSACIONAL DIRECTAMENTE (CON SOPORTE DE PAGOS)
       console.log('🧠 Procesando con GPT conversacional...');
       
-      // Verificar si la empresa tiene pagos habilitados
-      // Buscar el _id de la empresa en MongoDB
+      // Verificar si la empresa tiene pagos habilitados (usando módulos)
       const empresaDoc = await EmpresaModel.findOne({ nombre: empresa.nombre });
       const empresaIdStr = empresaDoc?._id?.toString() || '';
+      const tienePageosHabilitados = empresaDoc ? tieneMercadoPagoActivo(empresaDoc) : false;
       
-      // Verificar si tiene módulo de Mercado Pago habilitado
-      const moduloMP = empresaDoc?.modulos?.find((m: any) => m.id === 'mercadopago' && m.activo);
-      const tieneMPHabilitado = moduloMP ? true : false;
-      
-      // Fallback a lista hardcodeada para compatibilidad
-      const tienePageosHabilitados = tieneMPHabilitado || 
-                                      EMPRESAS_CON_PAGOS.includes(empresaIdStr) || 
-                                      EMPRESAS_CON_PAGOS.includes(empresa.nombre);
-      
-      console.log(`💳 [GPT] Empresa: ${empresa.nombre}, ID: ${empresaIdStr}, MP habilitado: ${tieneMPHabilitado}, Pagos habilitados: ${tienePageosHabilitados}`);
+      console.log(`💳 [GPT] Empresa: ${empresa.nombre}, ID: ${empresaIdStr}, MP habilitado: ${tienePageosHabilitados}`);
       
       try {
         const { obtenerRespuestaChat } = await import('../services/openaiService.js');
@@ -352,6 +404,11 @@ export const recibirMensaje = async (req: Request, res: Response, next: NextFunc
         
         // Construir prompt base con instrucciones de pago si aplica
         let promptBase = empresa.prompt || 'Eres un asistente virtual amable y servicial.';
+        
+        // Agregar reglas anti-loop al prompt
+        if (empresaDoc) {
+          promptBase += obtenerReglasAntiLoop(empresaDoc);
+        }
         
         if (tienePageosHabilitados) {
           // Obtener payment links de la empresa para incluir en el prompt
@@ -361,14 +418,9 @@ export const recibirMensaje = async (req: Request, res: Response, next: NextFunc
           const seller = await Seller.findOne({ internalId: empresa.nombre });
           let productosInfo = '';
           
-          if (seller) {
-            // Determinar el prefijo del slug según la empresa
-            let slugPrefix = '';
-            if (empresa.nombre === 'JFC Techno') {
-              slugPrefix = 'jfc-';
-            } else if (empresa.nombre === 'Veo Veo') {
-              slugPrefix = 'veo-';
-            }
+          if (seller && empresaDoc) {
+            // Obtener prefijo de slug de forma dinámica
+            const slugPrefix = obtenerSlugPrefix(empresaDoc);
             
             // Filtrar payment links por sellerId Y por prefijo de slug
             const query: any = { 
@@ -391,25 +443,11 @@ export const recibirMensaje = async (req: Request, res: Response, next: NextFunc
             }
           }
           
-          promptBase += `\n\n--- INSTRUCCIONES DE PAGO ---
-IMPORTANTE: Cuando el cliente mencione un producto o quiera pagar, DEBES:
-
-1. Si menciona un producto específico (mouse, teclado, etc.), confirma el producto y pregunta si quiere proceder al pago
-2. Cuando confirme que quiere pagar, USA LA FUNCIÓN generate_payment_link con:
-   - title: nombre del producto (ej: "Mouse Gamer RGB")
-   - amount: precio del producto (todos están a $1 ARS para pruebas)
-   - description: descripción breve del producto
-
-${productosInfo}
-
-TRIGGERS para generar link de pago:
-- "quiero pagar", "pagar", "sí quiero pagar", "confirmo", "listo", "proceder al pago", "comprar"
-
-IMPORTANTE: 
-- Cuando detectes intención de pago clara, USA LA FUNCIÓN generate_payment_link inmediatamente
-- NO pidas datos adicionales como email o dirección
-- El precio de prueba es $1 ARS para todos los productos
-- Sé directo y genera el link cuando el cliente confirme`;
+          // Agregar instrucciones de búsqueda y pago personalizadas
+          if (empresaDoc) {
+            promptBase += '\n\n' + obtenerInstruccionesBusqueda(empresaDoc);
+            promptBase += '\n\n' + obtenerInstruccionesPago(empresaDoc, productosInfo);
+          }
         }
         
         // Construir historial para GPT
