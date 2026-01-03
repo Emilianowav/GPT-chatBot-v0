@@ -66,7 +66,7 @@ export default function FlowEditor({ flow, empresaId, onClose }: FlowEditorProps
 
   const loadNodes = async (flowId: string) => {
     try {
-      const response = await fetch(`http://localhost:4000/api/flows/${flowId}/nodes`);
+      const response = await fetch(`http://localhost:3000/api/flows/${flowId}/nodes`);
       if (response.ok) {
         const data = await response.json();
         setNodes(data);
@@ -85,8 +85,8 @@ export default function FlowEditor({ flow, empresaId, onClose }: FlowEditorProps
     setSaving(true);
     try {
       const url = flow?._id 
-        ? `http://localhost:4000/api/flows/${flow._id}`
-        : 'http://localhost:4000/api/flows';
+        ? `http://localhost:3000/api/flows/${flow._id}`
+        : 'http://localhost:3000/api/flows';
       
       const method = flow?._id ? 'PUT' : 'POST';
       
@@ -126,8 +126,8 @@ export default function FlowEditor({ flow, empresaId, onClose }: FlowEditorProps
   const handleSaveNode = async (nodeData: FlowNode) => {
     try {
       const url = nodeData._id
-        ? `http://localhost:4000/api/nodes/${nodeData._id}`
-        : 'http://localhost:4000/api/nodes';
+        ? `http://localhost:3000/api/nodes/${nodeData._id}`
+        : 'http://localhost:3000/api/nodes';
       
       const method = nodeData._id ? 'PUT' : 'POST';
       
@@ -151,7 +151,7 @@ export default function FlowEditor({ flow, empresaId, onClose }: FlowEditorProps
     if (!confirm('¿Estás seguro de eliminar este nodo?')) return;
 
     try {
-      const response = await fetch(`http://localhost:4000/api/nodes/${nodeId}`, {
+      const response = await fetch(`http://localhost:3000/api/nodes/${nodeId}`, {
         method: 'DELETE'
       });
 

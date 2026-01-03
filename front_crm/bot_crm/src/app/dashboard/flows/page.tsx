@@ -36,7 +36,7 @@ export default function FlowsPage() {
   const loadFlows = async (empresa: string) => {
     try {
       setLoading(true);
-      const response = await fetch(`http://localhost:4000/api/flows?empresaId=${empresa}`);
+      const response = await fetch(`http://localhost:3000/api/flows?empresaId=${empresa}`);
       if (response.ok) {
         const data = await response.json();
         setFlows(data);
@@ -66,7 +66,7 @@ export default function FlowsPage() {
 
   const handleToggleActive = async (flowId: string, currentState: boolean) => {
     try {
-      const response = await fetch(`http://localhost:4000/api/flows/${flowId}`, {
+      const response = await fetch(`http://localhost:3000/api/flows/${flowId}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ activo: !currentState })
@@ -84,7 +84,7 @@ export default function FlowsPage() {
     if (!confirm('¿Estás seguro de eliminar este flujo?')) return;
     
     try {
-      const response = await fetch(`http://localhost:4000/api/flows/${flowId}`, {
+      const response = await fetch(`http://localhost:3000/api/flows/${flowId}`, {
         method: 'DELETE'
       });
       
@@ -98,7 +98,7 @@ export default function FlowsPage() {
 
   const handleDuplicateFlow = async (flow: Flow) => {
     try {
-      const response = await fetch(`http://localhost:4000/api/flows/${flow._id}/duplicate`, {
+      const response = await fetch(`http://localhost:3000/api/flows/${flow._id}/duplicate`, {
         method: 'POST'
       });
       
