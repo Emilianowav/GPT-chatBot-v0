@@ -28,7 +28,6 @@ export default function FlowsPage() {
   const [empresaId, setEmpresaId] = useState<string>('');
 
   useEffect(() => {
-    // Obtener empresa del usuario actual desde localStorage
     const storedEmpresa = localStorage.getItem('empresaId') || 'Veo Veo';
     setEmpresaId(storedEmpresa);
     loadFlows(storedEmpresa);

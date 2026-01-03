@@ -1,6 +1,6 @@
 'use client';
 
-import { Plus, Menu, MessageSquare, GitBranch, Zap, Globe, Brain, Trash2 } from 'lucide-react';
+import { Plus, Trash2, Menu, MessageSquare, GitBranch, Zap, Globe, Brain } from 'lucide-react';
 import styles from './NodeList.module.css';
 
 interface FlowNode {
@@ -30,16 +30,25 @@ const nodeTypeIcons: Record<string, any> = {
 };
 
 export default function NodeList({ nodes, selectedNode, onSelectNode, onCreateNode, onDeleteNode }: NodeListProps) {
+  const getIconClass = (type: string) => {
+    const classMap: Record<string, string> = {
+      menu: styles.iconMenu,
+      input: styles.iconInput,
+      message: styles.iconMessage,
+      condition: styles.iconCondition,
+      action: styles.iconAction,
+      api_call: styles.iconApiCall,
+      gpt: styles.iconGpt
+    };
+    return classMap[type] || styles.iconMenu;
+  };
+
   return (
     <div className={styles.container}>
       <div className={styles.header}>
         <h3 className={styles.title}>Nodos</h3>
-        <button
-          onClick={onCreateNode}
-          className={styles.createButton}
-          title="Crear nodo"
-        >
-          <Plus style={{ width: '1rem', height: '1rem' }} />
+        <button onClick={onCreateNode} className={styles.createButton}>
+          <Plus style={{ width: '18px', height: '18px' }} />
         </button>
       </div>
 
@@ -47,17 +56,13 @@ export default function NodeList({ nodes, selectedNode, onSelectNode, onCreateNo
         {nodes.length === 0 ? (
           <div className={styles.emptyState}>
             <p className={styles.emptyText}>No hay nodos creados</p>
-            <button
-              onClick={onCreateNode}
-              className={styles.emptyButton}
-            >
+            <button onClick={onCreateNode} className={styles.emptyButton}>
               Crear primer nodo
             </button>
           </div>
         ) : (
           nodes.map((node) => {
             const Icon = nodeTypeIcons[node.type] || MessageSquare;
-            const iconClass = `icon${node.type.charAt(0).toUpperCase() + node.type.slice(1).replace('_', '')}`;
             const isSelected = selectedNode?.id === node.id;
 
             return (
@@ -67,37 +72,29 @@ export default function NodeList({ nodes, selectedNode, onSelectNode, onCreateNo
                 className={`${styles.nodeItem} ${isSelected ? styles.nodeItemSelected : ''}`}
               >
                 <div className={styles.nodeContent}>
-                  <div className={`${styles.nodeIcon} ${styles[iconClass]}`}>
-                    <Icon style={{ width: '1rem', height: '1rem' }} />
+                  <div className={`${styles.nodeIcon} ${getIconClass(node.type)}`}>
+                    <Icon style={{ width: '18px', height: '18px' }} />
                   </div>
-                  
                   <div className={styles.nodeInfo}>
-                    <h4 className={styles.nodeName}>
-                      {node.name}
-                    </h4>
+                    <div className={styles.nodeName}>{node.name}</div>
                     <div className={styles.nodeMetadata}>
                       <span className={styles.nodeType}>{node.type}</span>
                       {!node.activo && (
-                        <span className={styles.nodeInactive}>Inactivo</span>
+                        <span className={styles.nodeInactive}>INACTIVO</span>
                       )}
                     </div>
                   </div>
-
                   <button
                     onClick={(e) => {
                       e.stopPropagation();
-                      if (node._id) onDeleteNode(node._id);
+                      onDeleteNode(node._id || node.id);
                     }}
                     className={styles.deleteButton}
-                    title="Eliminar"
                   >
-                    <Trash2 style={{ width: '0.875rem', height: '0.875rem' }} />
+                    <Trash2 style={{ width: '16px', height: '16px' }} />
                   </button>
                 </div>
-
-                <div className={styles.nodeId}>
-                  ID: {node.id}
-                </div>
+                <div className={styles.nodeId}>ID: {node.id}</div>
               </div>
             );
           })

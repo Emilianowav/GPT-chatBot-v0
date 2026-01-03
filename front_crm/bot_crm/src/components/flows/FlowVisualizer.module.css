@@ -13,14 +13,12 @@
   position: relative;
 }
 
-/* Canvas del flujo */
 .canvas {
   min-height: 600px;
   position: relative;
   padding: 40px;
 }
 
-/* Nodos */
 .node {
   position: absolute;
   width: 200px;
@@ -50,7 +48,6 @@
   box-shadow: 0 4px 12px rgba(59, 130, 246, 0.2);
 }
 
-/* Header del nodo */
 .nodeHeader {
   display: flex;
   align-items: center;
@@ -68,7 +65,6 @@
   flex-shrink: 0;
 }
 
-/* Colores por tipo de nodo */
 .nodeIconMenu {
   background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
   color: #1d4ed8;
@@ -127,7 +123,6 @@
   font-weight: 500;
 }
 
-/* Badge de inicio */
 .startBadge {
   display: inline-block;
   padding: 2px 8px;
@@ -141,36 +136,6 @@
   margin-top: 8px;
 }
 
-/* Conexiones */
-.connection {
-  position: absolute;
-  pointer-events: none;
-  z-index: 1;
-}
-
-.connectionLine {
-  stroke: #d1d5db;
-  stroke-width: 2;
-  fill: none;
-  transition: stroke 0.2s ease;
-}
-
-.connectionLine:hover {
-  stroke: #3b82f6;
-  stroke-width: 3;
-}
-
-.connectionArrow {
-  fill: #d1d5db;
-}
-
-.connectionLabel {
-  font-size: 11px;
-  fill: #6b7280;
-  font-weight: 500;
-}
-
-/* Empty state */
 .emptyState {
   display: flex;
   flex-direction: column;
@@ -205,76 +170,4 @@
   font-size: 14px;
   color: #6b7280;
   margin: 0;
-}
-
-/* Controles de zoom */
-.controls {
-  position: absolute;
-  top: 24px;
-  right: 24px;
-  display: flex;
-  gap: 8px;
-  background: #ffffff;
-  border: 1px solid #e5e7eb;
-  border-radius: 8px;
-  padding: 4px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-}
-
-.controlButton {
-  width: 32px;
-  height: 32px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: transparent;
-  border: none;
-  border-radius: 6px;
-  color: #6b7280;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.controlButton:hover {
-  background: #f3f4f6;
-  color: #111827;
-}
-
-/* Leyenda */
-.legend {
-  position: absolute;
-  bottom: 24px;
-  left: 24px;
-  background: #ffffff;
-  border: 1px solid #e5e7eb;
-  border-radius: 8px;
-  padding: 12px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-}
-
-.legendTitle {
-  font-size: 12px;
-  font-weight: 600;
-  color: #111827;
-  margin: 0 0 8px 0;
-}
-
-.legendItems {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-
-.legendItem {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 11px;
-  color: #6b7280;
-}
-
-.legendIcon {
-  width: 20px;
-  height: 20px;
-  border-radius: 4px;
 }

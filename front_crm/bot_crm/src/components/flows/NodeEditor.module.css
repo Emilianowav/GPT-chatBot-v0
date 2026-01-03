@@ -18,7 +18,6 @@
   to { opacity: 1; transform: translateX(0); }
 }
 
-/* Scrollbar personalizado */
 .container::-webkit-scrollbar {
   width: 6px;
 }
@@ -37,7 +36,6 @@
   background: #9ca3af;
 }
 
-/* Header del editor */
 .header {
   display: flex;
   align-items: center;
@@ -124,7 +122,6 @@
   color: #111827;
 }
 
-/* Formulario */
 .form {
   display: flex;
   flex-direction: column;
@@ -188,7 +185,6 @@
   margin: 0;
 }
 
-/* Secciones */
 .section {
   border-top: 1px solid #f3f4f6;
   padding-top: 20px;
@@ -202,7 +198,6 @@
   margin: 0 0 12px 0;
 }
 
-/* Lista de opciones */
 .optionsList {
   display: flex;
   flex-direction: column;
@@ -267,7 +262,6 @@
   transform: translateY(-1px);
 }
 
-/* Checkbox */
 .checkbox {
   display: flex;
   align-items: center;
@@ -297,7 +291,6 @@
   margin: 0;
 }
 
-/* Alert */
 .alert {
   display: flex;
   gap: 12px;
@@ -319,7 +312,6 @@
   margin: 0;
 }
 
-/* Empty state */
 .emptyState {
   text-align: center;
   padding: 40px 20px;

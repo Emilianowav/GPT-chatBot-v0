@@ -59,7 +59,6 @@
   transform: scale(0.95);
 }
 
-/* Tooltip para botón crear */
 .createButton::after {
   content: 'Crear nuevo nodo';
   position: absolute;
@@ -93,7 +92,6 @@
   padding-right: 4px;
 }
 
-/* Scrollbar personalizado */
 .nodesList::-webkit-scrollbar {
   width: 6px;
 }
@@ -113,7 +111,6 @@
   background: #9ca3af;
 }
 
-/* Empty State */
 .emptyState {
   text-align: center;
   padding: 40px 20px;
@@ -149,9 +146,6 @@
   transform: translateY(-1px);
 }
 
-/* ========================================
-   ITEM DE NODO - Con animaciones
-   ======================================== */
 .nodeItem {
   position: relative;
   padding: 12px;
@@ -186,13 +180,23 @@
   background: #dbeafe;
 }
 
+.nodeItemSelected::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 3px;
+  background: #3b82f6;
+  border-radius: 10px 0 0 10px;
+}
+
 .nodeContent {
   display: flex;
   align-items: flex-start;
   gap: 12px;
 }
 
-/* Iconos de nodos con colores y tooltips */
 .nodeIcon {
   width: 36px;
   height: 36px;
@@ -272,7 +276,6 @@
   content: 'Respuesta con IA';
 }
 
-/* Tooltip para iconos */
 .nodeIcon::after {
   position: absolute;
   top: -35px;
@@ -338,7 +341,6 @@
   50% { opacity: 0.6; }
 }
 
-/* Botón eliminar con tooltip */
 .deleteButton {
   opacity: 0;
   width: 28px;
@@ -387,7 +389,6 @@
   transform: translateY(0);
 }
 
-/* ID del nodo */
 .nodeId {
   margin-top: 8px;
   font-size: 10px;
@@ -400,4 +401,8 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.nodeItem:active {
+  transform: scale(0.98);
 }

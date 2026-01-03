@@ -46,7 +46,6 @@
   box-shadow: 0 8px 16px rgba(59, 130, 246, 0.3);
 }
 
-/* Tooltip para el icono */
 .iconBox::after {
   content: 'Sistema de flujos conversacionales';
   position: absolute;
@@ -85,7 +84,6 @@
   font-weight: 400;
 }
 
-/* Botón Crear - Minimal y con tooltip */
 .createButton {
   display: flex;
   align-items: center;
@@ -112,7 +110,6 @@
   transform: translateY(0);
 }
 
-/* Tooltip del botón crear */
 .createButton::before {
   content: 'Crea un nuevo flujo conversacional para tu bot';
   position: absolute;
@@ -292,7 +289,6 @@
   line-height: 1.5;
 }
 
-/* Badges con tooltips */
 .badge {
   padding: 4px 12px;
   border-radius: 12px;
