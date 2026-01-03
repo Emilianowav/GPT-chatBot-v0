@@ -4,6 +4,18 @@ import { useState, useEffect } from 'react';
 import { Plus, Bot, Workflow, Settings, Play, Pause, Trash2, Copy, Edit3 } from 'lucide-react';
 import FlowEditor from '@/components/flows/FlowEditor';
 
+// Agregar keyframes para animación
+if (typeof document !== 'undefined') {
+  const style = document.createElement('style');
+  style.textContent = `
+    @keyframes spin {
+      from { transform: rotate(0deg); }
+      to { transform: rotate(360deg); }
+    }
+  `;
+  document.head.appendChild(style);
+}
+
 interface Flow {
   _id: string;
   empresaId: string;
@@ -120,25 +132,63 @@ export default function FlowsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 p-6">
+    <div style={{ padding: '2rem' }}>
       {/* Header */}
-      <div className="bg-white border border-slate-200 rounded-2xl shadow-sm p-6 mb-6">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <div className="p-3 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl shadow-lg">
-              <Workflow className="w-8 h-8 text-white" />
+      <div style={{ 
+        background: 'white', 
+        border: '1px solid #e2e8f0', 
+        borderRadius: '1rem', 
+        boxShadow: '0 1px 3px 0 rgb(0 0 0 / 0.1)', 
+        padding: '1.5rem',
+        marginBottom: '1.5rem'
+      }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+            <div style={{ 
+              padding: '0.75rem', 
+              background: 'linear-gradient(135deg, #3b82f6 0%, #6366f1 100%)', 
+              borderRadius: '0.75rem',
+              boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)'
+            }}>
+              <Workflow style={{ width: '2rem', height: '2rem', color: 'white' }} />
             </div>
             <div>
-              <h1 className="text-3xl font-bold text-slate-900">Gestión de Flujos</h1>
-              <p className="text-slate-600 mt-1">Administra los flujos conversacionales de tu bot</p>
+              <h1 style={{ fontSize: '1.875rem', fontWeight: 'bold', color: '#0f172a', margin: 0 }}>
+                Gestión de Flujos
+              </h1>
+              <p style={{ color: '#64748b', marginTop: '0.25rem', fontSize: '0.875rem' }}>
+                Administra los flujos conversacionales de tu bot
+              </p>
             </div>
           </div>
           
           <button
             onClick={handleCreateFlow}
-            className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-xl hover:from-blue-700 hover:to-indigo-700 transition-all shadow-lg hover:shadow-xl transform hover:scale-105"
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.5rem',
+              padding: '0.75rem 1.5rem',
+              background: 'linear-gradient(135deg, #3b82f6 0%, #6366f1 100%)',
+              color: 'white',
+              border: 'none',
+              borderRadius: '0.75rem',
+              cursor: 'pointer',
+              fontSize: '0.875rem',
+              fontWeight: '500',
+              boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)',
+              transition: 'all 0.2s'
+            }}
+            onMouseOver={(e) => {
+              e.currentTarget.style.transform = 'scale(1.05)';
+              e.currentTarget.style.boxShadow = '0 10px 15px -3px rgb(0 0 0 / 0.1)';
+            }}
+            onMouseOut={(e) => {
+              e.currentTarget.style.transform = 'scale(1)';
+              e.currentTarget.style.boxShadow = '0 4px 6px -1px rgb(0 0 0 / 0.1)';
+            }}
           >
-            <Plus className="w-5 h-5" />
+            <Plus style={{ width: '1.25rem', height: '1.25rem' }} />
             Crear Flujo
           </button>
         </div>
@@ -147,96 +197,189 @@ export default function FlowsPage() {
       {/* Content */}
       <div>
         {loading ? (
-          <div className="flex items-center justify-center h-64">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '16rem' }}>
+            <div style={{ 
+              width: '3rem', 
+              height: '3rem', 
+              border: '2px solid #e2e8f0',
+              borderTopColor: '#3b82f6',
+              borderRadius: '50%',
+              animation: 'spin 1s linear infinite'
+            }}></div>
           </div>
         ) : flows.length === 0 ? (
-          <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-12 text-center">
-            <div className="inline-flex items-center justify-center w-20 h-20 bg-slate-100 rounded-full mb-6">
-              <Bot className="w-10 h-10 text-slate-400" />
+          <div style={{
+            background: 'white',
+            borderRadius: '1rem',
+            boxShadow: '0 1px 3px 0 rgb(0 0 0 / 0.1)',
+            border: '1px solid #e2e8f0',
+            padding: '3rem',
+            textAlign: 'center'
+          }}>
+            <div style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              width: '5rem',
+              height: '5rem',
+              background: '#f1f5f9',
+              borderRadius: '50%',
+              marginBottom: '1.5rem'
+            }}>
+              <Bot style={{ width: '2.5rem', height: '2.5rem', color: '#94a3b8' }} />
             </div>
-            <h3 className="text-xl font-semibold text-slate-900 mb-2">No hay flujos creados</h3>
-            <p className="text-slate-600 mb-6">Crea tu primer flujo para comenzar</p>
+            <h3 style={{ fontSize: '1.25rem', fontWeight: '600', color: '#0f172a', marginBottom: '0.5rem' }}>
+              No hay flujos creados
+            </h3>
+            <p style={{ color: '#64748b', marginBottom: '1.5rem' }}>
+              Crea tu primer flujo para comenzar
+            </p>
             <button
               onClick={handleCreateFlow}
-              className="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-xl hover:from-blue-700 hover:to-indigo-700 transition-all shadow-lg"
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '0.5rem',
+                padding: '0.75rem 1.5rem',
+                background: 'linear-gradient(135deg, #3b82f6 0%, #6366f1 100%)',
+                color: 'white',
+                border: 'none',
+                borderRadius: '0.75rem',
+                cursor: 'pointer',
+                fontSize: '0.875rem',
+                fontWeight: '500',
+                boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)'
+              }}
             >
-              <Plus className="w-5 h-5" />
+              <Plus style={{ width: '1.25rem', height: '1.25rem' }} />
               Crear Primer Flujo
             </button>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))',
+            gap: '1.5rem'
+          }}>
             {flows.map((flow) => (
               <div
                 key={flow._id}
-                className="bg-white rounded-2xl shadow-md hover:shadow-xl transition-all border border-slate-200 overflow-hidden group"
+                style={{
+                  background: 'white',
+                  borderRadius: '1rem',
+                  boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)',
+                  border: '1px solid #e2e8f0',
+                  overflow: 'hidden',
+                  transition: 'box-shadow 0.2s'
+                }}
+                onMouseOver={(e) => {
+                  e.currentTarget.style.boxShadow = '0 20px 25px -5px rgb(0 0 0 / 0.1)';
+                }}
+                onMouseOut={(e) => {
+                  e.currentTarget.style.boxShadow = '0 4px 6px -1px rgb(0 0 0 / 0.1)';
+                }}
               >
                 {/* Header */}
-                <div className="p-6 border-b border-slate-100">
-                  <div className="flex items-start justify-between mb-3">
-                    <div className="flex-1">
-                      <h3 className="text-lg font-semibold text-slate-900 mb-1">{flow.nombre}</h3>
-                      <p className="text-sm text-slate-600 line-clamp-2">{flow.descripcion || 'Sin descripción'}</p>
+                <div style={{ padding: '1.5rem', borderBottom: '1px solid #f1f5f9' }}>
+                  <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: '0.75rem' }}>
+                    <div style={{ flex: 1 }}>
+                      <h3 style={{ fontSize: '1.125rem', fontWeight: '600', color: '#0f172a', marginBottom: '0.25rem' }}>
+                        {flow.nombre}
+                      </h3>
+                      <p style={{ fontSize: '0.875rem', color: '#64748b', overflow: 'hidden', textOverflow: 'ellipsis', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' }}>
+                        {flow.descripcion || 'Sin descripción'}
+                      </p>
                     </div>
-                    <span className={`px-3 py-1 rounded-full text-xs font-medium ${
-                      flow.activo 
-                        ? 'bg-green-100 text-green-700' 
-                        : 'bg-slate-100 text-slate-600'
-                    }`}>
+                    <span style={{
+                      padding: '0.25rem 0.75rem',
+                      borderRadius: '9999px',
+                      fontSize: '0.75rem',
+                      fontWeight: '500',
+                      background: flow.activo ? '#dcfce7' : '#f1f5f9',
+                      color: flow.activo ? '#15803d' : '#475569'
+                    }}>
                       {flow.activo ? 'Activo' : 'Inactivo'}
                     </span>
                   </div>
                   
-                  <div className="flex items-center gap-4 text-sm text-slate-500">
-                    <span className="flex items-center gap-1">
-                      <Workflow className="w-4 h-4" />
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', fontSize: '0.875rem', color: '#64748b' }}>
+                    <span style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
+                      <Workflow style={{ width: '1rem', height: '1rem' }} />
                       {flow.categoria}
                     </span>
-                    <span className="flex items-center gap-1">
-                      <Settings className="w-4 h-4" />
+                    <span style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
+                      <Settings style={{ width: '1rem', height: '1rem' }} />
                       {flow.startNode}
                     </span>
                   </div>
                 </div>
 
                 {/* Actions */}
-                <div className="p-4 bg-slate-50 flex items-center justify-between">
+                <div style={{ padding: '1rem', background: '#f8fafc', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                   <button
                     onClick={() => handleSelectFlow(flow)}
-                    className="flex items-center gap-2 px-4 py-2 bg-white text-blue-600 rounded-lg hover:bg-blue-50 transition-colors border border-blue-200"
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '0.5rem',
+                      padding: '0.5rem 1rem',
+                      background: 'white',
+                      color: '#3b82f6',
+                      border: '1px solid #bfdbfe',
+                      borderRadius: '0.5rem',
+                      cursor: 'pointer',
+                      fontSize: '0.875rem',
+                      fontWeight: '500'
+                    }}
                   >
-                    <Edit3 className="w-4 h-4" />
+                    <Edit3 style={{ width: '1rem', height: '1rem' }} />
                     Editar
                   </button>
                   
-                  <div className="flex items-center gap-2">
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                     <button
                       onClick={() => handleToggleActive(flow._id, flow.activo)}
-                      className={`p-2 rounded-lg transition-colors ${
-                        flow.activo
-                          ? 'text-green-600 hover:bg-green-50'
-                          : 'text-slate-400 hover:bg-slate-100'
-                      }`}
+                      style={{
+                        padding: '0.5rem',
+                        background: 'transparent',
+                        border: 'none',
+                        borderRadius: '0.5rem',
+                        cursor: 'pointer',
+                        color: flow.activo ? '#16a34a' : '#94a3b8'
+                      }}
                       title={flow.activo ? 'Desactivar' : 'Activar'}
                     >
-                      {flow.activo ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4" />}
+                      {flow.activo ? <Pause style={{ width: '1rem', height: '1rem' }} /> : <Play style={{ width: '1rem', height: '1rem' }} />}
                     </button>
                     
                     <button
                       onClick={() => handleDuplicateFlow(flow)}
-                      className="p-2 text-slate-600 hover:bg-slate-100 rounded-lg transition-colors"
+                      style={{
+                        padding: '0.5rem',
+                        background: 'transparent',
+                        border: 'none',
+                        borderRadius: '0.5rem',
+                        cursor: 'pointer',
+                        color: '#64748b'
+                      }}
                       title="Duplicar"
                     >
-                      <Copy className="w-4 h-4" />
+                      <Copy style={{ width: '1rem', height: '1rem' }} />
                     </button>
                     
                     <button
                       onClick={() => handleDeleteFlow(flow._id)}
-                      className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                      style={{
+                        padding: '0.5rem',
+                        background: 'transparent',
+                        border: 'none',
+                        borderRadius: '0.5rem',
+                        cursor: 'pointer',
+                        color: '#dc2626'
+                      }}
                       title="Eliminar"
                     >
-                      <Trash2 className="w-4 h-4" />
+                      <Trash2 style={{ width: '1rem', height: '1rem' }} />
                     </button>
                   </div>
                 </div>
