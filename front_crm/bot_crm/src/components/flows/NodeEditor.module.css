@@ -1,0 +1,328 @@
+/* ========================================
+   EDITOR DE NODOS - Diseño Minimal
+   ======================================== */
+
+.container {
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+  padding: 24px;
+  height: calc(100vh - 16rem);
+  overflow-y: auto;
+  animation: slideIn 0.3s ease;
+}
+
+@keyframes slideIn {
+  from { opacity: 0; transform: translateX(20px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+/* Scrollbar personalizado */
+.container::-webkit-scrollbar {
+  width: 6px;
+}
+
+.container::-webkit-scrollbar-track {
+  background: #f3f4f6;
+  border-radius: 3px;
+}
+
+.container::-webkit-scrollbar-thumb {
+  background: #d1d5db;
+  border-radius: 3px;
+}
+
+.container::-webkit-scrollbar-thumb:hover {
+  background: #9ca3af;
+}
+
+/* Header del editor */
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 24px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid #f3f4f6;
+}
+
+.title {
+  font-size: 18px;
+  font-weight: 600;
+  color: #111827;
+  margin: 0;
+}
+
+.headerActions {
+  display: flex;
+  gap: 8px;
+}
+
+.saveButton {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  background: #3b82f6;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 500;
+  transition: all 0.2s ease;
+  position: relative;
+}
+
+.saveButton:hover {
+  background: #2563eb;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+}
+
+.saveButton::after {
+  content: 'Guardar cambios del nodo';
+  position: absolute;
+  top: -40px;
+  right: 0;
+  background: #1f2937;
+  color: white;
+  padding: 6px 10px;
+  border-radius: 6px;
+  font-size: 11px;
+  white-space: nowrap;
+  opacity: 0;
+  transform: translateY(5px);
+  transition: all 0.2s ease;
+  pointer-events: none;
+  z-index: 100;
+}
+
+.saveButton:hover::after {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.cancelButton {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  background: #f3f4f6;
+  color: #6b7280;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 500;
+  transition: all 0.2s ease;
+}
+
+.cancelButton:hover {
+  background: #e5e7eb;
+  color: #111827;
+}
+
+/* Formulario */
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.formGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.label {
+  font-size: 13px;
+  font-weight: 600;
+  color: #374151;
+  margin: 0;
+}
+
+.required {
+  color: #ef4444;
+  margin-left: 4px;
+}
+
+.input,
+.textarea,
+.select {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  font-size: 14px;
+  color: #111827;
+  background: #ffffff;
+  transition: all 0.2s ease;
+}
+
+.input:hover,
+.textarea:hover,
+.select:hover {
+  border-color: #9ca3af;
+}
+
+.input:focus,
+.textarea:focus,
+.select:focus {
+  outline: none;
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.textarea {
+  resize: vertical;
+  min-height: 80px;
+  font-family: inherit;
+}
+
+.helpText {
+  font-size: 12px;
+  color: #6b7280;
+  margin: 0;
+}
+
+/* Secciones */
+.section {
+  border-top: 1px solid #f3f4f6;
+  padding-top: 20px;
+  margin-top: 20px;
+}
+
+.sectionTitle {
+  font-size: 14px;
+  font-weight: 600;
+  color: #111827;
+  margin: 0 0 12px 0;
+}
+
+/* Lista de opciones */
+.optionsList {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.optionItem {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 12px;
+  padding: 12px;
+  background: #f9fafb;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  animation: slideIn 0.3s ease;
+}
+
+.optionInputs {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.deleteButton {
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: none;
+  color: #ef4444;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  align-self: flex-start;
+}
+
+.deleteButton:hover {
+  background: #fee2e2;
+  transform: scale(1.1);
+}
+
+.addButton {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  background: #eff6ff;
+  color: #3b82f6;
+  border: 1px solid #bfdbfe;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 500;
+  transition: all 0.2s ease;
+}
+
+.addButton:hover {
+  background: #dbeafe;
+  border-color: #3b82f6;
+  transform: translateY(-1px);
+}
+
+/* Checkbox */
+.checkbox {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px;
+  background: #f9fafb;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.checkbox:hover {
+  background: #f3f4f6;
+}
+
+.checkboxInput {
+  width: 18px;
+  height: 18px;
+  accent-color: #3b82f6;
+  cursor: pointer;
+}
+
+.checkboxLabel {
+  font-size: 14px;
+  font-weight: 500;
+  color: #111827;
+  margin: 0;
+}
+
+/* Alert */
+.alert {
+  display: flex;
+  gap: 12px;
+  padding: 12px;
+  background: #fef3c7;
+  border: 1px solid #fde68a;
+  border-radius: 8px;
+  margin-bottom: 16px;
+}
+
+.alertIcon {
+  color: #f59e0b;
+  flex-shrink: 0;
+}
+
+.alertText {
+  font-size: 13px;
+  color: #92400e;
+  margin: 0;
+}
+
+/* Empty state */
+.emptyState {
+  text-align: center;
+  padding: 40px 20px;
+  color: #9ca3af;
+  font-size: 13px;
+}
