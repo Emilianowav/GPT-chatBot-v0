@@ -3,7 +3,6 @@
 import { useState, useEffect } from 'react';
 import { Plus, Bot, Workflow, Settings, Play, Pause, Trash2, Copy, Edit3 } from 'lucide-react';
 import FlowEditor from '@/components/flows/FlowEditor';
-import FlowList from '@/components/flows/FlowList';
 
 interface Flow {
   _id: string;
@@ -27,7 +26,7 @@ export default function FlowsPage() {
   const [empresaId, setEmpresaId] = useState<string>('');
 
   useEffect(() => {
-    // Obtener empresa del usuario actual
+    // Obtener empresa del usuario actual desde localStorage
     const storedEmpresa = localStorage.getItem('empresaId') || 'Veo Veo';
     setEmpresaId(storedEmpresa);
     loadFlows(storedEmpresa);
@@ -121,40 +120,38 @@ export default function FlowsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 p-6">
       {/* Header */}
-      <div className="bg-white border-b border-slate-200 shadow-sm">
-        <div className="max-w-7xl mx-auto px-6 py-6">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <div className="p-3 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl shadow-lg">
-                <Workflow className="w-8 h-8 text-white" />
-              </div>
-              <div>
-                <h1 className="text-3xl font-bold text-slate-900">Gestión de Flujos</h1>
-                <p className="text-slate-600 mt-1">Administra los flujos conversacionales de tu bot</p>
-              </div>
+      <div className="bg-white border border-slate-200 rounded-2xl shadow-sm p-6 mb-6">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <div className="p-3 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl shadow-lg">
+              <Workflow className="w-8 h-8 text-white" />
             </div>
-            
-            <button
-              onClick={handleCreateFlow}
-              className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-xl hover:from-blue-700 hover:to-indigo-700 transition-all shadow-lg hover:shadow-xl transform hover:scale-105"
-            >
-              <Plus className="w-5 h-5" />
-              Crear Flujo
-            </button>
+            <div>
+              <h1 className="text-3xl font-bold text-slate-900">Gestión de Flujos</h1>
+              <p className="text-slate-600 mt-1">Administra los flujos conversacionales de tu bot</p>
+            </div>
           </div>
+          
+          <button
+            onClick={handleCreateFlow}
+            className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-xl hover:from-blue-700 hover:to-indigo-700 transition-all shadow-lg hover:shadow-xl transform hover:scale-105"
+          >
+            <Plus className="w-5 h-5" />
+            Crear Flujo
+          </button>
         </div>
       </div>
 
       {/* Content */}
-      <div className="max-w-7xl mx-auto px-6 py-8">
+      <div>
         {loading ? (
           <div className="flex items-center justify-center h-64">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
           </div>
         ) : flows.length === 0 ? (
-          <div className="text-center py-16">
+          <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-12 text-center">
             <div className="inline-flex items-center justify-center w-20 h-20 bg-slate-100 rounded-full mb-6">
               <Bot className="w-10 h-10 text-slate-400" />
             </div>
