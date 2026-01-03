@@ -1,6 +1,7 @@
 'use client';
 
 import { Plus, Menu, MessageSquare, GitBranch, Zap, Globe, Brain, Trash2 } from 'lucide-react';
+import styles from './NodeList.module.css';
 
 interface FlowNode {
   _id?: string;
@@ -28,37 +29,27 @@ const nodeTypeIcons: Record<string, any> = {
   gpt: Brain
 };
 
-const nodeTypeColors: Record<string, string> = {
-  menu: 'bg-blue-100 text-blue-700',
-  input: 'bg-green-100 text-green-700',
-  message: 'bg-purple-100 text-purple-700',
-  condition: 'bg-yellow-100 text-yellow-700',
-  action: 'bg-red-100 text-red-700',
-  api_call: 'bg-indigo-100 text-indigo-700',
-  gpt: 'bg-pink-100 text-pink-700'
-};
-
 export default function NodeList({ nodes, selectedNode, onSelectNode, onCreateNode, onDeleteNode }: NodeListProps) {
   return (
-    <div className="bg-white rounded-2xl shadow-lg p-4 h-[calc(100vh-16rem)] flex flex-col">
-      <div className="flex items-center justify-between mb-4">
-        <h3 className="text-lg font-semibold text-slate-900">Nodos</h3>
+    <div className={styles.container}>
+      <div className={styles.header}>
+        <h3 className={styles.title}>Nodos</h3>
         <button
           onClick={onCreateNode}
-          className="p-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+          className={styles.createButton}
           title="Crear nodo"
         >
-          <Plus className="w-4 h-4" />
+          <Plus style={{ width: '1rem', height: '1rem' }} />
         </button>
       </div>
 
-      <div className="flex-1 overflow-y-auto space-y-2">
+      <div className={styles.nodesList}>
         {nodes.length === 0 ? (
-          <div className="text-center py-8">
-            <p className="text-sm text-slate-500">No hay nodos creados</p>
+          <div className={styles.emptyState}>
+            <p className={styles.emptyText}>No hay nodos creados</p>
             <button
               onClick={onCreateNode}
-              className="mt-4 text-sm text-blue-600 hover:text-blue-700 font-medium"
+              className={styles.emptyButton}
             >
               Crear primer nodo
             </button>
@@ -66,32 +57,28 @@ export default function NodeList({ nodes, selectedNode, onSelectNode, onCreateNo
         ) : (
           nodes.map((node) => {
             const Icon = nodeTypeIcons[node.type] || MessageSquare;
-            const colorClass = nodeTypeColors[node.type] || 'bg-slate-100 text-slate-700';
+            const iconClass = `icon${node.type.charAt(0).toUpperCase() + node.type.slice(1).replace('_', '')}`;
             const isSelected = selectedNode?.id === node.id;
 
             return (
               <div
                 key={node.id}
                 onClick={() => onSelectNode(node)}
-                className={`group relative p-3 rounded-lg cursor-pointer transition-all ${
-                  isSelected
-                    ? 'bg-blue-50 border-2 border-blue-500 shadow-md'
-                    : 'bg-slate-50 border-2 border-transparent hover:border-slate-200 hover:shadow-sm'
-                }`}
+                className={`${styles.nodeItem} ${isSelected ? styles.nodeItemSelected : ''}`}
               >
-                <div className="flex items-start gap-3">
-                  <div className={`p-2 rounded-lg ${colorClass}`}>
-                    <Icon className="w-4 h-4" />
+                <div className={styles.nodeContent}>
+                  <div className={`${styles.nodeIcon} ${styles[iconClass]}`}>
+                    <Icon style={{ width: '1rem', height: '1rem' }} />
                   </div>
                   
-                  <div className="flex-1 min-w-0">
-                    <h4 className="text-sm font-medium text-slate-900 truncate">
+                  <div className={styles.nodeInfo}>
+                    <h4 className={styles.nodeName}>
                       {node.name}
                     </h4>
-                    <div className="flex items-center gap-2 mt-1">
-                      <span className="text-xs text-slate-500">{node.type}</span>
+                    <div className={styles.nodeMetadata}>
+                      <span className={styles.nodeType}>{node.type}</span>
                       {!node.activo && (
-                        <span className="text-xs text-red-600">Inactivo</span>
+                        <span className={styles.nodeInactive}>Inactivo</span>
                       )}
                     </div>
                   </div>
@@ -101,14 +88,14 @@ export default function NodeList({ nodes, selectedNode, onSelectNode, onCreateNo
                       e.stopPropagation();
                       if (node._id) onDeleteNode(node._id);
                     }}
-                    className="opacity-0 group-hover:opacity-100 p-1.5 text-red-600 hover:bg-red-50 rounded transition-all"
+                    className={styles.deleteButton}
                     title="Eliminar"
                   >
-                    <Trash2 className="w-3.5 h-3.5" />
+                    <Trash2 style={{ width: '0.875rem', height: '0.875rem' }} />
                   </button>
                 </div>
 
-                <div className="mt-2 text-xs text-slate-600 font-mono bg-white px-2 py-1 rounded">
+                <div className={styles.nodeId}>
                   ID: {node.id}
                 </div>
               </div>
