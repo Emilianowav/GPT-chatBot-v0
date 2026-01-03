@@ -2,19 +2,8 @@
 
 import { useState, useEffect } from 'react';
 import { Plus, Bot, Workflow, Settings, Play, Pause, Trash2, Copy, Edit3 } from 'lucide-react';
+import DashboardLayout from '@/components/DashboardLayout/DashboardLayout';
 import FlowEditor from '@/components/flows/FlowEditor';
-
-// Agregar keyframes para animación
-if (typeof document !== 'undefined') {
-  const style = document.createElement('style');
-  style.textContent = `
-    @keyframes spin {
-      from { transform: rotate(0deg); }
-      to { transform: rotate(360deg); }
-    }
-  `;
-  document.head.appendChild(style);
-}
 
 interface Flow {
   _id: string;
@@ -123,16 +112,18 @@ export default function FlowsPage() {
 
   if (selectedFlow || isCreating) {
     return (
-      <FlowEditor
-        flow={selectedFlow}
-        empresaId={empresaId}
-        onClose={handleCloseEditor}
-      />
+      <DashboardLayout title="Editor de Flujos">
+        <FlowEditor
+          flow={selectedFlow}
+          empresaId={empresaId}
+          onClose={handleCloseEditor}
+        />
+      </DashboardLayout>
     );
   }
 
   return (
-    <div style={{ padding: '2rem' }}>
+    <DashboardLayout title="Gestión de Flujos">
       {/* Header */}
       <div style={{ 
         background: 'white', 
@@ -388,6 +379,6 @@ export default function FlowsPage() {
           </div>
         )}
       </div>
-    </div>
+    </DashboardLayout>
   );
 }
