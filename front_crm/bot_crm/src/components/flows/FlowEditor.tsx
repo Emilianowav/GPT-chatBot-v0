@@ -5,6 +5,7 @@ import { ArrowLeft, Save, Plus, Trash2, Eye, Code, Settings, Zap } from 'lucide-
 import NodeEditor from './NodeEditor';
 import NodeList from './NodeList';
 import FlowVisualizer from './FlowVisualizer';
+import styles from './FlowEditor.module.css';
 
 interface Flow {
   _id?: string;
