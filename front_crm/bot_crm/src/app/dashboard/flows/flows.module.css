@@ -1,264 +1,597 @@
+/* ========================================
+   DISEÑO MINIMAL Y LIMPIO - PÁGINA DE FLUJOS
+   ======================================== */
+
+/* Header Principal */
 .header {
-  background: white;
-  border: 1px solid #e2e8f0;
-  border-radius: 1rem;
-  box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1);
-  padding: 1.5rem;
-  margin-bottom: 1.5rem;
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 24px;
+  margin-bottom: 24px;
+  transition: box-shadow 0.3s ease;
+}
+
+.header:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
 }
 
 .headerContent {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: 16px;
 }
 
 .headerLeft {
   display: flex;
   align-items: center;
-  gap: 1rem;
+  gap: 16px;
 }
 
 .iconBox {
-  padding: 0.75rem;
-  background: linear-gradient(135deg, #3b82f6 0%, #6366f1 100%);
-  border-radius: 0.75rem;
-  box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
-}
-
-.headerInfo h1 {
-  font-size: 1.875rem;
-  font-weight: bold;
-  color: #0f172a;
-  margin: 0;
-}
-
-.headerInfo p {
-  color: #64748b;
-  margin-top: 0.25rem;
-  font-size: 0.875rem;
-}
-
-.createButton {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.75rem 1.5rem;
-  background: linear-gradient(135deg, #3b82f6 0%, #6366f1 100%);
-  color: white;
-  border: none;
-  border-radius: 0.75rem;
-  cursor: pointer;
-  font-size: 0.875rem;
-  font-weight: 500;
-  box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
-  transition: all 0.2s;
-}
-
-.createButton:hover {
-  transform: scale(1.05);
-  box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1);
-}
-
-.loading {
+  width: 48px;
+  height: 48px;
   display: flex;
   align-items: center;
   justify-content: center;
-  height: 16rem;
+  background: #3b82f6;
+  border-radius: 10px;
+  transition: all 0.3s ease;
+  position: relative;
+}
+
+.iconBox:hover {
+  transform: scale(1.05);
+  box-shadow: 0 8px 16px rgba(59, 130, 246, 0.3);
+}
+
+/* Tooltip para el icono */
+.iconBox::after {
+  content: 'Sistema de flujos conversacionales';
+  position: absolute;
+  bottom: -40px;
+  left: 50%;
+  transform: translateX(-50%) scale(0);
+  background: #1f2937;
+  color: white;
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-size: 12px;
+  white-space: nowrap;
+  opacity: 0;
+  transition: all 0.2s ease;
+  pointer-events: none;
+  z-index: 100;
+}
+
+.iconBox:hover::after {
+  transform: translateX(-50%) scale(1);
+  opacity: 1;
+}
+
+.headerInfo h1 {
+  font-size: 24px;
+  font-weight: 600;
+  color: #111827;
+  margin: 0 0 4px 0;
+  letter-spacing: -0.5px;
+}
+
+.headerInfo p {
+  color: #6b7280;
+  margin: 0;
+  font-size: 14px;
+  font-weight: 400;
+}
+
+/* Botón Crear - Minimal y con tooltip */
+.createButton {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 20px;
+  background: #3b82f6;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  position: relative;
+}
+
+.createButton:hover {
+  background: #2563eb;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+}
+
+.createButton:active {
+  transform: translateY(0);
+}
+
+/* Tooltip del botón crear */
+.createButton::before {
+  content: 'Crea un nuevo flujo conversacional para tu bot';
+  position: absolute;
+  bottom: -50px;
+  right: 0;
+  background: #1f2937;
+  color: white;
+  padding: 8px 12px;
+  border-radius: 6px;
+  font-size: 12px;
+  white-space: nowrap;
+  opacity: 0;
+  transform: translateY(-10px);
+  transition: all 0.2s ease;
+  pointer-events: none;
+  z-index: 100;
+}
+
+.createButton:hover::before {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* ========================================
+   LOADING STATE - Animación suave
+   ======================================== */
+.loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 400px;
+  gap: 16px;
 }
 
 .spinner {
-  width: 3rem;
-  height: 3rem;
-  border: 2px solid #e2e8f0;
+  width: 40px;
+  height: 40px;
+  border: 3px solid #e5e7eb;
   border-top-color: #3b82f6;
   border-radius: 50%;
-  animation: spin 1s linear infinite;
+  animation: spin 0.8s linear infinite;
 }
 
 @keyframes spin {
-  from { transform: rotate(0deg); }
   to { transform: rotate(360deg); }
 }
 
+.loading::after {
+  content: 'Cargando flujos...';
+  color: #6b7280;
+  font-size: 14px;
+  animation: pulse 2s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 0.5; }
+  50% { opacity: 1; }
+}
+
+/* ========================================
+   EMPTY STATE - Mensaje amigable
+   ======================================== */
 .emptyState {
-  background: white;
-  border-radius: 1rem;
-  box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1);
-  border: 1px solid #e2e8f0;
-  padding: 3rem;
+  background: #ffffff;
+  border: 2px dashed #e5e7eb;
+  border-radius: 12px;
+  padding: 60px 40px;
   text-align: center;
+  animation: fadeIn 0.5s ease;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
 .emptyIcon {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 5rem;
-  height: 5rem;
-  background: #f1f5f9;
+  width: 80px;
+  height: 80px;
+  background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
   border-radius: 50%;
-  margin-bottom: 1.5rem;
+  margin-bottom: 24px;
+  animation: bounce 2s ease-in-out infinite;
+}
+
+@keyframes bounce {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-10px); }
 }
 
 .emptyState h3 {
-  font-size: 1.25rem;
+  font-size: 20px;
   font-weight: 600;
-  color: #0f172a;
-  margin-bottom: 0.5rem;
+  color: #111827;
+  margin: 0 0 8px 0;
 }
 
 .emptyState p {
-  color: #64748b;
-  margin-bottom: 1.5rem;
+  color: #6b7280;
+  font-size: 14px;
+  margin: 0 0 24px 0;
+  max-width: 400px;
+  margin-left: auto;
+  margin-right: auto;
 }
 
+/* ========================================
+   GRID DE FLUJOS - Responsive y limpio
+   ======================================== */
 .flowsGrid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-  gap: 1.5rem;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 20px;
+  animation: fadeIn 0.5s ease;
 }
 
+/* ========================================
+   CARD DE FLUJO - Diseño minimal
+   ======================================== */
 .flowCard {
-  background: white;
-  border-radius: 1rem;
-  box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
-  border: 1px solid #e2e8f0;
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
   overflow: hidden;
-  transition: box-shadow 0.2s;
+  transition: all 0.3s ease;
+  cursor: pointer;
 }
 
 .flowCard:hover {
-  box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.1);
+  border-color: #3b82f6;
+  box-shadow: 0 8px 24px rgba(59, 130, 246, 0.12);
+  transform: translateY(-4px);
 }
 
 .flowCardHeader {
-  padding: 1.5rem;
-  border-bottom: 1px solid #f1f5f9;
+  padding: 20px;
+  border-bottom: 1px solid #f3f4f6;
 }
 
 .flowCardTop {
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
-  margin-bottom: 0.75rem;
+  gap: 12px;
+  margin-bottom: 12px;
 }
 
 .flowCardInfo {
   flex: 1;
+  min-width: 0;
 }
 
 .flowCardInfo h3 {
-  font-size: 1.125rem;
+  font-size: 16px;
   font-weight: 600;
-  color: #0f172a;
-  margin-bottom: 0.25rem;
+  color: #111827;
+  margin: 0 0 6px 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .flowCardInfo p {
-  font-size: 0.875rem;
-  color: #64748b;
+  font-size: 13px;
+  color: #6b7280;
+  margin: 0;
   overflow: hidden;
   text-overflow: ellipsis;
   display: -webkit-box;
   -webkit-line-clamp: 2;
   line-clamp: 2;
   -webkit-box-orient: vertical;
+  line-height: 1.5;
 }
 
+/* Badges con tooltips */
 .badge {
-  padding: 0.25rem 0.75rem;
-  border-radius: 9999px;
-  font-size: 0.75rem;
-  font-weight: 500;
+  padding: 4px 12px;
+  border-radius: 12px;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  white-space: nowrap;
+  position: relative;
+  transition: all 0.2s ease;
 }
 
 .badgeActive {
-  background: #dcfce7;
-  color: #15803d;
+  background: #d1fae5;
+  color: #065f46;
+}
+
+.badgeActive:hover {
+  background: #a7f3d0;
+}
+
+.badgeActive::after {
+  content: 'Este flujo está activo y respondiendo mensajes';
+  position: absolute;
+  top: -45px;
+  right: 0;
+  background: #1f2937;
+  color: white;
+  padding: 6px 10px;
+  border-radius: 6px;
+  font-size: 11px;
+  white-space: nowrap;
+  opacity: 0;
+  transform: translateY(5px);
+  transition: all 0.2s ease;
+  pointer-events: none;
+  z-index: 100;
+}
+
+.badgeActive:hover::after {
+  opacity: 1;
+  transform: translateY(0);
 }
 
 .badgeInactive {
-  background: #f1f5f9;
-  color: #475569;
+  background: #f3f4f6;
+  color: #6b7280;
+}
+
+.badgeInactive:hover {
+  background: #e5e7eb;
+}
+
+.badgeInactive::after {
+  content: 'Este flujo está desactivado';
+  position: absolute;
+  top: -40px;
+  right: 0;
+  background: #1f2937;
+  color: white;
+  padding: 6px 10px;
+  border-radius: 6px;
+  font-size: 11px;
+  white-space: nowrap;
+  opacity: 0;
+  transform: translateY(5px);
+  transition: all 0.2s ease;
+  pointer-events: none;
+  z-index: 100;
+}
+
+.badgeInactive:hover::after {
+  opacity: 1;
+  transform: translateY(0);
 }
 
 .flowCardMeta {
   display: flex;
   align-items: center;
-  gap: 1rem;
-  font-size: 0.875rem;
-  color: #64748b;
+  gap: 16px;
+  font-size: 12px;
+  color: #9ca3af;
 }
 
 .flowCardMeta span {
   display: flex;
   align-items: center;
-  gap: 0.25rem;
+  gap: 6px;
+  transition: color 0.2s ease;
 }
 
+.flowCardMeta span:hover {
+  color: #3b82f6;
+}
+
+/* ========================================
+   ACCIONES DE CARD - Con tooltips
+   ======================================== */
 .flowCardActions {
-  padding: 1rem;
-  background: #f8fafc;
+  padding: 16px 20px;
+  background: #f9fafb;
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: 12px;
 }
 
 .editButton {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
-  padding: 0.5rem 1rem;
-  background: white;
+  gap: 8px;
+  padding: 8px 16px;
+  background: #ffffff;
   color: #3b82f6;
-  border: 1px solid #bfdbfe;
-  border-radius: 0.5rem;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
   cursor: pointer;
-  font-size: 0.875rem;
+  font-size: 13px;
   font-weight: 500;
-  transition: background 0.2s;
+  transition: all 0.2s ease;
+  position: relative;
 }
 
 .editButton:hover {
   background: #eff6ff;
+  border-color: #3b82f6;
+  transform: translateY(-1px);
+}
+
+.editButton::after {
+  content: 'Editar nodos y configuración del flujo';
+  position: absolute;
+  bottom: -45px;
+  left: 0;
+  background: #1f2937;
+  color: white;
+  padding: 6px 10px;
+  border-radius: 6px;
+  font-size: 11px;
+  white-space: nowrap;
+  opacity: 0;
+  transform: translateY(-5px);
+  transition: all 0.2s ease;
+  pointer-events: none;
+  z-index: 100;
+}
+
+.editButton:hover::after {
+  opacity: 1;
+  transform: translateY(0);
 }
 
 .actionButtons {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
+  gap: 8px;
 }
 
 .actionButton {
-  padding: 0.5rem;
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   background: transparent;
   border: none;
-  border-radius: 0.5rem;
+  border-radius: 8px;
   cursor: pointer;
-  transition: background 0.2s;
+  transition: all 0.2s ease;
+  position: relative;
 }
 
 .actionButton:hover {
-  background: rgba(0, 0, 0, 0.05);
+  background: #ffffff;
+  transform: scale(1.1);
 }
 
 .actionButtonActive {
-  color: #16a34a;
+  color: #10b981;
+}
+
+.actionButtonActive:hover {
+  background: #d1fae5;
+}
+
+.actionButtonActive::after {
+  content: 'Desactivar flujo';
+  position: absolute;
+  bottom: -40px;
+  left: 50%;
+  transform: translateX(-50%) translateY(-5px);
+  background: #1f2937;
+  color: white;
+  padding: 6px 10px;
+  border-radius: 6px;
+  font-size: 11px;
+  white-space: nowrap;
+  opacity: 0;
+  transition: all 0.2s ease;
+  pointer-events: none;
+  z-index: 100;
+}
+
+.actionButtonActive:hover::after {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
 }
 
 .actionButtonInactive {
-  color: #94a3b8;
+  color: #9ca3af;
+}
+
+.actionButtonInactive:hover {
+  background: #f3f4f6;
+}
+
+.actionButtonInactive::after {
+  content: 'Activar flujo';
+  position: absolute;
+  bottom: -40px;
+  left: 50%;
+  transform: translateX(-50%) translateY(-5px);
+  background: #1f2937;
+  color: white;
+  padding: 6px 10px;
+  border-radius: 6px;
+  font-size: 11px;
+  white-space: nowrap;
+  opacity: 0;
+  transition: all 0.2s ease;
+  pointer-events: none;
+  z-index: 100;
+}
+
+.actionButtonInactive:hover::after {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
 }
 
 .actionButtonDuplicate {
-  color: #64748b;
+  color: #6b7280;
+}
+
+.actionButtonDuplicate:hover {
+  background: #f3f4f6;
+  color: #3b82f6;
+}
+
+.actionButtonDuplicate::after {
+  content: 'Duplicar flujo';
+  position: absolute;
+  bottom: -40px;
+  left: 50%;
+  transform: translateX(-50%) translateY(-5px);
+  background: #1f2937;
+  color: white;
+  padding: 6px 10px;
+  border-radius: 6px;
+  font-size: 11px;
+  white-space: nowrap;
+  opacity: 0;
+  transition: all 0.2s ease;
+  pointer-events: none;
+  z-index: 100;
+}
+
+.actionButtonDuplicate:hover::after {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
 }
 
 .actionButtonDelete {
-  color: #dc2626;
+  color: #ef4444;
 }
 
 .actionButtonDelete:hover {
-  background: #fef2f2;
+  background: #fee2e2;
+  transform: scale(1.15);
+}
+
+.actionButtonDelete::after {
+  content: 'Eliminar flujo permanentemente';
+  position: absolute;
+  bottom: -40px;
+  right: 0;
+  transform: translateY(-5px);
+  background: #1f2937;
+  color: white;
+  padding: 6px 10px;
+  border-radius: 6px;
+  font-size: 11px;
+  white-space: nowrap;
+  opacity: 0;
+  transition: all 0.2s ease;
+  pointer-events: none;
+  z-index: 100;
+}
+
+.actionButtonDelete:hover::after {
+  opacity: 1;
+  transform: translateY(0);
 }
