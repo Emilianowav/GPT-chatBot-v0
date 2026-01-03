@@ -243,14 +243,86 @@
 
 .clienteAgente {
   display: flex;
-  align-items: center;
-  gap: 10px;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 300px;
 }
 
 .clienteAgente label {
   font-size: 0.8125rem;
   color: #6b7280;
-  white-space: nowrap;
+  font-weight: 500;
+}
+
+.agentesLista {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  min-height: 32px;
+  align-items: center;
+}
+
+.agenteChip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: #eff6ff;
+  border: 1px solid #bfdbfe;
+  color: #1e40af;
+  padding: 4px 8px 4px 10px;
+  border-radius: 6px;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  transition: all 0.2s;
+}
+
+.agenteChip:hover {
+  background: #dbeafe;
+  border-color: #93c5fd;
+}
+
+.btnRemover {
+  background: none;
+  border: none;
+  color: #3b82f6;
+  font-size: 1.25rem;
+  line-height: 1;
+  cursor: pointer;
+  padding: 0;
+  width: 18px;
+  height: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 3px;
+  transition: all 0.2s;
+}
+
+.btnRemover:hover {
+  background: #3b82f6;
+  color: white;
+}
+
+.btnRemover:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.sinAgentes {
+  font-size: 0.8125rem;
+  color: #9ca3af;
+  font-style: italic;
+}
+
+.selectAgregar {
+  padding: 8px 32px 8px 12px;
+  font-size: 0.875rem;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  background: #fff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%236b7280' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E") no-repeat right 10px center;
+  appearance: none;
+  cursor: pointer;
+  transition: all 0.2s;
 }
 
 .clienteAgente select {
@@ -265,23 +337,17 @@
   transition: all 0.2s;
 }
 
-.clienteAgente select:hover {
+.selectAgregar:hover {
   border-color: #9ca3af;
 }
 
-.clienteAgente select:focus {
+.selectAgregar:focus {
   outline: none;
   border-color: #3b82f6;
   box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
 }
 
-.clienteAgente select.sinAsignar {
-  color: #92400e;
-  background-color: #fffbeb;
-  border-color: #fcd34d;
-}
-
-.clienteAgente select:disabled {
+.selectAgregar:disabled {
   opacity: 0.6;
   cursor: not-allowed;
 }
@@ -357,9 +423,10 @@
 
   .clienteAgente {
     width: 100%;
+    min-width: auto;
   }
 
-  .clienteAgente select {
-    flex: 1;
+  .selectAgregar {
+    width: 100%;
   }
 }

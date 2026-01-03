@@ -24,7 +24,7 @@ export interface Cliente {
   dni?: string;
   notas?: string;
   sector?: string;
-  agenteAsignado?: string;
+  agentesAsignados: string[];
   origen: 'chatbot' | 'manual';
   chatbotUserId?: string;
   activo: boolean;
@@ -159,21 +159,64 @@ export async function eliminarCliente(clienteId: string): Promise<void> {
 }
 
 /**
- * Asignar o desasignar un agente a un cliente
+ * Agregar un agente a un cliente
  */
-export async function asignarAgente(
+export async function agregarAgente(
   clienteId: string,
-  agenteId: string | null
+  agenteId: string
 ): Promise<Cliente> {
-  const response = await fetch(`${API_BASE_URL}/api/clientes/${clienteId}/agente`, {
-    method: 'PATCH',
+  const response = await fetch(`${API_BASE_URL}/api/clientes/${clienteId}/agentes`, {
+    method: 'POST',
     headers: getHeaders(),
     body: JSON.stringify({ agenteId })
   });
 
   if (!response.ok) {
     const error = await response.json();
-    throw new Error(error.message || 'Error al asignar agente');
+    throw new Error(error.message || 'Error al agregar agente');
+  }
+
+  const result = await response.json();
+  return result.cliente;
+}
+
+/**
+ * Remover un agente de un cliente
+ */
+export async function removerAgente(
+  clienteId: string,
+  agenteId: string
+): Promise<Cliente> {
+  const response = await fetch(`${API_BASE_URL}/api/clientes/${clienteId}/agentes/${agenteId}`, {
+    method: 'DELETE',
+    headers: getHeaders()
+  });
+
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.message || 'Error al remover agente');
+  }
+
+  const result = await response.json();
+  return result.cliente;
+}
+
+/**
+ * Reemplazar todos los agentes de un cliente
+ */
+export async function reemplazarAgentes(
+  clienteId: string,
+  agentesIds: string[]
+): Promise<Cliente> {
+  const response = await fetch(`${API_BASE_URL}/api/clientes/${clienteId}/agentes`, {
+    method: 'PUT',
+    headers: getHeaders(),
+    body: JSON.stringify({ agentesIds })
+  });
+
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.message || 'Error al reemplazar agentes');
   }
 
   const result = await response.json();

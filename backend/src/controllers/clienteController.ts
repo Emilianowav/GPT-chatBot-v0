@@ -254,10 +254,10 @@ export const eliminarCliente = async (req: Request, res: Response): Promise<void
 }
 
 /**
- * PATCH /api/clientes/:id/agente
- * Asignar o desasignar un agente a un cliente
+ * POST /api/clientes/:id/agentes
+ * Agregar un agente a un cliente
  */
-export const asignarAgente = async (req: Request, res: Response): Promise<void> => {
+export const agregarAgente = async (req: Request, res: Response): Promise<void> => {
   try {
     const empresaId = (req as any).user?.empresaId;
     if (!empresaId) {
@@ -271,30 +271,123 @@ export const asignarAgente = async (req: Request, res: Response): Promise<void> 
     const { id } = req.params;
     const { agenteId } = req.body;
 
-    // Si se proporciona agenteId, verificar que el agente existe y pertenece a la empresa
-    if (agenteId) {
+    if (!agenteId) {
+      res.status(400).json({
+        success: false,
+        message: 'agenteId es requerido'
+      });
+      return;
+    }
+
+    // Verificar que el agente existe y pertenece a la empresa
+    const agente = await AgenteModel.findOne({ _id: agenteId, empresaId });
+    if (!agente) {
+      res.status(404).json({
+        success: false,
+        message: 'Agente no encontrado'
+      });
+      return;
+    }
+
+    const cliente = await clienteService.agregarAgente(id, empresaId, agenteId);
+
+    res.json({
+      success: true,
+      cliente,
+      message: 'Agente agregado correctamente'
+    });
+  } catch (error: any) {
+    console.error('Error al agregar agente:', error);
+    res.status(400).json({
+      success: false,
+      message: error.message || 'Error al agregar agente'
+    });
+  }
+}
+
+/**
+ * DELETE /api/clientes/:id/agentes/:agenteId
+ * Remover un agente de un cliente
+ */
+export const removerAgente = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const empresaId = (req as any).user?.empresaId;
+    if (!empresaId) {
+      res.status(401).json({
+        success: false,
+        message: 'No autenticado'
+      });
+      return;
+    }
+
+    const { id, agenteId } = req.params;
+
+    const cliente = await clienteService.removerAgente(id, empresaId, agenteId);
+
+    res.json({
+      success: true,
+      cliente,
+      message: 'Agente removido correctamente'
+    });
+  } catch (error: any) {
+    console.error('Error al remover agente:', error);
+    res.status(400).json({
+      success: false,
+      message: error.message || 'Error al remover agente'
+    });
+  }
+}
+
+/**
+ * PUT /api/clientes/:id/agentes
+ * Reemplazar todos los agentes de un cliente
+ */
+export const reemplazarAgentes = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const empresaId = (req as any).user?.empresaId;
+    if (!empresaId) {
+      res.status(401).json({
+        success: false,
+        message: 'No autenticado'
+      });
+      return;
+    }
+
+    const { id } = req.params;
+    const { agentesIds } = req.body;
+
+    if (!Array.isArray(agentesIds)) {
+      res.status(400).json({
+        success: false,
+        message: 'agentesIds debe ser un array'
+      });
+      return;
+    }
+
+    // Verificar que todos los agentes existen y pertenecen a la empresa
+    for (const agenteId of agentesIds) {
       const agente = await AgenteModel.findOne({ _id: agenteId, empresaId });
       if (!agente) {
         res.status(404).json({
           success: false,
-          message: 'Agente no encontrado'
+          message: `Agente ${agenteId} no encontrado`
         });
         return;
       }
     }
 
-    const cliente = await clienteService.asignarAgente(id, empresaId, agenteId || null);
+    const cliente = await clienteService.reemplazarAgentes(id, empresaId, agentesIds);
 
     res.json({
       success: true,
       cliente,
-      message: agenteId ? 'Agente asignado correctamente' : 'Agente desasignado correctamente'
+      message: 'Agentes actualizados correctamente'
     });
   } catch (error: any) {
-    console.error('Error al asignar agente:', error);
+    console.error('Error al reemplazar agentes:', error);
     res.status(400).json({
       success: false,
-      message: error.message || 'Error al asignar agente'
+      message: error.message || 'Error al reemplazar agentes'
     });
   }
 }

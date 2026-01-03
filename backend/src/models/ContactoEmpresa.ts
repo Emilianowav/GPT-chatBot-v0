@@ -69,7 +69,7 @@ export interface IContactoEmpresa extends Document {
   fechaNacimiento?: Date;
   dni?: string;
   sector?: string;                // Sector asignado
-  agenteAsignado?: mongoose.Types.ObjectId; // Agente vinculado (opcional)
+  agentesAsignados: mongoose.Types.ObjectId[]; // Agentes vinculados (múltiples)
   notas?: string;
   
   // Origen y tracking
@@ -165,10 +165,10 @@ const ContactoEmpresaSchema = new Schema<IContactoEmpresa>({
     type: String,
     trim: true
   },
-  agenteAsignado: {
-    type: Schema.Types.ObjectId,
+  agentesAsignados: {
+    type: [Schema.Types.ObjectId],
     ref: 'Agente',
-    required: false
+    default: []
   },
   notas: {
     type: String
@@ -308,7 +308,7 @@ ContactoEmpresaSchema.index({ empresaId: 1, telefono: 1 });
 ContactoEmpresaSchema.index({ empresaId: 1, email: 1 });
 ContactoEmpresaSchema.index({ empresaId: 1, activo: 1 });
 ContactoEmpresaSchema.index({ empresaId: 1, sector: 1 });
-ContactoEmpresaSchema.index({ empresaId: 1, agenteAsignado: 1 });
+ContactoEmpresaSchema.index({ empresaId: 1, agentesAsignados: 1 });
 ContactoEmpresaSchema.index({ 'metricas.ultimaInteraccion': 1 });
 
 // Middleware para actualizar fecha de modificación

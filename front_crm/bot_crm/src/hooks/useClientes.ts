@@ -72,14 +72,48 @@ export function useClientes(soloActivos: boolean = false) {
     }
   }, [cargarClientes]);
 
-  const asignarAgente = useCallback(async (
+  const agregarAgente = useCallback(async (
     clienteId: string,
-    agenteId: string | null
+    agenteId: string
   ) => {
     try {
       setLoading(true);
       setError(null);
-      await clientesApi.asignarAgente(clienteId, agenteId);
+      await clientesApi.agregarAgente(clienteId, agenteId);
+      await cargarClientes();
+    } catch (err: any) {
+      setError(err.message);
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  }, [cargarClientes]);
+
+  const removerAgente = useCallback(async (
+    clienteId: string,
+    agenteId: string
+  ) => {
+    try {
+      setLoading(true);
+      setError(null);
+      await clientesApi.removerAgente(clienteId, agenteId);
+      await cargarClientes();
+    } catch (err: any) {
+      setError(err.message);
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  }, [cargarClientes]);
+
+  const reemplazarAgentes = useCallback(async (
+    clienteId: string,
+    agentesIds: string[]
+  ) => {
+    try {
+      setLoading(true);
+      setError(null);
+      await clientesApi.reemplazarAgentes(clienteId, agentesIds);
       await cargarClientes();
     } catch (err: any) {
       setError(err.message);
@@ -97,7 +131,9 @@ export function useClientes(soloActivos: boolean = false) {
     crearCliente,
     actualizarCliente,
     eliminarCliente,
-    asignarAgente
+    agregarAgente,
+    removerAgente,
+    reemplazarAgentes
   };
 }
 

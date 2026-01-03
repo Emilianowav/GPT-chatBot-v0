@@ -210,17 +210,58 @@ export async function buscarClientes(
 }
 
 /**
- * Asignar un agente a un cliente
+ * Agregar un agente a un cliente
  */
-export async function asignarAgente(
+export async function agregarAgente(
   clienteId: string,
   empresaId: string,
-  agenteId: string | null
+  agenteId: string
 ): Promise<IContactoEmpresa> {
   const cliente = await ContactoEmpresaModel.findOne({ _id: clienteId, empresaId });
   if (!cliente) throw new Error('Cliente no encontrado');
 
-  cliente.agenteAsignado = agenteId ? agenteId as any : undefined;
+  // Verificar si el agente ya está asignado
+  if (cliente.agentesAsignados.some(id => id.toString() === agenteId)) {
+    throw new Error('El agente ya está asignado a este cliente');
+  }
+
+  cliente.agentesAsignados.push(agenteId as any);
+  await cliente.save();
+
+  return cliente;
+}
+
+/**
+ * Remover un agente de un cliente
+ */
+export async function removerAgente(
+  clienteId: string,
+  empresaId: string,
+  agenteId: string
+): Promise<IContactoEmpresa> {
+  const cliente = await ContactoEmpresaModel.findOne({ _id: clienteId, empresaId });
+  if (!cliente) throw new Error('Cliente no encontrado');
+
+  cliente.agentesAsignados = cliente.agentesAsignados.filter(
+    id => id.toString() !== agenteId
+  ) as any;
+  await cliente.save();
+
+  return cliente;
+}
+
+/**
+ * Reemplazar todos los agentes de un cliente
+ */
+export async function reemplazarAgentes(
+  clienteId: string,
+  empresaId: string,
+  agentesIds: string[]
+): Promise<IContactoEmpresa> {
+  const cliente = await ContactoEmpresaModel.findOne({ _id: clienteId, empresaId });
+  if (!cliente) throw new Error('Cliente no encontrado');
+
+  cliente.agentesAsignados = agentesIds as any;
   await cliente.save();
 
   return cliente;
@@ -235,7 +276,7 @@ export async function obtenerClientesPorAgente(
 ): Promise<IContactoEmpresa[]> {
   return await ContactoEmpresaModel.find({
     empresaId,
-    agenteAsignado: agenteId,
+    agentesAsignados: agenteId,
     activo: true
   }).sort({ apellido: 1, nombre: 1 });
 }
@@ -249,8 +290,8 @@ export async function obtenerClientesSinAgente(
   return await ContactoEmpresaModel.find({
     empresaId,
     $or: [
-      { agenteAsignado: null },
-      { agenteAsignado: { $exists: false } }
+      { agentesAsignados: { $size: 0 } },
+      { agentesAsignados: { $exists: false } }
     ],
     activo: true
   }).sort({ apellido: 1, nombre: 1 });

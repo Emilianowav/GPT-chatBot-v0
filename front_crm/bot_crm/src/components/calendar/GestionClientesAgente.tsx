@@ -26,14 +26,14 @@ export default function GestionClientesAgente({ onClose }: GestionClientesAgente
 
     // Filtrar por vista
     if (vistaActiva === 'asignados') {
-      resultado = resultado.filter(c => c.agenteAsignado);
+      resultado = resultado.filter(c => c.agentesAsignados && c.agentesAsignados.length > 0);
     } else if (vistaActiva === 'sin-asignar') {
-      resultado = resultado.filter(c => !c.agenteAsignado);
+      resultado = resultado.filter(c => !c.agentesAsignados || c.agentesAsignados.length === 0);
     }
 
     // Filtrar por agente seleccionado
     if (agenteSeleccionado) {
-      resultado = resultado.filter(c => c.agenteAsignado === agenteSeleccionado);
+      resultado = resultado.filter(c => c.agentesAsignados && c.agentesAsignados.includes(agenteSeleccionado));
     }
 
     // Filtrar por búsqueda
@@ -51,28 +51,49 @@ export default function GestionClientesAgente({ onClose }: GestionClientesAgente
   }, [clientes, vistaActiva, agenteSeleccionado, busqueda]);
 
   // Obtener nombre del agente por ID
-  const getNombreAgente = (agenteId: string | undefined) => {
-    if (!agenteId) return 'Sin asignar';
+  const getNombreAgente = (agenteId: string) => {
     const agente = agentes.find(a => a._id === agenteId);
     return agente ? `${agente.nombre} ${agente.apellido}` : 'Desconocido';
   };
 
-  // Asignar agente a cliente
-  const handleAsignarAgente = async (clienteId: string, agenteId: string | null) => {
+  // Agregar agente a cliente
+  const handleAgregarAgente = async (clienteId: string, agenteId: string) => {
     try {
       setGuardando(true);
       setMensaje(null);
-      await clientesApi.asignarAgente(clienteId, agenteId);
+      await clientesApi.agregarAgente(clienteId, agenteId);
       await recargarClientes();
       setMensaje({
         tipo: 'success',
-        texto: agenteId ? 'Agente asignado correctamente' : 'Agente desasignado correctamente'
+        texto: 'Agente agregado correctamente'
       });
       setTimeout(() => setMensaje(null), 3000);
     } catch (error: any) {
       setMensaje({
         tipo: 'error',
-        texto: error.message || 'Error al asignar agente'
+        texto: error.message || 'Error al agregar agente'
+      });
+    } finally {
+      setGuardando(false);
+    }
+  };
+
+  // Remover agente de cliente
+  const handleRemoverAgente = async (clienteId: string, agenteId: string) => {
+    try {
+      setGuardando(true);
+      setMensaje(null);
+      await clientesApi.removerAgente(clienteId, agenteId);
+      await recargarClientes();
+      setMensaje({
+        tipo: 'success',
+        texto: 'Agente removido correctamente'
+      });
+      setTimeout(() => setMensaje(null), 3000);
+    } catch (error: any) {
+      setMensaje({
+        tipo: 'error',
+        texto: error.message || 'Error al remover agente'
       });
     } finally {
       setGuardando(false);
@@ -81,10 +102,10 @@ export default function GestionClientesAgente({ onClose }: GestionClientesAgente
 
   // Contar clientes por agente
   const contarClientesPorAgente = (agenteId: string) => {
-    return clientes.filter(c => c.agenteAsignado === agenteId).length;
+    return clientes.filter(c => c.agentesAsignados && c.agentesAsignados.includes(agenteId)).length;
   };
 
-  const clientesSinAgente = clientes.filter(c => !c.agenteAsignado).length;
+  const clientesSinAgente = clientes.filter(c => !c.agentesAsignados || c.agentesAsignados.length === 0).length;
 
   if (loadingAgentes || loadingClientes) {
     return (
@@ -215,19 +236,44 @@ export default function GestionClientesAgente({ onClose }: GestionClientesAgente
                   </div>
                   
                   <div className={styles.clienteAgente}>
-                    <label>Agente asignado:</label>
+                    <label>Agentes asignados:</label>
+                    <div className={styles.agentesLista}>
+                      {cliente.agentesAsignados && cliente.agentesAsignados.length > 0 ? (
+                        cliente.agentesAsignados.map(agenteId => (
+                          <div key={agenteId} className={styles.agenteChip}>
+                            <span>{getNombreAgente(agenteId)}</span>
+                            <button
+                              onClick={() => handleRemoverAgente(cliente._id, agenteId)}
+                              disabled={guardando}
+                              className={styles.btnRemover}
+                              title="Remover agente"
+                            >
+                              ×
+                            </button>
+                          </div>
+                        ))
+                      ) : (
+                        <span className={styles.sinAgentes}>Sin agentes asignados</span>
+                      )}
+                    </div>
                     <select
-                      value={cliente.agenteAsignado || ''}
-                      onChange={(e) => handleAsignarAgente(cliente._id, e.target.value || null)}
+                      onChange={(e) => {
+                        if (e.target.value) {
+                          handleAgregarAgente(cliente._id, e.target.value);
+                          e.target.value = '';
+                        }
+                      }}
                       disabled={guardando}
-                      className={!cliente.agenteAsignado ? styles.sinAsignar : ''}
+                      className={styles.selectAgregar}
                     >
-                      <option value="">Sin asignar</option>
-                      {agentes.map(agente => (
-                        <option key={agente._id} value={agente._id}>
-                          {agente.nombre} {agente.apellido}
-                        </option>
-                      ))}
+                      <option value="">+ Agregar agente</option>
+                      {agentes
+                        .filter(agente => !cliente.agentesAsignados || !cliente.agentesAsignados.includes(agente._id))
+                        .map(agente => (
+                          <option key={agente._id} value={agente._id}>
+                            {agente.nombre} {agente.apellido}
+                          </option>
+                        ))}
                     </select>
                   </div>
                 </div>

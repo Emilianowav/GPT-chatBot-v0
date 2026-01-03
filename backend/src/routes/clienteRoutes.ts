@@ -8,7 +8,9 @@ import {
   obtenerClientePorId,
   actualizarCliente,
   eliminarCliente,
-  asignarAgente,
+  agregarAgente,
+  removerAgente,
+  reemplazarAgentes,
   obtenerClientesPorAgente,
   obtenerClientesSinAgente
 } from '../controllers/clienteController.js';
@@ -36,8 +38,14 @@ router.post('/', authenticate, crearCliente);
 // PATCH /api/clientes/:id - Actualizar un cliente
 router.patch('/:id', authenticate, actualizarCliente);
 
-// PATCH /api/clientes/:id/agente - Asignar o desasignar agente
-router.patch('/:id/agente', authenticate, asignarAgente);
+// POST /api/clientes/:id/agentes - Agregar un agente a un cliente
+router.post('/:id/agentes', authenticate, agregarAgente);
+
+// PUT /api/clientes/:id/agentes - Reemplazar todos los agentes de un cliente
+router.put('/:id/agentes', authenticate, reemplazarAgentes);
+
+// DELETE /api/clientes/:id/agentes/:agenteId - Remover un agente de un cliente
+router.delete('/:id/agentes/:agenteId', authenticate, removerAgente);
 
 // DELETE /api/clientes/:id - Eliminar un cliente
 router.delete('/:id', authenticate, eliminarCliente);
