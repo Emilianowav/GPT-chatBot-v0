@@ -427,7 +427,7 @@ export default function FlowBuilderPage() {
             Ejecutar
           </button>
         </div>
-      </div>
+        </div>
 
         <div className={styles.content}>
           <div className={styles.canvas}>
