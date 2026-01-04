@@ -4,24 +4,15 @@
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(0, 0, 0, 0.6);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 1001;
-  animation: fadeIn 0.2s ease;
-}
-
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
-  }
+  z-index: 1002;
+  pointer-events: none;
 }
 
 .modal {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%) translateX(40px) translateY(40px);
   background: white;
   border-radius: 8px;
   width: 90%;
@@ -29,18 +20,20 @@
   max-height: 85vh;
   display: flex;
   flex-direction: column;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
-  animation: scaleIn 0.2s ease;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
+  animation: slideIn 0.2s ease;
   overflow: hidden;
+  pointer-events: auto;
+  z-index: 1002;
 }
 
-@keyframes scaleIn {
+@keyframes slideIn {
   from {
-    transform: scale(0.95);
+    transform: translate(-50%, -50%) translateX(40px) translateY(40px) scale(0.95);
     opacity: 0;
   }
   to {
-    transform: scale(1);
+    transform: translate(-50%, -50%) translateX(40px) translateY(40px) scale(1);
     opacity: 1;
   }
 }

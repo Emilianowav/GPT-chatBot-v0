@@ -52,8 +52,8 @@ export default function WebhookSetupModal({ appName, onComplete, onClose }: Webh
   };
 
   return (
-    <div className={styles.overlay} onClick={onClose}>
-      <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
+    <div className={styles.overlay}>
+      <div className={styles.modal}>
         {/* Header con barra verde */}
         <div className={styles.headerBar}></div>
         
