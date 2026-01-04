@@ -181,7 +181,8 @@ function DynamicHandleNode({ id, data, selected }: NodeProps) {
       {/* Handles dinámicos que giran alrededor del nodo */}
       {dynamicHandles.map((handle) => {
         // Calcular posición en el círculo usando el ángulo
-        const radius = 50; // Radio desde el centro
+        // Radio del círculo (40px) + mitad del handle (10px) = 50px
+        const radius = 50;
         const x = Math.cos(handle.angle) * radius;
         const y = Math.sin(handle.angle) * radius;
 
