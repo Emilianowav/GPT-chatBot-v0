@@ -201,3 +201,148 @@
 .content::-webkit-scrollbar-thumb:hover {
   background: #3d3d54;
 }
+
+/* Webhook Section */
+.webhookSection {
+  margin-bottom: 20px;
+}
+
+.webhookHeader {
+  display: flex;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.webhookLabel {
+  color: #e5e5e5;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.webhookRequired {
+  color: #ef4444;
+  margin-left: 4px;
+  font-size: 14px;
+}
+
+.createWebhookBtn {
+  width: 100%;
+  background: #25D366;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  padding: 12px 20px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+  margin-bottom: 12px;
+}
+
+.createWebhookBtn:hover {
+  background: #20b858;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(37, 211, 102, 0.3);
+}
+
+.webhookInfo {
+  color: #888;
+  font-size: 13px;
+  line-height: 1.5;
+  margin: 0;
+}
+
+.link {
+  color: #8b5cf6;
+  text-decoration: none;
+  transition: color 0.2s;
+}
+
+.link:hover {
+  color: #a78bfa;
+  text-decoration: underline;
+}
+
+.webhookCreated {
+  background: #0f0f1e;
+  border: 1px solid #2d2d44;
+  border-radius: 8px;
+  padding: 16px;
+}
+
+.webhookUrlBox {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: #1a1a2e;
+  border: 1px solid #2d2d44;
+  border-radius: 6px;
+  padding: 10px 12px;
+  margin-bottom: 16px;
+}
+
+.webhookUrl {
+  flex: 1;
+  color: #25D366;
+  font-size: 13px;
+  font-family: 'Courier New', monospace;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.copyBtn {
+  background: transparent;
+  border: none;
+  color: #888;
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 16px;
+  transition: all 0.2s;
+}
+
+.copyBtn:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: #fff;
+}
+
+.webhookInstructions {
+  color: #e5e5e5;
+}
+
+.webhookInstructions h4 {
+  margin: 0 0 12px 0;
+  font-size: 14px;
+  font-weight: 600;
+  color: #fff;
+}
+
+.webhookInstructions ol {
+  margin: 0;
+  padding-left: 20px;
+  color: #888;
+  font-size: 13px;
+  line-height: 1.8;
+}
+
+.webhookInstructions li {
+  margin-bottom: 6px;
+}
+
+.webhookInstructions code {
+  background: #1a1a2e;
+  color: #25D366;
+  padding: 2px 6px;
+  border-radius: 3px;
+  font-size: 12px;
+  font-family: 'Courier New', monospace;
+}
+
+.webhookInstructions strong {
+  color: #fff;
+  font-weight: 600;
+}
