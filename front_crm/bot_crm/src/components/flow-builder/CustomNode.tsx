@@ -90,21 +90,13 @@ const nodeColors: Record<string, string> = {
 };
 
 function CustomNode({ data, selected }: NodeProps) {
-  // Si tiene appName, usar icono y color de la app
   const AppIcon = data.appName ? appIcons[data.appName] : null;
   const Icon = AppIcon || nodeIcons[data.type] || MessageSquare;
   const color = data.appName ? (appColors[data.appName] || '#6366f1') : (nodeColors[data.type] || '#6366f1');
 
   return (
-    <div className={styles.nodeWrapper}>
-      <Handle
-        type="target"
-        position={Position.Top}
-        className={styles.handleTop}
-        style={{ background: color, borderColor: '#f5f5f7' }}
-      />
-      
-      {/* Nodo circular estilo Make */}
+    <div className={styles.nodeContainer}>
+      {/* Círculo principal del nodo */}
       <div 
         className={`${styles.nodeCircle} ${selected ? styles.selected : ''}`}
         style={{ 
@@ -115,6 +107,90 @@ function CustomNode({ data, selected }: NodeProps) {
       >
         {AppIcon ? <AppIcon /> : <Icon size={32} color="white" strokeWidth={2} />}
       </div>
+
+      {/* Handles dinámicos alrededor del círculo */}
+      {/* Handle TOP - Entrada */}
+      <Handle
+        type="target"
+        position={Position.Top}
+        id="top"
+        className={styles.handleDynamic}
+        style={{ 
+          background: color,
+          top: '-5px',
+          left: '50%',
+          transform: 'translateX(-50%)'
+        }}
+      />
+
+      {/* Handle LEFT - Entrada lateral */}
+      <Handle
+        type="target"
+        position={Position.Left}
+        id="left"
+        className={styles.handleDynamic}
+        style={{ 
+          background: color,
+          left: '-5px',
+          top: '50%',
+          transform: 'translateY(-50%)'
+        }}
+      />
+
+      {/* Handle RIGHT - Salida lateral */}
+      <Handle
+        type="source"
+        position={Position.Right}
+        id="right"
+        className={styles.handleDynamic}
+        style={{ 
+          background: color,
+          right: '-5px',
+          top: '50%',
+          transform: 'translateY(-50%)'
+        }}
+      />
+
+      {/* Handle BOTTOM - Salida principal */}
+      <Handle
+        type="source"
+        position={Position.Bottom}
+        id="bottom"
+        className={styles.handleDynamic}
+        style={{ 
+          background: color,
+          bottom: '-5px',
+          left: '50%',
+          transform: 'translateX(-50%)'
+        }}
+      />
+
+      {/* Botón + para agregar (lado derecho, fuera del círculo) */}
+      <button 
+        className={styles.addButtonDynamic}
+        title="Agregar módulo"
+        style={{ 
+          background: color,
+          right: '-45px',
+          top: '50%',
+          transform: 'translateY(-50%)'
+        }}
+      >
+        <Plus size={16} color="white" strokeWidth={3} />
+      </button>
+
+      {/* Badge con número (esquina superior derecha) */}
+      {data.config?.id && (
+        <div 
+          className={styles.nodeBadge}
+          style={{
+            top: '-8px',
+            right: '-8px'
+          }}
+        >
+          {data.config.id.split('-').pop()?.substring(0, 2) || '1'}
+        </div>
+      )}
 
       {/* Nombre del nodo debajo */}
       <div className={styles.nodeLabel}>
@@ -128,29 +204,6 @@ function CustomNode({ data, selected }: NodeProps) {
           {data.config.message.length > 30 ? '...' : ''}
         </div>
       )}
-
-      {/* Badge con número */}
-      {data.config?.id && (
-        <div className={styles.nodeBadge}>
-          {data.config.id.split('-').pop()?.substring(0, 2) || '1'}
-        </div>
-      )}
-
-      {/* Botón + para agregar siguiente */}
-      <button 
-        className={styles.addButton} 
-        title="Agregar módulo"
-        style={{ background: color, borderColor: '#f5f5f7' }}
-      >
-        <Plus size={16} color="white" strokeWidth={3} />
-      </button>
-      
-      <Handle
-        type="source"
-        position={Position.Bottom}
-        className={styles.handleBottom}
-        style={{ background: color, borderColor: '#f5f5f7' }}
-      />
     </div>
   );
 }
