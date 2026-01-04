@@ -47,8 +47,8 @@ function CustomEdge({
       sourceNode.position.x - targetNode.position.x
     );
 
-    // Radio del handle: 50px (40px radio círculo + 10px mitad handle)
-    const handleRadius = 50;
+    // Radio del handle: 56px (40px radio círculo + 16px mitad handle de 32px)
+    const handleRadius = 56;
 
     // Posición real del handle source
     actualSourceX = sourceX + Math.cos(sourceAngle) * handleRadius;
