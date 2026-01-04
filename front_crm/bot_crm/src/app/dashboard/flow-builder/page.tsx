@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 import ReactFlow, {
   MiniMap,
   Controls,
@@ -14,12 +14,13 @@ import ReactFlow, {
   BackgroundVariant,
 } from 'reactflow';
 import 'reactflow/dist/style.css';
-import { Plus, Save, Play, Settings, Webhook } from 'lucide-react';
+import { Plus, Save, Play, Settings, Webhook, Edit2, Check, X } from 'lucide-react';
 import NodeConfigPanel from '@/components/flow-builder/NodeConfigPanel';
 import NodePalette from '@/components/flow-builder/NodePalette';
 import CustomNode from '@/components/flow-builder/CustomNode';
 import EdgeContextMenu from '@/components/flow-builder/EdgeContextMenu';
 import FilterModal from '@/components/flow-builder/FilterModal';
+import NodeSidebar from '@/components/flow-builder/NodeSidebar';
 import styles from './flow-builder.module.css';
 
 const nodeTypes = {
@@ -43,6 +44,9 @@ export default function FlowBuilderPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [edgeMenu, setEdgeMenu] = useState<{ x: number; y: number; edgeId: string } | null>(null);
   const [filterModal, setFilterModal] = useState<string | null>(null);
+  const [isEditingTitle, setIsEditingTitle] = useState(false);
+  const [editedTitle, setEditedTitle] = useState('');
+  const titleInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     loadFlow();
@@ -89,13 +93,39 @@ export default function FlowBuilderPage() {
           });
           
           setEdges(reactFlowEdges);
+        } else {
+          // Si no hay nodos, crear nodo inicial vacío
+          createInitialNode();
         }
+      } else {
+        // Si no existe el flujo, crear uno nuevo con nodo inicial
+        createInitialNode();
       }
     } catch (error) {
       console.error('Error cargando flujo:', error);
+      createInitialNode();
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const createInitialNode = () => {
+    const initialNode: Node = {
+      id: 'start_node',
+      type: 'custom',
+      position: { x: 400, y: 200 },
+      data: {
+        label: 'Inicio',
+        type: 'webhook',
+        config: {
+          id: 'start_node',
+          type: 'webhook',
+          name: 'Inicio',
+          message: 'Haz clic en el botón + para agregar módulos',
+        },
+      },
+    };
+    setNodes([initialNode]);
   };
 
   const onConnect = useCallback(
@@ -195,6 +225,32 @@ export default function FlowBuilderPage() {
     setShowPalette(false);
   }, [setNodes]);
 
+  const handleTitleEdit = () => {
+    setEditedTitle(flowData?.nombre || 'Nuevo Flujo');
+    setIsEditingTitle(true);
+    setTimeout(() => titleInputRef.current?.focus(), 0);
+  };
+
+  const handleTitleSave = () => {
+    if (editedTitle.trim() && flowData) {
+      setFlowData({ ...flowData, nombre: editedTitle.trim() });
+    }
+    setIsEditingTitle(false);
+  };
+
+  const handleTitleCancel = () => {
+    setIsEditingTitle(false);
+    setEditedTitle('');
+  };
+
+  const handleTitleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      handleTitleSave();
+    } else if (e.key === 'Escape') {
+      handleTitleCancel();
+    }
+  };
+
   const updateNodeConfig = useCallback((nodeId: string, config: any) => {
     setNodes((nds) =>
       nds.map((node) => {
@@ -270,15 +326,40 @@ export default function FlowBuilderPage() {
 
   return (
     <div className={styles.container}>
-      <div className={styles.header}>
-        <div className={styles.headerLeft}>
-          <h1 className={styles.title}>
-            {flowData?.nombre || 'Veo Veo - Flujo Completo'}
-          </h1>
-          <span className={styles.badge}>
-            {flowData?.activo ? '🟢 Activo' : '🔴 Inactivo'}
-          </span>
-        </div>
+      <NodeSidebar onAddNode={addNewNode} />
+      
+      <div className={styles.mainContent}>
+        <div className={styles.header}>
+          <div className={styles.headerLeft}>
+            {isEditingTitle ? (
+              <div className={styles.titleEdit}>
+                <input
+                  ref={titleInputRef}
+                  type="text"
+                  value={editedTitle}
+                  onChange={(e) => setEditedTitle(e.target.value)}
+                  onKeyDown={handleTitleKeyDown}
+                  className={styles.titleInput}
+                />
+                <button onClick={handleTitleSave} className={styles.titleBtn}>
+                  <Check size={16} />
+                </button>
+                <button onClick={handleTitleCancel} className={styles.titleBtn}>
+                  <X size={16} />
+                </button>
+              </div>
+            ) : (
+              <div className={styles.titleContainer} onClick={handleTitleEdit}>
+                <h1 className={styles.title}>
+                  {flowData?.nombre || 'Nuevo Flujo'}
+                </h1>
+                <Edit2 size={16} className={styles.titleEditIcon} />
+              </div>
+            )}
+            <span className={styles.badge}>
+              {flowData?.activo ? '🟢 Activo' : '🔴 Inactivo'}
+            </span>
+          </div>
         
         <div className={styles.headerRight}>
           <button className={styles.btnSecondary} title="Configuración del flujo">
@@ -307,8 +388,8 @@ export default function FlowBuilderPage() {
         </div>
       </div>
 
-      <div className={styles.content}>
-        <div className={styles.canvas}>
+        <div className={styles.content}>
+          <div className={styles.canvas}>
           <ReactFlow
             nodes={nodes}
             edges={edges}
@@ -387,13 +468,14 @@ export default function FlowBuilderPage() {
           />
         )}
 
-        {filterModal && (
-          <FilterModal
-            edgeId={filterModal}
-            onSave={handleSaveFilter}
-            onClose={() => setFilterModal(null)}
-          />
-        )}
+          {filterModal && (
+            <FilterModal
+              edgeId={filterModal}
+              onSave={handleSaveFilter}
+              onClose={() => setFilterModal(null)}
+            />
+          )}
+        </div>
       </div>
     </div>
   );

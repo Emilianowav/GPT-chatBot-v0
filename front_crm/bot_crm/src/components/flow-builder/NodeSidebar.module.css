@@ -1,0 +1,164 @@
+.sidebar {
+  width: 280px;
+  height: 100vh;
+  background: #1a1a2e;
+  border-right: 1px solid #2d2d44;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.header {
+  padding: 20px;
+  border-bottom: 1px solid #2d2d44;
+}
+
+.header h3 {
+  margin: 0;
+  color: #fff;
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.searchContainer {
+  padding: 16px;
+  border-bottom: 1px solid #2d2d44;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #888;
+}
+
+.searchInput {
+  flex: 1;
+  background: #0f0f1e;
+  border: 1px solid #2d2d44;
+  border-radius: 6px;
+  padding: 8px 12px;
+  color: #fff;
+  font-size: 13px;
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.searchInput:focus {
+  border-color: #8b5cf6;
+}
+
+.searchInput::placeholder {
+  color: #666;
+}
+
+.categories {
+  flex: 1;
+  overflow-y: auto;
+  padding: 8px 0;
+}
+
+.category {
+  margin-bottom: 4px;
+}
+
+.categoryHeader {
+  width: 100%;
+  padding: 12px 20px;
+  background: transparent;
+  border: none;
+  color: #aaa;
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  cursor: pointer;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  transition: background 0.2s;
+}
+
+.categoryHeader:hover {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.categoryToggle {
+  font-size: 16px;
+  color: #666;
+}
+
+.categoryItems {
+  padding: 4px 0;
+}
+
+.nodeItem {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 20px;
+  margin: 2px 12px;
+  background: #0f0f1e;
+  border: 1px solid #2d2d44;
+  border-radius: 8px;
+  cursor: grab;
+  transition: all 0.2s;
+}
+
+.nodeItem:hover {
+  background: #1a1a2e;
+  border-color: #8b5cf6;
+  transform: translateX(4px);
+}
+
+.nodeItem:active {
+  cursor: grabbing;
+}
+
+.nodeIcon {
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  background: linear-gradient(135deg, #8b5cf6 0%, #6366f1 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  flex-shrink: 0;
+}
+
+.nodeInfo {
+  flex: 1;
+  min-width: 0;
+}
+
+.nodeLabel {
+  color: #fff;
+  font-size: 13px;
+  font-weight: 500;
+  margin-bottom: 2px;
+}
+
+.nodeDescription {
+  color: #888;
+  font-size: 11px;
+  line-height: 1.3;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Scrollbar personalizado */
+.categories::-webkit-scrollbar {
+  width: 6px;
+}
+
+.categories::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.categories::-webkit-scrollbar-thumb {
+  background: #2d2d44;
+  border-radius: 3px;
+}
+
+.categories::-webkit-scrollbar-thumb:hover {
+  background: #3d3d54;
+}
