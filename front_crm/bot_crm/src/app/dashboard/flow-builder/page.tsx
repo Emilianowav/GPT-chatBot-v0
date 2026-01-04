@@ -56,7 +56,7 @@ import ModuleConfigModal from '@/components/flow-builder/ModuleConfigModal';
 import styles from './flow-builder.module.css';
 
 const nodeTypes = {
-  custom: CustomNode,
+  custom: DynamicHandleNode,
   empty: EmptyNode,
   router: RouterNode,
 };

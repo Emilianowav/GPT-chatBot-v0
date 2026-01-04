@@ -1,5 +1,5 @@
 import { memo } from 'react';
-import { EdgeProps, getSmoothStepPath, EdgeLabelRenderer } from 'reactflow';
+import { EdgeProps, getStraightPath, EdgeLabelRenderer } from 'reactflow';
 import { Settings } from 'lucide-react';
 import styles from './CustomEdge.module.css';
 
@@ -17,13 +17,12 @@ function CustomEdge({
   source,
   target,
 }: EdgeProps) {
-  const [edgePath, labelX, labelY] = getSmoothStepPath({
+  // Usar líneas RECTAS siempre
+  const [edgePath, labelX, labelY] = getStraightPath({
     sourceX,
     sourceY,
-    sourcePosition,
     targetX,
     targetY,
-    targetPosition,
   });
 
   const hasFilter = data?.filter;
