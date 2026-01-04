@@ -18,6 +18,7 @@ import { Save, Play, Settings, Webhook, Edit2, Check, X } from 'lucide-react';
 import DashboardLayout from '@/components/DashboardLayout/DashboardLayout';
 import CustomNode from '@/components/flow-builder/CustomNode';
 import EmptyNode from '@/components/flow-builder/EmptyNode';
+import RouterNode from '@/components/flow-builder/RouterNode';
 import CustomEdge from '@/components/flow-builder/CustomEdge';
 import EdgeContextMenu from '@/components/flow-builder/EdgeContextMenu';
 import FilterModal from '@/components/flow-builder/FilterModal';
@@ -28,6 +29,7 @@ import styles from './flow-builder.module.css';
 const nodeTypes = {
   custom: CustomNode,
   empty: EmptyNode,
+  router: RouterNode,
 };
 
 const edgeTypes = {
@@ -196,27 +198,65 @@ export default function FlowBuilderPage() {
     const edge = edges.find((e) => e.id === edgeId);
     if (!edge) return;
 
-    const newNode: Node = {
-      id: `router_${Date.now()}`,
-      type: 'custom',
-      position: { x: 400, y: 300 },
+    // Crear nodo router en el medio de la conexión
+    const sourceNode = nodes.find(n => n.id === edge.source);
+    const targetNode = nodes.find(n => n.id === edge.target);
+    
+    if (!sourceNode || !targetNode) return;
+
+    const routerId = `router_${Date.now()}`;
+    
+    // Calcular posición en el medio
+    const routerX = (sourceNode.position.x + targetNode.position.x) / 2;
+    const routerY = (sourceNode.position.y + targetNode.position.y) / 2;
+
+    // Crear nodo router
+    const routerNode: Node = {
+      id: routerId,
+      type: 'router',
+      position: { x: routerX, y: routerY },
       data: {
         label: 'Router',
-        type: 'router',
+        routeCount: 2,
         config: {
-          id: `router_${Date.now()}`,
+          id: routerId,
           type: 'router',
           name: 'Router',
         },
       },
     };
 
-    setNodes((nds) => [...nds, newNode]);
-    setEdges((eds) => [
-      ...eds.filter((e) => e.id !== edgeId),
-      { ...edge, target: newNode.id, id: `${edge.source}-${newNode.id}` },
-      { id: `${newNode.id}-${edge.target}`, source: newNode.id, target: edge.target, animated: true },
-    ]);
+    // Eliminar edge original
+    setEdges((eds) => eds.filter((e) => e.id !== edgeId));
+
+    // Crear nuevas conexiones: source -> router -> target
+    const newEdges: Edge[] = [
+      {
+        id: `${edge.source}-${routerId}`,
+        source: edge.source,
+        target: routerId,
+        type: 'custom',
+        animated: true,
+        data: {
+          onConfigClick: (edgeId: string) => setFilterModal(edgeId)
+        }
+      },
+      {
+        id: `${routerId}-${edge.target}-route1`,
+        source: routerId,
+        sourceHandle: 'route-1',
+        target: edge.target,
+        type: 'custom',
+        animated: true,
+        data: {
+          onConfigClick: (edgeId: string) => setFilterModal(edgeId)
+        }
+      }
+    ];
+
+    setNodes((nds) => [...nds, routerNode]);
+    setEdges((eds) => [...eds, ...newEdges]);
+    setEdgeMenu(null);
   };
 
   const handleAddModule = (edgeId: string) => {

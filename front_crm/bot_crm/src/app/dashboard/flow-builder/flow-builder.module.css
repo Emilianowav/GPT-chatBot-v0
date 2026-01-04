@@ -257,7 +257,7 @@
 :global(.react-flow__edge-path) {
   stroke: #d1d5db;
   stroke-width: 2;
-  stroke-dasharray: 8, 8;
+  stroke-dasharray: 24, 8
   animation: dash 20s linear infinite;
 }
 
@@ -276,11 +276,10 @@
 
 /* Handles (puntos de conexión) más grandes */
 :global(.react-flow__handle) {
-  width: 14px;
-  height: 14px;
+  width: 24px;
+  height: 24px;
   background: #10b981;
-  border: 3px solid white;
-  box-shadow: 0 2px 8px rgba(16, 185, 129, 0.3);
+  border: 3px solid #f5f5f7;
   transition: all 0.2s;
 }
 
