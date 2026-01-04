@@ -16,12 +16,12 @@ import ReactFlow, {
 import 'reactflow/dist/style.css';
 import { Save, Play, Settings, Webhook, Edit2, Check, X } from 'lucide-react';
 import DashboardLayout from '@/components/DashboardLayout/DashboardLayout';
-import NodeConfigPanel from '@/components/flow-builder/NodeConfigPanel';
 import CustomNode from '@/components/flow-builder/CustomNode';
 import EmptyNode from '@/components/flow-builder/EmptyNode';
 import EdgeContextMenu from '@/components/flow-builder/EdgeContextMenu';
 import FilterModal from '@/components/flow-builder/FilterModal';
 import AppsModal from '@/components/flow-builder/AppsModal';
+import ModuleConfigModal from '@/components/flow-builder/ModuleConfigModal';
 import styles from './flow-builder.module.css';
 
 const nodeTypes = {
@@ -51,6 +51,8 @@ export default function FlowBuilderPage() {
   const [isEditingTitle, setIsEditingTitle] = useState(false);
   const [editedTitle, setEditedTitle] = useState('');
   const titleInputRef = useRef<HTMLInputElement>(null);
+  const [showModuleConfig, setShowModuleConfig] = useState(false);
+  const [selectedModuleNode, setSelectedModuleNode] = useState<Node | null>(null);
 
   useEffect(() => {
     loadFlow();
@@ -128,7 +130,8 @@ export default function FlowBuilderPage() {
   const handleEmptyNodeClick = (nodeId: string) => {
     setSelectedNodeForAdd(nodeId);
     setShowAppsModal(true);
-    setSelectedNode(null); // Cerrar panel de configuración si está abierto
+    setSelectedNode(null);
+    setShowModuleConfig(false); // Cerrar modal de configuración si está abierto
   };
 
   const onConnect = useCallback(
@@ -137,6 +140,12 @@ export default function FlowBuilderPage() {
   );
 
   const onNodeClick = useCallback((event: React.MouseEvent, node: Node) => {
+    // Si es un nodo vacío, no hacer nada (ya tiene su propio handler)
+    if (node.type === 'empty') return;
+    
+    // Si es un nodo real, abrir modal de configuración
+    setSelectedModuleNode(node);
+    setShowModuleConfig(true);
     setSelectedNode(node);
   }, []);
 
@@ -295,23 +304,23 @@ export default function FlowBuilderPage() {
     }
   };
 
-  const updateNodeConfig = useCallback((nodeId: string, config: any) => {
-    setNodes((nds) =>
-      nds.map((node) => {
-        if (node.id === nodeId) {
-          return {
-            ...node,
-            data: {
-              ...node.data,
-              label: config.name || config.type,
-              config,
-            },
-          };
-        }
-        return node;
-      })
-    );
-  }, [setNodes]);
+  // const updateNodeConfig = useCallback((nodeId: string, config: any) => {
+  //   setNodes((nds) =>
+  //     nds.map((node) => {
+  //       if (node.id === nodeId) {
+  //         return {
+  //           ...node,
+  //           data: {
+  //             ...node.data,
+  //             label: config.name || config.type,
+  //             config,
+  //           },
+  //         };
+  //       }
+  //       return node;
+  //     })
+  //   );
+  // }, [setNodes]);
 
   const saveFlow = async () => {
     if (!flowData) return;
@@ -474,13 +483,13 @@ export default function FlowBuilderPage() {
 
         </div>
 
-        {selectedNode && !showAppsModal && (
+        {/* {selectedNode && !showAppsModal && (
           <NodeConfigPanel
             node={selectedNode}
             onUpdate={(config) => updateNodeConfig(selectedNode.id, config)}
             onClose={() => setSelectedNode(null)}
           />
-        )}
+        )} */}
 
         {showAppsModal && (
           <AppsModal
@@ -490,6 +499,39 @@ export default function FlowBuilderPage() {
             }}
             onSelectModule={handleSelectModule}
             position={appsModalPosition}
+          />
+        )}
+
+        {showModuleConfig && selectedModuleNode && (
+          <ModuleConfigModal
+            module={{
+              id: selectedModuleNode.id,
+              name: selectedModuleNode.data.label || '',
+              type: selectedModuleNode.data.type || '',
+              appName: selectedModuleNode.data.appName || '',
+            }}
+            onSave={(config) => {
+              // Actualizar configuración del nodo
+              setNodes((nds) =>
+                nds.map((node) =>
+                  node.id === selectedModuleNode.id
+                    ? {
+                        ...node,
+                        data: {
+                          ...node.data,
+                          config: { ...node.data.config, ...config },
+                        },
+                      }
+                    : node
+                )
+              );
+              setShowModuleConfig(false);
+              setSelectedModuleNode(null);
+            }}
+            onClose={() => {
+              setShowModuleConfig(false);
+              setSelectedModuleNode(null);
+            }}
           />
         )}
 
