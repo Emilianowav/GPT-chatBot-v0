@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { X } from 'lucide-react';
-import styles from './ModuleConfigModal_NEW.module.css';
-import WebhookSetupModal from './WebhookSetupModal_NEW';
+import styles from './ModuleConfigModal.module.css';
+import WebhookSetupModal from './WebhookSetupModal';
 
 interface ModuleConfigModalProps {
   module: {
