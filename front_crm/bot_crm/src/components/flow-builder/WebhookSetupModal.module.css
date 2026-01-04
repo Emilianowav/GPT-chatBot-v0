@@ -1,7 +1,7 @@
 .overlay {
   position: fixed;
   top: 0;
-  left: 250;
+  left: 0;
   right: 0;
   bottom: 0;
   display: flex;
@@ -9,6 +9,7 @@
   justify-content: center;
   z-index: 1002;
   animation: fadeIn 0.2s ease;
+  pointer-events: none;
 }
 
 @keyframes fadeIn {
@@ -29,21 +30,21 @@
   display: flex;
   flex-direction: column;
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(0, 0, 0, 0.1);
-  animation: scaleIn 0.2s ease;
+  animation: slideInOffset 0.2s ease;
   overflow: hidden;
   position: relative;
-  margin-left: 40px;
-  margin-top: 40px;
+  transform: translate(40px, 40px);
   z-index: 1003;
+  pointer-events: auto;
 }
 
-@keyframes scaleIn {
+@keyframes slideInOffset {
   from {
-    transform: scale(0.95);
+    transform: translate(40px, 40px) scale(0.95);
     opacity: 0;
   }
   to {
-    transform: scale(1);
+    transform: translate(40px, 40px) scale(1);
     opacity: 1;
   }
 }
