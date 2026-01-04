@@ -346,3 +346,21 @@
   color: #fff;
   font-weight: 600;
 }
+
+.reconfigureBtn {
+  margin-top: 12px;
+  padding: 8px 16px;
+  background: transparent;
+  border: 1px solid #2d2d44;
+  border-radius: 6px;
+  color: #8b5cf6;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.reconfigureBtn:hover {
+  background: rgba(139, 92, 246, 0.1);
+  border-color: #8b5cf6;
+}
