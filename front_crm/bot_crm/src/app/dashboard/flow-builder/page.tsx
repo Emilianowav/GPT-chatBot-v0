@@ -16,7 +16,7 @@ import ReactFlow, {
 import 'reactflow/dist/style.css';
 import { Save, Play, Settings, Webhook, Edit2, Check, X } from 'lucide-react';
 import DashboardLayout from '@/components/DashboardLayout/DashboardLayout';
-import CustomNode from '@/components/flow-builder/CustomNode';
+import DynamicHandleNode from '@/components/flow-builder/DynamicHandleNode';
 import EmptyNode from '@/components/flow-builder/EmptyNode';
 import RouterNode from '@/components/flow-builder/RouterNode';
 import CustomEdge from '@/components/flow-builder/CustomEdge';

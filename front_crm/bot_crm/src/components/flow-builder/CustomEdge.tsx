@@ -17,14 +17,6 @@ function CustomEdge({
   source,
   target,
 }: EdgeProps) {
-  // Usar líneas RECTAS siempre
-  const [edgePath, labelX, labelY] = getStraightPath({
-    sourceX,
-    sourceY,
-    targetX,
-    targetY,
-  });
-
   const hasFilter = data?.filter;
   
   // Obtener colores de los nodos source y target
@@ -32,6 +24,7 @@ function CustomEdge({
   const targetColor = data?.targetColor || '#d1d5db';
 
   // Calcular puntos a lo largo del path para los círculos
+  // sourceX/sourceY y targetX/targetY ya vienen desde los handles
   const distance = Math.sqrt(Math.pow(targetX - sourceX, 2) + Math.pow(targetY - sourceY, 2));
   const numCircles = Math.floor(distance / 40); // Un círculo cada 40px
   const circles = [];
@@ -80,7 +73,7 @@ function CustomEdge({
         <div
           style={{
             position: 'absolute',
-            transform: `translate(-50%, -50%) translate(${labelX}px,${labelY}px)`,
+            transform: `translate(-50%, -50%) translate(${(sourceX + targetX) / 2}px,${(sourceY + targetY) / 2}px)`,
             pointerEvents: 'all',
           }}
           className={styles.edgeButtonWrapper}
