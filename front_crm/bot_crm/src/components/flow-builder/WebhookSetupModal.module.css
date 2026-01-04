@@ -20,7 +20,7 @@
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
   overflow: hidden;
   pointer-events: auto;
-  transform: translateX(40px);
+  transform: translateX(100px);
 }
 
 .header {
