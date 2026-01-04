@@ -8,8 +8,7 @@
   align-items: center;
   justify-content: center;
   z-index: 1002;
-  animation: fadeIn 0.2s ease;
-  pointer-events: none;
+  animation: fadeIn 0.15s ease;
 }
 
 @keyframes fadeIn {
@@ -24,39 +23,31 @@
 .modal {
   background: white;
   border-radius: 8px;
-  width: 90%;
-  max-width: 600px;
-  max-height: 85vh;
+  width: 520px;
+  max-height: 600px;
   display: flex;
   flex-direction: column;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(0, 0, 0, 0.1);
-  animation: slideInOffset 0.2s ease;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+  animation: scaleIn 0.15s ease;
   overflow: hidden;
   position: relative;
-  transform: translate(40px, 40px);
   z-index: 1003;
-  pointer-events: auto;
 }
 
-@keyframes slideInOffset {
+@keyframes scaleIn {
   from {
-    transform: translate(40px, 40px) scale(0.95);
+    transform: scale(0.95);
     opacity: 0;
   }
   to {
-    transform: translate(40px, 40px) scale(1);
+    transform: scale(1);
     opacity: 1;
   }
 }
 
-/* Barra verde superior */
-.headerBar {
-  height: 4px;
-  background: linear-gradient(90deg, #25D366 0%, #20b858 100%);
-}
 
 .header {
-  padding: 20px 24px;
+  padding: 18px 24px;
   border-bottom: 1px solid #e5e7eb;
   display: flex;
   justify-content: space-between;
@@ -64,19 +55,19 @@
   background: white;
 }
 
-.title {
+.header h2 {
   margin: 0;
   color: #1f2937;
-  font-size: 18px;
+  font-size: 16px;
   font-weight: 600;
 }
 
 .closeBtn {
   background: transparent;
   border: none;
-  color: #6b7280;
+  color: #9ca3af;
   cursor: pointer;
-  padding: 4px;
+  padding: 6px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -105,26 +96,25 @@
 }
 
 .label {
-  display: flex;
-  align-items: center;
-  gap: 8px;
+  display: block;
   color: #374151;
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 500;
   margin-bottom: 8px;
 }
 
 .stepNumber {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 20px;
-  height: 20px;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
   background: #e5e7eb;
   color: #6b7280;
-  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   font-size: 12px;
   font-weight: 600;
+  flex-shrink: 0;
 }
 
 .required {
@@ -138,9 +128,9 @@
   background: white;
   border: 1px solid #d1d5db;
   border-radius: 6px;
-  padding: 10px 12px;
+  padding: 9px 12px;
   color: #1f2937;
-  font-size: 14px;
+  font-size: 13px;
   font-family: inherit;
   outline: none;
   transition: border-color 0.2s;
@@ -161,9 +151,12 @@
 
 .hint {
   margin-top: 6px;
-  color: #6b7280;
+  color: #9ca3af;
   font-size: 12px;
   line-height: 1.4;
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
 }
 
 .createConnectionBtn {
@@ -341,18 +334,21 @@
   border-top: 1px solid #e5e7eb;
   display: flex;
   justify-content: flex-end;
-  gap: 12px;
+  gap: 10px;
   background: white;
 }
 
 .btnSecondary,
 .btnPrimary {
-  padding: 10px 20px;
+  padding: 9px 18px;
   border-radius: 6px;
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 500;
   cursor: pointer;
   transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  gap: 8px;
   border: none;
 }
 
@@ -364,7 +360,7 @@
 
 .btnSecondary:hover {
   background: #f9fafb;
-  color: #374151;
+  color: #1f2937;
   border-color: #9ca3af;
 }
 
@@ -388,7 +384,7 @@
 }
 
 .content::-webkit-scrollbar-track {
-  background: #f9fafb;
+  background: #f3f4f6;
 }
 
 .content::-webkit-scrollbar-thumb {
