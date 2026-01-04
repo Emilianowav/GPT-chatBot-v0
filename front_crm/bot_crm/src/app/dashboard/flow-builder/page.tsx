@@ -20,6 +20,35 @@ import CustomNode from '@/components/flow-builder/CustomNode';
 import EmptyNode from '@/components/flow-builder/EmptyNode';
 import RouterNode from '@/components/flow-builder/RouterNode';
 import CustomEdge from '@/components/flow-builder/CustomEdge';
+
+// Colores de apps y nodos para gradientes
+const appColors: Record<string, string> = {
+  'WhatsApp Business Cloud': '#25D366',
+  'WhatsApp': '#25D366',
+  'OpenAI (ChatGPT, Sora, DALL-E, Whisper)': '#10a37f',
+  'OpenAI': '#10a37f',
+  'GPT': '#10a37f',
+  'WooCommerce': '#96588a',
+  'MercadoPago': '#009ee3',
+  'HTTP': '#0ea5e9',
+  'Webhooks': '#c13584',
+  'Gmail': '#ea4335',
+};
+
+const nodeColors: Record<string, string> = {
+  message: '#6366f1',
+  input: '#25D366',
+  question: '#8b5cf6',
+  condition: '#f59e0b',
+  api: '#10b981',
+  api_call: '#96588a',
+  webhook: '#ec4899',
+  email: '#3b82f6',
+  delay: '#6b7280',
+  validation: '#14b8a6',
+  error: '#ef4444',
+  gpt: '#10a37f',
+};
 import EdgeContextMenu from '@/components/flow-builder/EdgeContextMenu';
 import FilterModal from '@/components/flow-builder/FilterModal';
 import AppsModal from '@/components/flow-builder/AppsModal';
@@ -110,6 +139,18 @@ export default function FlowBuilderPage() {
             if (node.next) {
               const nextNodes = Array.isArray(node.next) ? node.next : [node.next];
               nextNodes.forEach((nextId: string) => {
+                // Obtener colores de los nodos source y target
+                const sourceNode = reactFlowNodes.find((n: any) => n.id === node.id);
+                const targetNode = reactFlowNodes.find((n: any) => n.id === nextId);
+                
+                const sourceColor = sourceNode?.data?.appName 
+                  ? (appColors[sourceNode.data.appName] || '#6366f1')
+                  : (nodeColors[sourceNode?.data?.type] || '#6366f1');
+                
+                const targetColor = targetNode?.data?.appName
+                  ? (appColors[targetNode.data.appName] || '#6366f1')
+                  : (nodeColors[targetNode?.data?.type] || '#6366f1');
+                
                 reactFlowEdges.push({
                   id: `${node.id}-${nextId}`,
                   source: node.id,
@@ -117,6 +158,8 @@ export default function FlowBuilderPage() {
                   type: 'custom',
                   animated: true,
                   data: {
+                    sourceColor,
+                    targetColor,
                     onConfigClick: (edgeId: string) => {
                       setFilterModal(edgeId);
                     }

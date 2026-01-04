@@ -77,21 +77,23 @@
 
 .addButton {
   position: absolute;
-  right: -12px;
+  right: -16px;
   top: 50%;
   transform: translateY(-50%);
-  width: 24px;
-  height: 24px;
+  width: 32px;
+  height: 32px;
   border-radius: 50%;
-  background: white;
-  border: 2px solid #e5e7eb;
+  background: #25D366;
+  border: 3px solid #f5f5f7;
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
   transition: all 0.2s;
-  color: #6b7280;
+  color: white;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
   opacity: 0;
+  z-index: 10;
 }
 
 .nodeWrapper:hover .addButton {
@@ -99,10 +101,8 @@
 }
 
 .addButton:hover {
-  background: #8b5cf6;
-  border-color: #8b5cf6;
-  color: white;
-  transform: translateY(-50%) scale(1.1);
+  transform: translateY(-50%) scale(1.15);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
 }
 
 /* ========================================
@@ -111,16 +111,26 @@
 
 .handleTop,
 .handleBottom {
-  width: 12px;
-  height: 12px;
-  background: white;
-  border: 2px solid #d1d5db;
+  width: 20px;
+  height: 20px;
+  background: #25D366;
+  border: 4px solid #f5f5f7;
   border-radius: 50%;
   transition: all 0.2s;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
 }
 
 .handleTop {
-  top: -6px;
-  background: #a78bfa;
-  box-shadow: 0 4px 12px rgba(139, 92, 246, 0.6);
+  top: -10px;
+}
+
+.handleBottom {
+  bottom: -10px;
+}
+
+.handleTop:hover,
+.handleBottom:hover {
+  width: 24px;
+  height: 24px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
 }

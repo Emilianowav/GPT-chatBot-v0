@@ -101,6 +101,7 @@ function CustomNode({ data, selected }: NodeProps) {
         type="target"
         position={Position.Top}
         className={styles.handleTop}
+        style={{ background: color, borderColor: '#f5f5f7' }}
       />
       
       {/* Nodo circular estilo Make */}
@@ -108,9 +109,8 @@ function CustomNode({ data, selected }: NodeProps) {
         className={`${styles.nodeCircle} ${selected ? styles.selected : ''}`}
         style={{ 
           background: `linear-gradient(135deg, ${color} 0%, ${color}dd 100%)`,
-          boxShadow: selected 
-            ? `0 0 0 3px ${color}40, 0 8px 24px ${color}60`
-            : `0 4px 12px ${color}40`
+          boxShadow: `0 6px 16px ${color}40`,
+          border: '4px solid #f5f5f7'
         }}
       >
         {AppIcon ? <AppIcon /> : <Icon size={32} color="white" strokeWidth={2} />}
@@ -137,14 +137,19 @@ function CustomNode({ data, selected }: NodeProps) {
       )}
 
       {/* Botón + para agregar siguiente */}
-      <button className={styles.addButton} title="Agregar módulo">
-        <Plus size={14} />
+      <button 
+        className={styles.addButton} 
+        title="Agregar módulo"
+        style={{ background: color, borderColor: '#f5f5f7' }}
+      >
+        <Plus size={16} color="white" strokeWidth={3} />
       </button>
       
       <Handle
         type="source"
         position={Position.Bottom}
         className={styles.handleBottom}
+        style={{ background: color, borderColor: '#f5f5f7' }}
       />
     </div>
   );
