@@ -14,7 +14,7 @@ import ReactFlow, {
   BackgroundVariant,
 } from 'reactflow';
 import 'reactflow/dist/style.css';
-import { Plus, Save, Play, Settings, Webhook, ArrowLeft, List } from 'lucide-react';
+import { Plus, Save, Play, Settings, Webhook, ArrowLeft, Trash2 } from 'lucide-react';
 import NodeConfigPanel from '@/components/flow-builder/NodeConfigPanel';
 import NodePalette from '@/components/flow-builder/NodePalette';
 import CustomNode from '@/components/flow-builder/CustomNode';
@@ -52,6 +52,7 @@ export default function FlowsPage() {
   const [viewMode, setViewMode] = useState<'list' | 'editor'>('list');
   const [flowsList, setFlowsList] = useState<FlowListItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const [selectedFlowId, setSelectedFlowId] = useState<string | null>(null);
 
   useEffect(() => {
     const storedEmpresa = localStorage.getItem('empresaId') || 'Veo Veo';
@@ -78,6 +79,7 @@ export default function FlowsPage() {
 
   const loadFlow = async (flowId: string) => {
     try {
+      setSelectedFlowId(flowId);
       const response = await fetch(`http://localhost:3000/api/flows/${flowId}`);
       
       if (response.ok) {
@@ -251,6 +253,7 @@ export default function FlowsPage() {
     setNodes([]);
     setEdges([]);
     setSelectedNode(null);
+    setSelectedFlowId(null);
     loadFlowsList(empresaId);
   };
 
