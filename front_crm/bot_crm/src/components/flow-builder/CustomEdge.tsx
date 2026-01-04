@@ -1,5 +1,5 @@
 import { memo } from 'react';
-import { EdgeProps, getStraightPath, EdgeLabelRenderer } from 'reactflow';
+import { EdgeProps, getStraightPath, EdgeLabelRenderer, useStore } from 'reactflow';
 import { Settings } from 'lucide-react';
 import styles from './CustomEdge.module.css';
 
@@ -23,16 +23,51 @@ function CustomEdge({
   const sourceColor = data?.sourceColor || '#d1d5db';
   const targetColor = data?.targetColor || '#d1d5db';
 
+  // Obtener posiciones reales de los nodos para calcular ángulo
+  const nodes = useStore((state) => state.nodeInternals);
+  const sourceNode = nodes.get(source);
+  const targetNode = nodes.get(target);
+
+  // Calcular posición real del handle usando el mismo ángulo que DynamicHandleNode
+  let actualSourceX = sourceX;
+  let actualSourceY = sourceY;
+  let actualTargetX = targetX;
+  let actualTargetY = targetY;
+
+  if (sourceNode && targetNode) {
+    // Calcular ángulo desde source hacia target
+    const sourceAngle = Math.atan2(
+      targetNode.position.y - sourceNode.position.y,
+      targetNode.position.x - sourceNode.position.x
+    );
+    
+    // Calcular ángulo desde target hacia source
+    const targetAngle = Math.atan2(
+      sourceNode.position.y - targetNode.position.y,
+      sourceNode.position.x - targetNode.position.x
+    );
+
+    // Radio del handle: 50px (40px radio círculo + 10px mitad handle)
+    const handleRadius = 50;
+
+    // Posición real del handle source
+    actualSourceX = sourceX + Math.cos(sourceAngle) * handleRadius;
+    actualSourceY = sourceY + Math.sin(sourceAngle) * handleRadius;
+
+    // Posición real del handle target
+    actualTargetX = targetX + Math.cos(targetAngle) * handleRadius;
+    actualTargetY = targetY + Math.sin(targetAngle) * handleRadius;
+  }
+
   // Calcular puntos a lo largo del path para los círculos
-  // sourceX/sourceY y targetX/targetY ya vienen desde los handles
-  const distance = Math.sqrt(Math.pow(targetX - sourceX, 2) + Math.pow(targetY - sourceY, 2));
+  const distance = Math.sqrt(Math.pow(actualTargetX - actualSourceX, 2) + Math.pow(actualTargetY - actualSourceY, 2));
   const numCircles = Math.floor(distance / 40); // Un círculo cada 40px
   const circles = [];
   
   for (let i = 1; i <= numCircles; i++) {
     const t = i / (numCircles + 1);
-    const x = sourceX + (targetX - sourceX) * t;
-    const y = sourceY + (targetY - sourceY) * t;
+    const x = actualSourceX + (actualTargetX - actualSourceX) * t;
+    const y = actualSourceY + (actualTargetY - actualSourceY) * t;
     
     // Interpolar color
     const r1 = parseInt(sourceColor.slice(1, 3), 16);
@@ -73,7 +108,7 @@ function CustomEdge({
         <div
           style={{
             position: 'absolute',
-            transform: `translate(-50%, -50%) translate(${(sourceX + targetX) / 2}px,${(sourceY + targetY) / 2}px)`,
+            transform: `translate(-50%, -50%) translate(${(actualSourceX + actualTargetX) / 2}px,${(actualSourceY + actualTargetY) / 2}px)`,
             pointerEvents: 'all',
           }}
           className={styles.edgeButtonWrapper}
