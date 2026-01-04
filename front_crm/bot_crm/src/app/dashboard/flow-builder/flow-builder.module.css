@@ -248,3 +248,79 @@
   font-size: 14px;
   color: #a0a0a0;
 }
+
+/* ========================================
+   REACT FLOW - CONEXIONES ESTILO MAKE
+   ======================================== */
+
+/* Líneas de conexión con puntos grandes */
+:global(.react-flow__edge-path) {
+  stroke: #d1d5db;
+  stroke-width: 2;
+  stroke-dasharray: 8, 8;
+  animation: dash 20s linear infinite;
+}
+
+@keyframes dash {
+  to {
+    stroke-dashoffset: -1000;
+  }
+}
+
+/* Puntos grandes en las conexiones */
+:global(.react-flow__edge)::before,
+:global(.react-flow__edge)::after {
+  content: '';
+  position: absolute;
+  width: 12px;
+  height: 12px;
+  background: #10b981;
+  border-radius: 50%;
+  border: 2px solid white;
+  box-shadow: 0 2px 8px rgba(16, 185, 129, 0.3);
+}
+
+/* Botón de configuración en la conexión (icono llave) */
+:global(.react-flow__edge-button) {
+  width: 24px;
+  height: 24px;
+  background: white;
+  border: 2px solid #d1d5db;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+:global(.react-flow__edge-button):hover {
+  background: #f3f4f6;
+  border-color: #8b5cf6;
+  transform: scale(1.1);
+  box-shadow: 0 4px 12px rgba(139, 92, 246, 0.3);
+}
+
+:global(.react-flow__edge-button) svg {
+  width: 14px;
+  height: 14px;
+  color: #6b7280;
+}
+
+:global(.react-flow__edge-button):hover svg {
+  color: #8b5cf6;
+}
+
+/* Conexión seleccionada */
+:global(.react-flow__edge.selected) :global(.react-flow__edge-path) {
+  stroke: #8b5cf6;
+  stroke-width: 3;
+}
+
+/* Conexión con filtro aplicado */
+:global(.react-flow__edge.filtered) :global(.react-flow__edge-path) {
+  stroke: #8b5cf6;
+  stroke-width: 3;
+  stroke-dasharray: 0;
+}

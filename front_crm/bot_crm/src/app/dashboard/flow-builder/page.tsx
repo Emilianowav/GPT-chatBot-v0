@@ -18,6 +18,7 @@ import { Save, Play, Settings, Webhook, Edit2, Check, X } from 'lucide-react';
 import DashboardLayout from '@/components/DashboardLayout/DashboardLayout';
 import CustomNode from '@/components/flow-builder/CustomNode';
 import EmptyNode from '@/components/flow-builder/EmptyNode';
+import CustomEdge from '@/components/flow-builder/CustomEdge';
 import EdgeContextMenu from '@/components/flow-builder/EdgeContextMenu';
 import FilterModal from '@/components/flow-builder/FilterModal';
 import AppsModal from '@/components/flow-builder/AppsModal';
@@ -27,6 +28,10 @@ import styles from './flow-builder.module.css';
 const nodeTypes = {
   custom: CustomNode,
   empty: EmptyNode,
+};
+
+const edgeTypes = {
+  custom: CustomEdge,
 };
 
 interface FlowData {
@@ -70,16 +75,31 @@ export default function FlowBuilderPage() {
         setFlowData(data.flow);
         
         if (data.nodes && data.nodes.length > 0) {
-          const reactFlowNodes = data.nodes.map((node: any, index: number) => ({
-            id: node.id,
-            type: 'custom',
-            position: node.metadata?.position || { x: 100 + index * 250, y: 100 },
-            data: {
-              label: node.name || node.type,
-              type: node.type,
-              config: node,
-            },
-          }));
+          const reactFlowNodes = data.nodes.map((node: any, index: number) => {
+            // Mapear tipo de nodo a nombre de app para iconos
+            let appName = '';
+            if (node.type === 'input' && node.name.includes('WhatsApp')) {
+              appName = 'WhatsApp';
+            } else if (node.type === 'gpt') {
+              appName = 'GPT';
+            } else if (node.type === 'api_call' && node.name.includes('WooCommerce')) {
+              appName = 'WooCommerce';
+            } else if (node.type === 'message' && node.name.includes('WhatsApp')) {
+              appName = 'WhatsApp';
+            }
+            
+            return {
+              id: node.id,
+              type: 'custom',
+              position: node.metadata?.position || { x: 100 + index * 250, y: 100 },
+              data: {
+                label: node.name || node.type,
+                type: node.type,
+                appName: appName,
+                config: node,
+              },
+            };
+          });
           
           setNodes(reactFlowNodes);
           
@@ -92,7 +112,13 @@ export default function FlowBuilderPage() {
                   id: `${node.id}-${nextId}`,
                   source: node.id,
                   target: nextId,
+                  type: 'custom',
                   animated: true,
+                  data: {
+                    onConfigClick: (edgeId: string) => {
+                      setFilterModal(edgeId);
+                    }
+                  }
                 });
               });
             }
@@ -450,6 +476,7 @@ export default function FlowBuilderPage() {
             onNodeClick={onNodeClick}
             onEdgeContextMenu={onEdgeContextMenu}
             nodeTypes={nodeTypes}
+            edgeTypes={edgeTypes}
             defaultEdgeOptions={{
               type: 'smoothstep',
               animated: true,

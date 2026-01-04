@@ -27,14 +27,31 @@ const OpenAIIcon = () => (
   </svg>
 );
 
+const WooCommerceIcon = () => (
+  <img 
+    src="/logos tecnologias/woocommerce.png" 
+    alt="WooCommerce" 
+    width="32" 
+    height="32"
+    style={{ borderRadius: '4px' }}
+  />
+);
+
 const appIcons: Record<string, any> = {
   'WhatsApp Business Cloud': WhatsAppIcon,
+  'WhatsApp': WhatsAppIcon,
   'OpenAI (ChatGPT, Sora, DALL-E, Whisper)': OpenAIIcon,
+  'OpenAI': OpenAIIcon,
+  'GPT': OpenAIIcon,
+  'WooCommerce': WooCommerceIcon,
 };
 
 const appColors: Record<string, string> = {
   'WhatsApp Business Cloud': '#25D366',
+  'WhatsApp': '#25D366',
   'OpenAI (ChatGPT, Sora, DALL-E, Whisper)': '#10a37f',
+  'OpenAI': '#10a37f',
+  'GPT': '#10a37f',
   'WooCommerce': '#96588a',
   'MercadoPago': '#009ee3',
   'HTTP': '#0ea5e9',
@@ -44,26 +61,32 @@ const appColors: Record<string, string> = {
 
 const nodeIcons: Record<string, any> = {
   message: MessageSquare,
+  input: MessageSquare,
   question: MessageSquare,
   condition: GitBranch,
   api: Database,
+  api_call: Database,
   webhook: Webhook,
   email: Mail,
   delay: Clock,
   validation: CheckCircle,
   error: AlertCircle,
+  gpt: OpenAIIcon,
 };
 
 const nodeColors: Record<string, string> = {
   message: '#6366f1',
+  input: '#25D366',
   question: '#8b5cf6',
   condition: '#f59e0b',
   api: '#10b981',
+  api_call: '#96588a',
   webhook: '#ec4899',
   email: '#3b82f6',
   delay: '#6b7280',
   validation: '#14b8a6',
   error: '#ef4444',
+  gpt: '#10a37f',
 };
 
 function CustomNode({ data, selected }: NodeProps) {
