@@ -1,55 +1,63 @@
 .node {
-  background: white;
-  border: 2px solid #e5e5e5;
-  border-radius: 12px;
-  min-width: 200px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  background: #2d2d2d;
+  border: 2px solid #3d3d3d;
+  border-radius: 16px;
+  min-width: 240px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
   transition: all 0.2s;
 }
 
 .node:hover {
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
   transform: translateY(-2px);
+  border-color: #8b5cf6;
 }
 
 .node.selected {
-  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.3);
+  box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.5);
+  border-color: #8b5cf6;
 }
 
 .nodeHeader {
-  padding: 12px;
-  border-radius: 10px 10px 0 0;
+  padding: 16px;
+  border-radius: 14px 14px 0 0;
   display: flex;
   align-items: center;
   justify-content: center;
+  position: relative;
 }
 
 .nodeBody {
-  padding: 12px;
+  padding: 16px;
+  background: #252525;
+  border-radius: 0 0 14px 14px;
 }
 
 .nodeLabel {
   font-size: 14px;
   font-weight: 600;
-  color: #1a1a1a;
-  margin-bottom: 4px;
+  color: #ffffff;
+  margin-bottom: 6px;
 }
 
 .nodePreview {
   font-size: 12px;
-  color: #666;
-  line-height: 1.4;
+  color: #a0a0a0;
+  line-height: 1.5;
 }
 
 .handle {
-  width: 10px;
-  height: 10px;
-  background: #6366f1;
-  border: 2px solid white;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  width: 12px;
+  height: 12px;
+  background: #8b5cf6;
+  border: 3px solid #2d2d2d;
+  box-shadow: 0 2px 8px rgba(139, 92, 246, 0.4);
+  transition: all 0.2s;
 }
 
 .handle:hover {
-  width: 12px;
-  height: 12px;
+  width: 14px;
+  height: 14px;
+  background: #a78bfa;
+  box-shadow: 0 4px 12px rgba(139, 92, 246, 0.6);
 }

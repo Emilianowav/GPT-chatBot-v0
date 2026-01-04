@@ -4,11 +4,11 @@
   right: 0;
   width: 400px;
   height: 100%;
-  background: white;
-  border-left: 1px solid #e5e5e5;
+  background: #2d2d2d;
+  border-left: 1px solid #3d3d3d;
   display: flex;
   flex-direction: column;
-  box-shadow: -4px 0 12px rgba(0, 0, 0, 0.08);
+  box-shadow: -4px 0 12px rgba(0, 0, 0, 0.4);
   z-index: 100;
   animation: slideInRight 0.3s;
 }
@@ -27,13 +27,13 @@
   justify-content: space-between;
   align-items: center;
   padding: 20px 24px;
-  border-bottom: 1px solid #e5e5e5;
+  border-bottom: 1px solid #3d3d3d;
 }
 
 .title {
   font-size: 18px;
   font-weight: 600;
-  color: #1a1a1a;
+  color: #ffffff;
   margin: 0;
 }
 
@@ -41,15 +41,15 @@
   background: none;
   border: none;
   cursor: pointer;
-  color: #666;
+  color: #a0a0a0;
   padding: 4px;
   border-radius: 6px;
   transition: all 0.2s;
 }
 
 .closeBtn:hover {
-  background: #f3f4f6;
-  color: #1a1a1a;
+  background: #3d3d3d;
+  color: #ffffff;
 }
 
 .content {
@@ -66,7 +66,7 @@
   display: block;
   font-size: 13px;
   font-weight: 600;
-  color: #374151;
+  color: #e5e5e5;
   margin-bottom: 8px;
 }
 
@@ -75,10 +75,11 @@
 .textarea {
   width: 100%;
   padding: 10px 12px;
-  border: 1px solid #d1d5db;
+  border: 1px solid #3d3d3d;
   border-radius: 8px;
   font-size: 14px;
-  color: #1a1a1a;
+  color: #ffffff;
+  background: #252525;
   transition: all 0.2s;
 }
 
@@ -86,8 +87,8 @@
 .select:focus,
 .textarea:focus {
   outline: none;
-  border-color: #6366f1;
-  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+  border-color: #8b5cf6;
+  box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.2);
 }
 
 .textarea {
@@ -99,14 +100,14 @@
 .hint {
   margin-top: 6px;
   font-size: 12px;
-  color: #6b7280;
+  color: #a0a0a0;
 }
 
 .footer {
   display: flex;
   gap: 12px;
   padding: 20px 24px;
-  border-top: 1px solid #e5e5e5;
+  border-top: 1px solid #3d3d3d;
 }
 
 .btnPrimary,
@@ -126,23 +127,23 @@
 }
 
 .btnPrimary {
-  background: #6366f1;
+  background: #8b5cf6;
   color: white;
 }
 
 .btnPrimary:hover {
-  background: #4f46e5;
+  background: #7c3aed;
   transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+  box-shadow: 0 4px 12px rgba(139, 92, 246, 0.4);
 }
 
 .btnSecondary {
-  background: white;
-  color: #666;
-  border: 1px solid #e5e5e5;
+  background: #3d3d3d;
+  color: #e5e5e5;
+  border: 1px solid #4d4d4d;
 }
 
 .btnSecondary:hover {
-  background: #f9fafb;
-  border-color: #d1d5db;
+  background: #4d4d4d;
+  border-color: #5d5d5d;
 }

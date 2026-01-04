@@ -3,17 +3,17 @@
   height: 100vh;
   display: flex;
   flex-direction: column;
-  background: #f5f5f7;
+  background: #1a1a1a;
 }
 
 .header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 16px 24px;
-  background: white;
-  border-bottom: 1px solid #e5e5e5;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  padding: 12px 20px;
+  background: #2d2d2d;
+  border-bottom: 1px solid #3d3d3d;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
 }
 
 .headerLeft {
@@ -23,19 +23,19 @@
 }
 
 .title {
-  font-size: 20px;
-  font-weight: 600;
-  color: #1a1a1a;
+  font-size: 16px;
+  font-weight: 500;
+  color: #ffffff;
   margin: 0;
 }
 
 .badge {
-  padding: 4px 12px;
-  border-radius: 12px;
-  font-size: 13px;
+  padding: 4px 10px;
+  border-radius: 4px;
+  font-size: 12px;
   font-weight: 500;
-  background: #f0f0f0;
-  color: #666;
+  background: #10b981;
+  color: white;
 }
 
 .headerRight {
@@ -59,14 +59,14 @@
 }
 
 .btnPrimary {
-  background: #6366f1;
+  background: #8b5cf6;
   color: white;
 }
 
 .btnPrimary:hover:not(:disabled) {
-  background: #4f46e5;
+  background: #7c3aed;
   transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+  box-shadow: 0 4px 12px rgba(139, 92, 246, 0.4);
 }
 
 .btnPrimary:disabled {
@@ -75,14 +75,14 @@
 }
 
 .btnSecondary {
-  background: white;
-  color: #666;
-  border: 1px solid #e5e5e5;
+  background: #3d3d3d;
+  color: #e5e5e5;
+  border: 1px solid #4d4d4d;
 }
 
 .btnSecondary:hover {
-  background: #f9fafb;
-  border-color: #d1d5db;
+  background: #4d4d4d;
+  border-color: #5d5d5d;
 }
 
 .btnSuccess {
@@ -115,22 +115,22 @@
   width: 56px;
   height: 56px;
   border-radius: 50%;
-  background: #6366f1;
+  background: #8b5cf6;
   color: white;
   border: none;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 4px 12px rgba(99, 102, 241, 0.4);
+  box-shadow: 0 4px 12px rgba(139, 92, 246, 0.5);
   transition: all 0.3s;
   z-index: 10;
 }
 
 .fabButton:hover {
-  background: #4f46e5;
+  background: #7c3aed;
   transform: scale(1.1);
-  box-shadow: 0 6px 20px rgba(99, 102, 241, 0.5);
+  box-shadow: 0 6px 20px rgba(139, 92, 246, 0.6);
 }
 
 .fabButton:active {
