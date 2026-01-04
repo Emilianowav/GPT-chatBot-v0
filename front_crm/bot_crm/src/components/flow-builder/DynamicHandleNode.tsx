@@ -112,57 +112,17 @@ function DynamicHandleNode({ id, data, selected }: NodeProps) {
   const nodes = useStore((state) => state.nodeInternals);
   const edges = useStore((state) => state.edges);
 
-  // Calcular handles dinámicos basados en conexiones
-  const dynamicHandles = useMemo(() => {
-    const currentNode = nodes.get(id);
-    if (!currentNode) return [];
-
-    const handles: Array<{
-      id: string;
-      type: 'source' | 'target';
-      position: Position;
-      angle: number;
-    }> = [];
-
-    // Encontrar edges conectados a este nodo
-    const connectedEdges = edges.filter(
-      (edge) => edge.source === id || edge.target === id
-    );
-
-    connectedEdges.forEach((edge) => {
-      const isSource = edge.source === id;
-      const connectedNodeId = isSource ? edge.target : edge.source;
-      const connectedNode = nodes.get(connectedNodeId);
-
-      if (connectedNode) {
-        const angle = calculateAngle(
-          currentNode.position.x,
-          currentNode.position.y,
-          connectedNode.position.x,
-          connectedNode.position.y
-        );
-
-        const position = getHandlePosition(angle);
-
-        handles.push({
-          id: edge.id,
-          type: isSource ? 'source' : 'target',
-          position,
-          angle,
-        });
-      }
-    });
-
-    // Si no hay conexiones, agregar handles por defecto
-    if (handles.length === 0) {
-      handles.push(
-        { id: 'default-top', type: 'target', position: Position.Top, angle: -Math.PI / 2 },
-        { id: 'default-bottom', type: 'source', position: Position.Bottom, angle: Math.PI / 2 }
-      );
-    }
-
-    return handles;
-  }, [id, nodes, edges]);
+  // Handles fijos en 8 direcciones alrededor del círculo
+  const fixedHandles = [
+    { id: 'top', position: Position.Top, angle: -Math.PI / 2 },
+    { id: 'right', position: Position.Right, angle: 0 },
+    { id: 'bottom', position: Position.Bottom, angle: Math.PI / 2 },
+    { id: 'left', position: Position.Left, angle: Math.PI },
+    { id: 'top-right', position: Position.Right, angle: -Math.PI / 4 },
+    { id: 'bottom-right', position: Position.Right, angle: Math.PI / 4 },
+    { id: 'bottom-left', position: Position.Left, angle: (3 * Math.PI) / 4 },
+    { id: 'top-left', position: Position.Left, angle: -(3 * Math.PI) / 4 },
+  ];
 
   return (
     <div className={styles.nodeContainer}>
@@ -178,8 +138,8 @@ function DynamicHandleNode({ id, data, selected }: NodeProps) {
         {AppIcon ? <AppIcon /> : <Icon size={32} color="white" strokeWidth={2} />}
       </div>
 
-      {/* Handles dinámicos que giran alrededor del nodo */}
-      {dynamicHandles.map((handle) => {
+      {/* Handles fijos en 8 direcciones */}
+      {fixedHandles.map((handle) => {
         // Calcular posición en el círculo usando el ángulo
         // Radio del círculo (40px) + mitad del handle (10px) = 50px
         const radius = 50;
@@ -187,19 +147,34 @@ function DynamicHandleNode({ id, data, selected }: NodeProps) {
         const y = Math.sin(handle.angle) * radius;
 
         return (
-          <Handle
-            key={handle.id}
-            type={handle.type}
-            position={handle.position}
-            id={handle.id}
-            className={styles.handleDynamic}
-            style={{
-              background: color,
-              left: `calc(50% + ${x}px)`,
-              top: `calc(50% + ${y}px)`,
-              transform: 'translate(-50%, -50%)',
-            }}
-          />
+          <>
+            <Handle
+              key={`${handle.id}-source`}
+              type="source"
+              position={handle.position}
+              id={`${handle.id}-source`}
+              className={styles.handleDynamic}
+              style={{
+                background: color,
+                left: `calc(50% + ${x}px)`,
+                top: `calc(50% + ${y}px)`,
+                transform: 'translate(-50%, -50%)',
+              }}
+            />
+            <Handle
+              key={`${handle.id}-target`}
+              type="target"
+              position={handle.position}
+              id={`${handle.id}-target`}
+              className={styles.handleDynamic}
+              style={{
+                background: color,
+                left: `calc(50% + ${x}px)`,
+                top: `calc(50% + ${y}px)`,
+                transform: 'translate(-50%, -50%)',
+              }}
+            />
+          </>
         );
       })}
 
