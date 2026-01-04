@@ -18,6 +18,8 @@ import { Plus, Save, Play, Settings, Webhook } from 'lucide-react';
 import NodeConfigPanel from '@/components/flow-builder/NodeConfigPanel';
 import NodePalette from '@/components/flow-builder/NodePalette';
 import CustomNode from '@/components/flow-builder/CustomNode';
+import EdgeContextMenu from '@/components/flow-builder/EdgeContextMenu';
+import FilterModal from '@/components/flow-builder/FilterModal';
 import styles from './flow-builder.module.css';
 
 const nodeTypes = {
@@ -39,6 +41,8 @@ export default function FlowBuilderPage() {
   const [flowData, setFlowData] = useState<FlowData | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [edgeMenu, setEdgeMenu] = useState<{ x: number; y: number; edgeId: string } | null>(null);
+  const [filterModal, setFilterModal] = useState<string | null>(null);
 
   useEffect(() => {
     loadFlow();
@@ -102,6 +106,73 @@ export default function FlowBuilderPage() {
   const onNodeClick = useCallback((event: React.MouseEvent, node: Node) => {
     setSelectedNode(node);
   }, []);
+
+  const onEdgeContextMenu = useCallback((event: React.MouseEvent, edge: Edge) => {
+    event.preventDefault();
+    setEdgeMenu({
+      x: event.clientX,
+      y: event.clientY,
+      edgeId: edge.id,
+    });
+  }, []);
+
+  const handleSetFilter = (edgeId: string) => {
+    setFilterModal(edgeId);
+  };
+
+  const handleUnlink = (edgeId: string) => {
+    setEdges((eds) => eds.filter((e) => e.id !== edgeId));
+  };
+
+  const handleAddRouter = (edgeId: string) => {
+    const edge = edges.find((e) => e.id === edgeId);
+    if (!edge) return;
+
+    const newNode: Node = {
+      id: `router_${Date.now()}`,
+      type: 'custom',
+      position: { x: 400, y: 300 },
+      data: {
+        label: 'Router',
+        type: 'router',
+        config: {
+          id: `router_${Date.now()}`,
+          type: 'router',
+          name: 'Router',
+        },
+      },
+    };
+
+    setNodes((nds) => [...nds, newNode]);
+    setEdges((eds) => [
+      ...eds.filter((e) => e.id !== edgeId),
+      { ...edge, target: newNode.id, id: `${edge.source}-${newNode.id}` },
+      { id: `${newNode.id}-${edge.target}`, source: newNode.id, target: edge.target, animated: true },
+    ]);
+  };
+
+  const handleAddModule = (edgeId: string) => {
+    setShowPalette(true);
+  };
+
+  const handleAddNote = (edgeId: string) => {
+    console.log('Add note:', edgeId);
+  };
+
+  const handleSaveFilter = (edgeId: string, filter: any) => {
+    setEdges((eds) =>
+      eds.map((edge) =>
+        edge.id === edgeId
+          ? {
+              ...edge,
+              data: { ...edge.data, filter },
+              label: filter.label,
+              style: { ...edge.style, stroke: '#8b5cf6', strokeWidth: 3 },
+            }
+          : edge
+      )
+    );
+  };
 
   const addNewNode = useCallback((nodeType: string) => {
     const newNode: Node = {
@@ -245,12 +316,37 @@ export default function FlowBuilderPage() {
             onEdgesChange={onEdgesChange}
             onConnect={onConnect}
             onNodeClick={onNodeClick}
+            onEdgeContextMenu={onEdgeContextMenu}
             nodeTypes={nodeTypes}
+            defaultEdgeOptions={{
+              type: 'smoothstep',
+              animated: true,
+              style: { 
+                stroke: '#d1d5db',
+                strokeWidth: 2,
+                strokeDasharray: '5,5'
+              }
+            }}
             fitView
           >
             <Controls />
-            <MiniMap />
-            <Background variant={BackgroundVariant.Dots} gap={12} size={1} />
+            <MiniMap 
+              nodeColor={(node) => {
+                const colors: Record<string, string> = {
+                  message: '#25D366',
+                  question: '#25D366',
+                  condition: '#A3E635',
+                  webhook: '#C13584',
+                };
+                return colors[node.data?.type] || '#25D366';
+              }}
+            />
+            <Background 
+              variant={BackgroundVariant.Dots} 
+              gap={16} 
+              size={1}
+              color="#e5e7eb"
+            />
           </ReactFlow>
 
           <button
@@ -274,6 +370,28 @@ export default function FlowBuilderPage() {
           <NodePalette
             onSelectNode={addNewNode}
             onClose={() => setShowPalette(false)}
+          />
+        )}
+
+        {edgeMenu && (
+          <EdgeContextMenu
+            x={edgeMenu.x}
+            y={edgeMenu.y}
+            edgeId={edgeMenu.edgeId}
+            onSetFilter={handleSetFilter}
+            onUnlink={handleUnlink}
+            onAddRouter={handleAddRouter}
+            onAddModule={handleAddModule}
+            onAddNote={handleAddNote}
+            onClose={() => setEdgeMenu(null)}
+          />
+        )}
+
+        {filterModal && (
+          <FilterModal
+            edgeId={filterModal}
+            onSave={handleSaveFilter}
+            onClose={() => setFilterModal(null)}
           />
         )}
       </div>

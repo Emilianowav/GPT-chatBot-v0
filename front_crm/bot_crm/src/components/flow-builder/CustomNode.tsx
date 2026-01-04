@@ -9,7 +9,9 @@ import {
   AlertCircle,
   Webhook,
   Mail,
-  Clock
+  Clock,
+  Phone,
+  Plus
 } from 'lucide-react';
 
 const nodeIcons: Record<string, any> = {
