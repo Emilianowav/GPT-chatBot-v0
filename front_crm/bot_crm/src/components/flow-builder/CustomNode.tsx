@@ -38,37 +38,58 @@ const nodeColors: Record<string, string> = {
 
 function CustomNode({ data, selected }: NodeProps) {
   const Icon = nodeIcons[data.type] || MessageSquare;
-  const color = nodeColors[data.type] || '#6366f1';
+  const color = nodeColors[data.type] || '#25D366';
 
   return (
-    <div 
-      className={`${styles.node} ${selected ? styles.selected : ''}`}
-      style={{ borderColor: color }}
-    >
+    <div className={styles.nodeWrapper}>
       <Handle
         type="target"
         position={Position.Top}
-        className={styles.handle}
+        className={styles.handleTop}
       />
       
-      <div className={styles.nodeHeader} style={{ background: color }}>
-        <Icon size={18} color="white" />
+      {/* Nodo circular estilo Make */}
+      <div 
+        className={`${styles.nodeCircle} ${selected ? styles.selected : ''}`}
+        style={{ 
+          background: `linear-gradient(135deg, ${color} 0%, ${color}dd 100%)`,
+          boxShadow: selected 
+            ? `0 0 0 3px ${color}40, 0 8px 24px ${color}60`
+            : `0 4px 12px ${color}40`
+        }}
+      >
+        <Icon size={32} color="white" strokeWidth={2} />
       </div>
-      
-      <div className={styles.nodeBody}>
-        <div className={styles.nodeLabel}>{data.label}</div>
-        {data.config?.message && (
-          <div className={styles.nodePreview}>
-            {data.config.message.substring(0, 50)}
-            {data.config.message.length > 50 ? '...' : ''}
-          </div>
-        )}
+
+      {/* Nombre del nodo debajo */}
+      <div className={styles.nodeLabel}>
+        {data.label}
       </div>
+
+      {/* Subtítulo/descripción */}
+      {data.config?.message && (
+        <div className={styles.nodeSubtitle}>
+          {data.config.message.substring(0, 30)}
+          {data.config.message.length > 30 ? '...' : ''}
+        </div>
+      )}
+
+      {/* Badge con número */}
+      {data.config?.id && (
+        <div className={styles.nodeBadge}>
+          {data.config.id.split('-').pop()?.substring(0, 2) || '1'}
+        </div>
+      )}
+
+      {/* Botón + para agregar siguiente */}
+      <button className={styles.addButton} title="Agregar módulo">
+        <Plus size={14} />
+      </button>
       
       <Handle
         type="source"
         position={Position.Bottom}
-        className={styles.handle}
+        className={styles.handleBottom}
       />
     </div>
   );
