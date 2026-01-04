@@ -474,7 +474,7 @@ export default function FlowBuilderPage() {
 
         </div>
 
-        {selectedNode && (
+        {selectedNode && !showAppsModal && (
           <NodeConfigPanel
             node={selectedNode}
             onUpdate={(config) => updateNodeConfig(selectedNode.id, config)}
