@@ -14,17 +14,19 @@ import ReactFlow, {
   BackgroundVariant,
 } from 'reactflow';
 import 'reactflow/dist/style.css';
-import { Plus, Save, Play, Settings, Webhook, Edit2, Check, X } from 'lucide-react';
+import { Save, Play, Settings, Webhook, Edit2, Check, X } from 'lucide-react';
+import DashboardLayout from '@/components/DashboardLayout/DashboardLayout';
 import NodeConfigPanel from '@/components/flow-builder/NodeConfigPanel';
-import NodePalette from '@/components/flow-builder/NodePalette';
 import CustomNode from '@/components/flow-builder/CustomNode';
+import EmptyNode from '@/components/flow-builder/EmptyNode';
 import EdgeContextMenu from '@/components/flow-builder/EdgeContextMenu';
 import FilterModal from '@/components/flow-builder/FilterModal';
-import NodeSidebar from '@/components/flow-builder/NodeSidebar';
+import AppsModal from '@/components/flow-builder/AppsModal';
 import styles from './flow-builder.module.css';
 
 const nodeTypes = {
   custom: CustomNode,
+  empty: EmptyNode,
 };
 
 interface FlowData {
@@ -38,7 +40,9 @@ export default function FlowBuilderPage() {
   const [nodes, setNodes, onNodesChange] = useNodesState([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState([]);
   const [selectedNode, setSelectedNode] = useState<Node | null>(null);
-  const [showPalette, setShowPalette] = useState(false);
+  const [showAppsModal, setShowAppsModal] = useState(false);
+  const [appsModalPosition, setAppsModalPosition] = useState<{ x: number; y: number } | undefined>();
+  const [selectedNodeForAdd, setSelectedNodeForAdd] = useState<string | null>(null);
   const [flowData, setFlowData] = useState<FlowData | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
@@ -112,20 +116,18 @@ export default function FlowBuilderPage() {
   const createInitialNode = () => {
     const initialNode: Node = {
       id: 'start_node',
-      type: 'custom',
+      type: 'empty',
       position: { x: 400, y: 200 },
       data: {
-        label: 'Inicio',
-        type: 'webhook',
-        config: {
-          id: 'start_node',
-          type: 'webhook',
-          name: 'Inicio',
-          message: 'Haz clic en el botón + para agregar módulos',
-        },
+        onAddClick: () => handleEmptyNodeClick('start_node'),
       },
     };
     setNodes([initialNode]);
+  };
+
+  const handleEmptyNodeClick = (nodeId: string) => {
+    setSelectedNodeForAdd(nodeId);
+    setShowAppsModal(true);
   };
 
   const onConnect = useCallback(
@@ -182,7 +184,7 @@ export default function FlowBuilderPage() {
   };
 
   const handleAddModule = (edgeId: string) => {
-    setShowPalette(true);
+    setShowAppsModal(true);
   };
 
   const handleAddNote = (edgeId: string) => {
@@ -204,26 +206,67 @@ export default function FlowBuilderPage() {
     );
   };
 
-  const addNewNode = useCallback((nodeType: string) => {
-    const newNode: Node = {
-      id: `node_${Date.now()}`,
+  const handleSelectModule = useCallback((moduleType: string, moduleName: string, appName: string) => {
+    if (!selectedNodeForAdd) return;
+
+    const selectedNode = nodes.find(n => n.id === selectedNodeForAdd);
+    if (!selectedNode) return;
+
+    const newNodeId = `node_${Date.now()}`;
+    const newEmptyNodeId = `empty_${Date.now()}`;
+
+    // Convertir nodo vacío en nodo real
+    const updatedNode: Node = {
+      ...selectedNode,
       type: 'custom',
-      position: { x: Math.random() * 400, y: Math.random() * 400 },
       data: {
-        label: nodeType,
-        type: nodeType,
+        label: moduleName,
+        type: moduleType,
+        appName: appName,
         config: {
-          id: `node_${Date.now()}`,
-          type: nodeType,
-          name: `Nuevo ${nodeType}`,
+          id: selectedNode.id,
+          type: moduleType,
+          name: moduleName,
           message: '',
         },
       },
     };
 
-    setNodes((nds) => [...nds, newNode]);
-    setShowPalette(false);
-  }, [setNodes]);
+    // Crear nuevo nodo vacío conectado
+    const newEmptyNode: Node = {
+      id: newEmptyNodeId,
+      type: 'empty',
+      position: {
+        x: selectedNode.position.x,
+        y: selectedNode.position.y + 150,
+      },
+      data: {
+        onAddClick: () => handleEmptyNodeClick(newEmptyNodeId),
+      },
+    };
+
+    // Actualizar nodos
+    setNodes((nds) => [
+      ...nds.filter(n => n.id !== selectedNodeForAdd),
+      updatedNode,
+      newEmptyNode,
+    ]);
+
+    // Crear conexión
+    setEdges((eds) => [
+      ...eds,
+      {
+        id: `${selectedNode.id}-${newEmptyNodeId}`,
+        source: selectedNode.id,
+        target: newEmptyNodeId,
+        animated: true,
+        style: { stroke: '#d1d5db', strokeWidth: 2, strokeDasharray: '5,5' },
+      },
+    ]);
+
+    setShowAppsModal(false);
+    setSelectedNodeForAdd(null);
+  }, [selectedNodeForAdd, nodes, setNodes, setEdges]);
 
   const handleTitleEdit = () => {
     setEditedTitle(flowData?.nombre || 'Nuevo Flujo');
@@ -325,10 +368,8 @@ export default function FlowBuilderPage() {
   }
 
   return (
-    <div className={styles.container}>
-      <NodeSidebar onAddNode={addNewNode} />
-      
-      <div className={styles.mainContent}>
+    <DashboardLayout>
+      <div className={styles.container}>
         <div className={styles.header}>
           <div className={styles.headerLeft}>
             {isEditingTitle ? (
@@ -430,13 +471,6 @@ export default function FlowBuilderPage() {
             />
           </ReactFlow>
 
-          <button
-            className={styles.fabButton}
-            onClick={() => setShowPalette(!showPalette)}
-            title="Agregar nodo"
-          >
-            <Plus size={24} />
-          </button>
         </div>
 
         {selectedNode && (
@@ -447,10 +481,14 @@ export default function FlowBuilderPage() {
           />
         )}
 
-        {showPalette && (
-          <NodePalette
-            onSelectNode={addNewNode}
-            onClose={() => setShowPalette(false)}
+        {showAppsModal && (
+          <AppsModal
+            onClose={() => {
+              setShowAppsModal(false);
+              setSelectedNodeForAdd(null);
+            }}
+            onSelectModule={handleSelectModule}
+            position={appsModalPosition}
           />
         )}
 
@@ -475,8 +513,7 @@ export default function FlowBuilderPage() {
               onClose={() => setFilterModal(null)}
             />
           )}
-        </div>
       </div>
-    </div>
+    </DashboardLayout>
   );
 }

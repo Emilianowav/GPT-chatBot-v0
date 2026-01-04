@@ -1,0 +1,41 @@
+.emptyNode {
+  position: relative;
+}
+
+.addButton {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #8b5cf6 0%, #ec4899 100%);
+  border: none;
+  color: white;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 20px rgba(139, 92, 246, 0.4);
+  transition: all 0.3s ease;
+  position: relative;
+}
+
+.addButton:hover {
+  transform: scale(1.1);
+  box-shadow: 0 6px 30px rgba(139, 92, 246, 0.6);
+}
+
+.addButton:active {
+  transform: scale(0.95);
+}
+
+.handle {
+  width: 12px;
+  height: 12px;
+  background: #8b5cf6;
+  border: 2px solid #fff;
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+
+.emptyNode:hover .handle {
+  opacity: 1;
+}
