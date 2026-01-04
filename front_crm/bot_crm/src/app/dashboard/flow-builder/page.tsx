@@ -128,6 +128,7 @@ export default function FlowBuilderPage() {
   const handleEmptyNodeClick = (nodeId: string) => {
     setSelectedNodeForAdd(nodeId);
     setShowAppsModal(true);
+    setSelectedNode(null); // Cerrar panel de configuración si está abierto
   };
 
   const onConnect = useCallback(
