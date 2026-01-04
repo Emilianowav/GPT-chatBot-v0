@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import ReactFlow, {
   MiniMap,
   Controls,
@@ -14,7 +14,7 @@ import ReactFlow, {
   BackgroundVariant,
 } from 'reactflow';
 import 'reactflow/dist/style.css';
-import { Plus, Save, Play, Settings, Webhook, ArrowLeft, Trash2 } from 'lucide-react';
+import { Plus, Save, Play, Settings, Webhook, ArrowLeft, List } from 'lucide-react';
 import NodeConfigPanel from '@/components/flow-builder/NodeConfigPanel';
 import NodePalette from '@/components/flow-builder/NodePalette';
 import CustomNode from '@/components/flow-builder/CustomNode';
@@ -65,7 +65,9 @@ export default function FlowsPage() {
       const response = await fetch(`http://localhost:3000/api/flows?empresaId=${empresa}`);
       if (response.ok) {
         const data = await response.json();
-        setFlowsList(data.flows || []);
+        // La API puede devolver un array directo o un objeto con propiedad flows
+        const flows = Array.isArray(data) ? data : (data.flows || []);
+        setFlowsList(flows);
       }
     } catch (error) {
       console.error('Error loading flows:', error);

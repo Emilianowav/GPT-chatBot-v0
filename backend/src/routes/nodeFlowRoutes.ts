@@ -30,12 +30,16 @@ router.get('/flows', async (req: Request, res: Response): Promise<void> => {
  */
 router.get('/flows/:id', async (req: Request, res: Response): Promise<void> => {
   try {
-    const flow = await FlowModel.findById(req.params.id);
+    const flow = await FlowModel.findOne({ id: req.params.id });
     if (!flow) {
       res.status(404).json({ error: 'Flow not found' });
       return;
     }
-    res.json(flow);
+    
+    // Obtener nodos del flujo
+    const nodes = await FlowNodeModel.find({ flowId: req.params.id }).sort({ createdAt: 1 });
+    
+    res.json({ flow, nodes });
   } catch (error: any) {
     console.error('Error getting flow:', error);
     res.status(500).json({ error: error.message });
@@ -62,15 +66,30 @@ router.post('/flows', async (req: Request, res: Response): Promise<void> => {
  */
 router.put('/flows/:id', async (req: Request, res: Response): Promise<void> => {
   try {
-    const flow = await FlowModel.findByIdAndUpdate(
-      req.params.id,
-      req.body,
-      { new: true, runValidators: true }
+    const { flow: flowData, nodes: nodesData } = req.body;
+    
+    // Actualizar o crear flujo
+    const flow = await FlowModel.findOneAndUpdate(
+      { id: req.params.id },
+      { ...flowData, id: req.params.id, updatedAt: new Date() },
+      { new: true, upsert: true, runValidators: true }
     );
     
     if (!flow) {
       res.status(404).json({ error: 'Flow not found' });
       return;
+    }
+    
+    // Actualizar nodos si se proporcionan
+    if (nodesData && Array.isArray(nodesData)) {
+      await FlowNodeModel.deleteMany({ flowId: req.params.id });
+      await FlowNodeModel.insertMany(
+        nodesData.map((node: any) => ({
+          ...node,
+          flowId: req.params.id,
+          empresaId: flow.empresaId
+        }))
+      );
     }
     
     res.json(flow);
@@ -86,8 +105,8 @@ router.put('/flows/:id', async (req: Request, res: Response): Promise<void> => {
  */
 router.patch('/flows/:id', async (req: Request, res: Response): Promise<void> => {
   try {
-    const flow = await FlowModel.findByIdAndUpdate(
-      req.params.id,
+    const flow = await FlowModel.findOneAndUpdate(
+      { id: req.params.id },
       { $set: req.body },
       { new: true }
     );
@@ -110,7 +129,7 @@ router.patch('/flows/:id', async (req: Request, res: Response): Promise<void> =>
  */
 router.delete('/flows/:id', async (req: Request, res: Response): Promise<void> => {
   try {
-    const flow = await FlowModel.findById(req.params.id);
+    const flow = await FlowModel.findOne({ id: req.params.id });
     
     if (!flow) {
       res.status(404).json({ error: 'Flow not found' });
@@ -118,10 +137,10 @@ router.delete('/flows/:id', async (req: Request, res: Response): Promise<void> =
     }
     
     // Eliminar todos los nodos del flujo
-    await FlowNodeModel.deleteMany({ flowId: flow.id });
+    await FlowNodeModel.deleteMany({ flowId: req.params.id });
     
     // Eliminar el flujo
-    await FlowModel.findByIdAndDelete(req.params.id);
+    await FlowModel.deleteOne({ id: req.params.id });
     
     res.json({ success: true, message: 'Flow and nodes deleted' });
   } catch (error: any) {
@@ -136,7 +155,7 @@ router.delete('/flows/:id', async (req: Request, res: Response): Promise<void> =
  */
 router.post('/flows/:id/duplicate', async (req: Request, res: Response): Promise<void> => {
   try {
-    const originalFlow = await FlowModel.findById(req.params.id);
+    const originalFlow = await FlowModel.findOne({ id: req.params.id });
     
     if (!originalFlow) {
       res.status(404).json({ error: 'Flow not found' });
@@ -147,7 +166,7 @@ router.post('/flows/:id/duplicate', async (req: Request, res: Response): Promise
     const newFlow = await FlowModel.create({
       ...originalFlow.toObject(),
       _id: undefined,
-      id: `${originalFlow.id}_copy`,
+      id: `${originalFlow.id}_copy_${Date.now()}`,
       nombre: `${originalFlow.nombre} (Copia)`,
       activo: false,
       createdAt: undefined,
