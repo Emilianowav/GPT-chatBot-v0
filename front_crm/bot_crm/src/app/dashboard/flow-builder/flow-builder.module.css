@@ -267,17 +267,28 @@
   }
 }
 
-/* Puntos grandes en las conexiones */
-:global(.react-flow__edge)::before,
-:global(.react-flow__edge)::after {
-  content: '';
-  position: absolute;
-  width: 12px;
-  height: 12px;
+/* Puntos grandes en las conexiones - estilo Make.com */
+:global(.react-flow__connectionline) {
+  stroke: #d1d5db;
+  stroke-width: 2;
+  stroke-dasharray: 8, 8;
+}
+
+/* Handles (puntos de conexión) más grandes */
+:global(.react-flow__handle) {
+  width: 14px;
+  height: 14px;
   background: #10b981;
-  border-radius: 50%;
-  border: 2px solid white;
+  border: 3px solid white;
   box-shadow: 0 2px 8px rgba(16, 185, 129, 0.3);
+  transition: all 0.2s;
+}
+
+:global(.react-flow__handle):hover {
+  width: 18px;
+  height: 18px;
+  background: #059669;
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.5);
 }
 
 /* Botón de configuración en la conexión (icono llave) */

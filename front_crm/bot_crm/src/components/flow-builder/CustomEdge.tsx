@@ -40,26 +40,6 @@ function CustomEdge({
         d={edgePath}
         markerEnd={markerEnd}
       />
-      
-      {/* Puntos en los extremos */}
-      <circle
-        cx={sourceX}
-        cy={sourceY}
-        r={6}
-        fill="#10b981"
-        stroke="white"
-        strokeWidth={2}
-        className={styles.edgeDot}
-      />
-      <circle
-        cx={targetX}
-        cy={targetY}
-        r={6}
-        fill="#10b981"
-        stroke="white"
-        strokeWidth={2}
-        className={styles.edgeDot}
-      />
 
       {/* Botón de configuración en el centro */}
       <EdgeLabelRenderer>
