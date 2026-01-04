@@ -61,7 +61,7 @@ export default function FlowBuilderPage() {
   const loadFlow = async () => {
     try {
       setIsLoading(true);
-      const flowId = 'veo-veo-completo';
+      const flowId = 'veo-veo-gpt-conversacional';
       
       const response = await fetch(`http://localhost:3000/api/flows/${flowId}`);
       
