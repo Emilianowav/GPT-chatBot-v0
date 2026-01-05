@@ -30,10 +30,21 @@ function SimpleEdge({
 
   // Calcular ángulo desde source hacia target
   const calculateHandleOffset = (fromX: number, fromY: number, toX: number, toY: number) => {
-    const dx = toX - fromX;
-    const dy = toY - fromY;
+    // Calcular desde el centro del nodo (position + 50px que es el radio)
+    const nodeRadius = 50;
+    const fromCenterX = fromX + nodeRadius;
+    const fromCenterY = fromY + nodeRadius;
+    const toCenterX = toX + nodeRadius;
+    const toCenterY = toY + nodeRadius;
+
+    const dx = toCenterX - fromCenterX;
+    const dy = toCenterY - fromCenterY;
     const angleRad = Math.atan2(dy, dx);
-    const orbitRadius = 70; // Mismo radio que en AppNode
+    
+    // ⚙️ AJUSTA ESTE VALOR para alinear las líneas con los handles
+    // Si las líneas están muy cerca del centro: aumenta el valor
+    // Si las líneas están muy lejos: disminuye el valor
+    const orbitRadius = 48; // Ajustado para coincidir con handles visuales
     
     return {
       x: Math.cos(angleRad) * orbitRadius,
@@ -76,8 +87,7 @@ function SimpleEdge({
   );
 
   // Calcular número de círculos (uno cada 35px)
-  const numCircles = Math.max(2, Math.floor(distance / 35));
-
+  const numCircles = Math.max(1, Math.floor(distance / 25));
   // Generar posiciones de círculos desde handles reales
   const circles = [];
   for (let i = 0; i < numCircles; i++) {
