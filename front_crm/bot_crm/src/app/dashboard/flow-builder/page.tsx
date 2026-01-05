@@ -25,6 +25,7 @@ import WebhookNode from '@/components/flow-builder/nodes/WebhookNode';
 import SimpleEdge from '@/components/flow-builder/edges/SimpleEdge';
 import AppsModal from '@/components/flow-builder/modals/AppsModal';
 import ModuleSelectionModal from '@/components/flow-builder/modals/ModuleSelectionModal';
+import WebhookConfigModal from '@/components/flow-builder/modals/WebhookConfigModal';
 import NodeConfigPanel from '@/components/flow-builder/panels/NodeConfigPanel';
 import styles from './flow-builder.module.css';
 
