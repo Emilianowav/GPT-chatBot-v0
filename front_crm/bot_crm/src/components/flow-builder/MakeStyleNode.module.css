@@ -1,0 +1,171 @@
+/* ========================================
+   CONTENEDOR PRINCIPAL ESTILO MAKE.COM
+   ======================================== */
+
+.makeNodeContainer {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 0;
+  min-width: 100px;
+}
+
+/* ========================================
+   CÍRCULO PRINCIPAL DEL NODO
+   ======================================== */
+
+.nodeCircle {
+  width: 100px;
+  height: 100px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: grab;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  z-index: 1;
+  border: 4px solid #f5f5f7;
+}
+
+.nodeCircle:active {
+  cursor: grabbing;
+}
+
+.nodeCircle:hover {
+  transform: scale(1.05);
+}
+
+.nodeCircle.selected {
+  transform: scale(1.08);
+  box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.3), 0 10px 30px rgba(99, 102, 241, 0.5);
+}
+
+/* ========================================
+   HANDLES INVISIBLES (PARA REACTFLOW)
+   ======================================== */
+
+.invisibleHandle {
+  width: 1px;
+  height: 1px;
+  border: none;
+  background: transparent;
+  position: absolute;
+  opacity: 0;
+  pointer-events: all;
+}
+
+/* ========================================
+   HANDLES VISUALES (SEMICÍRCULOS GRANDES)
+   Estilo Make.com: Semicírculos grandes pegados al borde
+   ======================================== */
+
+.visualHandle {
+  position: absolute;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: crosshair;
+  transition: all 0.15s ease;
+  border: 3px solid #f5f5f7;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  z-index: 10;
+  pointer-events: all;
+}
+
+.visualHandle:hover {
+  transform: translate(-50%, -50%) scale(1.15);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.3);
+}
+
+/* Handle conectado (sin icono +) */
+.visualHandle.connected {
+  opacity: 0.95;
+}
+
+/* Handle de agregar (con icono +) */
+.visualHandle.addButton {
+  opacity: 1;
+}
+
+.visualHandle.addButton:hover {
+  transform: translate(-50%, -50%) scale(1.2);
+}
+
+/* ========================================
+   BADGE DE EJECUCIÓN (ARRIBA DERECHA)
+   ======================================== */
+
+.executionBadge {
+  position: absolute;
+  background: #ef4444;
+  color: white;
+  border: 3px solid #f5f5f7;
+  border-radius: 50%;
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  font-weight: 700;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+  z-index: 20;
+  top: -5px;
+  right: -5px;
+}
+
+/* ========================================
+   ICONO PEQUEÑO (ABAJO IZQUIERDA)
+   Ej: Rayo de WhatsApp
+   ======================================== */
+
+.appBadge {
+  position: absolute;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 3px solid #f5f5f7;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+  z-index: 15;
+  bottom: -5px;
+  left: -5px;
+}
+
+/* ========================================
+   LABELS
+   ======================================== */
+
+.nodeLabel {
+  margin-top: 16px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #1f2937;
+  text-align: center;
+  max-width: 180px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  position: relative;
+  z-index: 1;
+}
+
+.nodeSubtitle {
+  margin-top: 4px;
+  font-size: 12px;
+  color: #6b7280;
+  text-align: center;
+  max-width: 180px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  position: relative;
+  z-index: 1;
+}
