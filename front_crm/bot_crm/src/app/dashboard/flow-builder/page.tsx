@@ -114,6 +114,13 @@ export default function FlowBuilderPage() {
   const [selectedNode, setSelectedNode] = useState<Node | null>(null);
   const [showConfigPanel, setShowConfigPanel] = useState(false);
 
+  const handlePlusNodeClick = useCallback((nodeId: string, handleId?: string) => {
+    setSourceNodeForConnection(nodeId);
+    setSourceHandleForConnection(handleId);
+    setShowAppsModal(true);
+    setAppsModalPosition(undefined);
+  }, []);
+
   const handleNodeClick = useCallback((nodeId: string) => {
     const node = nodes.find(n => n.id === nodeId);
     if (node) {
@@ -184,13 +191,6 @@ export default function FlowBuilderPage() {
     
     loadVeoVeoFlow();
   }, [handleNodeClick, handlePlusNodeClick]);
-
-  const handlePlusNodeClick = useCallback((nodeId: string, handleId?: string) => {
-    setSourceNodeForConnection(nodeId);
-    setSourceHandleForConnection(handleId);
-    setShowAppsModal(true);
-    setAppsModalPosition(undefined);
-  }, []);
 
   const handleAppSelect = (app: any) => {
     setSelectedApp(app);
