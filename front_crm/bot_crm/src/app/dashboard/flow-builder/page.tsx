@@ -26,6 +26,7 @@ import SimpleEdge from '@/components/flow-builder/edges/SimpleEdge';
 import AppsModal from '@/components/flow-builder/modals/AppsModal';
 import ModuleSelectionModal from '@/components/flow-builder/modals/ModuleSelectionModal';
 import WebhookConfigModal from '@/components/flow-builder/modals/WebhookConfigModal';
+import GPTConfigModal from '@/components/flow-builder/modals/GPTConfigModal';
 import NodeConfigPanel from '@/components/flow-builder/panels/NodeConfigPanel';
 import styles from './flow-builder.module.css';
 
@@ -79,13 +80,38 @@ const WHATSAPP_MODULES = [
 ];
 
 const OPENAI_MODULES = [
-  // CHAT AND ASSISTANT - Módulos implementados y funcionales
+  // CHAT - Módulos conversacionales
   {
-    id: 'generate-completion',
-    name: 'Create a Chat Completion',
-    description: 'Generates a chat completion using GPT models. Processes user messages and generates intelligent responses.',
+    id: 'conversacional',
+    name: 'Conversacional',
+    description: 'Conversa con usuarios, responde preguntas y recopila información de manera natural.',
     category: 'CHAT',
     badges: ['GPT-4', 'GPT-3.5'],
+    tipo: 'conversacional',
+  },
+  {
+    id: 'formateador',
+    name: 'Formateador',
+    description: 'Transforma datos recopilados en formato específico para otros sistemas (WooCommerce, APIs, etc.).',
+    category: 'DATA PROCESSING',
+    badges: ['GPT-4'],
+    tipo: 'formateador',
+  },
+  {
+    id: 'procesador',
+    name: 'Procesador',
+    description: 'Procesa y analiza información, extrae datos clave y toma decisiones.',
+    category: 'DATA PROCESSING',
+    badges: ['GPT-4'],
+    tipo: 'procesador',
+  },
+  {
+    id: 'transform-structured',
+    name: 'Transform text to structured data',
+    description: 'Identifies information in a prompt\'s text and returns it as structured data (JSON).',
+    category: 'DATA EXTRACTION',
+    badges: ['Structured Output'],
+    tipo: 'transform',
   },
 ];
 
@@ -104,6 +130,7 @@ export default function FlowBuilderPage() {
   const [showAppsModal, setShowAppsModal] = useState(false);
   const [showModuleModal, setShowModuleModal] = useState(false);
   const [showWebhookConfigModal, setShowWebhookConfigModal] = useState(false);
+  const [showGPTConfigModal, setShowGPTConfigModal] = useState(false);
   const [appsModalPosition, setAppsModalPosition] = useState<{ x: number; y: number } | undefined>();
   const [selectedApp, setSelectedApp] = useState<any>(null);
   const [selectedModule, setSelectedModule] = useState<any>(null);
@@ -229,6 +256,13 @@ export default function FlowBuilderPage() {
       return;
     }
     
+    // Si es OpenAI (cualquier tipo de GPT), mostrar modal de configuración
+    if (selectedApp.id === 'openai') {
+      setShowModuleModal(false);
+      setShowGPTConfigModal(true);
+      return;
+    }
+    
     // Para otros módulos, crear nodo directamente
     setShowModuleModal(false);
     createNodeFromModule(module, {});
@@ -237,6 +271,11 @@ export default function FlowBuilderPage() {
   const handleWebhookConfigSave = (webhookConfig: any) => {
     setShowWebhookConfigModal(false);
     createNodeFromModule(selectedModule, webhookConfig);
+  };
+
+  const handleGPTConfigSave = (gptConfig: any) => {
+    setShowGPTConfigModal(false);
+    createNodeFromModule(selectedModule, gptConfig);
   };
 
   const createNodeFromModule = (module: any, config: any) => {
@@ -479,6 +518,19 @@ export default function FlowBuilderPage() {
             }}
             onSave={handleWebhookConfigSave}
             appName={selectedApp.name}
+            moduleName={selectedModule.name}
+          />
+        )}
+
+        {selectedApp && selectedModule && (
+          <GPTConfigModal
+            isOpen={showGPTConfigModal}
+            onClose={() => {
+              setShowGPTConfigModal(false);
+              setSelectedModule(null);
+            }}
+            onSave={handleGPTConfigSave}
+            moduleType={selectedModule.tipo || 'conversacional'}
             moduleName={selectedModule.name}
           />
         )}
