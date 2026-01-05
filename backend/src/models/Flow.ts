@@ -2,7 +2,7 @@
 import mongoose, { Schema, Document } from 'mongoose';
 
 // Tipos de bot soportados
-export type BotType = 'conversacional' | 'pasos';
+export type BotType = 'conversacional' | 'pasos' | 'visual';
 export type PasosSubType = 'api' | 'crm';
 
 // Configuración de API para bots de pasos
@@ -92,7 +92,7 @@ const FlowSchema = new Schema<IFlow>(
     // Tipo de bot
     botType: {
       type: String,
-      enum: ['conversacional', 'pasos'],
+      enum: ['conversacional', 'pasos', 'visual'],
       required: true,
       default: 'conversacional'
     },
@@ -117,6 +117,24 @@ const FlowSchema = new Schema<IFlow>(
     
     // Configuración de API
     apiConfig: ApiConfigSchema,
+    
+    // Flow Builder Visual: Nodos y edges
+    nodes: [{
+      id: { type: String, required: true },
+      type: { type: String, required: true },
+      position: {
+        x: { type: Number, required: true },
+        y: { type: Number, required: true }
+      },
+      data: { type: Schema.Types.Mixed, required: true }
+    }],
+    edges: [{
+      id: { type: String, required: true },
+      source: { type: String, required: true },
+      target: { type: String, required: true },
+      type: { type: String, required: true },
+      data: { type: Schema.Types.Mixed }
+    }],
     
     settings: {
       timeout: { type: Number, default: 300 },

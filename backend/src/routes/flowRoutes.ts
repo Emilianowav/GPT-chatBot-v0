@@ -3,7 +3,7 @@ import express, { Request, Response } from 'express';
 import { authenticate } from '../middlewares/authMiddleware.js';
 import { flowManager } from '../flows/FlowManager.js';
 import { ConversationStateModel } from '../models/ConversationState.js';
-import { FlowBuilder } from '../models/flow.model.js';
+import { FlowModel } from '../models/Flow.js';
 
 const router = express.Router();
 
@@ -18,7 +18,7 @@ const router = express.Router();
 router.get('/:empresaId', authenticate, async (req: Request, res: Response): Promise<void> => {
   try {
     const { empresaId } = req.params;
-    const flows = await Flow.find({ empresaId, activo: true }).sort({ createdAt: -1 });
+    const flows = await FlowModel.find({ empresaId, activo: true, botType: 'visual' }).sort({ createdAt: -1 });
     res.json(flows);
   } catch (error: any) {
     console.error('Error obteniendo flows:', error);
@@ -33,7 +33,7 @@ router.get('/:empresaId', authenticate, async (req: Request, res: Response): Pro
 router.get('/detail/:flowId', async (req: Request, res: Response): Promise<void> => {
   try {
     const { flowId } = req.params;
-    const flow = await Flow.findById(flowId);
+    const flow = await FlowModel.findById(flowId);
     
     if (!flow) {
       res.status(404).json({ error: 'Flow not found' });
@@ -54,7 +54,7 @@ router.get('/detail/:flowId', async (req: Request, res: Response): Promise<void>
 router.post('/', authenticate, async (req: Request, res: Response): Promise<void> => {
   try {
     const flowData = req.body;
-    const newFlow = new Flow(flowData);
+    const newFlow = new FlowModel({ ...flowData, botType: 'visual' });
     await newFlow.save();
     res.status(201).json(newFlow);
   } catch (error: any) {
@@ -71,7 +71,7 @@ router.put('/:flowId', authenticate, async (req: Request, res: Response): Promis
   try {
     const { flowId } = req.params;
     const flowData = req.body;
-    const updatedFlow = await FlowBuilder.findByIdAndUpdate(
+    const updatedFlow = await FlowModel.findByIdAndUpdate(
       flowId,
       { ...flowData, updatedAt: new Date() },
       { new: true }
