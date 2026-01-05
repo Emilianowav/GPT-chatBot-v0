@@ -16,10 +16,11 @@ import ReactFlow, {
 import 'reactflow/dist/style.css';
 import { Save, Play, Settings, Webhook, Edit2, Check, X } from 'lucide-react';
 import DashboardLayout from '@/components/DashboardLayout/DashboardLayout';
-import MakeStyleNode from '@/components/flow-builder/MakeStyleNode';
-import EmptyNode from '@/components/flow-builder/EmptyNode';
-import RouterNode from '@/components/flow-builder/RouterNode';
-import MakeStyleEdge from '@/components/flow-builder/MakeStyleEdge';
+import PlusNode from '@/components/flow-builder/nodes/PlusNode';
+import AppNode from '@/components/flow-builder/nodes/AppNode';
+import SimpleEdge from '@/components/flow-builder/edges/SimpleEdge';
+import AppsModal from '@/components/flow-builder/modals/AppsModal';
+import ModuleSelectionModal from '@/components/flow-builder/modals/ModuleSelectionModal';
 
 // Colores de apps y nodos para gradientes
 const appColors: Record<string, string> = {
@@ -49,20 +50,15 @@ const nodeColors: Record<string, string> = {
   error: '#ef4444',
   gpt: '#10a37f',
 };
-import EdgeContextMenu from '@/components/flow-builder/EdgeContextMenu';
-import FilterModal from '@/components/flow-builder/FilterModal';
-import AppsModal from '@/components/flow-builder/AppsModal';
-import ModuleConfigModal from '@/components/flow-builder/ModuleConfigModal';
 import styles from './flow-builder.module.css';
 
 const nodeTypes = {
-  custom: MakeStyleNode,
-  empty: EmptyNode,
-  router: RouterNode,
+  plus: PlusNode,
+  app: AppNode,
 };
 
 const edgeTypes = {
-  custom: MakeStyleEdge,
+  simple: SimpleEdge,
 };
 
 interface FlowData {
@@ -73,25 +69,31 @@ interface FlowData {
 }
 
 export default function FlowBuilderPage() {
+  // Estado de ReactFlow
   const [nodes, setNodes, onNodesChange] = useNodesState([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState([]);
-  const [selectedNode, setSelectedNode] = useState<Node | null>(null);
+  
+  // Estado de modales
   const [showAppsModal, setShowAppsModal] = useState(false);
+  const [showModuleModal, setShowModuleModal] = useState(false);
   const [appsModalPosition, setAppsModalPosition] = useState<{ x: number; y: number } | undefined>();
-  const [selectedNodeForAdd, setSelectedNodeForAdd] = useState<string | null>(null);
-  const [flowData, setFlowData] = useState<FlowData | null>(null);
-  const [isSaving, setIsSaving] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
-  const [edgeMenu, setEdgeMenu] = useState<{ x: number; y: number; edgeId: string } | null>(null);
-  const [filterModal, setFilterModal] = useState<string | null>(null);
-  const [isEditingTitle, setIsEditingTitle] = useState(false);
-  const [editedTitle, setEditedTitle] = useState('');
-  const titleInputRef = useRef<HTMLInputElement>(null);
-  const [showModuleConfig, setShowModuleConfig] = useState(false);
-  const [selectedModuleNode, setSelectedModuleNode] = useState<Node | null>(null);
+  
+  // Estado de selección
+  const [selectedApp, setSelectedApp] = useState<any>(null);
+  const [selectedModule, setSelectedModule] = useState<any>(null);
+  const [sourceNodeForConnection, setSourceNodeForConnection] = useState<string | null>(null);
 
+  // Inicializar con nodo +
   useEffect(() => {
-    loadFlow();
+    const initialNode: Node = {
+      id: 'plus-initial',
+      type: 'plus',
+      position: { x: 400, y: 300 },
+      data: {
+        onAddClick: handlePlusNodeClick,
+      },
+    };
+    setNodes([initialNode]);
   }, []);
 
   const loadFlow = async () => {
