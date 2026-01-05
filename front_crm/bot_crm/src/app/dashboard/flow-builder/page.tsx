@@ -19,6 +19,9 @@ import PlusNode from '@/components/flow-builder/nodes/PlusNode';
 import RouterNode from '@/components/flow-builder/nodes/RouterNode';
 import WhatsAppNode from '@/components/flow-builder/nodes/WhatsAppNode';
 import WooCommerceNode from '@/components/flow-builder/nodes/WooCommerceNode';
+import GPTNode from '@/components/flow-builder/nodes/GPTNode';
+import MercadoPagoNode from '@/components/flow-builder/nodes/MercadoPagoNode';
+import WebhookNode from '@/components/flow-builder/nodes/WebhookNode';
 import SimpleEdge from '@/components/flow-builder/edges/SimpleEdge';
 import AppsModal from '@/components/flow-builder/modals/AppsModal';
 import ModuleSelectionModal from '@/components/flow-builder/modals/ModuleSelectionModal';
@@ -30,6 +33,9 @@ const nodeTypes = {
   router: RouterNode,
   whatsapp: WhatsAppNode,
   woocommerce: WooCommerceNode,
+  gpt: GPTNode,
+  mercadopago: MercadoPagoNode,
+  webhook: WebhookNode,
 };
 
 const edgeTypes = {
