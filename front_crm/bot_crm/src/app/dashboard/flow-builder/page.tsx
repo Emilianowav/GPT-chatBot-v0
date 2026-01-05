@@ -128,10 +128,14 @@ export default function FlowBuilderPage() {
         const flow = await response.json();
         
         if (flow && flow.nodes && flow.edges) {
+          // Calcular qué nodos tienen conexiones salientes
+          const nodesWithConnections = new Set(flow.edges.map((e: Edge) => e.source));
+          
           const nodesWithHandlers = flow.nodes.map((node: Node) => ({
             ...node,
             data: {
               ...node.data,
+              hasConnection: nodesWithConnections.has(node.id),
               onNodeClick: handleNodeClick,
               onHandleClick: handlePlusNodeClick,
             }
