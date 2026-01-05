@@ -116,6 +116,7 @@ function MakeStyleNode({ id, data, selected }: NodeProps) {
   const edges = useStore((state) => state.edges);
 
   // Calcular handles dinámicos que orbitan alrededor del nodo
+  // REGLA: Un handle por edge conectado (como Make.com)
   const dynamicHandles = useMemo(() => {
     const currentNode = nodes.get(id);
     if (!currentNode) return [];
@@ -128,11 +129,13 @@ function MakeStyleNode({ id, data, selected }: NodeProps) {
       connectedNodeId?: string;
     }> = [];
 
-    // Encontrar edges conectados
+    // Encontrar edges conectados a este nodo
     const connectedEdges = edges.filter(
       (edge) => edge.source === id || edge.target === id
     );
 
+    // IMPORTANTE: Solo crear un handle por edge
+    // Si un nodo necesita múltiples salidas, usar Router
     connectedEdges.forEach((edge) => {
       const isSource = edge.source === id;
       const connectedNodeId = isSource ? edge.target : edge.source;
@@ -155,12 +158,12 @@ function MakeStyleNode({ id, data, selected }: NodeProps) {
       }
     });
 
-    // Si no hay conexiones, agregar handle por defecto (abajo derecha)
+    // Si no hay conexiones, agregar handle por defecto (derecha)
     if (handles.length === 0) {
       handles.push({
         id: 'default-source',
         type: 'source',
-        angle: Math.PI / 4, // 45 grados (abajo derecha)
+        angle: 0, // 0 grados (derecha)
         isConnected: false,
       });
     }
