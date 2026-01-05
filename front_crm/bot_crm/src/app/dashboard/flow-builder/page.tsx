@@ -87,15 +87,36 @@ export default function FlowBuilderPage() {
   const [isSaving, setIsSaving] = useState(false);
 
   useEffect(() => {
-    const initialNode: Node = {
-      id: 'plus-initial',
-      type: 'plus',
-      position: { x: 400, y: 300 },
-      data: {
-        onAddClick: handlePlusNodeClick,
-      },
+    // Cargar flow de Veo Veo automáticamente
+    const loadVeoVeoFlow = async () => {
+      try {
+        const flowId = '695b5802cf46dd410a91f37c'; // Consultar Libros
+        const response = await fetch(`http://localhost:3001/api/flows/detail/${flowId}`);
+        const flow = await response.json();
+        
+        if (flow && flow.nodes && flow.edges) {
+          setNodes(flow.nodes);
+          setEdges(flow.edges);
+          setFlowName(flow.nombre);
+          setCurrentFlowId(flow._id);
+          console.log('✅ Flow de Veo Veo cargado:', flow.nombre);
+        }
+      } catch (error) {
+        console.error('❌ Error cargando flow:', error);
+        // Si falla, mostrar nodo inicial
+        const initialNode: Node = {
+          id: 'plus-initial',
+          type: 'plus',
+          position: { x: 400, y: 300 },
+          data: {
+            onAddClick: handlePlusNodeClick,
+          },
+        };
+        setNodes([initialNode]);
+      }
     };
-    setNodes([initialNode]);
+    
+    loadVeoVeoFlow();
   }, []);
 
   const handlePlusNodeClick = (nodeId: string) => {
