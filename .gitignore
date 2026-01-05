@@ -5,3 +5,6 @@
 *.env
 node_modules/
 extras
+
+# Documentación con credenciales sensibles
+backend/docs/VEO-VEO-GPT-CONFIGURACION.md
