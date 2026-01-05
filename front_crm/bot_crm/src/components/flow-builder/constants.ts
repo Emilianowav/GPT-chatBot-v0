@@ -20,10 +20,10 @@ export const HANDLE_ORBIT_RADIUS = 70; // Distancia desde centro del nodo hasta 
 // LÍNEAS CONECTORAS
 // ========================================
 export const LINE_ORBIT_RADIUS = 70; // Distancia desde centro del nodo hasta donde comienzan las líneas
-// Debe coincidir con HANDLE_ORBIT_RADIUS para que las líneas comiencen en los handles
-// Ajusta este valor para que las líneas comiencen exactamente en los handles
+// ⚠️ IMPORTANTE: Debe ser IGUAL a HANDLE_ORBIT_RADIUS para que las líneas comiencen en los handles
+// Si cambias HANDLE_ORBIT_RADIUS, cambia este valor también
 
-export const LINE_CIRCLE_SPACING = 25; // Espaciado entre círculos de las líneas (px)
+export const LINE_CIRCLE_SPACING = 35; // Espaciado entre círculos de las líneas (px)
 // Aumenta para menos círculos, disminuye para más círculos
 
 export const LINE_CIRCLE_RADIUS = 10; // Radio de cada círculo en las líneas (px)
