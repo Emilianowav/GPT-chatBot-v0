@@ -109,60 +109,164 @@ const NodeConfigPanel: React.FC<NodeConfigPanelProps> = ({ node, onClose, onSave
     </>
   );
 
-  const renderWhatsAppConfig = () => (
-    <>
-      <div className={styles.formGroup}>
-        <label>Tipo</label>
-        <select 
-          value={config.tipo || 'enviar_mensaje'}
-          onChange={(e) => setConfig({ ...config, tipo: e.target.value })}
-        >
-          <option value="trigger">Trigger</option>
-          <option value="enviar_mensaje">Enviar Mensaje</option>
-          <option value="recopilar">Recopilar Datos</option>
-        </select>
-      </div>
-
-      <div className={styles.formGroup}>
-        <label>Mensaje</label>
-        <textarea 
-          rows={4}
-          value={config.mensaje || config.pregunta || ''}
-          onChange={(e) => setConfig({ ...config, mensaje: e.target.value, pregunta: e.target.value })}
-          placeholder="Mensaje a enviar o pregunta a hacer..."
-        />
-      </div>
-
-      {config.tipo === 'recopilar' && (
+  const renderWhatsAppConfig = () => {
+    // Si es Watch Events, mostrar configuración de webhook
+    if (config.module === 'watch-events') {
+      return (
         <>
-          <div className={styles.formGroup}>
-            <label>Nombre de Variable</label>
-            <input 
-              type="text"
-              value={config.nombreVariable || ''}
-              onChange={(e) => setConfig({ ...config, nombreVariable: e.target.value })}
-              placeholder="nombre_variable"
-            />
+          <div className={styles.section}>
+            <h3>Webhook Configuration</h3>
+            
+            <div className={styles.formGroup}>
+              <label>Webhook Name</label>
+              <input 
+                type="text"
+                value={config.webhookName || ''}
+                onChange={(e) => setConfig({ ...config, webhookName: e.target.value })}
+                placeholder="My WhatsApp Events webhook"
+              />
+            </div>
+
+            <div className={styles.formGroup}>
+              <label>Webhook URL</label>
+              <input 
+                type="text"
+                value={config.webhookUrl || ''}
+                onChange={(e) => setConfig({ ...config, webhookUrl: e.target.value })}
+                placeholder="https://api.momentoia.co/webhook/whatsapp"
+                disabled
+              />
+              <small>Esta URL se configura en WhatsApp Business Cloud</small>
+            </div>
+
+            <div className={styles.formGroup}>
+              <label>Verify Token</label>
+              <input 
+                type="text"
+                value={config.verifyToken || ''}
+                onChange={(e) => setConfig({ ...config, verifyToken: e.target.value })}
+                placeholder="2001-ic"
+              />
+            </div>
           </div>
 
-          <div className={styles.formGroup}>
-            <label>Tipo de Validación</label>
-            <select 
-              value={config.validacion?.tipo || 'texto'}
-              onChange={(e) => setConfig({ 
-                ...config, 
-                validacion: { ...config.validacion, tipo: e.target.value }
-              })}
-            >
-              <option value="texto">Texto</option>
-              <option value="numero">Número</option>
-              <option value="opcion">Opción</option>
-            </select>
+          <div className={styles.section}>
+            <h3>WhatsApp Business Cloud</h3>
+            
+            <div className={styles.formGroup}>
+              <label>Phone Number ID</label>
+              <input 
+                type="text"
+                value={config.phoneNumberId || ''}
+                onChange={(e) => setConfig({ ...config, phoneNumberId: e.target.value })}
+                placeholder="906667632531979"
+              />
+            </div>
+
+            <div className={styles.formGroup}>
+              <label>Connection Name</label>
+              <input 
+                type="text"
+                value={config.connectionName || ''}
+                onChange={(e) => setConfig({ ...config, connectionName: e.target.value })}
+                placeholder="My WhatsApp Connection"
+              />
+            </div>
+          </div>
+
+          <div className={styles.section}>
+            <h3>Empresa</h3>
+            
+            <div className={styles.formGroup}>
+              <label>Nombre</label>
+              <input 
+                type="text"
+                value={config.empresaNombre || ''}
+                onChange={(e) => setConfig({ ...config, empresaNombre: e.target.value })}
+                placeholder="Veo Veo"
+              />
+            </div>
+
+            <div className={styles.formGroup}>
+              <label>Teléfono</label>
+              <input 
+                type="text"
+                value={config.empresaTelefono || ''}
+                onChange={(e) => setConfig({ ...config, empresaTelefono: e.target.value })}
+                placeholder="+5493794057297"
+              />
+            </div>
+
+            <div className={styles.formGroup}>
+              <label>Mensaje de Bienvenida</label>
+              <textarea 
+                rows={8}
+                value={config.mensajeBienvenida || ''}
+                onChange={(e) => setConfig({ ...config, mensajeBienvenida: e.target.value })}
+                placeholder="Hola 👋..."
+              />
+            </div>
           </div>
         </>
-      )}
-    </>
-  );
+      );
+    }
+
+    // Configuración normal de WhatsApp (Send Message, etc.)
+    return (
+      <>
+        <div className={styles.formGroup}>
+          <label>Tipo</label>
+          <select 
+            value={config.tipo || 'enviar_mensaje'}
+            onChange={(e) => setConfig({ ...config, tipo: e.target.value })}
+          >
+            <option value="trigger">Trigger</option>
+            <option value="enviar_mensaje">Enviar Mensaje</option>
+            <option value="recopilar">Recopilar Datos</option>
+          </select>
+        </div>
+
+        <div className={styles.formGroup}>
+          <label>Mensaje</label>
+          <textarea 
+            rows={4}
+            value={config.mensaje || config.pregunta || ''}
+            onChange={(e) => setConfig({ ...config, mensaje: e.target.value, pregunta: e.target.value })}
+            placeholder="Mensaje a enviar o pregunta a hacer..."
+          />
+        </div>
+
+        {config.tipo === 'recopilar' && (
+          <>
+            <div className={styles.formGroup}>
+              <label>Nombre de Variable</label>
+              <input 
+                type="text"
+                value={config.nombreVariable || ''}
+                onChange={(e) => setConfig({ ...config, nombreVariable: e.target.value })}
+                placeholder="nombre_variable"
+              />
+            </div>
+
+            <div className={styles.formGroup}>
+              <label>Tipo de Validación</label>
+              <select 
+                value={config.validacion?.tipo || 'texto'}
+                onChange={(e) => setConfig({ 
+                  ...config, 
+                  validacion: { ...config.validacion, tipo: e.target.value }
+                })}
+              >
+                <option value="texto">Texto</option>
+                <option value="numero">Número</option>
+                <option value="opcion">Opción</option>
+              </select>
+            </div>
+          </>
+        )}
+      </>
+    );
+  };
 
   const renderWooCommerceConfig = () => (
     <>
