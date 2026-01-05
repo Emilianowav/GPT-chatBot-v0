@@ -97,7 +97,8 @@ export default function FlowBuilderPage() {
     const loadVeoVeoFlow = async () => {
       try {
         const flowId = '695b5802cf46dd410a91f37c'; // Consultar Libros
-        const response = await fetch(`http://localhost:3000/api/flows/detail/${flowId}`);
+        const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';
+        const response = await fetch(`${apiUrl}/api/flows/detail/${flowId}`);
         const flow = await response.json();
         
         if (flow && flow.nodes && flow.edges) {
