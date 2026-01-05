@@ -122,10 +122,12 @@ function OrbitHandleNode({ id, data, selected }: NodeProps) {
   const color = data.appName ? (appColors[data.appName] || '#6366f1') : (nodeColors[data.type] || '#6366f1');
 
   // Obtener posiciones de nodos y edges para calcular órbitas
+  // Usar selector que detecta cambios en posiciones
   const nodes = useStore((state) => state.nodeInternals);
   const edges = useStore((state) => state.edges);
 
   // Calcular handles en órbita basados en conexiones
+  // Se recalcula automáticamente cuando nodes o edges cambian
   const orbitHandles = useMemo(() => {
     const currentNode = nodes.get(id);
     if (!currentNode) return [];
@@ -150,6 +152,7 @@ function OrbitHandleNode({ id, data, selected }: NodeProps) {
 
       if (connectedNode) {
         // Calcular ángulo desde este nodo hacia el nodo conectado
+        // Este ángulo se recalcula cada vez que cualquier nodo se mueve
         const angle = Math.atan2(
           connectedNode.position.y - currentNode.position.y,
           connectedNode.position.x - currentNode.position.x
