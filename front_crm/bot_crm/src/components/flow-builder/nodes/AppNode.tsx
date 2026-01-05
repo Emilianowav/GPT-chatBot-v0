@@ -69,7 +69,7 @@ function AppNode({ id, data, selected }: NodeProps<AppNodeData>) {
 
   // Calcular posición x,y del handle en órbita según ángulo
   const getHandlePosition = (angleDeg: number) => {
-    const orbitRadius = 50; // Radio del nodo (handles pegados al borde)
+    const orbitRadius = 70; // 50px radio nodo + 20px separación
     const angleRad = (angleDeg * Math.PI) / 180;
     
     return {
