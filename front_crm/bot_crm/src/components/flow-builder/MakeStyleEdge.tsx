@@ -62,8 +62,10 @@ function MakeStyleEdge({
       sourceNode.position.x - targetNode.position.x
     );
 
-    // Posición del handle en el BORDE del círculo
-    // El handle está pegado al borde, no separado
+    // CRÍTICO: La línea debe salir desde el CENTRO del handle visual
+    // Handle está en NODE_RADIUS (50px) desde el centro del nodo
+    // El handle visual está centrado en esa posición con translate(-50%, -50%)
+    // Por lo tanto, el centro del handle está exactamente en NODE_RADIUS
     actualSourceX = sourceX + Math.cos(sourceAngle) * NODE_RADIUS;
     actualSourceY = sourceY + Math.sin(sourceAngle) * NODE_RADIUS;
 
