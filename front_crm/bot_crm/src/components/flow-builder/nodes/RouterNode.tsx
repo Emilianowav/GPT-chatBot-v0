@@ -19,10 +19,15 @@ interface RouterNodeData {
   subtitle?: string;
   executionCount?: number;
   hasConnection?: boolean;
-  onHandleClick?: (nodeId: string) => void;
+  onHandleClick?: (nodeId: string, handleId?: string) => void;
   onNodeClick?: (nodeId: string) => void;
+  routes?: number;
   config?: {
-    opciones: Array<{
+    conditions?: Array<{
+      label: string;
+      condition: string;
+    }>;
+    opciones?: Array<{
       valor: string;
       label: string;
       workflowId?: string;
@@ -38,10 +43,12 @@ function RouterNode({ id, data, selected }: NodeProps<RouterNodeData>) {
     hasConnection = false,
     onHandleClick,
     onNodeClick,
+    routes = 2,
     config,
   } = data;
 
   const color = '#f59e0b'; // Router yellow/orange
+  const totalRoutes = routes || config?.conditions?.length || config?.opciones?.length || 2;
 
   const handleNodeClick = () => {
     if (onNodeClick) {
@@ -49,10 +56,10 @@ function RouterNode({ id, data, selected }: NodeProps<RouterNodeData>) {
     }
   };
 
-  const handlePlusClick = (e: React.MouseEvent) => {
+  const handlePlusClick = (handleId: string) => (e: React.MouseEvent) => {
     e.stopPropagation();
     if (onHandleClick) {
-      onHandleClick(id);
+      onHandleClick(id, handleId);
     }
   };
 
@@ -92,40 +99,40 @@ function RouterNode({ id, data, selected }: NodeProps<RouterNodeData>) {
       </div>
 
       {/* Handles de salida múltiples (derecha) - distribuidos verticalmente */}
-      {Array.from({ length: config?.opciones?.length || 2 }).map((_, index) => {
-        const totalHandles = config?.opciones?.length || 2;
-        const topPosition = ((index + 1) * 100) / (totalHandles + 1);
+      {Array.from({ length: totalRoutes }).map((_, index) => {
+        const topPosition = ((index + 1) * 100) / (totalRoutes + 1);
+        const handleId = `source-${index}`;
         
         return (
-          <Handle
-            key={`output-${index}`}
-            type="source"
-            position={Position.Right}
-            id={`output-${index}`}
-            style={{
-              top: `${topPosition}%`,
-              opacity: 0,
-              background: color,
-            }}
-          />
+          <div key={handleId} style={{ position: 'relative' }}>
+            <Handle
+              type="source"
+              position={Position.Right}
+              id={handleId}
+              style={{
+                top: `${topPosition}%`,
+                opacity: 0,
+                background: color,
+              }}
+            />
+            
+            {/* Botón + para cada salida del router */}
+            <div
+              className={styles.handlePlusRoute}
+              style={{ 
+                background: color,
+                top: `${topPosition}%`,
+              }}
+              onClick={handlePlusClick(handleId)}
+              role="button"
+              tabIndex={0}
+              aria-label={`Add module to route ${index + 1}`}
+            >
+              <Plus size={16} color="white" strokeWidth={3} />
+            </div>
+          </div>
         );
       })}
-
-      {/* Handle visual conectado (derecha) */}
-      <div className={styles.handleConnected} />
-
-      {!hasConnection && (
-        <div
-          className={styles.handlePlus}
-          style={{ background: color }}
-          onClick={handlePlusClick}
-          role="button"
-          tabIndex={0}
-          aria-label="Add next module"
-        >
-          <Plus size={20} color="white" strokeWidth={3} />
-        </div>
-      )}
 
       {/* Label */}
       <div className={styles.nodeLabel}>{label}</div>

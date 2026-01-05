@@ -98,6 +98,7 @@ export default function FlowBuilderPage() {
   const [appsModalPosition, setAppsModalPosition] = useState<{ x: number; y: number } | undefined>();
   const [selectedApp, setSelectedApp] = useState<any>(null);
   const [sourceNodeForConnection, setSourceNodeForConnection] = useState<string | null>(null);
+  const [sourceHandleForConnection, setSourceHandleForConnection] = useState<string | undefined>(undefined);
   const [currentFlowId, setCurrentFlowId] = useState<string | null>(null);
   const [flowName, setFlowName] = useState('Nuevo Flow');
   const [isSaving, setIsSaving] = useState(false);
@@ -173,8 +174,9 @@ export default function FlowBuilderPage() {
     loadVeoVeoFlow();
   }, []);
 
-  const handlePlusNodeClick = (nodeId: string) => {
+  const handlePlusNodeClick = (nodeId: string, handleId?: string) => {
     setSourceNodeForConnection(nodeId);
+    setSourceHandleForConnection(handleId);
     setShowAppsModal(true);
     setAppsModalPosition(undefined);
   };
@@ -249,8 +251,9 @@ export default function FlowBuilderPage() {
       setNodes([newNode]);
     } else {
       const newEdge: Edge = {
-        id: `${sourceNodeForConnection}-${newNodeId}`,
+        id: `${sourceNodeForConnection}-${sourceHandleForConnection || 'default'}-${newNodeId}`,
         source: sourceNodeForConnection,
+        sourceHandle: sourceHandleForConnection,
         target: newNodeId,
         type: 'simple',
       };
@@ -267,11 +270,13 @@ export default function FlowBuilderPage() {
     }
 
     setSourceNodeForConnection(null);
+    setSourceHandleForConnection(undefined);
     setSelectedApp(null);
   };
 
-  const handleHandlePlusClick = (nodeId: string) => {
+  const handleHandlePlusClick = (nodeId: string, handleId?: string) => {
     setSourceNodeForConnection(nodeId);
+    setSourceHandleForConnection(handleId);
     setShowAppsModal(true);
     const node = nodes.find(n => n.id === nodeId);
     if (node) {
