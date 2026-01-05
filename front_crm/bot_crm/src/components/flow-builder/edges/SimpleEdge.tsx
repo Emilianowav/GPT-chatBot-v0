@@ -33,7 +33,7 @@ function SimpleEdge({
     const dx = toX - fromX;
     const dy = toY - fromY;
     const angleRad = Math.atan2(dy, dx);
-    const orbitRadius = 70; // Mismo radio que en AppNode
+    const orbitRadius = 50; // Mismo radio que en AppNode (borde del nodo)
     
     return {
       x: Math.cos(angleRad) * orbitRadius,
