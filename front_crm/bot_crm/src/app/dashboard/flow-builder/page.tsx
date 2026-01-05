@@ -95,8 +95,10 @@ export default function FlowBuilderPage() {
   const [edges, setEdges, onEdgesChange] = useEdgesState([]);
   const [showAppsModal, setShowAppsModal] = useState(false);
   const [showModuleModal, setShowModuleModal] = useState(false);
+  const [showWebhookConfigModal, setShowWebhookConfigModal] = useState(false);
   const [appsModalPosition, setAppsModalPosition] = useState<{ x: number; y: number } | undefined>();
   const [selectedApp, setSelectedApp] = useState<any>(null);
+  const [selectedModule, setSelectedModule] = useState<any>(null);
   const [sourceNodeForConnection, setSourceNodeForConnection] = useState<string | null>(null);
   const [sourceHandleForConnection, setSourceHandleForConnection] = useState<string | undefined>(undefined);
   const [currentFlowId, setCurrentFlowId] = useState<string | null>(null);
@@ -193,7 +195,26 @@ export default function FlowBuilderPage() {
   };
 
   const handleModuleSelect = (module: any) => {
+    setSelectedModule(module);
+    
+    // Si es WhatsApp Watch Events, mostrar configuración de webhook
+    if (selectedApp.id === 'whatsapp' && module.id === 'watch-events') {
+      setShowModuleModal(false);
+      setShowWebhookConfigModal(true);
+      return;
+    }
+    
+    // Para otros módulos, crear nodo directamente
     setShowModuleModal(false);
+    createNodeFromModule(module, {});
+  };
+
+  const handleWebhookConfigSave = (webhookConfig: any) => {
+    setShowWebhookConfigModal(false);
+    createNodeFromModule(selectedModule, webhookConfig);
+  };
+
+  const createNodeFromModule = (module: any, config: any) => {
 
     const sourceNode = nodes.find(n => n.id === sourceNodeForConnection);
     if (!sourceNode && sourceNodeForConnection !== 'plus-initial') return;
@@ -231,18 +252,24 @@ export default function FlowBuilderPage() {
       newNode = {
         id: newNodeId,
         type: selectedApp.id === 'whatsapp' ? 'whatsapp' : 
-              selectedApp.id === 'openai' ? 'gpt' : 'app',
+              selectedApp.id === 'openai' ? 'gpt' : 
+              selectedApp.id === 'woocommerce' ? 'woocommerce' :
+              selectedApp.id === 'flow-control' ? 'router' : 'app',
         position: sourceNode ? {
           x: sourceNode.position.x + 250,
           y: sourceNode.position.y,
         } : { x: 400, y: 300 },
         data: {
-          label: module.name,
+          label: selectedApp.name,
+          subtitle: module.name,
           executionCount: nodes.length + 1,
           hasConnection: false,
           onNodeClick: handleNodeClick,
           onHandleClick: handlePlusNodeClick,
-          config: {},
+          config: {
+            module: module.id,
+            ...config,
+          },
         },
       };
     }
@@ -272,6 +299,7 @@ export default function FlowBuilderPage() {
     setSourceNodeForConnection(null);
     setSourceHandleForConnection(undefined);
     setSelectedApp(null);
+    setSelectedModule(null);
   };
 
   const handleHandlePlusClick = (nodeId: string, handleId?: string) => {
@@ -414,6 +442,19 @@ export default function FlowBuilderPage() {
             verified={true}
             modules={getModulesForApp()}
             onSelectModule={handleModuleSelect}
+          />
+        )}
+
+        {selectedApp && selectedModule && (
+          <WebhookConfigModal
+            isOpen={showWebhookConfigModal}
+            onClose={() => {
+              setShowWebhookConfigModal(false);
+              setSelectedModule(null);
+            }}
+            onSave={handleWebhookConfigSave}
+            appName={selectedApp.name}
+            moduleName={selectedModule.name}
           />
         )}
 
