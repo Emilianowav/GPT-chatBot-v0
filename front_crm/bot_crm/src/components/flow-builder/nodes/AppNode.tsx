@@ -1,4 +1,4 @@
-import { memo } from 'react';
+import React, { memo } from 'react';
 import { NodeProps, Handle, Position, useEdges } from 'reactflow';
 import { Plus, Zap } from 'lucide-react';
 import styles from './AppNode.module.css';
@@ -46,6 +46,34 @@ function AppNode({ id, data, selected }: NodeProps<AppNodeData>) {
   const incomingEdges = edges.filter(edge => edge.target === id);
   const hasOutgoingConnection = outgoingEdges.length > 0;
   const hasIncomingConnection = incomingEdges.length > 0;
+
+  // Calcular posiciones en órbita para handles
+  const getOrbitPosition = (index: number, total: number, isOutput: boolean = true) => {
+    // Radio de órbita: 50px (radio del nodo) + 30px (separación)
+    const orbitRadius = 80;
+    
+    if (total === 1) {
+      // Una sola conexión: derecha (0°) o izquierda (180°)
+      const angle = isOutput ? 0 : 180;
+      const angleRad = (angle * Math.PI) / 180;
+      return {
+        x: Math.cos(angleRad) * orbitRadius,
+        y: Math.sin(angleRad) * orbitRadius,
+      };
+    }
+    
+    // Múltiples conexiones: distribuir en semicírculo
+    const startAngle = isOutput ? -45 : 135; // Derecha o izquierda
+    const endAngle = isOutput ? 45 : 225;
+    const angleStep = (endAngle - startAngle) / (total - 1);
+    const angle = startAngle + (angleStep * index);
+    const angleRad = (angle * Math.PI) / 180;
+    
+    return {
+      x: Math.cos(angleRad) * orbitRadius,
+      y: Math.sin(angleRad) * orbitRadius,
+    };
+  };
 
   const handleNodeClick = () => {
     if (onNodeClick) {
@@ -113,20 +141,37 @@ function AppNode({ id, data, selected }: NodeProps<AppNodeData>) {
         <Zap size={16} color="white" strokeWidth={2.5} />
       </div>
 
-      {/* Handle de salida (derecha) */}
+      {/* Handles de salida en órbita */}
       {hasOutgoingConnection ? (
-        // Handle conectado visible
-        <>
-          <div
-            className={styles.handleConnected}
-            style={{ background: color }}
-          />
-          <Handle
-            type="source"
-            position={Position.Right}
-            style={{ opacity: 0 }}
-          />
-        </>
+        // Múltiples handles orbitando
+        outgoingEdges.map((edge, index) => {
+          const pos = getOrbitPosition(index, outgoingEdges.length, true);
+          return (
+            <React.Fragment key={`output-${index}`}>
+              {/* Handle visual pequeño en órbita */}
+              <div
+                className={styles.handleOrbit}
+                style={{
+                  background: color,
+                  left: `calc(50% + ${pos.x}px)`,
+                  top: `calc(50% + ${pos.y}px)`,
+                }}
+              />
+              {/* Handle invisible de ReactFlow */}
+              <Handle
+                type="source"
+                position={Position.Right}
+                id={`source-${index}`}
+                style={{
+                  left: `calc(50% + ${pos.x}px)`,
+                  top: `calc(50% + ${pos.y}px)`,
+                  transform: 'translate(-50%, -50%)',
+                  opacity: 0,
+                }}
+              />
+            </React.Fragment>
+          );
+        })
       ) : (
         // Handle + cuando no hay conexiones
         <>
@@ -146,6 +191,45 @@ function AppNode({ id, data, selected }: NodeProps<AppNodeData>) {
             style={{ opacity: 0 }}
           />
         </>
+      )}
+
+      {/* Handles de entrada en órbita */}
+      {incomingEdges.map((edge, index) => {
+        const pos = getOrbitPosition(index, incomingEdges.length, false);
+        return (
+          <React.Fragment key={`input-${index}`}>
+            {/* Handle visual pequeño en órbita */}
+            <div
+              className={styles.handleOrbit}
+              style={{
+                background: color,
+                left: `calc(50% + ${pos.x}px)`,
+                top: `calc(50% + ${pos.y}px)`,
+              }}
+            />
+            {/* Handle invisible de ReactFlow */}
+            <Handle
+              type="target"
+              position={Position.Left}
+              id={`target-${index}`}
+              style={{
+                left: `calc(50% + ${pos.x}px)`,
+                top: `calc(50% + ${pos.y}px)`,
+                transform: 'translate(-50%, -50%)',
+                opacity: 0,
+              }}
+            />
+          </React.Fragment>
+        );
+      })}
+
+      {/* Handle invisible de entrada por defecto */}
+      {!hasIncomingConnection && (
+        <Handle
+          type="target"
+          position={Position.Left}
+          style={{ opacity: 0 }}
+        />
       )}
 
       {/* Labels */}
