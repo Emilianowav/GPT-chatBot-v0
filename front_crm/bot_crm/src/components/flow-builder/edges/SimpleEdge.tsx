@@ -17,10 +17,18 @@ function SimpleEdge({
 }: EdgeProps) {
   const color = data?.color || '#25D366';
 
-  // Líneas desde centro a centro
+  // 🎯 AJUSTAR PUNTO INICIAL (desde borde derecho del nodo source)
+  const adjustedSourceX = sourceX + NODE_RADIUS;  // +50px a la derecha
+  const adjustedSourceY = sourceY;
+  
+  // 🎯 AJUSTAR PUNTO FINAL (hasta borde izquierdo del nodo target)
+  const adjustedTargetX = targetX - NODE_RADIUS;  // -50px a la izquierda
+  const adjustedTargetY = targetY;
+
+  // Calcular distancia con puntos ajustados
   const distance = Math.sqrt(
-    Math.pow(targetX - sourceX, 2) + 
-    Math.pow(targetY - sourceY, 2)
+    Math.pow(adjustedTargetX - adjustedSourceX, 2) + 
+    Math.pow(adjustedTargetY - adjustedSourceY, 2)
   );
 
   const numCircles = Math.max(2, Math.floor(distance / LINE_CIRCLE_SPACING));
@@ -28,8 +36,8 @@ function SimpleEdge({
   
   for (let i = 0; i < numCircles; i++) {
     const t = i / (numCircles - 1);
-    const x = sourceX + (targetX - sourceX) * t;
-    const y = sourceY + (targetY - sourceY) * t;
+    const x = adjustedSourceX + (adjustedTargetX - adjustedSourceX) * t;
+    const y = adjustedSourceY + (adjustedTargetY - adjustedSourceY) * t;
     circles.push({ x, y });
   }
 
