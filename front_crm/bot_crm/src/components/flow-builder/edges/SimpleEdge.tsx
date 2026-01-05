@@ -41,9 +41,19 @@ function SimpleEdge({
     const dy = toCenterY - fromCenterY;
     const angleRad = Math.atan2(dy, dx);
     
+    // Calcular posición base en órbita
+    const baseX = Math.cos(angleRad) * LINE_ORBIT_RADIUS;
+    const baseY = Math.sin(angleRad) * LINE_ORBIT_RADIUS;
+    
+    // Aplicar el mismo desplazamiento visual que tiene el handle en CSS
+    // transform: translate(-50%, -120%) significa:
+    // - X: ya está centrado con -50% en el cálculo base
+    // - Y: desplazamiento adicional de -20% del tamaño del handle (32px * -0.2 = -6.4px)
+    const handleVisualOffsetY = -6.4; // -20% de 32px (tamaño del handle)
+    
     return {
-      x: Math.cos(angleRad) * LINE_ORBIT_RADIUS,
-      y: Math.sin(angleRad) * LINE_ORBIT_RADIUS,
+      x: baseX,
+      y: baseY + handleVisualOffsetY,
     };
   };
 
