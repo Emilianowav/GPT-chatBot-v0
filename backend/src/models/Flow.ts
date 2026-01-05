@@ -42,6 +42,21 @@ export interface IFlow extends Document {
   // NUEVO: Configuración de API (solo para botType === 'pasos' && pasosSubType === 'api')
   apiConfig?: IApiConfig;
   
+  // FLOW BUILDER VISUAL: Nodos y edges (solo para botType === 'visual')
+  nodes?: Array<{
+    id: string;
+    type: string;
+    position: { x: number; y: number };
+    data: any;
+  }>;
+  edges?: Array<{
+    id: string;
+    source: string;
+    target: string;
+    type: string;
+    data?: any;
+  }>;
+  
   settings: {
     timeout?: number;
     maxRetries?: number;
@@ -118,7 +133,7 @@ const FlowSchema = new Schema<IFlow>(
     // Configuración de API
     apiConfig: ApiConfigSchema,
     
-    // Flow Builder Visual: Nodos y edges
+    // Flow Builder Visual: Nodos y edges (solo para botType === 'visual')
     nodes: [{
       id: { type: String, required: true },
       type: { type: String, required: true },
