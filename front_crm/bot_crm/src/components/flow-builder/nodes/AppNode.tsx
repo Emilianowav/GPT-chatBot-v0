@@ -47,17 +47,6 @@ function AppNode({ id, data, selected }: NodeProps<AppNodeData>) {
   const hasOutgoingConnection = outgoingEdges.length > 0;
   const hasIncomingConnection = incomingEdges.length > 0;
 
-  // Calcular ángulo para el handle según el número de conexiones
-  // Por defecto: 0° (derecha), si hay múltiples se distribuyen en órbita
-  const getHandleAngle = (index: number, total: number) => {
-    if (total === 1) return 0; // Derecha
-    // Distribuir en semicírculo derecho (-45° a 45°)
-    const startAngle = -45;
-    const endAngle = 45;
-    const step = (endAngle - startAngle) / (total - 1);
-    return startAngle + (step * index);
-  };
-
   const handleNodeClick = () => {
     if (onNodeClick) {
       onNodeClick(id);
@@ -124,45 +113,22 @@ function AppNode({ id, data, selected }: NodeProps<AppNodeData>) {
         <Zap size={16} color="white" strokeWidth={2.5} />
       </div>
 
-      {/* Handles dinámicos en órbita */}
+      {/* Handle de salida (derecha) */}
       {hasOutgoingConnection ? (
-        // Mostrar handles conectados para cada conexión saliente
-        outgoingEdges.map((edge, index) => {
-          const angle = getHandleAngle(index, outgoingEdges.length);
-          const angleRad = (angle * Math.PI) / 180;
-          const radius = 70; // 50px (radio nodo) + 20px (radio handle)
-          const handleX = Math.cos(angleRad) * radius;
-          const handleY = Math.sin(angleRad) * radius;
-
-          return (
-            <div key={edge.id}>
-              {/* Handle visual conectado en órbita */}
-              <div
-                className={styles.handleConnected}
-                style={{
-                  background: color,
-                  position: 'absolute',
-                  left: `calc(50% + ${handleX}px)`,
-                  top: `calc(50% + ${handleY}px)`,
-                  transform: 'translate(-50%, -50%)',
-                }}
-              />
-              {/* Handle invisible de ReactFlow */}
-              <Handle
-                type="source"
-                position={Position.Right}
-                id={edge.id}
-                style={{
-                  left: `calc(50% + ${handleX}px)`,
-                  top: `calc(50% + ${handleY}px)`,
-                  opacity: 0,
-                }}
-              />
-            </div>
-          );
-        })
+        // Handle conectado visible
+        <>
+          <div
+            className={styles.handleConnected}
+            style={{ background: color }}
+          />
+          <Handle
+            type="source"
+            position={Position.Right}
+            style={{ opacity: 0 }}
+          />
+        </>
       ) : (
-        // Mostrar handle + cuando no hay conexiones
+        // Handle + cuando no hay conexiones
         <>
           <div
             className={styles.handlePlus}
@@ -174,7 +140,6 @@ function AppNode({ id, data, selected }: NodeProps<AppNodeData>) {
           >
             <Plus size={20} color="white" strokeWidth={3} />
           </div>
-          {/* Handle invisible de salida por defecto */}
           <Handle
             type="source"
             position={Position.Right}
