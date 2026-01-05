@@ -14,16 +14,17 @@ import ReactFlow, {
 } from 'reactflow';
 import 'reactflow/dist/style.css';
 import DashboardLayout from '@/components/DashboardLayout/DashboardLayout';
-import PlusNode from '@/components/flow-builder/nodes/PlusNode';
 import AppNode from '@/components/flow-builder/nodes/AppNode';
+import PlusNode from '@/components/flow-builder/nodes/PlusNode';
 import RouterNode from '@/components/flow-builder/nodes/RouterNode';
+import WhatsAppNode from '@/components/flow-builder/nodes/WhatsAppNode';
+import WooCommerceNode from '@/components/flow-builder/nodes/WooCommerceNode';
 import SimpleEdge from '@/components/flow-builder/edges/SimpleEdge';
 import AppsModal from '@/components/flow-builder/modals/AppsModal';
 import ModuleSelectionModal from '@/components/flow-builder/modals/ModuleSelectionModal';
 import styles from './flow-builder.module.css';
 
 const nodeTypes = {
-  plus: PlusNode,
   app: AppNode,
   router: RouterNode,
 };

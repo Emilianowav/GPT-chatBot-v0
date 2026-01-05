@@ -15,21 +15,33 @@ import styles from './RouterNode.module.css';
  */
 
 interface RouterNodeData {
-  label?: string;
+  label: string;
+  subtitle?: string;
   executionCount?: number;
-  outputCount?: number;
-  onAddRoute?: (nodeId: string) => void;
+  hasConnection?: boolean;
+  onHandleClick?: (nodeId: string) => void;
   onNodeClick?: (nodeId: string) => void;
+  config?: {
+    opciones: Array<{
+      valor: string;
+      label: string;
+      workflowId?: string;
+    }>;
+  };
 }
 
 function RouterNode({ id, data, selected }: NodeProps<RouterNodeData>) {
   const {
-    label = 'Router',
+    label,
+    subtitle,
     executionCount = 1,
-    outputCount = 2,
-    onAddRoute,
+    hasConnection = false,
+    onHandleClick,
     onNodeClick,
+    config,
   } = data;
+
+  const color = '#f59e0b'; // Router yellow/orange
 
   const handleNodeClick = () => {
     if (onNodeClick) {
@@ -37,10 +49,10 @@ function RouterNode({ id, data, selected }: NodeProps<RouterNodeData>) {
     }
   };
 
-  const handleAddRoute = (e: React.MouseEvent) => {
+  const handlePlusClick = (e: React.MouseEvent) => {
     e.stopPropagation();
-    if (onAddRoute) {
-      onAddRoute(id);
+    if (onHandleClick) {
+      onHandleClick(id);
     }
   };
 
@@ -56,28 +68,38 @@ function RouterNode({ id, data, selected }: NodeProps<RouterNodeData>) {
       {/* Círculo principal del nodo */}
       <div 
         className={`${styles.routerNode} ${selected ? styles.selected : ''}`}
+        style={{ background: color }}
         onClick={handleNodeClick}
         role="button"
         tabIndex={0}
         aria-label={label}
       >
-        <GitBranch size={40} color="white" strokeWidth={2.5} />
-      </div>
+        <GitBranch size={48} color="white" strokeWidth={2} />
 
-      {/* Badge de ejecución (arriba derecha) */}
-      <div className={styles.executionBadge}>
-        {executionCount}
+        <div 
+          className={styles.executionBadge}
+          style={{ background: '#ef4444' }}
+        >
+          {executionCount}
+        </div>
+
+        <div 
+          className={styles.appBadge}
+          style={{ background: color }}
+        >
+          <GitBranch size={16} color="white" strokeWidth={2.5} />
+        </div>
       </div>
 
       {/* Handles de salida múltiples (derecha) */}
-      {Array.from({ length: outputCount }).map((_, index) => (
+      {Array.from({ length: config?.opciones?.length || 2 }).map((_, index) => (
         <Handle
           key={`output-${index}`}
           type="source"
           position={Position.Right}
           id={`output-${index}`}
           style={{
-            top: `${((index + 1) * 100) / (outputCount + 1)}%`,
+            top: `${((index + 1) * 100) / (config?.opciones?.length + 1)}%`,
             opacity: 0,
           }}
         />
@@ -86,19 +108,24 @@ function RouterNode({ id, data, selected }: NodeProps<RouterNodeData>) {
       {/* Handle visual conectado (derecha) */}
       <div className={styles.handleConnected} />
 
-      {/* Handle + para agregar ruta */}
-      <div
-        className={styles.handlePlus}
-        onClick={handleAddRoute}
-        role="button"
-        tabIndex={0}
-        aria-label="Add route"
-      >
-        <Plus size={20} color="white" strokeWidth={3} />
-      </div>
+      {!hasConnection && (
+        <div
+          className={styles.handlePlus}
+          style={{ background: color }}
+          onClick={handlePlusClick}
+          role="button"
+          tabIndex={0}
+          aria-label="Add next module"
+        >
+          <Plus size={20} color="white" strokeWidth={3} />
+        </div>
+      )}
 
       {/* Label */}
       <div className={styles.nodeLabel}>{label}</div>
+      {subtitle && (
+        <div className={styles.nodeSubtitle}>{subtitle}</div>
+      )}
     </div>
   );
 }
