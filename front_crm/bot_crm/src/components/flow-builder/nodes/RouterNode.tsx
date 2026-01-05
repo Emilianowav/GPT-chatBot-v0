@@ -91,19 +91,25 @@ function RouterNode({ id, data, selected }: NodeProps<RouterNodeData>) {
         </div>
       </div>
 
-      {/* Handles de salida múltiples (derecha) */}
-      {Array.from({ length: config?.opciones?.length || 2 }).map((_, index) => (
-        <Handle
-          key={`output-${index}`}
-          type="source"
-          position={Position.Right}
-          id={`output-${index}`}
-          style={{
-            top: `${((index + 1) * 100) / (config?.opciones?.length + 1)}%`,
-            opacity: 0,
-          }}
-        />
-      ))}
+      {/* Handles de salida múltiples (derecha) - distribuidos verticalmente */}
+      {Array.from({ length: config?.opciones?.length || 2 }).map((_, index) => {
+        const totalHandles = config?.opciones?.length || 2;
+        const topPosition = ((index + 1) * 100) / (totalHandles + 1);
+        
+        return (
+          <Handle
+            key={`output-${index}`}
+            type="source"
+            position={Position.Right}
+            id={`output-${index}`}
+            style={{
+              top: `${topPosition}%`,
+              opacity: 0,
+              background: color,
+            }}
+          />
+        );
+      })}
 
       {/* Handle visual conectado (derecha) */}
       <div className={styles.handleConnected} />
