@@ -1,62 +1,119 @@
-import React from 'react';
-import { Handle, Position } from 'reactflow';
+import React, { memo } from 'react';
+import { NodeProps, Handle, Position } from 'reactflow';
+import { Brain, Settings, MessageSquare, Plus } from 'lucide-react';
 import styles from './AppNode.module.css';
 
-interface GPTNodeProps {
-  data: {
-    label: string;
-    icon?: string;
-    config?: any;
+interface GPTNodeData {
+  label: string;
+  icon?: string;
+  executionCount?: number;
+  hasConnection?: boolean;
+  onHandleClick?: (nodeId: string) => void;
+  onNodeClick?: (nodeId: string) => void;
+  config?: {
+    tipo: 'conversacional' | 'formateador' | 'procesador';
+    modelo?: string;
+    temperatura?: number;
+    max_tokens?: number;
+    prompt_sistema?: string;
+    variables_entrada?: string[];
+    variables_salida?: string[];
   };
 }
 
-const GPTNode: React.FC<GPTNodeProps> = ({ data }) => {
-  const getIconForType = (tipo: string) => {
-    switch (tipo) {
+function GPTNode({ id, data, selected }: NodeProps<GPTNodeData>) {
+  const {
+    label,
+    executionCount = 1,
+    hasConnection = false,
+    onHandleClick,
+    onNodeClick,
+    config,
+  } = data;
+
+  const color = '#10a37f'; // OpenAI green
+
+  const getIconForType = () => {
+    switch (config?.tipo) {
       case 'conversacional':
-        return '🤖';
+        return <MessageSquare size={48} color="white" strokeWidth={2} />;
       case 'formateador':
-        return '⚙️';
+        return <Settings size={48} color="white" strokeWidth={2} />;
       case 'procesador':
-        return '🧠';
+        return <Brain size={48} color="white" strokeWidth={2} />;
       default:
-        return '🤖';
+        return <Brain size={48} color="white" strokeWidth={2} />;
     }
   };
 
-  const icon = data.config?.tipo ? getIconForType(data.config.tipo) : '🤖';
+  const handleNodeClick = () => {
+    if (onNodeClick) {
+      onNodeClick(id);
+    }
+  };
+
+  const handlePlusClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (onHandleClick) {
+      onHandleClick(id);
+    }
+  };
 
   return (
-    <div className={styles.node} style={{ 
-      background: 'linear-gradient(135deg, #10a37f 0%, #1a7f64 100%)',
-      border: '2px solid #0d8c6c',
-      minWidth: '200px'
-    }}>
-      <Handle type="target" position={Position.Top} className={styles.handle} />
-      
-      <div className={styles.nodeHeader}>
-        <div className={styles.iconContainer} style={{ fontSize: '32px' }}>
-          {icon}
+    <div className={styles.appNodeContainer}>
+      <div
+        className={`${styles.appNode} ${selected ? styles.selected : ''}`}
+        style={{ background: color }}
+        onClick={handleNodeClick}
+      >
+        {getIconForType()}
+
+        <div 
+          className={styles.executionBadge}
+          style={{ background: '#ef4444' }}
+        >
+          {executionCount}
+        </div>
+
+        <div 
+          className={styles.appBadge}
+          style={{ background: color }}
+        >
+          <Brain size={16} color="white" strokeWidth={2.5} />
         </div>
       </div>
-      
-      <div className={styles.nodeContent}>
-        <div className={styles.nodeTitle}>{data.label}</div>
-        {data.config?.tipo && (
-          <div className={styles.nodeSubtitle}>
-            Tipo: {data.config.tipo}
-          </div>
-        )}
-        {data.config?.modelo && (
-          <div className={styles.nodeSubtitle} style={{ fontSize: '10px', opacity: 0.8 }}>
-            {data.config.modelo}
-          </div>
-        )}
-      </div>
-      
-      <Handle type="source" position={Position.Bottom} className={styles.handle} />
+
+      <Handle
+        type="target"
+        position={Position.Left}
+        style={{ opacity: 0 }}
+      />
+
+      {!hasConnection && (
+        <div
+          className={styles.handlePlus}
+          style={{ background: color }}
+          onClick={handlePlusClick}
+          role="button"
+          tabIndex={0}
+          aria-label="Add next module"
+        >
+          <Plus size={20} color="white" strokeWidth={3} />
+        </div>
+      )}
+
+      <Handle
+        type="source"
+        position={Position.Right}
+        style={{ opacity: 0 }}
+      />
+
+      <div className={styles.nodeLabel}>{label}</div>
+      {config?.tipo && (
+        <div className={styles.nodeSubtitle}>{config.tipo}</div>
+      )}
     </div>
   );
-};
+}
 
-export default GPTNode;
+export default memo(GPTNode);

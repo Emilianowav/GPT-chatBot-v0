@@ -1,42 +1,104 @@
-import React from 'react';
-import { Handle, Position } from 'reactflow';
+import React, { memo } from 'react';
+import { NodeProps, Handle, Position } from 'reactflow';
+import { CreditCard, Plus } from 'lucide-react';
 import styles from './AppNode.module.css';
 
-interface MercadoPagoNodeProps {
-  data: {
-    label: string;
-    icon?: string;
-    config?: any;
+interface MercadoPagoNodeData {
+  label: string;
+  icon?: string;
+  executionCount?: number;
+  hasConnection?: boolean;
+  onHandleClick?: (nodeId: string) => void;
+  onNodeClick?: (nodeId: string) => void;
+  config?: {
+    tipo: 'crear_preferencia' | 'verificar_pago';
+    credenciales?: any;
+    configuracion?: any;
   };
 }
 
-const MercadoPagoNode: React.FC<MercadoPagoNodeProps> = ({ data }) => {
+function MercadoPagoNode({ id, data, selected }: NodeProps<MercadoPagoNodeData>) {
+  const {
+    label,
+    executionCount = 1,
+    hasConnection = false,
+    onHandleClick,
+    onNodeClick,
+    config,
+  } = data;
+
+  const color = '#009ee3'; // MercadoPago blue
+
+  const handleNodeClick = () => {
+    if (onNodeClick) {
+      onNodeClick(id);
+    }
+  };
+
+  const handlePlusClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (onHandleClick) {
+      onHandleClick(id);
+    }
+  };
+
   return (
-    <div className={styles.node} style={{ 
-      background: 'linear-gradient(135deg, #009ee3 0%, #0084c7 100%)',
-      border: '2px solid #006ba6',
-      minWidth: '200px'
-    }}>
-      <Handle type="target" position={Position.Top} className={styles.handle} />
-      
-      <div className={styles.nodeHeader}>
-        <div className={styles.iconContainer} style={{ fontSize: '32px' }}>
-          💳
+    <div className={styles.appNodeContainer}>
+      <div
+        className={`${styles.appNode} ${selected ? styles.selected : ''}`}
+        style={{ background: color }}
+        onClick={handleNodeClick}
+      >
+        <CreditCard size={48} color="white" strokeWidth={2} />
+
+        <div 
+          className={styles.executionBadge}
+          style={{ background: '#ef4444' }}
+        >
+          {executionCount}
+        </div>
+
+        <div 
+          className={styles.appBadge}
+          style={{ background: color }}
+        >
+          <CreditCard size={16} color="white" strokeWidth={2.5} />
         </div>
       </div>
-      
-      <div className={styles.nodeContent}>
-        <div className={styles.nodeTitle}>{data.label}</div>
-        {data.config?.tipo && (
-          <div className={styles.nodeSubtitle}>
-            {data.config.tipo === 'crear_preferencia' ? 'Generar Link de Pago' : data.config.tipo}
-          </div>
-        )}
-      </div>
-      
-      <Handle type="source" position={Position.Bottom} className={styles.handle} />
+
+      <Handle
+        type="target"
+        position={Position.Left}
+        style={{ opacity: 0 }}
+      />
+
+      {!hasConnection && (
+        <div
+          className={styles.handlePlus}
+          style={{ background: color }}
+          onClick={handlePlusClick}
+          role="button"
+          tabIndex={0}
+          aria-label="Add next module"
+        >
+          <Plus size={20} color="white" strokeWidth={3} />
+        </div>
+      )}
+
+      <Handle
+        type="source"
+        position={Position.Right}
+        style={{ opacity: 0 }}
+      />
+
+      <div className={styles.nodeLabel}>{label}</div>
+      {config?.tipo && (
+        <div className={styles.nodeSubtitle}>
+          {config.tipo === 'crear_preferencia' ? 'Link de Pago' : config.tipo}
+        </div>
+      )}
     </div>
   );
-};
+}
 
-export default MercadoPagoNode;
+export default memo(MercadoPagoNode);
