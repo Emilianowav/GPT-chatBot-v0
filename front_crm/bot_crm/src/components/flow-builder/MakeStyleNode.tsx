@@ -115,39 +115,10 @@ function MakeStyleNode({ id, data, selected }: NodeProps) {
   const nodes = useStore((state) => state.nodeInternals);
   const edges = useStore((state) => state.edges);
 
-  // Calcular posición visual del handle decorativo
-  // Solo para mostrar, ReactFlow maneja las conexiones reales
-  const visualHandlePosition = useMemo(() => {
-    const currentNode = nodes.get(id);
-    if (!currentNode) return { angle: 0, hasConnection: false };
-
-    // Encontrar la primera conexión para mostrar el handle visual
-    const connectedEdges = edges.filter(
-      (edge) => edge.source === id || edge.target === id
-    );
-
-    if (connectedEdges.length === 0) {
-      return { angle: 0, hasConnection: false }; // Derecha por defecto
-    }
-
-    // Tomar la primera conexión para calcular el ángulo
-    const firstEdge = connectedEdges[0];
-    const isSource = firstEdge.source === id;
-    const connectedNodeId = isSource ? firstEdge.target : firstEdge.source;
-    const connectedNode = nodes.get(connectedNodeId);
-
-    if (!connectedNode) {
-      return { angle: 0, hasConnection: false };
-    }
-
-    // Calcular ángulo hacia el nodo conectado
-    const angle = Math.atan2(
-      connectedNode.position.y - currentNode.position.y,
-      connectedNode.position.x - currentNode.position.x
-    );
-
-    return { angle, hasConnection: true };
-  }, [id, nodes, edges]);
+  // Verificar si el nodo tiene conexiones
+  const hasConnection = useMemo(() => {
+    return edges.some((edge) => edge.source === id || edge.target === id);
+  }, [id, edges]);
 
   return (
     <div className={styles.makeNodeContainer}>
@@ -192,33 +163,18 @@ function MakeStyleNode({ id, data, selected }: NodeProps) {
         style={{ top: '50%', left: 0 }}
       />
 
-      {/* Handle visual decorativo (solo para mostrar) */}
-      {visualHandlePosition.hasConnection && (
-        <div
-          className={`${styles.visualHandle} ${styles.connected}`}
-          style={{
-            background: color,
-            left: `calc(50% + ${Math.cos(visualHandlePosition.angle) * NODE_RADIUS}px)`,
-            top: `calc(50% + ${Math.sin(visualHandlePosition.angle) * NODE_RADIUS}px)`,
-            transform: 'translate(-50%, -50%)',
-          }}
-        />
-      )}
-
-      {/* Handle por defecto (botón +) cuando no hay conexiones */}
-      {!visualHandlePosition.hasConnection && (
-        <div
-          className={`${styles.visualHandle} ${styles.addButton}`}
-          style={{
-            background: color,
-            left: `calc(50% + ${NODE_RADIUS}px)`,
-            top: '50%',
-            transform: 'translate(-50%, -50%)',
-          }}
-        >
-          <Plus size={20} color="white" strokeWidth={3} />
-        </div>
-      )}
+      {/* Handle visual FIJO (siempre a la derecha) */}
+      <div
+        className={`${styles.visualHandle} ${hasConnection ? styles.connected : styles.addButton}`}
+        style={{
+          background: color,
+          left: `calc(50% + ${NODE_RADIUS}px)`, // Siempre a la derecha
+          top: '50%', // Siempre en el centro vertical
+          transform: 'translate(-50%, -50%)',
+        }}
+      >
+        {!hasConnection && <Plus size={20} color="white" strokeWidth={3} />}
+      </div>
 
       {/* Badge de ejecución (arriba derecha) */}
       {data.executionCount && (

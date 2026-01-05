@@ -51,36 +51,21 @@ function MakeStyleEdge({
   let actualTargetY = targetY;
 
   if (sourceNode && targetNode) {
-    // Ángulo desde source hacia target
-    const sourceAngle = Math.atan2(
-      targetNode.position.y - sourceNode.position.y,
-      targetNode.position.x - sourceNode.position.x
-    );
+    // HANDLE FIJO: Siempre a la derecha del nodo
+    // Las líneas SIEMPRE salen desde el mismo punto (centro del handle derecho)
+    // No hay cálculo dinámico de ángulo
     
-    // Ángulo desde target hacia source
-    const targetAngle = Math.atan2(
-      sourceNode.position.y - targetNode.position.y,
-      sourceNode.position.x - targetNode.position.x
-    );
-
-    // CRÍTICO: La línea debe salir desde el CENTRO del handle visual
-    // En Make.com, las líneas SIEMPRE salen desde el mismo punto del handle
-    // 
-    // Cálculo correcto:
-    // 1. Handle está posicionado en NODE_RADIUS (50px) desde centro del nodo
-    // 2. Handle visual tiene 40px de diámetro (HANDLE_RADIUS = 20px)
-    // 3. Handle está centrado con translate(-50%, -50%)
-    // 4. Pero el handle se extiende HACIA AFUERA del nodo
-    // 5. Por lo tanto, el centro del handle está en NODE_RADIUS + HANDLE_RADIUS
-    //
-    // Resultado: NODE_RADIUS (50px) + HANDLE_RADIUS (20px) = 70px desde centro
+    // Handle está a la derecha: NODE_RADIUS (50px) desde centro
+    // Centro del handle: NODE_RADIUS + HANDLE_RADIUS = 70px
     const connectionDistance = NODE_RADIUS + HANDLE_RADIUS;
     
-    actualSourceX = sourceX + Math.cos(sourceAngle) * connectionDistance;
-    actualSourceY = sourceY + Math.sin(sourceAngle) * connectionDistance;
+    // Source: handle derecho (ángulo 0°)
+    actualSourceX = sourceX + connectionDistance; // +70px a la derecha
+    actualSourceY = sourceY; // Mismo Y (centro vertical)
 
-    actualTargetX = targetX + Math.cos(targetAngle) * connectionDistance;
-    actualTargetY = targetY + Math.sin(targetAngle) * connectionDistance;
+    // Target: handle izquierdo (ángulo 180°)
+    actualTargetX = targetX - connectionDistance; // -70px a la izquierda
+    actualTargetY = targetY; // Mismo Y (centro vertical)
   }
 
   // Calcular círculos a lo largo de la línea recta
