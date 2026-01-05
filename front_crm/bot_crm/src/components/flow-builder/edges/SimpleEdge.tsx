@@ -45,14 +45,11 @@ function SimpleEdge({
   const handleTargetX = targetCenterX - Math.cos(angle) * HANDLE_ORBIT_RADIUS;
   const handleTargetY = targetCenterY - Math.sin(angle) * HANDLE_ORBIT_RADIUS;
 
-  // PASO 3.5: Aplicar desplazamiento visual del handle CSS
-  // transform: translate(-50%, -120%) = -20% de 32px = -6.4px
-  const handleVisualOffsetY = -6.4;
-  
+  // PASO 3.5: Sin offset adicional - handle usa translate(-50%, -50%) estándar
   const finalSourceX = handleSourceX;
-  const finalSourceY = handleSourceY + handleVisualOffsetY;
+  const finalSourceY = handleSourceY;
   const finalTargetX = handleTargetX;
-  const finalTargetY = handleTargetY + handleVisualOffsetY;
+  const finalTargetY = handleTargetY;
 
   // PASO 4: Calcular distancia entre handles finales
   const distance = Math.sqrt(
