@@ -1,5 +1,5 @@
 import React, { memo } from 'react';
-import { NodeProps, Handle, Position, useEdges } from 'reactflow';
+import { NodeProps, Handle, Position, useEdges, useNodes } from 'reactflow';
 import { Plus, Zap } from 'lucide-react';
 import styles from './AppNode.module.css';
 
@@ -40,6 +40,7 @@ function AppNode({ id, data, selected }: NodeProps<AppNodeData>) {
   } = data;
 
   const edges = useEdges();
+  const nodes = useNodes();
 
   // Calcular conexiones salientes y entrantes desde este nodo
   const outgoingEdges = edges.filter(edge => edge.source === id);
@@ -47,27 +48,29 @@ function AppNode({ id, data, selected }: NodeProps<AppNodeData>) {
   const hasOutgoingConnection = outgoingEdges.length > 0;
   const hasIncomingConnection = incomingEdges.length > 0;
 
-  // Calcular posiciones en órbita para handles
-  const getOrbitPosition = (index: number, total: number, isOutput: boolean = true) => {
-    // Radio de órbita: 50px (radio del nodo) + 30px (separación)
-    const orbitRadius = 80;
+  // Obtener posición del nodo actual
+  const currentNode = nodes.find(n => n.id === id);
+  const currentPos = currentNode?.position || { x: 0, y: 0 };
+
+  // Calcular ángulo entre dos nodos para posicionar handle en órbita
+  const calculateHandleAngle = (targetNodeId: string): number => {
+    const targetNode = nodes.find(n => n.id === targetNodeId);
+    if (!targetNode) return 0;
+
+    const dx = targetNode.position.x - currentPos.x;
+    const dy = targetNode.position.y - currentPos.y;
     
-    if (total === 1) {
-      // Una sola conexión: derecha (0°) o izquierda (180°)
-      const angle = isOutput ? 0 : 180;
-      const angleRad = (angle * Math.PI) / 180;
-      return {
-        x: Math.cos(angleRad) * orbitRadius,
-        y: Math.sin(angleRad) * orbitRadius,
-      };
-    }
+    // Calcular ángulo en radianes y convertir a grados
+    const angleRad = Math.atan2(dy, dx);
+    const angleDeg = (angleRad * 180) / Math.PI;
     
-    // Múltiples conexiones: distribuir en semicírculo
-    const startAngle = isOutput ? -45 : 135; // Derecha o izquierda
-    const endAngle = isOutput ? 45 : 225;
-    const angleStep = (endAngle - startAngle) / (total - 1);
-    const angle = startAngle + (angleStep * index);
-    const angleRad = (angle * Math.PI) / 180;
+    return angleDeg;
+  };
+
+  // Calcular posición x,y del handle en órbita según ángulo
+  const getHandlePosition = (angleDeg: number) => {
+    const orbitRadius = 70; // 50px radio nodo + 20px separación
+    const angleRad = (angleDeg * Math.PI) / 180;
     
     return {
       x: Math.cos(angleRad) * orbitRadius,
@@ -119,64 +122,14 @@ function AppNode({ id, data, selected }: NodeProps<AppNodeData>) {
         <Zap size={16} color="white" strokeWidth={2.5} />
       </div>
 
-      {/* Handles de salida en órbita */}
-      {hasOutgoingConnection ? (
-        // Múltiples handles orbitando
-        outgoingEdges.map((edge, index) => {
-          const pos = getOrbitPosition(index, outgoingEdges.length, true);
-          return (
-            <React.Fragment key={`output-${index}`}>
-              {/* Handle visual pequeño en órbita */}
-              <div
-                className={styles.handleOrbit}
-                style={{
-                  background: color,
-                  left: `calc(50% + ${pos.x}px)`,
-                  top: `calc(50% + ${pos.y}px)`,
-                }}
-              />
-              {/* Handle invisible de ReactFlow */}
-              <Handle
-                type="source"
-                position={Position.Right}
-                id={`source-${index}`}
-                style={{
-                  left: `calc(50% + ${pos.x}px)`,
-                  top: `calc(50% + ${pos.y}px)`,
-                  transform: 'translate(-50%, -50%)',
-                  opacity: 0,
-                }}
-              />
-            </React.Fragment>
-          );
-        })
-      ) : (
-        // Handle + cuando no hay conexiones
-        <>
-          <div
-            className={styles.handlePlus}
-            style={{ background: color }}
-            onClick={handlePlusClick}
-            role="button"
-            tabIndex={0}
-            aria-label="Add next module"
-          >
-            <Plus size={20} color="white" strokeWidth={3} />
-          </div>
-          <Handle
-            type="source"
-            position={Position.Right}
-            style={{ opacity: 0 }}
-          />
-        </>
-      )}
-
-      {/* Handles de entrada en órbita */}
+      {/* Handles de entrada en órbita dinámica */}
       {incomingEdges.map((edge, index) => {
-        const pos = getOrbitPosition(index, incomingEdges.length, false);
+        const angle = calculateHandleAngle(edge.source);
+        const pos = getHandlePosition(angle);
+        
         return (
-          <React.Fragment key={`input-${index}`}>
-            {/* Handle visual pequeño en órbita */}
+          <React.Fragment key={`input-${edge.id}`}>
+            {/* Handle visual en órbita */}
             <div
               className={styles.handleOrbit}
               style={{
@@ -208,6 +161,58 @@ function AppNode({ id, data, selected }: NodeProps<AppNodeData>) {
           position={Position.Left}
           style={{ opacity: 0 }}
         />
+      )}
+
+      {/* Handles de salida en órbita dinámica */}
+      {hasOutgoingConnection ? (
+        outgoingEdges.map((edge, index) => {
+          const angle = calculateHandleAngle(edge.target);
+          const pos = getHandlePosition(angle);
+          
+          return (
+            <React.Fragment key={`output-${edge.id}`}>
+              {/* Handle visual en órbita */}
+              <div
+                className={styles.handleOrbit}
+                style={{
+                  background: color,
+                  left: `calc(50% + ${pos.x}px)`,
+                  top: `calc(50% + ${pos.y}px)`,
+                }}
+              />
+              {/* Handle invisible de ReactFlow */}
+              <Handle
+                type="source"
+                position={Position.Right}
+                id={`source-${index}`}
+                style={{
+                  left: `calc(50% + ${pos.x}px)`,
+                  top: `calc(50% + ${pos.y}px)`,
+                  transform: 'translate(-50%, -50%)',
+                  opacity: 0,
+                }}
+              />
+            </React.Fragment>
+          );
+        })
+      ) : (
+        <>
+          <div
+            className={styles.handlePlus}
+            style={{ background: color }}
+            onClick={handlePlusClick}
+            role="button"
+            tabIndex={0}
+            aria-label="Add next module"
+          >
+            <Plus size={20} color="white" strokeWidth={3} />
+          </div>
+          <Handle
+            type="source"
+            position={Position.Right}
+            style={{ opacity: 0 }}
+          />
+        </>
       )}
 
       {/* Labels */}
