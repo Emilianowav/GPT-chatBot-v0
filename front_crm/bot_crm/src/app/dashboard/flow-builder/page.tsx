@@ -16,10 +16,10 @@ import ReactFlow, {
 import 'reactflow/dist/style.css';
 import { Save, Play, Settings, Webhook, Edit2, Check, X } from 'lucide-react';
 import DashboardLayout from '@/components/DashboardLayout/DashboardLayout';
-import DynamicHandleNode from '@/components/flow-builder/DynamicHandleNode';
+import OrbitHandleNode from '@/components/flow-builder/OrbitHandleNode';
 import EmptyNode from '@/components/flow-builder/EmptyNode';
 import RouterNode from '@/components/flow-builder/RouterNode';
-import CustomEdge from '@/components/flow-builder/CustomEdge';
+import OrbitEdge from '@/components/flow-builder/OrbitEdge';
 
 // Colores de apps y nodos para gradientes
 const appColors: Record<string, string> = {
@@ -56,13 +56,13 @@ import ModuleConfigModal from '@/components/flow-builder/ModuleConfigModal';
 import styles from './flow-builder.module.css';
 
 const nodeTypes = {
-  custom: DynamicHandleNode,
+  custom: OrbitHandleNode,
   empty: EmptyNode,
   router: RouterNode,
 };
 
 const edgeTypes = {
-  custom: CustomEdge,
+  custom: OrbitEdge,
 };
 
 interface FlowData {
