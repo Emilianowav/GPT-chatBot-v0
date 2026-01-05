@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import { useState, useCallback, useEffect } from 'react';
 import ReactFlow, {
@@ -25,6 +25,7 @@ import WebhookNode from '@/components/flow-builder/nodes/WebhookNode';
 import SimpleEdge from '@/components/flow-builder/edges/SimpleEdge';
 import AppsModal from '@/components/flow-builder/modals/AppsModal';
 import ModuleSelectionModal from '@/components/flow-builder/modals/ModuleSelectionModal';
+import NodeConfigPanel from '@/components/flow-builder/panels/NodeConfigPanel';
 import styles from './flow-builder.module.css';
 
 const nodeTypes = {
@@ -91,9 +92,34 @@ export default function FlowBuilderPage() {
   const [currentFlowId, setCurrentFlowId] = useState<string | null>(null);
   const [flowName, setFlowName] = useState('Nuevo Flow');
   const [isSaving, setIsSaving] = useState(false);
+  const [selectedNode, setSelectedNode] = useState<Node | null>(null);
+  const [showConfigPanel, setShowConfigPanel] = useState(false);
+
+  const handleNodeClick = (nodeId: string) => {
+    const node = nodes.find(n => n.id === nodeId);
+    if (node) {
+      setSelectedNode(node);
+      setShowConfigPanel(true);
+    }
+  };
+
+  const handleSaveNodeConfig = (nodeId: string, config: any) => {
+    setNodes(prev => prev.map(node => 
+      node.id === nodeId 
+        ? { 
+            ...node, 
+            data: { 
+              ...node.data, 
+              label: config.label,
+              config: config 
+            } 
+          }
+        : node
+    ));
+  };
 
   useEffect(() => {
-    // Cargar flow de Veo Veo autom├íticamente
+    // Cargar flow de Veo Veo automáticamente
     const loadVeoVeoFlow = async () => {
       try {
         const flowId = '695b5802cf46dd410a91f37c'; // Consultar Libros
@@ -102,14 +128,22 @@ export default function FlowBuilderPage() {
         const flow = await response.json();
         
         if (flow && flow.nodes && flow.edges) {
-          setNodes(flow.nodes);
+          const nodesWithHandlers = flow.nodes.map((node: Node) => ({
+            ...node,
+            data: {
+              ...node.data,
+              onNodeClick: handleNodeClick,
+              onHandleClick: handlePlusNodeClick,
+            }
+          }));
+          setNodes(nodesWithHandlers);
           setEdges(flow.edges);
           setFlowName(flow.nombre);
           setCurrentFlowId(flow._id);
-          console.log('Γ£à Flow de Veo Veo cargado:', flow.nombre);
+          console.log('✅ Flow de Veo Veo cargado:', flow.nombre);
         }
       } catch (error) {
-        console.error('Γ¥î Error cargando flow:', error);
+        console.error('❌ Error cargando flow:', error);
         // Si falla, mostrar nodo inicial
         const initialNode: Node = {
           id: 'plus-initial',
@@ -300,7 +334,7 @@ export default function FlowBuilderPage() {
               disabled={isSaving}
               className={styles.btnSuccess}
             >
-              {isSaving ? 'Guardando...' : '≡ƒÆ╛ Guardar'}
+              {isSaving ? 'Guardando...' : '💾 Guardar'}
             </button>
             <button
               onClick={() => {
@@ -309,7 +343,7 @@ export default function FlowBuilderPage() {
               }}
               className={styles.btnPrimary}
             >
-              ≡ƒôé Cargar
+              📂 Cargar
             </button>
           </div>
         </div>
@@ -350,6 +384,14 @@ export default function FlowBuilderPage() {
             verified={true}
             modules={getModulesForApp()}
             onSelectModule={handleModuleSelect}
+          />
+        )}
+
+        {showConfigPanel && selectedNode && (
+          <NodeConfigPanel
+            node={selectedNode}
+            onClose={() => setShowConfigPanel(false)}
+            onSave={handleSaveNodeConfig}
           />
         )}
       </div>
