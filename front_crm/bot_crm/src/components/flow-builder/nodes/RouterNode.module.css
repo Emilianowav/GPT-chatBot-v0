@@ -1,0 +1,115 @@
+/* ========================================
+   ROUTER NODE - Nodo de bifurcación
+   ======================================== */
+
+.routerNodeContainer {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+
+/* Círculo principal del router */
+.routerNode {
+  width: 100px;
+  height: 100px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #a3e635 0%, #84cc16 100%);
+  box-shadow: 0 8px 20px rgba(163, 230, 53, 0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  position: relative;
+  border: 3px solid white;
+}
+
+.routerNode:hover {
+  transform: scale(1.05);
+  box-shadow: 0 12px 28px rgba(163, 230, 53, 0.5);
+}
+
+.routerNode.selected {
+  box-shadow: 0 0 0 3px #8b5cf6, 0 12px 28px rgba(163, 230, 53, 0.5);
+}
+
+/* Badge de ejecución (arriba derecha) */
+.executionBadge {
+  position: absolute;
+  top: -8px;
+  right: -8px;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: #ef4444;
+  color: white;
+  font-size: 13px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 8px rgba(239, 68, 68, 0.4);
+  border: 2px solid white;
+  z-index: 2;
+}
+
+/* Handle visual conectado (derecha) */
+.handleConnected {
+  position: absolute;
+  right: -20px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: #a3e635;
+  border: 3px solid white;
+  box-shadow: 0 4px 12px rgba(163, 230, 53, 0.3);
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Handle + para agregar ruta (abajo derecha) */
+.handlePlus {
+  position: absolute;
+  right: -15px;
+  bottom: -15px;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: #a3e635;
+  border: 2px solid white;
+  box-shadow: 0 4px 12px rgba(163, 230, 53, 0.3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  z-index: 2;
+}
+
+.handlePlus:hover {
+  transform: scale(1.15);
+  box-shadow: 0 6px 16px rgba(163, 230, 53, 0.4);
+}
+
+.handlePlus:active {
+  transform: scale(0.95);
+}
+
+/* Label del nodo */
+.nodeLabel {
+  font-size: 14px;
+  font-weight: 600;
+  color: #1a1a1a;
+  text-align: center;
+  margin-top: 4px;
+  max-width: 150px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}

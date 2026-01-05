@@ -1,5 +1,5 @@
 import { memo } from 'react';
-import { NodeProps } from 'reactflow';
+import { NodeProps, Handle, Position } from 'reactflow';
 import { Plus, Zap } from 'lucide-react';
 import styles from './AppNode.module.css';
 
@@ -54,6 +54,13 @@ function AppNode({ id, data, selected }: NodeProps<AppNodeData>) {
 
   return (
     <div className={styles.appNodeContainer}>
+      {/* Handle invisible de entrada (izquierda) */}
+      <Handle
+        type="target"
+        position={Position.Left}
+        style={{ opacity: 0 }}
+      />
+
       {/* Círculo principal del nodo */}
       <div 
         className={`${styles.appNode} ${selected ? styles.selected : ''}`}
@@ -82,6 +89,12 @@ function AppNode({ id, data, selected }: NodeProps<AppNodeData>) {
         <Zap size={16} color="white" strokeWidth={2.5} />
       </div>
 
+      {/* Handle visual conectado (siempre visible) */}
+      <div
+        className={styles.handleConnected}
+        style={{ background: color }}
+      />
+
       {/* Handle + a la derecha (solo si no está conectado) */}
       {!hasConnection && (
         <div
@@ -96,13 +109,12 @@ function AppNode({ id, data, selected }: NodeProps<AppNodeData>) {
         </div>
       )}
 
-      {/* Handle conectado (si está conectado) */}
-      {hasConnection && (
-        <div
-          className={styles.handleConnected}
-          style={{ background: color }}
-        />
-      )}
+      {/* Handle invisible de salida (derecha) - SIEMPRE presente */}
+      <Handle
+        type="source"
+        position={Position.Right}
+        style={{ opacity: 0 }}
+      />
 
       {/* Labels */}
       <div className={styles.nodeLabel}>{label}</div>
