@@ -81,6 +81,15 @@ const OPENAI_MODULES = [
   },
 ];
 
+const FLOW_CONTROL_MODULES = [
+  {
+    id: 'router',
+    name: 'Router',
+    description: 'Splits the scenario flow into multiple routes.',
+    category: 'CONDITIONALS',
+  },
+];
+
 export default function FlowBuilderPage() {
   const [nodes, setNodes, onNodesChange] = useNodesState([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState([]);
@@ -184,55 +193,66 @@ export default function FlowBuilderPage() {
   const handleModuleSelect = (module: any) => {
     setShowModuleModal(false);
 
-    if (sourceNodeForConnection === 'plus-initial') {
-      const appNode: Node = {
-        id: 'node-1',
-        type: 'app',
-        position: { x: 400, y: 300 },
-        data: {
-          appName: selectedApp.name,
-          appIcon: selectedApp.id === 'whatsapp' ? <WhatsAppIcon /> : <OpenAIIcon />,
-          color: selectedApp.color,
-          label: selectedApp.name,
-          subtitle: module.name,
-          executionCount: 1,
-          hasConnection: false,
-          onHandleClick: handleHandlePlusClick,
-        },
-      };
-      setNodes([appNode]);
-    } else {
-      const sourceNode = nodes.find(n => n.id === sourceNodeForConnection);
-      if (!sourceNode) return;
+    const sourceNode = nodes.find(n => n.id === sourceNodeForConnection);
+    if (!sourceNode && sourceNodeForConnection !== 'plus-initial') return;
 
-      const newNodeId = `node-${nodes.length + 1}`;
-      const newNode: Node = {
+    const newNodeId = `node-${Date.now()}`;
+    const isRouter = module.id === 'router';
+    
+    let newNode: Node;
+    
+    if (isRouter) {
+      // Crear nodo Router
+      newNode = {
         id: newNodeId,
-        type: 'app',
-        position: {
+        type: 'router',
+        position: sourceNode ? {
           x: sourceNode.position.x + 250,
           y: sourceNode.position.y,
-        },
+        } : { x: 400, y: 300 },
         data: {
-          appName: selectedApp.name,
-          appIcon: selectedApp.id === 'whatsapp' ? <WhatsAppIcon /> : <OpenAIIcon />,
-          color: selectedApp.color,
-          label: selectedApp.name,
-          subtitle: module.name,
+          label: 'Router',
           executionCount: nodes.length + 1,
-          hasConnection: false,
-          onHandleClick: handleHandlePlusClick,
+          routes: 2, // Por defecto 2 rutas
+          onNodeClick: handleNodeClick,
+          onHandleClick: handlePlusNodeClick,
+          config: {
+            conditions: [
+              { label: 'Route 1', condition: '' },
+              { label: 'Route 2', condition: '' },
+            ],
+          },
         },
       };
+    } else {
+      // Crear nodo normal (WhatsApp, OpenAI, etc.)
+      newNode = {
+        id: newNodeId,
+        type: selectedApp.id === 'whatsapp' ? 'whatsapp' : 
+              selectedApp.id === 'openai' ? 'gpt' : 'app',
+        position: sourceNode ? {
+          x: sourceNode.position.x + 250,
+          y: sourceNode.position.y,
+        } : { x: 400, y: 300 },
+        data: {
+          label: module.name,
+          executionCount: nodes.length + 1,
+          hasConnection: false,
+          onNodeClick: handleNodeClick,
+          onHandleClick: handlePlusNodeClick,
+          config: {},
+        },
+      };
+    }
 
+    if (sourceNodeForConnection === 'plus-initial') {
+      setNodes([newNode]);
+    } else {
       const newEdge: Edge = {
         id: `${sourceNodeForConnection}-${newNodeId}`,
         source: sourceNodeForConnection,
         target: newNodeId,
         type: 'simple',
-        data: {
-          color: sourceNode.data.color,
-        },
       };
 
       setNodes(prev => [
@@ -268,6 +288,7 @@ export default function FlowBuilderPage() {
     if (!selectedApp) return [];
     if (selectedApp.id === 'whatsapp') return WHATSAPP_MODULES;
     if (selectedApp.id === 'openai') return OPENAI_MODULES;
+    if (selectedApp.id === 'flow-control') return FLOW_CONTROL_MODULES;
     return [];
   };
 
