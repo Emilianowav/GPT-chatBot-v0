@@ -147,10 +147,14 @@ export default function FlowBuilderPage() {
             }
           } else {
             // Si no hay nodos, crear canvas vacío
+            createInitialNode();
+          }
+        } else {
+          // Si no existe el flujo, crear uno nuevo con nodo inicial
           createInitialNode();
         }
       } else {
-        // Si no existe el flujo, crear uno nuevo con nodo inicial
+        // Error en la respuesta
         createInitialNode();
       }
     } catch (error) {
