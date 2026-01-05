@@ -57,8 +57,15 @@ function AppNode({ id, data, selected }: NodeProps<AppNodeData>) {
     const targetNode = nodes.find(n => n.id === targetNodeId);
     if (!targetNode) return 0;
 
-    const dx = targetNode.position.x - currentPos.x;
-    const dy = targetNode.position.y - currentPos.y;
+    // Calcular desde el centro del nodo (position + 50px que es el radio)
+    const nodeRadius = 50;
+    const currentCenterX = currentPos.x + nodeRadius;
+    const currentCenterY = currentPos.y + nodeRadius;
+    const targetCenterX = targetNode.position.x + nodeRadius;
+    const targetCenterY = targetNode.position.y + nodeRadius;
+
+    const dx = targetCenterX - currentCenterX;
+    const dy = targetCenterY - currentCenterY;
     
     // Calcular ángulo en radianes y convertir a grados
     const angleRad = Math.atan2(dy, dx);
