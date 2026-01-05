@@ -25,18 +25,29 @@ function SimpleEdge({
   const sourceNode = nodes.find(n => n.id === source);
   const targetNode = nodes.find(n => n.id === target);
 
-  // Calcular ángulo desde source hacia target
-  const dx = targetX - sourceX;
-  const dy = targetY - sourceY;
+  if (!sourceNode || !targetNode) {
+    // Fallback si no encontramos los nodos
+    return null;
+  }
+
+  // Calcular posición del centro de cada nodo
+  const sourceCenterX = sourceNode.position.x + NODE_RADIUS;
+  const sourceCenterY = sourceNode.position.y + NODE_RADIUS;
+  const targetCenterX = targetNode.position.x + NODE_RADIUS;
+  const targetCenterY = targetNode.position.y + NODE_RADIUS;
+
+  // Calcular ángulo entre centros de nodos
+  const dx = targetCenterX - sourceCenterX;
+  const dy = targetCenterY - sourceCenterY;
   const angleRad = Math.atan2(dy, dx);
 
-  // Ajustar posiciones para que comiencen desde handles en órbita
-  const actualSourceX = sourceX + Math.cos(angleRad) * HANDLE_ORBIT_RADIUS;
-  const actualSourceY = sourceY + Math.sin(angleRad) * HANDLE_ORBIT_RADIUS;
+  // Calcular posición EXACTA del handle visual en órbita del source
+  const actualSourceX = sourceCenterX + Math.cos(angleRad) * HANDLE_ORBIT_RADIUS;
+  const actualSourceY = sourceCenterY + Math.sin(angleRad) * HANDLE_ORBIT_RADIUS;
   
-  // Ángulo inverso para target
-  const actualTargetX = targetX - Math.cos(angleRad) * HANDLE_ORBIT_RADIUS;
-  const actualTargetY = targetY - Math.sin(angleRad) * HANDLE_ORBIT_RADIUS;
+  // Calcular posición EXACTA del handle visual en órbita del target (ángulo inverso)
+  const actualTargetX = targetCenterX - Math.cos(angleRad) * HANDLE_ORBIT_RADIUS;
+  const actualTargetY = targetCenterY - Math.sin(angleRad) * HANDLE_ORBIT_RADIUS;
 
   // Calcular distancia total
   const distance = Math.sqrt(

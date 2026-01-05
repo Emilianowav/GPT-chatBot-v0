@@ -19,7 +19,7 @@ export const HANDLE_ORBIT_RADIUS = 70; // Distancia desde centro del nodo hasta 
 // ========================================
 // LÍNEAS CONECTORAS
 // ========================================
-export const LINE_ORBIT_RADIUS = 70; // Distancia desde centro del nodo hasta donde comienzan las líneas
+export const LINE_ORBIT_RADIUS = 10; // Distancia desde centro del nodo hasta donde comienzan las líneas
 // ⚠️ IMPORTANTE: Debe ser IGUAL a HANDLE_ORBIT_RADIUS para que las líneas comiencen en los handles
 // Si cambias HANDLE_ORBIT_RADIUS, cambia este valor también
 
