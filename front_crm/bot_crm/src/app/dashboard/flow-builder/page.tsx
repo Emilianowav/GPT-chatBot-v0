@@ -26,7 +26,10 @@ import styles from './flow-builder.module.css';
 
 const nodeTypes = {
   app: AppNode,
+  plus: PlusNode,
   router: RouterNode,
+  whatsapp: WhatsAppNode,
+  woocommerce: WooCommerceNode,
 };
 
 const edgeTypes = {
@@ -252,65 +255,35 @@ export default function FlowBuilderPage() {
   return (
     <DashboardLayout>
       <div className={styles.flowBuilderContainer}>
-        {/* Toolbar */}
-        <div style={{
-          position: 'absolute',
-          top: '20px',
-          left: '20px',
-          zIndex: 10,
-          display: 'flex',
-          gap: '10px',
-          background: 'white',
-          padding: '10px',
-          borderRadius: '8px',
-          boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
-        }}>
-          <input
-            type="text"
-            value={flowName}
-            onChange={(e) => setFlowName(e.target.value)}
-            placeholder="Nombre del flow"
-            style={{
-              padding: '8px 12px',
-              border: '1px solid #e5e7eb',
-              borderRadius: '6px',
-              fontSize: '14px'
-            }}
-          />
-          <button
-            onClick={handleSaveFlow}
-            disabled={isSaving}
-            style={{
-              padding: '8px 16px',
-              background: '#10b981',
-              color: 'white',
-              border: 'none',
-              borderRadius: '6px',
-              cursor: isSaving ? 'not-allowed' : 'pointer',
-              fontSize: '14px',
-              fontWeight: '600'
-            }}
-          >
-            {isSaving ? 'Guardando...' : '💾 Guardar Flow'}
-          </button>
-          <button
-            onClick={() => {
-              const flowId = prompt('ID del flow a cargar:');
-              if (flowId) handleLoadFlow(flowId);
-            }}
-            style={{
-              padding: '8px 16px',
-              background: '#3b82f6',
-              color: 'white',
-              border: 'none',
-              borderRadius: '6px',
-              cursor: 'pointer',
-              fontSize: '14px',
-              fontWeight: '600'
-            }}
-          >
-            📂 Cargar Flow
-          </button>
+        {/* Header Toolbar */}
+        <div className={styles.header}>
+          <div className={styles.headerLeft}>
+            <input
+              type="text"
+              value={flowName}
+              onChange={(e) => setFlowName(e.target.value)}
+              placeholder="Nombre del flow"
+              className={styles.titleInput}
+            />
+          </div>
+          <div className={styles.headerRight}>
+            <button
+              onClick={handleSaveFlow}
+              disabled={isSaving}
+              className={styles.btnSuccess}
+            >
+              {isSaving ? 'Guardando...' : '💾 Guardar'}
+            </button>
+            <button
+              onClick={() => {
+                const flowId = prompt('ID del flow a cargar:');
+                if (flowId) handleLoadFlow(flowId);
+              }}
+              className={styles.btnPrimary}
+            >
+              📂 Cargar
+            </button>
+          </div>
         </div>
         
         <div className={styles.flowCanvas}>
