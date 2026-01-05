@@ -90,28 +90,6 @@ function AppNode({ id, data, selected }: NodeProps<AppNodeData>) {
 
   return (
     <div className={styles.appNodeContainer}>
-      {/* Handle de entrada */}
-      {hasIncomingConnection ? (
-        // Handle visual conectado en entrada (izquierda)
-        <>
-          <div
-            className={styles.handleConnectedInput}
-            style={{ background: color }}
-          />
-          <Handle
-            type="target"
-            position={Position.Left}
-            style={{ opacity: 0 }}
-          />
-        </>
-      ) : (
-        // Handle invisible de entrada
-        <Handle
-          type="target"
-          position={Position.Left}
-          style={{ opacity: 0 }}
-        />
-      )}
 
       {/* Círculo principal del nodo */}
       <div 
