@@ -1,5 +1,5 @@
 import { memo } from 'react';
-import { NodeProps, Handle, Position } from 'reactflow';
+import { NodeProps, Handle, Position, useEdges } from 'reactflow';
 import { Plus, Zap } from 'lucide-react';
 import styles from './AppNode.module.css';
 
@@ -38,6 +38,23 @@ function AppNode({ id, data, selected }: NodeProps<AppNodeData>) {
     onHandleClick,
     onNodeClick,
   } = data;
+
+  const edges = useEdges();
+
+  // Calcular conexiones salientes desde este nodo
+  const outgoingEdges = edges.filter(edge => edge.source === id);
+  const hasOutgoingConnection = outgoingEdges.length > 0;
+
+  // Calcular ángulo para el handle según el número de conexiones
+  // Por defecto: 0° (derecha), si hay múltiples se distribuyen en órbita
+  const getHandleAngle = (index: number, total: number) => {
+    if (total === 1) return 0; // Derecha
+    // Distribuir en semicírculo derecho (-45° a 45°)
+    const startAngle = -45;
+    const endAngle = 45;
+    const step = (endAngle - startAngle) / (total - 1);
+    return startAngle + (step * index);
+  };
 
   const handleNodeClick = () => {
     if (onNodeClick) {
@@ -89,32 +106,64 @@ function AppNode({ id, data, selected }: NodeProps<AppNodeData>) {
         <Zap size={16} color="white" strokeWidth={2.5} />
       </div>
 
-      {/* Handle visual conectado (siempre visible) */}
-      <div
-        className={styles.handleConnected}
-        style={{ background: color }}
-      />
+      {/* Handles dinámicos en órbita */}
+      {hasOutgoingConnection ? (
+        // Mostrar handles conectados para cada conexión saliente
+        outgoingEdges.map((edge, index) => {
+          const angle = getHandleAngle(index, outgoingEdges.length);
+          const angleRad = (angle * Math.PI) / 180;
+          const radius = 70; // 50px (radio nodo) + 20px (radio handle)
+          const handleX = Math.cos(angleRad) * radius;
+          const handleY = Math.sin(angleRad) * radius;
 
-      {/* Handle + a la derecha (solo si no está conectado) */}
-      {!hasConnection && (
-        <div
-          className={styles.handlePlus}
-          style={{ background: color }}
-          onClick={handlePlusClick}
-          role="button"
-          tabIndex={0}
-          aria-label="Add next module"
-        >
-          <Plus size={20} color="white" strokeWidth={3} />
-        </div>
+          return (
+            <div key={edge.id}>
+              {/* Handle visual conectado en órbita */}
+              <div
+                className={styles.handleConnected}
+                style={{
+                  background: color,
+                  position: 'absolute',
+                  left: `calc(50% + ${handleX}px)`,
+                  top: `calc(50% + ${handleY}px)`,
+                  transform: 'translate(-50%, -50%)',
+                }}
+              />
+              {/* Handle invisible de ReactFlow */}
+              <Handle
+                type="source"
+                position={Position.Right}
+                id={edge.id}
+                style={{
+                  left: `calc(50% + ${handleX}px)`,
+                  top: `calc(50% + ${handleY}px)`,
+                  opacity: 0,
+                }}
+              />
+            </div>
+          );
+        })
+      ) : (
+        // Mostrar handle + cuando no hay conexiones
+        <>
+          <div
+            className={styles.handlePlus}
+            style={{ background: color }}
+            onClick={handlePlusClick}
+            role="button"
+            tabIndex={0}
+            aria-label="Add next module"
+          >
+            <Plus size={20} color="white" strokeWidth={3} />
+          </div>
+          {/* Handle invisible de salida por defecto */}
+          <Handle
+            type="source"
+            position={Position.Right}
+            style={{ opacity: 0 }}
+          />
+        </>
       )}
-
-      {/* Handle invisible de salida (derecha) - SIEMPRE presente */}
-      <Handle
-        type="source"
-        position={Position.Right}
-        style={{ opacity: 0 }}
-      />
 
       {/* Labels */}
       <div className={styles.nodeLabel}>{label}</div>
