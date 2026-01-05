@@ -1,5 +1,6 @@
 import { memo } from 'react';
 import { EdgeProps, useNodes } from 'reactflow';
+import { NODE_RADIUS, LINE_ORBIT_RADIUS, LINE_CIRCLE_SPACING, LINE_CIRCLE_RADIUS } from '../constants';
 
 /**
  * SIMPLE EDGE - Línea con círculos estilo Make.com
@@ -30,25 +31,19 @@ function SimpleEdge({
 
   // Calcular ángulo desde source hacia target
   const calculateHandleOffset = (fromX: number, fromY: number, toX: number, toY: number) => {
-    // Calcular desde el centro del nodo (position + 50px que es el radio)
-    const nodeRadius = 50;
-    const fromCenterX = fromX + nodeRadius;
-    const fromCenterY = fromY + nodeRadius;
-    const toCenterX = toX + nodeRadius;
-    const toCenterY = toY + nodeRadius;
+    // Calcular desde el centro del nodo
+    const fromCenterX = fromX + NODE_RADIUS;
+    const fromCenterY = fromY + NODE_RADIUS;
+    const toCenterX = toX + NODE_RADIUS;
+    const toCenterY = toY + NODE_RADIUS;
 
     const dx = toCenterX - fromCenterX;
     const dy = toCenterY - fromCenterY;
     const angleRad = Math.atan2(dy, dx);
     
-    // ⚙️ AJUSTA ESTE VALOR para alinear las líneas con los handles
-    // Si las líneas están muy cerca del centro: aumenta el valor
-    // Si las líneas están muy lejos: disminuye el valor
-    const orbitRadius = 48; // Ajustado para coincidir con handles visuales
-    
     return {
-      x: Math.cos(angleRad) * orbitRadius,
-      y: Math.sin(angleRad) * orbitRadius,
+      x: Math.cos(angleRad) * LINE_ORBIT_RADIUS,
+      y: Math.sin(angleRad) * LINE_ORBIT_RADIUS,
     };
   };
 
@@ -86,8 +81,8 @@ function SimpleEdge({
     Math.pow(actualTargetY - actualSourceY, 2)
   );
 
-  // Calcular número de círculos (uno cada 35px)
-  const numCircles = Math.max(1, Math.floor(distance / 25));
+  // Calcular número de círculos
+  const numCircles = Math.max(2, Math.floor(distance / LINE_CIRCLE_SPACING));
   // Generar posiciones de círculos desde handles reales
   const circles = [];
   for (let i = 0; i < numCircles; i++) {
@@ -105,7 +100,7 @@ function SimpleEdge({
           key={index}
           cx={circle.x}
           cy={circle.y}
-          r={10}
+          r={LINE_CIRCLE_RADIUS}
           fill={color}
           stroke="#ffffff"
           strokeWidth={3}
