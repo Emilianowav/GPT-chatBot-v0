@@ -96,7 +96,7 @@ router.put('/:flowId', authenticate, async (req: Request, res: Response): Promis
 router.delete('/:flowId', authenticate, async (req: Request, res: Response): Promise<void> => {
   try {
     const { flowId } = req.params;
-    const deletedFlow = await Flow.findByIdAndUpdate(
+    const deletedFlow = await FlowModel.findByIdAndUpdate(
       flowId,
       { activo: false, updatedAt: new Date() },
       { new: true }

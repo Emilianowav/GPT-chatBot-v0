@@ -3,7 +3,9 @@
 import mongoose, { Schema, Document } from 'mongoose';
 import type { Workflow, WorkflowNode, NodeConnection } from '../types/NodeTypes.js';
 
-export interface IUnifiedWorkflow extends Document, Omit<Workflow, '_id'> {}
+export interface IUnifiedWorkflow extends Omit<Workflow, '_id' | 'id'>, Document {
+  id: string;
+}
 
 const NodeConnectionSchema = new Schema<NodeConnection>({
   targetNodeId: { type: String, required: true },

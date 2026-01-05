@@ -25,22 +25,23 @@ export class APICallExecutor {
       const bodyProcesado = this.reemplazarVariables(config.body || {}, session.variables);
       
       // Ejecutar llamada a API
-      const resultado = await apiExecutor.execute({
-        endpoint: {
-          id: config.endpointId,
-          method: config.method,
-          url: '', // Se obtiene de la configuración de la API
-          headers: config.headers || {}
-        },
-        params: paramsProcesados,
-        body: bodyProcesado
-      });
+      const resultado = await apiExecutor.ejecutar(
+        '', // apiConfigId - se debe obtener de la configuración
+        config.endpointId,
+        {
+          query: paramsProcesados,
+          body: bodyProcesado
+        }
+      );
       
       if (!resultado.success) {
-        console.error(`❌ [API Call] Error: ${resultado.error}`);
+        console.error(`❌ [API Call] Error:`, resultado.error);
+        const errorMsg = typeof resultado.error === 'string' 
+          ? resultado.error 
+          : resultado.error?.mensaje || 'Error ejecutando API';
         return {
           success: false,
-          error: resultado.error || 'Error ejecutando API'
+          error: errorMsg
         };
       }
       

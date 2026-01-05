@@ -327,19 +327,6 @@ Link de pago: {{payment_link}}`,
 {{nodo_id.variable}}
 {{1.message}}           // Mensaje del nodo 1
 {{2.titulo}}            // Título extraído por GPT en nodo 2
-{{4.products[0].name}}  // Primer producto del array
-```
-
-### Variables especiales:
-```
-{{input.*}}             // Datos de entrada del nodo actual
-{{output.*}}            // Datos de salida del nodo actual
-{{trigger.*}}           // Datos del trigger inicial (siempre disponibles)
-{{previous.*}}          // Datos del nodo inmediatamente anterior
-```
-
----
-
 ## 💾 ESTRUCTURA EN BASE DE DATOS
 
 ```javascript

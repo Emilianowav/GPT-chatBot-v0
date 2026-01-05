@@ -23,6 +23,7 @@ import {
 } from '../utils/empresaHelpers.js';
 import { nodeEngine } from '../services/nodeEngine.js';
 import { FlowModel } from '../models/Flow.js';
+import { FlowExecutor } from '../services/FlowExecutor.js';
 
 import type { EmpresaConfig } from '../types/Types.js';
 
@@ -188,56 +189,60 @@ export const recibirMensaje = async (req: Request, res: Response, next: NextFunc
       return;
     }
 
-    // 🆕 SISTEMA DE NODOS: Verificar si existe flujo de nodos activo
-    console.log('\n🆕 ========== VERIFICANDO SISTEMA DE NODOS ==========');
+    // 🆕 SISTEMA DE FLUJOS VISUALES: Verificar si existe flujo visual activo
+    console.log('\n🆕 ========== VERIFICANDO SISTEMA DE FLUJOS VISUALES ==========');
     
-    const flowNodos = await FlowModel.findOne({ 
-      empresaId: empresa.nombre, 
+    const flowVisual = await FlowModel.findOne({ 
+      empresaId: empresaMongoId,
       activo: true 
     });
 
-    if (flowNodos) {
-      console.log(`✅ Flow de nodos encontrado: ${flowNodos.nombre} (${flowNodos.id})`);
+    if (flowVisual && flowVisual.nodes && flowVisual.edges) {
+      console.log(`✅ Flujo visual encontrado: ${flowVisual.nombre} (${flowVisual._id})`);
+      console.log(`   Nodos: ${flowVisual.nodes.length}, Edges: ${flowVisual.edges.length}`);
       
       try {
-        // Verificar si hay sesión activa
-        const sesionActiva = nodeEngine.getSessionState(empresa.nombre, contacto._id.toString());
+        // Ejecutar flujo visual con FlowExecutor
+        const executor = new FlowExecutor();
+        const resultado = await executor.execute(flowVisual._id.toString(), {
+          message: mensaje,
+          from: telefonoCliente,
+          to: telefonoEmpresa,
+          phoneNumberId: phoneNumberId,
+          timestamp: new Date(),
+          profileName: profileName,
+        });
         
-        let respuestaNodo: string;
-        
-        if (sesionActiva) {
-          // Continuar flujo existente
-          console.log(`🔄 Continuando flujo en nodo: ${sesionActiva.currentNode}`);
-          respuestaNodo = await nodeEngine.handleUserInput(empresa.nombre, contacto._id.toString(), mensaje);
-        } else {
-          // Iniciar nuevo flujo
-          console.log(`🎉 Iniciando nuevo flujo: ${flowNodos.id}`);
-          respuestaNodo = await nodeEngine.startFlow(empresa.nombre, contacto._id.toString(), flowNodos.id);
-        }
-        
-        // Enviar respuesta
-        await enviarMensajeWhatsAppTexto(telefonoCliente, respuestaNodo, phoneNumberId);
+        console.log('✅ Flujo visual ejecutado exitosamente');
+        console.log('📊 Resultado:', JSON.stringify(resultado, null, 2));
         
         // Actualizar historial y métricas
         await actualizarHistorialConversacion(contacto._id.toString(), `Cliente: ${mensaje}`);
-        await actualizarHistorialConversacion(contacto._id.toString(), `Bot: ${respuestaNodo}`);
+        
+        // Buscar respuesta GPT en el contexto
+        const respuestaGPT = resultado['gpt-conversacional']?.output?.respuesta_gpt;
+        if (respuestaGPT) {
+          await actualizarHistorialConversacion(contacto._id.toString(), `Bot: ${respuestaGPT}`);
+        }
+        
         await incrementarMetricas(contacto._id.toString(), {
           mensajesEnviados: 1,
           mensajesRecibidos: 1,
           interacciones: 1
         });
         
-        console.log('✅ Mensaje procesado con sistema de nodos');
+        console.log('✅ Mensaje procesado con flujo visual');
         res.sendStatus(200);
         return;
         
       } catch (error: any) {
-        console.error('❌ Error en sistema de nodos:', error.message);
+        console.error('❌ Error en flujo visual:', error.message);
+        console.error('Stack:', error.stack);
         console.log('⚠️ Fallback a sistema legacy...');
         // Continuar con sistema legacy si falla
       }
     } else {
-      console.log('⚠️ No hay flow de nodos activo, usando sistema legacy');
+      console.log('⚠️ No hay flujo visual activo, usando sistema legacy');
     }
     
     // 🎯 ROUTER UNIVERSAL: Evaluar triggers ANTES de decidir flujo
