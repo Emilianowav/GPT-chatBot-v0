@@ -79,6 +79,9 @@ export default function FlowBuilderPage() {
   const [appsModalPosition, setAppsModalPosition] = useState<{ x: number; y: number } | undefined>();
   const [selectedApp, setSelectedApp] = useState<any>(null);
   const [sourceNodeForConnection, setSourceNodeForConnection] = useState<string | null>(null);
+  const [currentFlowId, setCurrentFlowId] = useState<string | null>(null);
+  const [flowName, setFlowName] = useState('Nuevo Flow');
+  const [isSaving, setIsSaving] = useState(false);
 
   useEffect(() => {
     const initialNode: Node = {
@@ -199,9 +202,117 @@ export default function FlowBuilderPage() {
     return [];
   };
 
+  const handleSaveFlow = async () => {
+    try {
+      setIsSaving(true);
+      
+      const flowData = {
+        nombre: flowName,
+        empresaId: '6940a9a181b92bfce970fdb5', // Veo Veo
+        activo: true,
+        nodes,
+        edges
+      };
+
+      const response = await fetch('/api/flows', {
+        method: currentFlowId ? 'PUT' : 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(currentFlowId ? { ...flowData, _id: currentFlowId } : flowData)
+      });
+
+      const savedFlow = await response.json();
+      setCurrentFlowId(savedFlow._id);
+      
+      alert('Flow guardado exitosamente');
+    } catch (error) {
+      console.error('Error guardando flow:', error);
+      alert('Error al guardar el flow');
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleLoadFlow = async (flowId: string) => {
+    try {
+      const response = await fetch(`/api/flows/detail/${flowId}`);
+      const flow = await response.json();
+      
+      setNodes(flow.nodes);
+      setEdges(flow.edges);
+      setFlowName(flow.nombre);
+      setCurrentFlowId(flow._id);
+      
+      alert('Flow cargado exitosamente');
+    } catch (error) {
+      console.error('Error cargando flow:', error);
+      alert('Error al cargar el flow');
+    }
+  };
+
   return (
     <DashboardLayout>
       <div className={styles.flowBuilderContainer}>
+        {/* Toolbar */}
+        <div style={{
+          position: 'absolute',
+          top: '20px',
+          left: '20px',
+          zIndex: 10,
+          display: 'flex',
+          gap: '10px',
+          background: 'white',
+          padding: '10px',
+          borderRadius: '8px',
+          boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
+        }}>
+          <input
+            type="text"
+            value={flowName}
+            onChange={(e) => setFlowName(e.target.value)}
+            placeholder="Nombre del flow"
+            style={{
+              padding: '8px 12px',
+              border: '1px solid #e5e7eb',
+              borderRadius: '6px',
+              fontSize: '14px'
+            }}
+          />
+          <button
+            onClick={handleSaveFlow}
+            disabled={isSaving}
+            style={{
+              padding: '8px 16px',
+              background: '#10b981',
+              color: 'white',
+              border: 'none',
+              borderRadius: '6px',
+              cursor: isSaving ? 'not-allowed' : 'pointer',
+              fontSize: '14px',
+              fontWeight: '600'
+            }}
+          >
+            {isSaving ? 'Guardando...' : '💾 Guardar Flow'}
+          </button>
+          <button
+            onClick={() => {
+              const flowId = prompt('ID del flow a cargar:');
+              if (flowId) handleLoadFlow(flowId);
+            }}
+            style={{
+              padding: '8px 16px',
+              background: '#3b82f6',
+              color: 'white',
+              border: 'none',
+              borderRadius: '6px',
+              cursor: 'pointer',
+              fontSize: '14px',
+              fontWeight: '600'
+            }}
+          >
+            📂 Cargar Flow
+          </button>
+        </div>
+        
         <div className={styles.flowCanvas}>
           <ReactFlow
             nodes={nodes}
