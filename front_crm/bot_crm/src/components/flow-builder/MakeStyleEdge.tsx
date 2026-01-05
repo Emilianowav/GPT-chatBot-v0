@@ -63,14 +63,17 @@ function MakeStyleEdge({
       sourceNode.position.x - targetNode.position.x
     );
 
-    // Handle está en NODE_RADIUS (50px) desde el centro del nodo
-    // El handle visual tiene 40px, por lo que su centro está en NODE_RADIUS
-    // Las líneas salen desde el centro del handle
-    actualSourceX = sourceX + Math.cos(sourceAngle) * NODE_RADIUS;
-    actualSourceY = sourceY + Math.sin(sourceAngle) * NODE_RADIUS;
+    // CRÍTICO: Handle visual está en NODE_RADIUS (50px)
+    // Handle tiene 40px de diámetro, su centro está en NODE_RADIUS
+    // Pero la línea debe salir desde el BORDE EXTERIOR del handle
+    // Por lo tanto: NODE_RADIUS + HANDLE_RADIUS = 50px + 20px = 70px
+    const handleConnectionPoint = NODE_RADIUS + HANDLE_RADIUS;
+    
+    actualSourceX = sourceX + Math.cos(sourceAngle) * handleConnectionPoint;
+    actualSourceY = sourceY + Math.sin(sourceAngle) * handleConnectionPoint;
 
-    actualTargetX = targetX + Math.cos(targetAngle) * NODE_RADIUS;
-    actualTargetY = targetY + Math.sin(targetAngle) * NODE_RADIUS;
+    actualTargetX = targetX + Math.cos(targetAngle) * handleConnectionPoint;
+    actualTargetY = targetY + Math.sin(targetAngle) * handleConnectionPoint;
   }
 
   // Calcular círculos a lo largo de la línea recta

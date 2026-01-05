@@ -97,81 +97,56 @@ export default function FlowBuilderPage() {
   const loadFlow = async () => {
     try {
       setIsLoading(true);
-      const flowId = 'veo-veo-gpt-conversacional';
       
-      const response = await fetch(`http://localhost:3000/api/flows/${flowId}`);
+      // Cargar flujo desde BD (empresa Veo Veo)
+      const empresaId = '6940a9a181b92bfce970fdb5';
+      const response = await fetch(`http://localhost:3000/api/flows?empresaId=${empresaId}`);
       
       if (response.ok) {
         const data = await response.json();
-        setFlowData(data.flow);
         
-        if (data.nodes && data.nodes.length > 0) {
-          const reactFlowNodes = data.nodes.map((node: any, index: number) => {
-            // Mapear tipo de nodo a nombre de app para iconos
-            let appName = '';
-            if (node.type === 'input' && node.name.includes('WhatsApp')) {
-              appName = 'WhatsApp';
-            } else if (node.type === 'gpt') {
-              appName = 'GPT';
-            } else if (node.type === 'api_call' && node.name.includes('WooCommerce')) {
-              appName = 'WooCommerce';
-            } else if (node.type === 'message' && node.name.includes('WhatsApp')) {
-              appName = 'WhatsApp';
-            }
-            
-            return {
+        if (data.flows && data.flows.length > 0) {
+          const flow = data.flows[0]; // Tomar el primer flujo
+          setFlowData(flow);
+          
+          if (flow.nodes && flow.nodes.length > 0) {
+            const reactFlowNodes = flow.nodes.map((node: any) => ({
               id: node.id,
-              type: 'custom',
-              position: node.metadata?.position || { x: 100 + index * 250, y: 100 },
+              type: node.type === 'router' ? 'router' : 'custom',
+              position: node.position || { x: 0, y: 0 },
               data: {
-                label: node.name || node.type,
-                type: node.type,
-                appName: appName,
-                config: node,
+                label: node.data?.label || 'Nodo',
+                subtitle: node.data?.subtitle,
+                type: node.data?.type,
+                appName: node.data?.appName,
+                executionCount: node.data?.executionCount,
+                config: node.data?.config,
               },
-            };
-          });
-          
-          setNodes(reactFlowNodes);
-          
-          const reactFlowEdges: Edge[] = [];
-          data.nodes.forEach((node: any) => {
-            if (node.next) {
-              const nextNodes = Array.isArray(node.next) ? node.next : [node.next];
-              nextNodes.forEach((nextId: string) => {
-                // Obtener colores de los nodos source y target
-                const sourceNode = reactFlowNodes.find((n: any) => n.id === node.id);
-                const targetNode = reactFlowNodes.find((n: any) => n.id === nextId);
-                
-                const sourceColor = sourceNode?.data?.appName 
-                  ? (appColors[sourceNode.data.appName] || '#6366f1')
-                  : (nodeColors[sourceNode?.data?.type] || '#6366f1');
-                
-                const targetColor = targetNode?.data?.appName
-                  ? (appColors[targetNode.data.appName] || '#6366f1')
-                  : (nodeColors[targetNode?.data?.type] || '#6366f1');
-                
-                reactFlowEdges.push({
-                  id: `${node.id}-${nextId}`,
-                  source: node.id,
-                  target: nextId,
-                  type: 'custom',
-                  animated: true,
-                  data: {
-                    sourceColor,
-                    targetColor,
-                    onConfigClick: (edgeId: string) => {
-                      setFilterModal(edgeId);
-                    }
+            }));
+            
+            setNodes(reactFlowNodes);
+            
+            if (flow.edges && flow.edges.length > 0) {
+              const reactFlowEdges = flow.edges.map((edge: any) => ({
+                id: edge.id,
+                source: edge.source,
+                target: edge.target,
+                type: edge.type || 'custom',
+                animated: edge.animated !== false,
+                data: {
+                  sourceColor: edge.data?.sourceColor || '#6366f1',
+                  targetColor: edge.data?.targetColor || '#6366f1',
+                  filter: edge.data?.filter,
+                  onConfigClick: (edgeId: string) => {
+                    setFilterModal(edgeId);
                   }
-                });
-              });
+                }
+              }));
+              
+              setEdges(reactFlowEdges);
             }
-          });
-          
-          setEdges(reactFlowEdges);
-        } else {
-          // Si no hay nodos, crear nodo inicial vacío
+          } else {
+            // Si no hay nodos, crear canvas vacío
           createInitialNode();
         }
       } else {
