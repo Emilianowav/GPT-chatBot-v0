@@ -79,12 +79,107 @@ const WHATSAPP_MODULES = [
 ];
 
 const OPENAI_MODULES = [
+  // GET STARTED
   {
-    id: 'create-completion',
-    name: 'Create a Completion',
-    description: 'Creates a completion for the provided prompt.',
-    category: 'COMPLETIONS',
-    badges: ['GPT-4'],
+    id: 'simple-text-prompt',
+    name: 'Simple text prompt (beta)',
+    description: 'Generates a response based on a simple text prompt.',
+    category: 'GET STARTED',
+    badges: ['Tokens'],
+  },
+  
+  // RESPONSES AND CONVERSATIONS
+  {
+    id: 'generate-response',
+    name: 'Generate a response',
+    description: 'Generates a response.',
+    category: 'RESPONSES AND CONVERSATIONS',
+  },
+  {
+    id: 'list-input-items',
+    name: 'List input items',
+    description: 'Lists input items.',
+    category: 'RESPONSES AND CONVERSATIONS',
+  },
+  {
+    id: 'get-response',
+    name: 'Get a response',
+    description: 'Retrieves an existing model response.',
+    category: 'RESPONSES AND CONVERSATIONS',
+  },
+  {
+    id: 'delete-response',
+    name: 'Delete a response',
+    description: 'Deletes an existing model response.',
+    category: 'RESPONSES AND CONVERSATIONS',
+  },
+  {
+    id: 'delete-conversation',
+    name: 'Delete a conversation',
+    description: 'Deletes an existing conversation.',
+    category: 'RESPONSES AND CONVERSATIONS',
+  },
+  
+  // CHAT AND ASSISTANT
+  {
+    id: 'generate-completion',
+    name: 'Generate a completion',
+    description: 'Generates a chat completion.',
+    category: 'CHAT AND ASSISTANT',
+  },
+  {
+    id: 'generate-moderation',
+    name: 'Generate a moderation',
+    description: 'Qualifies whether the provided image or text(s) contains violent, hateful, illicit or adult content.',
+    category: 'CHAT AND ASSISTANT',
+  },
+  {
+    id: 'message-assistant',
+    name: 'Message an assistant',
+    description: 'Sends a message to an assistant.',
+    category: 'CHAT AND ASSISTANT',
+  },
+  
+  // FILES
+  {
+    id: 'add-files-vector-store',
+    name: 'Add files to a vector store',
+    description: 'Adds files to a specified vector store or, if not specified, creates a new vector store based on the configuration.',
+    category: 'FILES',
+  },
+  {
+    id: 'upload-file',
+    name: 'Upload a file',
+    description: 'Uploads a file to be used across the OpenAI platform.',
+    category: 'FILES',
+  },
+  {
+    id: 'download-container-file',
+    name: 'Download a container file',
+    description: 'Downloads a container file.',
+    category: 'FILES',
+  },
+  
+  // BATCHES
+  {
+    id: 'cancel-batch',
+    name: 'Cancel a batch',
+    description: 'Cancels an "in-progress" batch. The batch will be in status "cancelling" for up to 10 minutes, before changing to "cancelled".',
+    category: 'BATCHES',
+  },
+  
+  // OTHER
+  {
+    id: 'transform-text-structured',
+    name: 'Transform text to structured data',
+    description: 'Identifies information in a prompt\'s text and returns it as structured data.',
+    category: 'OTHER',
+  },
+  {
+    id: 'make-api-call',
+    name: 'Make an API call',
+    description: 'Performs an arbitrary authorized API call.',
+    category: 'OTHER',
   },
 ];
 
