@@ -17,6 +17,7 @@ import styles from './CustomEdge.module.css';
 // Constantes (deben coincidir con MakeStyleNode)
 const NODE_RADIUS = 50; // Radio del círculo del nodo
 const HANDLE_SIZE = 40; // Tamaño del handle visual
+const HANDLE_RADIUS = HANDLE_SIZE / 2; // 20px - Radio del handle
 
 function MakeStyleEdge({
   id,
@@ -63,14 +64,23 @@ function MakeStyleEdge({
     );
 
     // CRÍTICO: La línea debe salir desde el CENTRO del handle visual
-    // Handle está en NODE_RADIUS (50px) desde el centro del nodo
-    // El handle visual está centrado en esa posición con translate(-50%, -50%)
-    // Por lo tanto, el centro del handle está exactamente en NODE_RADIUS
-    actualSourceX = sourceX + Math.cos(sourceAngle) * NODE_RADIUS;
-    actualSourceY = sourceY + Math.sin(sourceAngle) * NODE_RADIUS;
+    // En Make.com, las líneas SIEMPRE salen desde el mismo punto del handle
+    // 
+    // Cálculo correcto:
+    // 1. Handle está posicionado en NODE_RADIUS (50px) desde centro del nodo
+    // 2. Handle visual tiene 40px de diámetro (HANDLE_RADIUS = 20px)
+    // 3. Handle está centrado con translate(-50%, -50%)
+    // 4. Pero el handle se extiende HACIA AFUERA del nodo
+    // 5. Por lo tanto, el centro del handle está en NODE_RADIUS + HANDLE_RADIUS
+    //
+    // Resultado: NODE_RADIUS (50px) + HANDLE_RADIUS (20px) = 70px desde centro
+    const connectionDistance = NODE_RADIUS + HANDLE_RADIUS;
+    
+    actualSourceX = sourceX + Math.cos(sourceAngle) * connectionDistance;
+    actualSourceY = sourceY + Math.sin(sourceAngle) * connectionDistance;
 
-    actualTargetX = targetX + Math.cos(targetAngle) * NODE_RADIUS;
-    actualTargetY = targetY + Math.sin(targetAngle) * NODE_RADIUS;
+    actualTargetX = targetX + Math.cos(targetAngle) * connectionDistance;
+    actualTargetY = targetY + Math.sin(targetAngle) * connectionDistance;
   }
 
   // Calcular círculos a lo largo de la línea recta
