@@ -41,9 +41,11 @@ function AppNode({ id, data, selected }: NodeProps<AppNodeData>) {
 
   const edges = useEdges();
 
-  // Calcular conexiones salientes desde este nodo
+  // Calcular conexiones salientes y entrantes desde este nodo
   const outgoingEdges = edges.filter(edge => edge.source === id);
+  const incomingEdges = edges.filter(edge => edge.target === id);
   const hasOutgoingConnection = outgoingEdges.length > 0;
+  const hasIncomingConnection = incomingEdges.length > 0;
 
   // Calcular ángulo para el handle según el número de conexiones
   // Por defecto: 0° (derecha), si hay múltiples se distribuyen en órbita
@@ -71,12 +73,28 @@ function AppNode({ id, data, selected }: NodeProps<AppNodeData>) {
 
   return (
     <div className={styles.appNodeContainer}>
-      {/* Handle invisible de entrada (izquierda) */}
-      <Handle
-        type="target"
-        position={Position.Left}
-        style={{ opacity: 0 }}
-      />
+      {/* Handle de entrada */}
+      {hasIncomingConnection ? (
+        // Handle visual conectado en entrada (izquierda)
+        <>
+          <div
+            className={styles.handleConnectedInput}
+            style={{ background: color }}
+          />
+          <Handle
+            type="target"
+            position={Position.Left}
+            style={{ opacity: 0 }}
+          />
+        </>
+      ) : (
+        // Handle invisible de entrada
+        <Handle
+          type="target"
+          position={Position.Left}
+          style={{ opacity: 0 }}
+        />
+      )}
 
       {/* Círculo principal del nodo */}
       <div 
