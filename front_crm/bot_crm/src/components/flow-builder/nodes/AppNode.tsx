@@ -129,15 +129,40 @@ function AppNode({ id, data, selected }: NodeProps<AppNodeData>) {
         <Zap size={16} color="white" strokeWidth={2.5} />
       </div>
 
-      {/* Handles de entrada en órbita dinámica */}
+      {/* Handles visuales de entrada en órbita (solo decoración) */}
       {incomingEdges.map((edge, index) => {
         const angle = calculateHandleAngle(edge.source);
         const pos = getHandlePosition(angle);
         
         return (
-          <React.Fragment key={`input-${edge.id}`}>
-            {/* Handle visual en órbita */}
+          <div
+            key={`input-visual-${edge.id}`}
+            className={styles.handleOrbit}
+            style={{
+              background: color,
+              left: `calc(50% + ${pos.x}px)`,
+              top: `calc(50% + ${pos.y}px)`,
+            }}
+          />
+        );
+      })}
+
+      {/* Handle invisible de ReactFlow (posición estándar Left) */}
+      <Handle
+        type="target"
+        position={Position.Left}
+        style={{ opacity: 0 }}
+      />
+
+      {/* Handles visuales de salida en órbita (solo decoración) */}
+      {hasOutgoingConnection ? (
+        outgoingEdges.map((edge, index) => {
+          const angle = calculateHandleAngle(edge.target);
+          const pos = getHandlePosition(angle);
+          
+          return (
             <div
+              key={`output-visual-${edge.id}`}
               className={styles.handleOrbit}
               style={{
                 background: color,
@@ -145,82 +170,27 @@ function AppNode({ id, data, selected }: NodeProps<AppNodeData>) {
                 top: `calc(50% + ${pos.y}px)`,
               }}
             />
-            {/* Handle invisible de ReactFlow */}
-            <Handle
-              type="target"
-              position={Position.Left}
-              id={`target-${index}`}
-              style={{
-                left: `calc(50% + ${pos.x}px)`,
-                top: `calc(50% + ${pos.y}px)`,
-                transform: 'translate(-50%, -50%)',
-                opacity: 0,
-              }}
-            />
-          </React.Fragment>
-        );
-      })}
-
-      {/* Handle invisible de entrada por defecto */}
-      {!hasIncomingConnection && (
-        <Handle
-          type="target"
-          position={Position.Left}
-          style={{ opacity: 0 }}
-        />
-      )}
-
-      {/* Handles de salida en órbita dinámica */}
-      {hasOutgoingConnection ? (
-        outgoingEdges.map((edge, index) => {
-          const angle = calculateHandleAngle(edge.target);
-          const pos = getHandlePosition(angle);
-          
-          return (
-            <React.Fragment key={`output-${edge.id}`}>
-              {/* Handle visual en órbita */}
-              <div
-                className={styles.handleOrbit}
-                style={{
-                  background: color,
-                  left: `calc(50% + ${pos.x}px)`,
-                  top: `calc(50% + ${pos.y}px)`,
-                }}
-              />
-              {/* Handle invisible de ReactFlow */}
-              <Handle
-                type="source"
-                position={Position.Right}
-                id={`source-${index}`}
-                style={{
-                  left: `calc(50% + ${pos.x}px)`,
-                  top: `calc(50% + ${pos.y}px)`,
-                  transform: 'translate(-50%, -50%)',
-                  opacity: 0,
-                }}
-              />
-            </React.Fragment>
           );
         })
       ) : (
-        <>
-          <div
-            className={styles.handlePlus}
-            style={{ background: color }}
-            onClick={handlePlusClick}
-            role="button"
-            tabIndex={0}
-            aria-label="Add next module"
-          >
-            <Plus size={20} color="white" strokeWidth={3} />
-          </div>
-          <Handle
-            type="source"
-            position={Position.Right}
-            style={{ opacity: 0 }}
-          />
-        </>
+        <div
+          className={styles.handlePlus}
+          style={{ background: color }}
+          onClick={handlePlusClick}
+          role="button"
+          tabIndex={0}
+          aria-label="Add next module"
+        >
+          <Plus size={20} color="white" strokeWidth={3} />
+        </div>
       )}
+
+      {/* Handle invisible de ReactFlow (posición estándar Right) */}
+      <Handle
+        type="source"
+        position={Position.Right}
+        style={{ opacity: 0 }}
+      />
 
       {/* Labels */}
       <div className={styles.nodeLabel}>{label}</div>
