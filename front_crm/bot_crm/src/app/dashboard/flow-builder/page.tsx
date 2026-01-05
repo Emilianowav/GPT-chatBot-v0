@@ -25,7 +25,6 @@ import WebhookNode from '@/components/flow-builder/nodes/WebhookNode';
 import SimpleEdge from '@/components/flow-builder/edges/SimpleEdge';
 import AppsModal from '@/components/flow-builder/modals/AppsModal';
 import ModuleSelectionModal from '@/components/flow-builder/modals/ModuleSelectionModal';
-import NodeConfigPanel from '@/components/flow-builder/panels/NodeConfigPanel';
 import styles from './flow-builder.module.css';
 
 const nodeTypes = {
@@ -92,8 +91,6 @@ export default function FlowBuilderPage() {
   const [currentFlowId, setCurrentFlowId] = useState<string | null>(null);
   const [flowName, setFlowName] = useState('Nuevo Flow');
   const [isSaving, setIsSaving] = useState(false);
-  const [selectedNode, setSelectedNode] = useState<Node | null>(null);
-  const [showConfigPanel, setShowConfigPanel] = useState(false);
 
   useEffect(() => {
     // Cargar flow de Veo Veo autom├íticamente
@@ -105,16 +102,7 @@ export default function FlowBuilderPage() {
         const flow = await response.json();
         
         if (flow && flow.nodes && flow.edges) {
-          // Agregar handlers a todos los nodos
-          const nodesWithHandlers = flow.nodes.map((node: Node) => ({
-            ...node,
-            data: {
-              ...node.data,
-              onNodeClick: handleNodeClick,
-              onHandleClick: handlePlusNodeClick,
-            }
-          }));
-          setNodes(nodesWithHandlers);
+          setNodes(flow.nodes);
           setEdges(flow.edges);
           setFlowName(flow.nombre);
           setCurrentFlowId(flow._id);
@@ -129,33 +117,10 @@ export default function FlowBuilderPage() {
           position: { x: 400, y: 300 },
           data: {
             onAddClick: handlePlusNodeClick,
-          },NodeClick = (nodeId: string) => {
-    const node = nodes.find(n => n.id === nodeId);
-    if (node) {
-      setSelectedNode(node);
-      setShowConfigPanel(true);
-    }
-  };
-
-  const handle
+          },
         };
         setNodes([initialNode]);
-      }ndefined);
-  };
-
-  const handleSaveNodeConfig = (oId: string, conig: any) => {
-    setNodes(prev => prev.map(node => 
-      node.d === nodeId 
-        ? { 
-            ...node, 
-            data: { 
-              ...od.ata, 
-              label: config.label,
-              config: config 
-            } 
-          }
-        : node
-    )
+      }
     };
     
     loadVeoVeoFlow();
@@ -385,14 +350,6 @@ export default function FlowBuilderPage() {
             verified={true}
             modules={getModulesForApp()}
             onSelectModule={handleModuleSelect}
-          />
-        )}
-
-        {showConfigPanel && selectedNode && (
-          <NodeConfigPanel
-            node={selectedNode}
-            onClose={() => setShowConfigPanel(false)}
-            onSave={handleSaveNodeConfig}
           />
         )}
       </div>
