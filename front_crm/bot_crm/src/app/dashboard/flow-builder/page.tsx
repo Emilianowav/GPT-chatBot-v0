@@ -122,12 +122,16 @@ export default function FlowBuilderPage() {
   }, []);
 
   const handleNodeClick = useCallback((nodeId: string) => {
-    const node = nodes.find(n => n.id === nodeId);
-    if (node) {
-      setSelectedNode(node);
-      setShowConfigPanel(true);
-    }
-  }, [nodes]);
+    // Usar función de actualización para evitar dependencia de nodes
+    setNodes(currentNodes => {
+      const node = currentNodes.find(n => n.id === nodeId);
+      if (node) {
+        setSelectedNode(node);
+        setShowConfigPanel(true);
+      }
+      return currentNodes; // No modificar nodes
+    });
+  }, []);
 
   const handleSaveNodeConfig = useCallback((nodeId: string, config: any) => {
     setNodes(prev => prev.map(node => 
