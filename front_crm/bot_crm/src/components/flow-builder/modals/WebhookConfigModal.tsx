@@ -193,3 +193,4 @@ function WebhookConfigModal({
 }
 
 export default memo(WebhookConfigModal);
+export type { WebhookConfig };

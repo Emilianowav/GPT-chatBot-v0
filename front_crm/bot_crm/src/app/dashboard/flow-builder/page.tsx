@@ -60,14 +60,20 @@ const WHATSAPP_MODULES = [
     id: 'watch-events',
     name: 'Watch Events',
     description: 'Triggers when a new message is received.',
-    category: 'MESSAGE',
-    badges: ['INSTANT', 'ACID'],
+    category: 'TRIGGERS',
+    badges: ['INSTANT', 'TRIGGER'],
   },
   {
     id: 'send-message',
     name: 'Send a Message',
     description: 'Sends a message.',
-    category: 'MESSAGE',
+    category: 'ACTIONS',
+  },
+  {
+    id: 'upload-media',
+    name: 'Upload a Media',
+    description: 'Uploads a media and retrieves its ID.',
+    category: 'ACTIONS',
   },
 ];
 
@@ -197,8 +203,19 @@ export default function FlowBuilderPage() {
   const handleModuleSelect = (module: any) => {
     setSelectedModule(module);
     
-    // Si es WhatsApp Watch Events, mostrar configuración de webhook
+    // Si es WhatsApp Watch Events, verificar que no exista ya
     if (selectedApp.id === 'whatsapp' && module.id === 'watch-events') {
+      const watchEventsExists = nodes.some(
+        n => n.type === 'whatsapp' && n.data.config?.module === 'watch-events'
+      );
+      
+      if (watchEventsExists) {
+        alert('Ya existe un nodo Watch Events. Solo puede haber uno por flujo.');
+        setShowModuleModal(false);
+        setSelectedModule(null);
+        return;
+      }
+      
       setShowModuleModal(false);
       setShowWebhookConfigModal(true);
       return;
