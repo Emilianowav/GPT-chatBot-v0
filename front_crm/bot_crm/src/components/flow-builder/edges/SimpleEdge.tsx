@@ -45,20 +45,29 @@ function SimpleEdge({
   const handleTargetX = targetCenterX - Math.cos(angle) * HANDLE_ORBIT_RADIUS;
   const handleTargetY = targetCenterY - Math.sin(angle) * HANDLE_ORBIT_RADIUS;
 
-  // PASO 4: Calcular distancia entre handles
+  // PASO 3.5: Aplicar desplazamiento visual del handle CSS
+  // transform: translate(-50%, -120%) = -20% de 32px = -6.4px
+  const handleVisualOffsetY = -6.4;
+  
+  const finalSourceX = handleSourceX;
+  const finalSourceY = handleSourceY + handleVisualOffsetY;
+  const finalTargetX = handleTargetX;
+  const finalTargetY = handleTargetY + handleVisualOffsetY;
+
+  // PASO 4: Calcular distancia entre handles finales
   const distance = Math.sqrt(
-    Math.pow(handleTargetX - handleSourceX, 2) + 
-    Math.pow(handleTargetY - handleSourceY, 2)
+    Math.pow(finalTargetX - finalSourceX, 2) + 
+    Math.pow(finalTargetY - finalSourceY, 2)
   );
 
-  // PASO 5: Generar círculos en línea recta entre handles
+  // PASO 5: Generar círculos en línea recta entre handles finales
   const numCircles = Math.max(2, Math.floor(distance / LINE_CIRCLE_SPACING));
   const circles = [];
   
   for (let i = 0; i < numCircles; i++) {
     const t = i / (numCircles - 1);
-    const x = handleSourceX + (handleTargetX - handleSourceX) * t;
-    const y = handleSourceY + (handleTargetY - handleSourceY) * t;
+    const x = finalSourceX + (finalTargetX - finalSourceX) * t;
+    const y = finalSourceY + (finalTargetY - finalSourceY) * t;
     circles.push({ x, y });
   }
 
