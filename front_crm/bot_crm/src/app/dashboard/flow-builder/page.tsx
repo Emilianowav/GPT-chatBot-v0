@@ -114,15 +114,15 @@ export default function FlowBuilderPage() {
   const [selectedNode, setSelectedNode] = useState<Node | null>(null);
   const [showConfigPanel, setShowConfigPanel] = useState(false);
 
-  const handleNodeClick = (nodeId: string) => {
+  const handleNodeClick = useCallback((nodeId: string) => {
     const node = nodes.find(n => n.id === nodeId);
     if (node) {
       setSelectedNode(node);
       setShowConfigPanel(true);
     }
-  };
+  }, [nodes]);
 
-  const handleSaveNodeConfig = (nodeId: string, config: any) => {
+  const handleSaveNodeConfig = useCallback((nodeId: string, config: any) => {
     setNodes(prev => prev.map(node => 
       node.id === nodeId 
         ? { 
@@ -135,7 +135,7 @@ export default function FlowBuilderPage() {
           }
         : node
     ));
-  };
+  }, [setNodes]);
 
   useEffect(() => {
     // Cargar flow de Veo Veo automáticamente
@@ -164,6 +164,8 @@ export default function FlowBuilderPage() {
           setFlowName(flow.nombre);
           setCurrentFlowId(flow._id);
           console.log('✅ Flow de Veo Veo cargado:', flow.nombre);
+          console.log('📊 Nodos cargados:', nodesWithHandlers.length);
+          console.log('🔗 Edges cargados:', flow.edges.length);
         }
       } catch (error) {
         console.error('❌ Error cargando flow:', error);
@@ -181,14 +183,14 @@ export default function FlowBuilderPage() {
     };
     
     loadVeoVeoFlow();
-  }, []);
+  }, [handleNodeClick, handlePlusNodeClick]);
 
-  const handlePlusNodeClick = (nodeId: string, handleId?: string) => {
+  const handlePlusNodeClick = useCallback((nodeId: string, handleId?: string) => {
     setSourceNodeForConnection(nodeId);
     setSourceHandleForConnection(handleId);
     setShowAppsModal(true);
     setAppsModalPosition(undefined);
-  };
+  }, []);
 
   const handleAppSelect = (app: any) => {
     setSelectedApp(app);
