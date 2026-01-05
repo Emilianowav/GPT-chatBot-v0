@@ -51,21 +51,26 @@ function MakeStyleEdge({
   let actualTargetY = targetY;
 
   if (sourceNode && targetNode) {
-    // HANDLE FIJO: Siempre a la derecha del nodo
-    // Las líneas SIEMPRE salen desde el mismo punto (centro del handle derecho)
-    // No hay cálculo dinámico de ángulo
+    // Calcular ángulo desde source hacia target
+    const sourceAngle = Math.atan2(
+      targetNode.position.y - sourceNode.position.y,
+      targetNode.position.x - sourceNode.position.x
+    );
     
-    // Handle está a la derecha: NODE_RADIUS (50px) desde centro
-    // Centro del handle: NODE_RADIUS + HANDLE_RADIUS = 70px
-    const connectionDistance = NODE_RADIUS + HANDLE_RADIUS;
-    
-    // Source: handle derecho (ángulo 0°)
-    actualSourceX = sourceX + connectionDistance; // +70px a la derecha
-    actualSourceY = sourceY; // Mismo Y (centro vertical)
+    // Calcular ángulo desde target hacia source
+    const targetAngle = Math.atan2(
+      sourceNode.position.y - targetNode.position.y,
+      sourceNode.position.x - targetNode.position.x
+    );
 
-    // Target: handle izquierdo (ángulo 180°)
-    actualTargetX = targetX - connectionDistance; // -70px a la izquierda
-    actualTargetY = targetY; // Mismo Y (centro vertical)
+    // Handle está en NODE_RADIUS (50px) desde el centro del nodo
+    // El handle visual tiene 40px, por lo que su centro está en NODE_RADIUS
+    // Las líneas salen desde el centro del handle
+    actualSourceX = sourceX + Math.cos(sourceAngle) * NODE_RADIUS;
+    actualSourceY = sourceY + Math.sin(sourceAngle) * NODE_RADIUS;
+
+    actualTargetX = targetX + Math.cos(targetAngle) * NODE_RADIUS;
+    actualTargetY = targetY + Math.sin(targetAngle) * NODE_RADIUS;
   }
 
   // Calcular círculos a lo largo de la línea recta

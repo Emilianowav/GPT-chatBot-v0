@@ -115,10 +115,39 @@ function MakeStyleNode({ id, data, selected }: NodeProps) {
   const nodes = useStore((state) => state.nodeInternals);
   const edges = useStore((state) => state.edges);
 
-  // Verificar si el nodo tiene conexiones
-  const hasConnection = useMemo(() => {
-    return edges.some((edge) => edge.source === id || edge.target === id);
-  }, [id, edges]);
+  // Calcular handles que orbitan alrededor del nodo
+  const orbitHandles = useMemo(() => {
+    const currentNode = nodes.get(id);
+    if (!currentNode) return [];
+
+    const handles: Array<{
+      angle: number;
+      connectedNodeId: string;
+    }> = [];
+
+    // Encontrar edges conectados
+    const connectedEdges = edges.filter(
+      (edge) => edge.source === id || edge.target === id
+    );
+
+    connectedEdges.forEach((edge) => {
+      const isSource = edge.source === id;
+      const connectedNodeId = isSource ? edge.target : edge.source;
+      const connectedNode = nodes.get(connectedNodeId);
+
+      if (connectedNode) {
+        // Calcular ángulo hacia el nodo conectado
+        const angle = Math.atan2(
+          connectedNode.position.y - currentNode.position.y,
+          connectedNode.position.x - currentNode.position.x
+        );
+
+        handles.push({ angle, connectedNodeId });
+      }
+    });
+
+    return handles;
+  }, [id, nodes, edges]);
 
   return (
     <div className={styles.makeNodeContainer}>
@@ -163,18 +192,39 @@ function MakeStyleNode({ id, data, selected }: NodeProps) {
         style={{ top: '50%', left: 0 }}
       />
 
-      {/* Handle visual FIJO (siempre a la derecha) */}
-      <div
-        className={`${styles.visualHandle} ${hasConnection ? styles.connected : styles.addButton}`}
-        style={{
-          background: color,
-          left: `calc(50% + ${NODE_RADIUS}px)`, // Siempre a la derecha
-          top: '50%', // Siempre en el centro vertical
-          transform: 'translate(-50%, -50%)',
-        }}
-      >
-        {!hasConnection && <Plus size={20} color="white" strokeWidth={3} />}
-      </div>
+      {/* Handles que orbitan alrededor del nodo */}
+      {orbitHandles.map((handle, index) => {
+        const handleX = Math.cos(handle.angle) * NODE_RADIUS;
+        const handleY = Math.sin(handle.angle) * NODE_RADIUS;
+
+        return (
+          <div
+            key={`handle-${handle.connectedNodeId}-${index}`}
+            className={`${styles.visualHandle} ${styles.connected}`}
+            style={{
+              background: color,
+              left: `calc(50% + ${handleX}px)`,
+              top: `calc(50% + ${handleY}px)`,
+              transform: 'translate(-50%, -50%)',
+            }}
+          />
+        );
+      })}
+
+      {/* Botón + cuando no hay conexiones */}
+      {orbitHandles.length === 0 && (
+        <div
+          className={`${styles.visualHandle} ${styles.addButton}`}
+          style={{
+            background: color,
+            left: `calc(50% + ${NODE_RADIUS}px)`,
+            top: '50%',
+            transform: 'translate(-50%, -50%)',
+          }}
+        >
+          <Plus size={20} color="white" strokeWidth={3} />
+        </div>
+      )}
 
       {/* Badge de ejecución (arriba derecha) */}
       {data.executionCount && (
