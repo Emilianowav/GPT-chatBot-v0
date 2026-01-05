@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { useState, useCallback, useEffect } from 'react';
 import ReactFlow, {
@@ -43,29 +43,12 @@ const OpenAIIcon = () => (
 );
 
 const WHATSAPP_MODULES = [
-  {
-    id: 'watch-events',
-    name: 'Watch Events',
-    description: 'Triggers when a new message is received.',
-    category: 'MESSAGE',
-    badges: ['INSTANT', 'ACID'],
-  },
-  {
-    id: 'send-message',
-    name: 'Send a Message',
-    description: 'Sends a message.',
-    category: 'MESSAGE',
-  },
+  { id: 'watch-events', name: 'Watch Events', description: 'Triggers when a new message is received.', category: 'MESSAGE', badges: ['INSTANT', 'ACID'] },
+  { id: 'send-message', name: 'Send a Message', description: 'Sends a message.', category: 'MESSAGE' },
 ];
 
 const OPENAI_MODULES = [
-  {
-    id: 'create-completion',
-    name: 'Create a Completion',
-    description: 'Creates a completion for the provided prompt.',
-    category: 'COMPLETIONS',
-    badges: ['GPT-4'],
-  },
+  { id: 'create-completion', name: 'Create a Completion', description: 'Creates a completion.', category: 'COMPLETIONS', badges: ['GPT-4'] },
 ];
 
 export default function FlowBuilderPage() {
@@ -73,29 +56,22 @@ export default function FlowBuilderPage() {
   const [edges, setEdges, onEdgesChange] = useEdgesState([]);
   const [showAppsModal, setShowAppsModal] = useState(false);
   const [showModuleModal, setShowModuleModal] = useState(false);
-  const [appsModalPosition, setAppsModalPosition] = useState<{ x: number; y: number } | undefined>();
-  const [selectedApp, setSelectedApp] = useState<any>(null);
-  const [sourceNodeForConnection, setSourceNodeForConnection] = useState<string | null>(null);
+  const [appsModalPosition, setAppsModalPosition] = useState(undefined);
+  const [selectedApp, setSelectedApp] = useState(null);
+  const [sourceNodeForConnection, setSourceNodeForConnection] = useState(null);
 
   useEffect(() => {
-    const initialNode: Node = {
-      id: 'plus-initial',
-      type: 'plus',
-      position: { x: 400, y: 300 },
-      data: {
-        onAddClick: handlePlusNodeClick,
-      },
-    };
+    const initialNode = { id: 'plus-initial', type: 'plus', position: { x: 400, y: 300 }, data: { onAddClick: handlePlusNodeClick } };
     setNodes([initialNode]);
   }, []);
 
-  const handlePlusNodeClick = (nodeId: string) => {
+  const handlePlusNodeClick = (nodeId) => {
     setSourceNodeForConnection(nodeId);
     setShowAppsModal(true);
     setAppsModalPosition(undefined);
   };
 
-  const handleAppSelect = (app: any) => {
+  const handleAppSelect = (app) => {
     setSelectedApp(app);
     setShowAppsModal(false);
     setShowModuleModal(true);
@@ -106,88 +82,32 @@ export default function FlowBuilderPage() {
     setShowAppsModal(true);
   };
 
-  const handleModuleSelect = (module: any) => {
+  const handleModuleSelect = (module) => {
     setShowModuleModal(false);
-
     if (sourceNodeForConnection === 'plus-initial') {
-      const appNode: Node = {
-        id: 'node-1',
-        type: 'app',
-        position: { x: 400, y: 300 },
-        data: {
-          appName: selectedApp.name,
-          appIcon: selectedApp.id === 'whatsapp' ? <WhatsAppIcon /> : <OpenAIIcon />,
-          color: selectedApp.color,
-          label: selectedApp.name,
-          subtitle: module.name,
-          executionCount: 1,
-          hasConnection: false,
-          onHandleClick: handleHandlePlusClick,
-        },
-      };
+      const appNode = { id: 'node-1', type: 'app', position: { x: 400, y: 300 }, data: { appName: selectedApp.name, appIcon: selectedApp.id === 'whatsapp' ? <WhatsAppIcon /> : <OpenAIIcon />, color: selectedApp.color, label: selectedApp.name, subtitle: module.name, executionCount: 1, hasConnection: false, onHandleClick: handleHandlePlusClick } };
       setNodes([appNode]);
     } else {
       const sourceNode = nodes.find(n => n.id === sourceNodeForConnection);
       if (!sourceNode) return;
-
-      const newNodeId = `node-${nodes.length + 1}`;
-      const newNode: Node = {
-        id: newNodeId,
-        type: 'app',
-        position: {
-          x: sourceNode.position.x + 250,
-          y: sourceNode.position.y,
-        },
-        data: {
-          appName: selectedApp.name,
-          appIcon: selectedApp.id === 'whatsapp' ? <WhatsAppIcon /> : <OpenAIIcon />,
-          color: selectedApp.color,
-          label: selectedApp.name,
-          subtitle: module.name,
-          executionCount: nodes.length + 1,
-          hasConnection: false,
-          onHandleClick: handleHandlePlusClick,
-        },
-      };
-
-      const newEdge: Edge = {
-        id: `${sourceNodeForConnection}-${newNodeId}`,
-        source: sourceNodeForConnection,
-        target: newNodeId,
-        type: 'simple',
-        data: {
-          color: sourceNode.data.color,
-        },
-      };
-
-      setNodes(prev => [
-        ...prev.map(n => 
-          n.id === sourceNodeForConnection 
-            ? { ...n, data: { ...n.data, hasConnection: true } }
-            : n
-        ),
-        newNode
-      ]);
+      const newNodeId = 'node-' + (nodes.length + 1);
+      const newNode = { id: newNodeId, type: 'app', position: { x: sourceNode.position.x + 250, y: sourceNode.position.y }, data: { appName: selectedApp.name, appIcon: selectedApp.id === 'whatsapp' ? <WhatsAppIcon /> : <OpenAIIcon />, color: selectedApp.color, label: selectedApp.name, subtitle: module.name, executionCount: nodes.length + 1, hasConnection: false, onHandleClick: handleHandlePlusClick } };
+      const newEdge = { id: sourceNodeForConnection + '-' + newNodeId, source: sourceNodeForConnection, target: newNodeId, type: 'simple', data: { color: sourceNode.data.color } };
+      setNodes(prev => [...prev.map(n => n.id === sourceNodeForConnection ? { ...n, data: { ...n.data, hasConnection: true } } : n), newNode]);
       setEdges(prev => [...prev, newEdge]);
     }
-
     setSourceNodeForConnection(null);
     setSelectedApp(null);
   };
 
-  const handleHandlePlusClick = (nodeId: string) => {
+  const handleHandlePlusClick = (nodeId) => {
     setSourceNodeForConnection(nodeId);
     setShowAppsModal(true);
     const node = nodes.find(n => n.id === nodeId);
-    if (node) {
-      setAppsModalPosition({ x: node.position.x, y: node.position.y });
-    }
+    if (node) setAppsModalPosition({ x: node.position.x, y: node.position.y });
   };
 
-  const onConnect = useCallback(
-    (params: Connection) => setEdges((eds) => addEdge(params, eds)),
-    [setEdges]
-  );
+  const onConnect = useCallback((params) => setEdges((eds) => addEdge(params, eds)), [setEdges]);
 
   const getModulesForApp = () => {
     if (!selectedApp) return [];
@@ -200,43 +120,13 @@ export default function FlowBuilderPage() {
     <DashboardLayout>
       <div className={styles.flowBuilderContainer}>
         <div className={styles.flowCanvas}>
-          <ReactFlow
-            nodes={nodes}
-            edges={edges}
-            onNodesChange={onNodesChange}
-            onEdgesChange={onEdgesChange}
-            onConnect={onConnect}
-            nodeTypes={nodeTypes}
-            edgeTypes={edgeTypes}
-            fitView
-            minZoom={0.5}
-            maxZoom={1.5}
-          >
+          <ReactFlow nodes={nodes} edges={edges} onNodesChange={onNodesChange} onEdgesChange={onEdgesChange} onConnect={onConnect} nodeTypes={nodeTypes} edgeTypes={edgeTypes} fitView minZoom={0.5} maxZoom={1.5}>
             <Controls />
             <Background variant={BackgroundVariant.Dots} gap={20} size={1} color="#e5e7eb" />
           </ReactFlow>
         </div>
-
-        <AppsModal
-          isOpen={showAppsModal}
-          onClose={() => setShowAppsModal(false)}
-          onSelectApp={handleAppSelect}
-          position={appsModalPosition}
-        />
-
-        {selectedApp && (
-          <ModuleSelectionModal
-            isOpen={showModuleModal}
-            onClose={() => setShowModuleModal(false)}
-            onBack={handleBackToApps}
-            appName={selectedApp.name}
-            appIcon={selectedApp.id === 'whatsapp' ? <WhatsAppIcon /> : <OpenAIIcon />}
-            appColor={selectedApp.color}
-            verified={true}
-            modules={getModulesForApp()}
-            onSelectModule={handleModuleSelect}
-          />
-        )}
+        <AppsModal isOpen={showAppsModal} onClose={() => setShowAppsModal(false)} onSelectApp={handleAppSelect} position={appsModalPosition} />
+        {selectedApp && <ModuleSelectionModal isOpen={showModuleModal} onClose={() => setShowModuleModal(false)} onBack={handleBackToApps} appName={selectedApp.name} appIcon={selectedApp.id === 'whatsapp' ? <WhatsAppIcon /> : <OpenAIIcon />} appColor={selectedApp.color} verified={true} modules={getModulesForApp()} onSelectModule={handleModuleSelect} />}
       </div>
     </DashboardLayout>
   );
