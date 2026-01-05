@@ -115,60 +115,38 @@ function MakeStyleNode({ id, data, selected }: NodeProps) {
   const nodes = useStore((state) => state.nodeInternals);
   const edges = useStore((state) => state.edges);
 
-  // Calcular handles dinámicos que orbitan alrededor del nodo
-  // REGLA: Un handle por edge conectado (como Make.com)
-  const dynamicHandles = useMemo(() => {
+  // Calcular posición visual del handle decorativo
+  // Solo para mostrar, ReactFlow maneja las conexiones reales
+  const visualHandlePosition = useMemo(() => {
     const currentNode = nodes.get(id);
-    if (!currentNode) return [];
+    if (!currentNode) return { angle: 0, hasConnection: false };
 
-    const handles: Array<{
-      id: string;
-      type: 'source' | 'target';
-      angle: number;
-      isConnected: boolean;
-      connectedNodeId?: string;
-    }> = [];
-
-    // Encontrar edges conectados a este nodo
+    // Encontrar la primera conexión para mostrar el handle visual
     const connectedEdges = edges.filter(
       (edge) => edge.source === id || edge.target === id
     );
 
-    // IMPORTANTE: Solo crear un handle por edge
-    // Si un nodo necesita múltiples salidas, usar Router
-    connectedEdges.forEach((edge) => {
-      const isSource = edge.source === id;
-      const connectedNodeId = isSource ? edge.target : edge.source;
-      const connectedNode = nodes.get(connectedNodeId);
-
-      if (connectedNode) {
-        // Calcular ángulo hacia el nodo conectado
-        const angle = Math.atan2(
-          connectedNode.position.y - currentNode.position.y,
-          connectedNode.position.x - currentNode.position.x
-        );
-
-        handles.push({
-          id: `${isSource ? 'source' : 'target'}-${connectedNodeId}`,
-          type: isSource ? 'source' : 'target',
-          angle,
-          isConnected: true,
-          connectedNodeId,
-        });
-      }
-    });
-
-    // Si no hay conexiones, agregar handle por defecto (derecha)
-    if (handles.length === 0) {
-      handles.push({
-        id: 'default-source',
-        type: 'source',
-        angle: 0, // 0 grados (derecha)
-        isConnected: false,
-      });
+    if (connectedEdges.length === 0) {
+      return { angle: 0, hasConnection: false }; // Derecha por defecto
     }
 
-    return handles;
+    // Tomar la primera conexión para calcular el ángulo
+    const firstEdge = connectedEdges[0];
+    const isSource = firstEdge.source === id;
+    const connectedNodeId = isSource ? firstEdge.target : firstEdge.source;
+    const connectedNode = nodes.get(connectedNodeId);
+
+    if (!connectedNode) {
+      return { angle: 0, hasConnection: false };
+    }
+
+    // Calcular ángulo hacia el nodo conectado
+    const angle = Math.atan2(
+      connectedNode.position.y - currentNode.position.y,
+      connectedNode.position.x - currentNode.position.x
+    );
+
+    return { angle, hasConnection: true };
   }, [id, nodes, edges]);
 
   return (
@@ -184,44 +162,63 @@ function MakeStyleNode({ id, data, selected }: NodeProps) {
         {AppIcon ? <AppIcon /> : <Icon size={40} color="white" strokeWidth={2} />}
       </div>
 
-      {/* Handles dinámicos que orbitan */}
-      {dynamicHandles.map((handle) => {
-        // Calcular posición del handle en el borde del círculo
-        // El handle debe estar PEGADO al borde, no separado
-        const handleX = Math.cos(handle.angle) * NODE_RADIUS;
-        const handleY = Math.sin(handle.angle) * NODE_RADIUS;
+      {/* Handles estáticos de ReactFlow (invisibles) */}
+      <Handle
+        type="target"
+        position={Position.Top}
+        id="top"
+        className={styles.invisibleHandle}
+        style={{ top: 0, left: '50%' }}
+      />
+      <Handle
+        type="source"
+        position={Position.Right}
+        id="right"
+        className={styles.invisibleHandle}
+        style={{ top: '50%', right: 0 }}
+      />
+      <Handle
+        type="source"
+        position={Position.Bottom}
+        id="bottom"
+        className={styles.invisibleHandle}
+        style={{ bottom: 0, left: '50%' }}
+      />
+      <Handle
+        type="target"
+        position={Position.Left}
+        id="left"
+        className={styles.invisibleHandle}
+        style={{ top: '50%', left: 0 }}
+      />
 
-        return (
-          <div key={handle.id}>
-            {/* Handle de ReactFlow (invisible, solo para conexión) */}
-            <Handle
-              type={handle.type}
-              position={Position.Top}
-              id={handle.id}
-              className={styles.invisibleHandle}
-              style={{
-                left: `calc(50% + ${handleX}px)`,
-                top: `calc(50% + ${handleY}px)`,
-              }}
-            />
-            
-            {/* Handle visual (semicírculo grande) */}
-            <div
-              className={`${styles.visualHandle} ${handle.isConnected ? styles.connected : styles.addButton}`}
-              style={{
-                background: handle.isConnected ? color : color,
-                left: `calc(50% + ${handleX}px)`,
-                top: `calc(50% + ${handleY}px)`,
-                transform: `translate(-50%, -50%) rotate(${handle.angle}rad)`,
-              }}
-            >
-              {!handle.isConnected && (
-                <Plus size={20} color="white" strokeWidth={3} />
-              )}
-            </div>
-          </div>
-        );
-      })}
+      {/* Handle visual decorativo (solo para mostrar) */}
+      {visualHandlePosition.hasConnection && (
+        <div
+          className={`${styles.visualHandle} ${styles.connected}`}
+          style={{
+            background: color,
+            left: `calc(50% + ${Math.cos(visualHandlePosition.angle) * NODE_RADIUS}px)`,
+            top: `calc(50% + ${Math.sin(visualHandlePosition.angle) * NODE_RADIUS}px)`,
+            transform: 'translate(-50%, -50%)',
+          }}
+        />
+      )}
+
+      {/* Handle por defecto (botón +) cuando no hay conexiones */}
+      {!visualHandlePosition.hasConnection && (
+        <div
+          className={`${styles.visualHandle} ${styles.addButton}`}
+          style={{
+            background: color,
+            left: `calc(50% + ${NODE_RADIUS}px)`,
+            top: '50%',
+            transform: 'translate(-50%, -50%)',
+          }}
+        >
+          <Plus size={20} color="white" strokeWidth={3} />
+        </div>
+      )}
 
       {/* Badge de ejecución (arriba derecha) */}
       {data.executionCount && (
