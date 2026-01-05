@@ -40,50 +40,10 @@ function AppNode({ id, data, selected }: NodeProps<AppNodeData>) {
   } = data;
 
   const edges = useEdges();
-  const nodes = useNodes();
 
-  // Calcular conexiones salientes y entrantes desde este nodo
+  // Calcular conexiones salientes
   const outgoingEdges = edges.filter(edge => edge.source === id);
-  const incomingEdges = edges.filter(edge => edge.target === id);
   const hasOutgoingConnection = outgoingEdges.length > 0;
-  const hasIncomingConnection = incomingEdges.length > 0;
-
-  // Obtener posición del nodo actual
-  const currentNode = nodes.find(n => n.id === id);
-  const currentPos = currentNode?.position || { x: 0, y: 0 };
-
-  // Calcular ángulo entre dos nodos para posicionar handle en órbita
-  const calculateHandleAngle = (targetNodeId: string): number => {
-    const targetNode = nodes.find(n => n.id === targetNodeId);
-    if (!targetNode) return 0;
-
-    // Calcular desde el centro del nodo (position + 50px que es el radio)
-    const nodeRadius = 50;
-    const currentCenterX = currentPos.x + nodeRadius;
-    const currentCenterY = currentPos.y + nodeRadius;
-    const targetCenterX = targetNode.position.x + nodeRadius;
-    const targetCenterY = targetNode.position.y + nodeRadius;
-
-    const dx = targetCenterX - currentCenterX;
-    const dy = targetCenterY - currentCenterY;
-    
-    // Calcular ángulo en radianes y convertir a grados
-    const angleRad = Math.atan2(dy, dx);
-    const angleDeg = (angleRad * 180) / Math.PI;
-    
-    return angleDeg;
-  };
-
-  // Calcular posición x,y del handle en órbita según ángulo
-  const getHandlePosition = (angleDeg: number) => {
-    const orbitRadius = 70; // 50px radio nodo + 20px separación
-    const angleRad = (angleDeg * Math.PI) / 180;
-    
-    return {
-      x: Math.cos(angleRad) * orbitRadius,
-      y: Math.sin(angleRad) * orbitRadius,
-    };
-  };
 
   const handleNodeClick = () => {
     if (onNodeClick) {
@@ -129,24 +89,6 @@ function AppNode({ id, data, selected }: NodeProps<AppNodeData>) {
         <Zap size={16} color="white" strokeWidth={2.5} />
       </div>
 
-      {/* Handles visuales de entrada en órbita (solo decoración) */}
-      {incomingEdges.map((edge, index) => {
-        const angle = calculateHandleAngle(edge.source);
-        const pos = getHandlePosition(angle);
-        
-        return (
-          <div
-            key={`input-visual-${edge.id}`}
-            className={styles.handleOrbit}
-            style={{
-              background: color,
-              left: `calc(50% + ${pos.x}px)`,
-              top: `calc(50% + ${pos.y}px)`,
-            }}
-          />
-        );
-      })}
-
       {/* Handle invisible de ReactFlow (posición estándar Left) */}
       <Handle
         type="target"
@@ -154,25 +96,8 @@ function AppNode({ id, data, selected }: NodeProps<AppNodeData>) {
         style={{ opacity: 0 }}
       />
 
-      {/* Handles visuales de salida en órbita (solo decoración) */}
-      {hasOutgoingConnection ? (
-        outgoingEdges.map((edge, index) => {
-          const angle = calculateHandleAngle(edge.target);
-          const pos = getHandlePosition(angle);
-          
-          return (
-            <div
-              key={`output-visual-${edge.id}`}
-              className={styles.handleOrbit}
-              style={{
-                background: color,
-                left: `calc(50% + ${pos.x}px)`,
-                top: `calc(50% + ${pos.y}px)`,
-              }}
-            />
-          );
-        })
-      ) : (
+      {/* Handle + para agregar siguiente nodo */}
+      {!hasOutgoingConnection && (
         <div
           className={styles.handlePlus}
           style={{ background: color }}
