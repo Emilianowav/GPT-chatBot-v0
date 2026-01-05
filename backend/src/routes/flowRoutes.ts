@@ -3,7 +3,7 @@ import express, { Request, Response } from 'express';
 import { authenticate } from '../middlewares/authMiddleware.js';
 import { flowManager } from '../flows/FlowManager.js';
 import { ConversationStateModel } from '../models/ConversationState.js';
-import { Flow } from '../models/flow.model.js';
+import { FlowBuilder } from '../models/flow.model.js';
 
 const router = express.Router();
 
@@ -71,7 +71,7 @@ router.put('/:flowId', authenticate, async (req: Request, res: Response): Promis
   try {
     const { flowId } = req.params;
     const flowData = req.body;
-    const updatedFlow = await Flow.findByIdAndUpdate(
+    const updatedFlow = await FlowBuilder.findByIdAndUpdate(
       flowId,
       { ...flowData, updatedAt: new Date() },
       { new: true }

@@ -50,4 +50,4 @@ const FlowSchema: Schema = new Schema({
 FlowSchema.index({ empresaId: 1, activo: 1 });
 FlowSchema.index({ empresaId: 1, createdAt: -1 });
 
-export const Flow = mongoose.model<IFlow>('Flow', FlowSchema);
+export const FlowBuilder = mongoose.models.FlowBuilder || mongoose.model<IFlow>('FlowBuilder', FlowSchema);
