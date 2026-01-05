@@ -3,8 +3,120 @@ import express, { Request, Response } from 'express';
 import { authenticate } from '../middlewares/authMiddleware.js';
 import { flowManager } from '../flows/FlowManager.js';
 import { ConversationStateModel } from '../models/ConversationState.js';
+import { Flow } from '../models/flow.model.js';
 
 const router = express.Router();
+
+// ============================================================================
+// RUTAS PARA FLOW BUILDER (CRUD DE FLOWS VISUALES)
+// ============================================================================
+
+/**
+ * GET /api/flows/:empresaId
+ * Obtener todos los flows de una empresa
+ */
+router.get('/:empresaId', authenticate, async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { empresaId } = req.params;
+    const flows = await Flow.find({ empresaId, activo: true }).sort({ createdAt: -1 });
+    res.json(flows);
+  } catch (error: any) {
+    console.error('Error obteniendo flows:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+/**
+ * GET /api/flows/detail/:flowId
+ * Obtener un flow específico por ID
+ */
+router.get('/detail/:flowId', async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { flowId } = req.params;
+    const flow = await Flow.findById(flowId);
+    
+    if (!flow) {
+      res.status(404).json({ error: 'Flow not found' });
+      return;
+    }
+    
+    res.json(flow);
+  } catch (error: any) {
+    console.error('Error obteniendo flow:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+/**
+ * POST /api/flows
+ * Crear un nuevo flow
+ */
+router.post('/', authenticate, async (req: Request, res: Response): Promise<void> => {
+  try {
+    const flowData = req.body;
+    const newFlow = new Flow(flowData);
+    await newFlow.save();
+    res.status(201).json(newFlow);
+  } catch (error: any) {
+    console.error('Error creando flow:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+/**
+ * PUT /api/flows/:flowId
+ * Actualizar un flow existente
+ */
+router.put('/:flowId', authenticate, async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { flowId } = req.params;
+    const flowData = req.body;
+    const updatedFlow = await Flow.findByIdAndUpdate(
+      flowId,
+      { ...flowData, updatedAt: new Date() },
+      { new: true }
+    );
+    
+    if (!updatedFlow) {
+      res.status(404).json({ error: 'Flow not found' });
+      return;
+    }
+    
+    res.json(updatedFlow);
+  } catch (error: any) {
+    console.error('Error actualizando flow:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+/**
+ * DELETE /api/flows/:flowId
+ * Eliminar (desactivar) un flow
+ */
+router.delete('/:flowId', authenticate, async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { flowId } = req.params;
+    const deletedFlow = await Flow.findByIdAndUpdate(
+      flowId,
+      { activo: false, updatedAt: new Date() },
+      { new: true }
+    );
+    
+    if (!deletedFlow) {
+      res.status(404).json({ error: 'Flow not found' });
+      return;
+    }
+    
+    res.status(204).send();
+  } catch (error: any) {
+    console.error('Error eliminando flow:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// ============================================================================
+// RUTAS PARA GESTIÓN DE FLUJOS ACTIVOS (EXISTENTES)
+// ============================================================================
 
 /**
  * GET /api/flows/:empresaId/active
