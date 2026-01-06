@@ -40,6 +40,16 @@ export class FlowExecutor {
       console.log(`   Nodos: ${flow.nodes.length}`);
       console.log(`   Edges: ${flow.edges.length}`);
 
+      // 🔍 DEBUG: Logear estructura completa de nodos
+      console.log('\n🔍 DEBUG - Estructura de nodos:');
+      flow.nodes.forEach((node: any, index: number) => {
+        console.log(`   Nodo ${index + 1}:`);
+        console.log(`      id: ${node.id}`);
+        console.log(`      type: ${node.type}`);
+        console.log(`      category: ${node.category || '❌ UNDEFINED'}`);
+        console.log(`      data.label: ${node.data?.label || 'N/A'}`);
+      });
+
       // 2. Inicializar contexto con datos del trigger
       this.context = {
         '1': {
@@ -48,8 +58,16 @@ export class FlowExecutor {
       };
 
       // 3. Encontrar nodo trigger
+      console.log('\n🔍 Buscando nodo con category === "trigger"...');
       const triggerNode = flow.nodes.find((n: any) => n.category === 'trigger');
+      
       if (!triggerNode) {
+        console.error('❌ NO SE ENCONTRÓ NODO TRIGGER');
+        console.error('   Nodos disponibles:', flow.nodes.map((n: any) => ({
+          id: n.id,
+          category: n.category,
+          type: n.type
+        })));
         throw new Error('No se encontró nodo trigger en el flujo');
       }
 
