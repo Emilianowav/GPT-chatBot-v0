@@ -27,7 +27,7 @@ export class FlowExecutor {
       console.log(`🚀 Ejecutando flujo: ${flowId}`);
       
       // 1. Cargar flujo de BD
-      const flow = await FlowModel.findById(flowId);
+      const flow = await FlowModel.findById(flowId).lean(); // ← USAR .lean() para obtener objeto plano
       if (!flow) {
         throw new Error(`Flujo ${flowId} no encontrado`);
       }
@@ -39,6 +39,9 @@ export class FlowExecutor {
       console.log(`📊 Flujo cargado: ${flow.nombre}`);
       console.log(`   Nodos: ${flow.nodes.length}`);
       console.log(`   Edges: ${flow.edges.length}`);
+      
+      // 🔍 DEBUG: Ver objeto completo del primer nodo
+      console.log('\n🔍 DEBUG - Primer nodo RAW:', JSON.stringify(flow.nodes[0], null, 2));
 
       // 🔍 DEBUG: Logear estructura completa de nodos
       console.log('\n🔍 DEBUG - Estructura de nodos:');
