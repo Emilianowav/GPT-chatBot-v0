@@ -194,7 +194,8 @@ export const recibirMensaje = async (req: Request, res: Response, next: NextFunc
     
     const flowVisual = await FlowModel.findOne({ 
       empresaId: empresaMongoId,
-      activo: true 
+      activo: true,
+      botType: 'visual' // ← FILTRAR SOLO FLUJOS VISUALES
     });
 
     if (flowVisual && flowVisual.nodes && flowVisual.edges) {
