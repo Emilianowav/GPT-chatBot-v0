@@ -163,6 +163,17 @@ export class FlowExecutor {
     console.log(`   Modelo: ${config.modelo}`);
     console.log(`   Input:`, JSON.stringify(input).substring(0, 100) + '...');
 
+    let userMessage: string;
+    
+    // Determinar contenido del mensaje según tipo de GPT
+    if (config.tipo === 'transform') {
+      // Para transform, pasar todo el input como contexto
+      userMessage = typeof input === 'string' ? input : JSON.stringify(input, null, 2);
+    } else {
+      // Para conversacional, usar el mensaje del usuario
+      userMessage = input.mensaje_usuario || input.message || JSON.stringify(input);
+    }
+
     // Construir mensajes para GPT
     const messages: ChatCompletionMessageParam[] = [
       {
@@ -171,7 +182,7 @@ export class FlowExecutor {
       },
       {
         role: 'user',
-        content: input.mensaje_usuario || input.message || JSON.stringify(input),
+        content: userMessage,
       },
     ];
 
@@ -194,9 +205,13 @@ export class FlowExecutor {
     // Si es tipo transform, intentar parsear JSON
     if (config.tipo === 'transform' && config.outputFormat === 'json') {
       try {
-        output.datos_estructurados = JSON.parse(resultado.texto);
+        const jsonMatch = resultado.texto.match(/\{[\s\S]*\}/);
+        const jsonString = jsonMatch ? jsonMatch[0] : resultado.texto;
+        output.datos_estructurados = JSON.parse(jsonString);
+        console.log(`   ✅ JSON parseado:`, output.datos_estructurados);
       } catch (e) {
         console.warn('⚠️  No se pudo parsear respuesta como JSON');
+        console.warn('   Respuesta:', resultado.texto);
         output.datos_estructurados = null;
       }
     }
