@@ -66,31 +66,33 @@ const NodeConfigPanel: React.FC<NodeConfigPanelProps> = ({ node, onClose, onSave
         <label>Max Tokens</label>
         <input 
           type="number"
-          value={config.max_tokens || 500}
-          onChange={(e) => setConfig({ ...config, max_tokens: parseInt(e.target.value) })}
+          value={config.maxTokens || 500}
+          onChange={(e) => setConfig({ ...config, maxTokens: parseInt(e.target.value) })}
         />
       </div>
 
       <div className={styles.formGroup}>
-        <label>Prompt del Sistema</label>
+        <label>System Prompt</label>
         <textarea 
-          rows={6}
-          value={config.prompt_sistema || ''}
-          onChange={(e) => setConfig({ ...config, prompt_sistema: e.target.value })}
+          rows={10}
+          value={config.systemPrompt || ''}
+          onChange={(e) => setConfig({ ...config, systemPrompt: e.target.value })}
           placeholder="Instrucciones para el modelo..."
+          style={{ fontFamily: 'monospace', fontSize: '12px' }}
         />
+        <small>Personalidad, instrucciones y formato de respuesta del GPT</small>
       </div>
 
       <div className={styles.formGroup}>
         <label>Variables de Entrada (separadas por coma)</label>
         <input 
           type="text"
-          value={config.variables_entrada?.join(', ') || ''}
+          value={config.variablesEntrada?.join(', ') || ''}
           onChange={(e) => setConfig({ 
             ...config, 
-            variables_entrada: e.target.value.split(',').map(v => v.trim()).filter(v => v)
+            variablesEntrada: e.target.value.split(',').map(v => v.trim()).filter(v => v)
           })}
-          placeholder="titulo, editorial, edicion"
+          placeholder="mensaje_usuario, telefono_usuario"
         />
       </div>
 
@@ -98,14 +100,27 @@ const NodeConfigPanel: React.FC<NodeConfigPanelProps> = ({ node, onClose, onSave
         <label>Variables de Salida (separadas por coma)</label>
         <input 
           type="text"
-          value={config.variables_salida?.join(', ') || ''}
+          value={config.variablesSalida?.join(', ') || ''}
           onChange={(e) => setConfig({ 
             ...config, 
-            variables_salida: e.target.value.split(',').map(v => v.trim()).filter(v => v)
+            variablesSalida: e.target.value.split(',').map(v => v.trim()).filter(v => v)
           })}
-          placeholder="search_query, filters"
+          placeholder="respuesta_gpt, datos_estructurados"
         />
       </div>
+
+      {config.tipo === 'transform' && (
+        <div className={styles.formGroup}>
+          <label>Output Format</label>
+          <select 
+            value={config.outputFormat || 'json'}
+            onChange={(e) => setConfig({ ...config, outputFormat: e.target.value })}
+          >
+            <option value="text">Text</option>
+            <option value="json">JSON</option>
+          </select>
+        </div>
+      )}
     </>
   );
 
@@ -215,25 +230,36 @@ const NodeConfigPanel: React.FC<NodeConfigPanelProps> = ({ node, onClose, onSave
     return (
       <>
         <div className={styles.formGroup}>
-          <label>Tipo</label>
-          <select 
-            value={config.tipo || 'enviar_mensaje'}
-            onChange={(e) => setConfig({ ...config, tipo: e.target.value })}
-          >
-            <option value="trigger">Trigger</option>
-            <option value="enviar_mensaje">Enviar Mensaje</option>
-            <option value="recopilar">Recopilar Datos</option>
-          </select>
+          <label>Phone Number ID</label>
+          <input 
+            type="text"
+            value={config.phoneNumberId || ''}
+            onChange={(e) => setConfig({ ...config, phoneNumberId: e.target.value })}
+            placeholder="906667632531979"
+          />
+        </div>
+
+        <div className={styles.formGroup}>
+          <label>Destinatario (To)</label>
+          <input 
+            type="text"
+            value={config.to || ''}
+            onChange={(e) => setConfig({ ...config, to: e.target.value })}
+            placeholder="{{1.from}}"
+          />
+          <small>Usar variables como {`{{1.from}}`} para responder al remitente</small>
         </div>
 
         <div className={styles.formGroup}>
           <label>Mensaje</label>
           <textarea 
-            rows={4}
-            value={config.mensaje || config.pregunta || ''}
-            onChange={(e) => setConfig({ ...config, mensaje: e.target.value, pregunta: e.target.value })}
-            placeholder="Mensaje a enviar o pregunta a hacer..."
+            rows={6}
+            value={config.message || ''}
+            onChange={(e) => setConfig({ ...config, message: e.target.value })}
+            placeholder="Mensaje a enviar. Usa variables como {{gpt-conversacional.respuesta_gpt}}"
+            style={{ fontFamily: 'monospace', fontSize: '12px' }}
           />
+          <small>Puedes usar variables de nodos anteriores: {`{{nodeId.variable}}`}</small>
         </div>
 
         {config.tipo === 'recopilar' && (
@@ -385,36 +411,111 @@ const NodeConfigPanel: React.FC<NodeConfigPanelProps> = ({ node, onClose, onSave
     </>
   );
 
-  const renderRouterConfig = () => (
-    <>
-      <div className={styles.formGroup}>
-        <label>Tipo</label>
-        <select 
-          value={config.tipo || 'condicional'}
-          onChange={(e) => setConfig({ ...config, tipo: e.target.value })}
-        >
-          <option value="condicional">Condicional</option>
-          <option value="switch">Switch</option>
-        </select>
-      </div>
+  const renderRouterConfig = () => {
+    const routes = config.routes || [];
+    
+    return (
+      <>
+        <div className={styles.formGroup}>
+          <label>Rutas del Router</label>
+          <small>Cada ruta representa un camino posible basado en condiciones</small>
+        </div>
 
-      <div className={styles.formGroup}>
-        <label>Condiciones (JSON)</label>
-        <textarea 
-          rows={6}
-          value={JSON.stringify(config.condiciones || [], null, 2)}
-          onChange={(e) => {
-            try {
-              setConfig({ ...config, condiciones: JSON.parse(e.target.value) });
-            } catch (err) {
-              // Mantener el valor actual si el JSON es inválido
-            }
-          }}
-          placeholder='[{"nombre": "con_resultados", "expresion": "total > 0"}]'
-        />
-      </div>
-    </>
-  );
+        {routes.map((route: any, index: number) => (
+          <div key={index} className={styles.routeConfig}>
+            <h4>Ruta {index + 1}: {route.label}</h4>
+            
+            <div className={styles.formGroup}>
+              <label>ID de Ruta</label>
+              <input 
+                type="text"
+                value={route.id || ''}
+                onChange={(e) => {
+                  const newRoutes = [...routes];
+                  newRoutes[index] = { ...route, id: e.target.value };
+                  setConfig({ ...config, routes: newRoutes });
+                }}
+                placeholder="info-completa"
+              />
+            </div>
+
+            <div className={styles.formGroup}>
+              <label>Label</label>
+              <input 
+                type="text"
+                value={route.label || ''}
+                onChange={(e) => {
+                  const newRoutes = [...routes];
+                  newRoutes[index] = { ...route, label: e.target.value };
+                  setConfig({ ...config, routes: newRoutes });
+                }}
+                placeholder="Información Completa"
+              />
+            </div>
+
+            <div className={styles.formGroup}>
+              <label>Campo a Evaluar</label>
+              <input 
+                type="text"
+                value={route.condition?.field || ''}
+                onChange={(e) => {
+                  const newRoutes = [...routes];
+                  newRoutes[index] = { 
+                    ...route, 
+                    condition: { ...route.condition, field: e.target.value }
+                  };
+                  setConfig({ ...config, routes: newRoutes });
+                }}
+                placeholder="gpt-conversacional.respuesta_gpt"
+              />
+            </div>
+
+            <div className={styles.formGroup}>
+              <label>Operador</label>
+              <select 
+                value={route.condition?.operator || 'contains'}
+                onChange={(e) => {
+                  const newRoutes = [...routes];
+                  newRoutes[index] = { 
+                    ...route, 
+                    condition: { ...route.condition, operator: e.target.value }
+                  };
+                  setConfig({ ...config, routes: newRoutes });
+                }}
+              >
+                <option value="contains">Contains</option>
+                <option value="not_contains">Not Contains</option>
+                <option value="equal">Equal</option>
+                <option value="not_equal">Not Equal</option>
+                <option value="greater_than">Greater Than</option>
+                <option value="less_than">Less Than</option>
+                <option value="is_empty">Is Empty</option>
+                <option value="not_empty">Not Empty</option>
+                <option value="regex">Regex</option>
+              </select>
+            </div>
+
+            <div className={styles.formGroup}>
+              <label>Valor</label>
+              <input 
+                type="text"
+                value={route.condition?.value || ''}
+                onChange={(e) => {
+                  const newRoutes = [...routes];
+                  newRoutes[index] = { 
+                    ...route, 
+                    condition: { ...route.condition, value: e.target.value }
+                  };
+                  setConfig({ ...config, routes: newRoutes });
+                }}
+                placeholder="[INFO_COMPLETA]"
+              />
+            </div>
+          </div>
+        ))}
+      </>
+    );
+  };
 
   const renderConfigByType = () => {
     switch (node.type) {
