@@ -84,11 +84,33 @@ export class FlowExecutor {
       while (currentNodeId && executionCount < maxExecutions) {
         executionCount++;
 
-        // Buscar siguiente edge
-        const nextEdge = flow.edges.find((e: any) => e.source === currentNodeId);
-        if (!nextEdge) {
+        // Buscar siguiente edge(s)
+        const possibleEdges = flow.edges.filter((e: any) => e.source === currentNodeId);
+        
+        if (possibleEdges.length === 0) {
           console.log(`✅ Fin del flujo (no hay más edges desde ${currentNodeId})`);
           break;
+        }
+
+        // Si hay múltiples edges (Router), elegir según _routerPath
+        let nextEdge;
+        if (possibleEdges.length > 1) {
+          const routerPath = this.context[currentNodeId]?.output?._routerPath;
+          console.log(`   🔀 Router detectado. Ruta elegida: ${routerPath || 'default'}`);
+          
+          // Buscar edge que coincida con la ruta
+          nextEdge = possibleEdges.find((e: any) => 
+            e.data?.routeId === routerPath || 
+            e.id.includes(routerPath)
+          );
+          
+          // Si no encuentra, usar el primero (fallback)
+          if (!nextEdge) {
+            console.log(`   ⚠️  No se encontró edge para ruta ${routerPath}, usando fallback`);
+            nextEdge = possibleEdges[0];
+          }
+        } else {
+          nextEdge = possibleEdges[0];
         }
 
         // Buscar siguiente nodo
@@ -265,11 +287,100 @@ export class FlowExecutor {
     const config = node.data.config;
     
     console.log(`   Evaluando condiciones del router`);
+    console.log(`   Rutas configuradas: ${config.routes?.length || 0}`);
 
-    // Por ahora, simplemente pasa el input al output
-    // TODO: Implementar evaluación de condiciones
+    // Si no hay rutas configuradas, usar ruta por defecto
+    if (!config.routes || config.routes.length === 0) {
+      console.log(`   ⚠️  No hay rutas configuradas, usando ruta por defecto`);
+      return { 
+        output: { 
+          ...input, 
+          _routerPath: 'default' 
+        } 
+      };
+    }
+
+    // Evaluar cada ruta en orden
+    for (const route of config.routes) {
+      console.log(`   🔍 Evaluando ruta: ${route.label || route.id}`);
+      
+      const conditionMet = this.evaluateCondition(route.condition, input);
+      
+      if (conditionMet) {
+        console.log(`   ✅ Condición cumplida: ${route.label || route.id}`);
+        return { 
+          output: { 
+            ...input, 
+            _routerPath: route.id,
+            _routerLabel: route.label 
+          } 
+        };
+      }
+    }
+
+    // Si ninguna condición se cumple, usar ruta fallback
+    console.log(`   ⚠️  Ninguna condición cumplida, usando ruta fallback`);
+    return { 
+      output: { 
+        ...input, 
+        _routerPath: 'fallback' 
+      } 
+    };
+  }
+
+  /**
+   * Evalúa una condición del router
+   */
+  private evaluateCondition(condition: any, input: any): boolean {
+    if (!condition) return false;
+
+    const { field, operator, value } = condition;
     
-    return { output: input };
+    // Resolver el valor del campo (puede ser una variable como "gpt-conversacional.respuesta_gpt")
+    const fieldValue = this.getVariableValue(field);
+    
+    console.log(`      Campo: ${field} = ${JSON.stringify(fieldValue)?.substring(0, 50)}...`);
+    console.log(`      Operador: ${operator}`);
+    console.log(`      Valor esperado: ${value}`);
+
+    switch (operator) {
+      case 'contains':
+        return String(fieldValue || '').toLowerCase().includes(String(value).toLowerCase());
+      
+      case 'not_contains':
+        return !String(fieldValue || '').toLowerCase().includes(String(value).toLowerCase());
+      
+      case 'equal':
+        return fieldValue === value;
+      
+      case 'not_equal':
+        return fieldValue !== value;
+      
+      case 'greater_than':
+        return Number(fieldValue) > Number(value);
+      
+      case 'less_than':
+        return Number(fieldValue) < Number(value);
+      
+      case 'is_empty':
+        return !fieldValue || String(fieldValue).trim() === '';
+      
+      case 'not_empty':
+        return !!fieldValue && String(fieldValue).trim() !== '';
+      
+      case 'regex':
+        try {
+          const regex = new RegExp(value);
+          return regex.test(String(fieldValue || ''));
+        } catch (e) {
+          console.warn(`      ⚠️  Regex inválido: ${value}`);
+          return false;
+        }
+      
+      default:
+        console.warn(`      ⚠️  Operador desconocido: ${operator}`);
+        return false;
+    }
   }
 
   /**
