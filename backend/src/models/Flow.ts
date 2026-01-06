@@ -46,6 +46,7 @@ export interface IFlow extends Document {
   nodes?: Array<{
     id: string;
     type: string;
+    category?: string; // ← CRÍTICO: trigger, processor, action
     position: { x: number; y: number };
     data: any;
   }>;
@@ -137,6 +138,7 @@ const FlowSchema = new Schema<IFlow>(
     nodes: [{
       id: { type: String, required: true },
       type: { type: String, required: true },
+      category: { type: String }, // ← CRÍTICO: trigger, processor, action
       position: {
         x: { type: Number, required: true },
         y: { type: Number, required: true }
