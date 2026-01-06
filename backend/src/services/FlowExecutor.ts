@@ -2,6 +2,7 @@ import { FlowModel } from '../models/Flow.js';
 import { obtenerRespuestaChat } from './openaiService.js';
 import { enviarMensajeWhatsAppTexto } from './metaService.js';
 import type { ChatCompletionMessageParam } from './openaiService.js';
+import { ContactoEmpresaModel } from '../models/ContactoEmpresa.js';
 
 interface FlowContext {
   [nodeId: string]: {
@@ -18,11 +19,50 @@ interface NodeExecutionResult {
 
 export class FlowExecutor {
   private context: FlowContext = {};
+  private contactoId?: string;
+  private historialConversacion: string[] = [];
+
+  /**
+   * Carga el historial de conversación del contacto
+   */
+  private async loadHistorial(contactoId: string): Promise<void> {
+    try {
+      const contacto = await ContactoEmpresaModel.findById(contactoId);
+      if (contacto && contacto.conversaciones?.historial) {
+        this.historialConversacion = contacto.conversaciones.historial;
+        console.log(`📚 [HISTORIAL] Cargado: ${this.historialConversacion.length} mensajes`);
+      }
+    } catch (error) {
+      console.warn('⚠️  Error cargando historial:', error);
+      this.historialConversacion = [];
+    }
+  }
+
+  /**
+   * Guarda un mensaje en el historial del contacto
+   */
+  private async saveToHistorial(mensaje: string): Promise<void> {
+    if (!this.contactoId) return;
+    
+    try {
+      const { actualizarHistorialConversacion } = await import('./contactoService.js');
+      await actualizarHistorialConversacion(this.contactoId, mensaje);
+      this.historialConversacion.push(mensaje);
+    } catch (error) {
+      console.warn('⚠️  Error guardando en historial:', error);
+    }
+  }
 
   /**
    * Ejecuta un flujo visual completo
    */
-  async execute(flowId: string, triggerData: any): Promise<FlowContext> {
+  async execute(flowId: string, triggerData: any, contactoId?: string): Promise<FlowContext> {
+    this.contactoId = contactoId;
+    
+    // Cargar historial de conversación si hay contactoId
+    if (contactoId) {
+      await this.loadHistorial(contactoId);
+    }
     try {
       console.log(`🚀 Ejecutando flujo: ${flowId}`);
       
@@ -202,11 +242,28 @@ export class FlowExecutor {
         role: 'system',
         content: config.systemPrompt || 'Eres un asistente útil.',
       },
-      {
-        role: 'user',
-        content: userMessage,
-      },
     ];
+
+    // Si es conversacional, agregar historial completo
+    if (config.tipo === 'conversacional' && this.historialConversacion.length > 0) {
+      console.log(`   📚 Agregando historial: ${this.historialConversacion.length} mensajes`);
+      
+      // Agregar historial (alternando user/assistant)
+      for (let i = 0; i < this.historialConversacion.length; i++) {
+        const msg = this.historialConversacion[i];
+        const role = i % 2 === 0 ? 'user' : 'assistant';
+        messages.push({
+          role: role as 'user' | 'assistant',
+          content: msg,
+        });
+      }
+    }
+
+    // Agregar mensaje actual
+    messages.push({
+      role: 'user',
+      content: userMessage,
+    });
 
     // Llamar a OpenAI
     const resultado = await obtenerRespuestaChat({

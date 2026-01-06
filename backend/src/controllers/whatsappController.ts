@@ -205,26 +205,23 @@ export const recibirMensaje = async (req: Request, res: Response, next: NextFunc
       try {
         // Ejecutar flujo visual con FlowExecutor
         const executor = new FlowExecutor();
-        const resultado = await executor.execute(flowVisual._id.toString(), {
-          message: mensaje,
-          from: telefonoCliente,
-          to: telefonoEmpresa,
-          phoneNumberId: phoneNumberId,
-          timestamp: new Date(),
-          profileName: profileName,
-        });
+        const resultado = await executor.execute(
+          flowVisual._id.toString(), 
+          {
+            message: mensaje,
+            from: telefonoCliente,
+            to: telefonoEmpresa,
+            phoneNumberId: phoneNumberId,
+            timestamp: new Date(),
+            profileName: profileName,
+          },
+          contacto._id.toString() // ← Pasar contactoId para cargar historial
+        );
         
         console.log('✅ Flujo visual ejecutado exitosamente');
         console.log('📊 Resultado:', JSON.stringify(resultado, null, 2));
         
-        // Actualizar historial y métricas
-        await actualizarHistorialConversacion(contacto._id.toString(), `Cliente: ${mensaje}`);
-        
-        // Buscar respuesta GPT en el contexto
-        const respuestaGPT = resultado['gpt-conversacional']?.output?.respuesta_gpt;
-        if (respuestaGPT) {
-          await actualizarHistorialConversacion(contacto._id.toString(), `Bot: ${respuestaGPT}`);
-        }
+        // El historial ya se guarda dentro del FlowExecutor, no duplicar aquí
         
         await incrementarMetricas(contacto._id.toString(), {
           mensajesEnviados: 1,
