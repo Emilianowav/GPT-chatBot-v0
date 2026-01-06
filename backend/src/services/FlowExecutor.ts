@@ -19,8 +19,31 @@ interface NodeExecutionResult {
 
 export class FlowExecutor {
   private context: FlowContext = {};
+  private globalVariables: Record<string, any> = {};
   private contactoId?: string;
   private historialConversacion: string[] = [];
+
+  /**
+   * Guarda una variable global
+   */
+  setGlobalVariable(key: string, value: any): void {
+    this.globalVariables[key] = value;
+    console.log(`🌐 [GLOBAL] ${key} = ${JSON.stringify(value).substring(0, 100)}`);
+  }
+
+  /**
+   * Obtiene una variable global
+   */
+  getGlobalVariable(key: string): any {
+    return this.globalVariables[key];
+  }
+
+  /**
+   * Obtiene todas las variables globales
+   */
+  getAllGlobalVariables(): Record<string, any> {
+    return { ...this.globalVariables };
+  }
 
   /**
    * Carga el historial de conversación del contacto
@@ -244,6 +267,10 @@ export class FlowExecutor {
       },
     ];
 
+    // Resolver variables globales en el systemPrompt
+    const systemPromptResolved = this.resolveVariableInString(config.systemPrompt || 'Eres un asistente útil.');
+    messages[0].content = systemPromptResolved;
+
     // Si es conversacional, agregar historial completo
     if (config.tipo === 'conversacional' && this.historialConversacion.length > 0) {
       console.log(`   📚 Agregando historial: ${this.historialConversacion.length} mensajes`);
@@ -455,10 +482,17 @@ export class FlowExecutor {
   }
 
   /**
-   * Obtiene el valor de una variable del contexto
+   * Obtiene el valor de una variable del contexto o variables globales
    * Ejemplo: '1.message' → context['1'].output.message
+   * Ejemplo: 'global.titulo' → globalVariables['titulo']
    */
   private getVariableValue(varPath: string): any {
+    // Soporte para variables globales
+    if (varPath.startsWith('global.')) {
+      const globalKey = varPath.substring(7); // Remover 'global.'
+      return this.getGlobalVariable(globalKey);
+    }
+
     const parts = varPath.split('.');
     const nodeId = parts[0];
     const path = parts.slice(1);
