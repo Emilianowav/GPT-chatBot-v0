@@ -52,7 +52,7 @@ function MercadoPagoNode({ id, data, selected }: NodeProps<MercadoPagoNodeData>)
         <img 
           src="/logos tecnologias/mercado-pago.svg" 
           alt="Mercado Pago" 
-          className={styles.nodeLogo}
+          style={{ width: '48px', height: '48px', objectFit: 'contain', filter: 'brightness(0) invert(1)' }}
         />
 
         <div 

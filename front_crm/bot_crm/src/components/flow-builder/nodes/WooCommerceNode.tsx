@@ -60,7 +60,7 @@ function WooCommerceNode({ id, data, selected }: NodeProps<WooCommerceNodeData>)
         <img 
           src="/logos tecnologias/woocommerce.png" 
           alt="WooCommerce" 
-          className={styles.nodeLogo}
+          style={{ width: '48px', height: '48px', objectFit: 'contain' }}
         />
 
         <div 

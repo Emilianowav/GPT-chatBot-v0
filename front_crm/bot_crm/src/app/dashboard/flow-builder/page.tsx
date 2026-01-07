@@ -124,6 +124,90 @@ const FLOW_CONTROL_MODULES = [
   },
 ];
 
+const WOOCOMMERCE_MODULES = [
+  // PRODUCT
+  {
+    id: 'search-product',
+    name: 'Search for a Product',
+    description: 'This module helps you find a product.',
+    category: 'PRODUCT',
+  },
+  {
+    id: 'get-product',
+    name: 'Get a Product',
+    description: 'This module lets you retrieve a specified product by its ID.',
+    category: 'PRODUCT',
+  },
+  {
+    id: 'create-product',
+    name: 'Create a Product',
+    description: 'This module helps you to create a new product.',
+    category: 'PRODUCT',
+  },
+  {
+    id: 'update-product',
+    name: 'Update a Product',
+    description: 'This module lets you modify a product.',
+    category: 'PRODUCT',
+  },
+  {
+    id: 'delete-product',
+    name: 'Delete a Product',
+    description: 'This module helps you to delete a specified product.',
+    category: 'PRODUCT',
+  },
+  // ORDER
+  {
+    id: 'search-order',
+    name: 'Search for an Order',
+    description: 'This module helps you to find an order.',
+    category: 'ORDER',
+  },
+  {
+    id: 'get-order',
+    name: 'Get an Order',
+    description: 'This module lets you retrieve a specified order by its ID.',
+    category: 'ORDER',
+  },
+  {
+    id: 'create-order',
+    name: 'Create an Order',
+    description: 'This module helps you to create a new order.',
+    category: 'ORDER',
+  },
+  {
+    id: 'update-order',
+    name: 'Update an Order',
+    description: 'This module lets you modify an order.',
+    category: 'ORDER',
+  },
+  // CUSTOMER
+  {
+    id: 'search-customer',
+    name: 'Search for a Customer',
+    description: 'This module helps you to find a customer.',
+    category: 'CUSTOMER',
+  },
+  {
+    id: 'get-customer',
+    name: 'Get a Customer',
+    description: 'This module lets you retrieve a specified customer by its ID.',
+    category: 'CUSTOMER',
+  },
+  {
+    id: 'create-customer',
+    name: 'Create a Customer',
+    description: 'This module helps you to create a new customer.',
+    category: 'CUSTOMER',
+  },
+  {
+    id: 'update-customer',
+    name: 'Update a Customer',
+    description: 'This module helps you to modify a customer.',
+    category: 'CUSTOMER',
+  },
+];
+
 export default function FlowBuilderPage() {
   const [nodes, setNodes, onNodesChange] = useNodesState([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState([]);
@@ -386,6 +470,7 @@ export default function FlowBuilderPage() {
     if (selectedApp.id === 'whatsapp') return WHATSAPP_MODULES;
     if (selectedApp.id === 'openai') return OPENAI_MODULES;
     if (selectedApp.id === 'flow-control') return FLOW_CONTROL_MODULES;
+    if (selectedApp.id === 'woocommerce') return WOOCOMMERCE_MODULES;
     return [];
   };
 
