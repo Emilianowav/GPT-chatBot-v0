@@ -78,7 +78,7 @@ function WhatsAppNode({ id, data, selected }: NodeProps<WhatsAppNodeData>) {
           {executionCount}
         </div>
 
-        // {/* Badge de WhatsApp (abajo izquierda) */}
+        {/* Badge de WhatsApp (abajo izquierda) */}
         <div 
           className={styles.appBadge}
           style={{ background: color }}

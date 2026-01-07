@@ -104,7 +104,7 @@ function RouterNode({ id, data, selected }: NodeProps<RouterNodeData>) {
         const handleId = `source-${index}`;
         
         return (
-          <div key={handleId} style={{ position: 'relative' }}>
+          <React.Fragment key={handleId}>
             <Handle
               type="source"
               position={Position.Right}
@@ -130,7 +130,7 @@ function RouterNode({ id, data, selected }: NodeProps<RouterNodeData>) {
             >
               <Plus size={16} color="white" strokeWidth={3} />
             </div>
-          </div>
+          </React.Fragment>
         );
       })}
 
