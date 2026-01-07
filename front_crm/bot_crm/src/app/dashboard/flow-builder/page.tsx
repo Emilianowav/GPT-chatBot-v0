@@ -180,7 +180,7 @@ export default function FlowBuilderPage() {
     // Cargar flow de Veo Veo automáticamente
     const loadVeoVeoFlow = async () => {
       try {
-        const flowId = '695b5802cf46dd410a91f37c'; // Veo Veo - Consultar Libros
+        const flowId = '695a156681f6d67f0ae9cf39'; // Veo Veo - Test 3 Bloques
         const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';
         const response = await fetch(`${apiUrl}/api/flows/detail/${flowId}`);
         const flow = await response.json();
