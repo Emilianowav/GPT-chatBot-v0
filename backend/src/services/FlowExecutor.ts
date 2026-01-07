@@ -264,12 +264,20 @@ export class FlowExecutor {
     // NUEVO: Construir systemPrompt dinámico desde los 3 bloques
     let systemPrompt: string;
     if (config.personalidad || config.topicos || config.variablesRecopilar) {
-      console.log(`   🔧 Construyendo prompt desde bloques dinámicos...`);
+      console.log(`\n   🔧 [PROMPT] Construyendo desde bloques dinámicos...`);
+      console.log(`   Personalidad: ${config.personalidad ? '✅' : '❌'}`);
+      console.log(`   Tópicos: ${config.topicos?.length || 0}`);
+      console.log(`   Variables: ${config.variablesRecopilar?.length || 0}`);
+      console.log(`   Acciones: ${config.accionesCompletado?.length || 0}`);
+      
       systemPrompt = GPTPromptBuilder.buildSystemPrompt(config);
-      console.log(`   📝 Prompt generado (${systemPrompt.length} caracteres)`);
+      
+      console.log(`   📝 Prompt generado: ${systemPrompt.length} caracteres`);
+      console.log(`   📄 Preview del prompt:\n${systemPrompt.substring(0, 300)}...\n`);
     } else {
       // Fallback: usar systemPrompt legacy
       systemPrompt = config.systemPrompt || 'Eres un asistente útil.';
+      console.log(`   📝 Usando systemPrompt legacy (${systemPrompt.length} caracteres)`);
     }
 
     // Construir mensajes para GPT
@@ -343,25 +351,33 @@ export class FlowExecutor {
 
     // NUEVO: Procesar variables recopiladas automáticamente
     if (config.variablesRecopilar && config.variablesRecopilar.length > 0) {
-      console.log(`   🔍 Extrayendo variables recopiladas...`);
+      console.log(`\n   🔍 [VARIABLES] Procesando recopilación automática...`);
+      console.log(`   Variables configuradas: ${config.variablesRecopilar.map(v => v.nombre).join(', ')}`);
       
-      // Extraer variables de la respuesta del GPT
-      const variablesExtraidas = GPTPromptBuilder.extractVariables(
+      // Extraer variables de la respuesta del GPT (ahora es async)
+      const variablesExtraidas = await GPTPromptBuilder.extractVariables(
         resultado.texto,
         config.variablesRecopilar
       );
       
+      console.log(`   📦 Variables extraídas por GPT: ${Object.keys(variablesExtraidas).length}`);
+      
       // Guardar cada variable extraída en variables globales
       for (const [nombre, valor] of Object.entries(variablesExtraidas)) {
         if (valor !== undefined && valor !== null && valor !== '') {
+          console.log(`   💾 Guardando global: ${nombre} = ${JSON.stringify(valor)}`);
           this.setGlobalVariable(nombre, valor);
           output[nombre] = valor;
         }
       }
       
+      // Mostrar estado actual de variables globales
+      const todasLasGlobales = this.getAllGlobalVariables();
+      console.log(`   🌐 Variables globales actuales:`, JSON.stringify(todasLasGlobales, null, 2));
+      
       // Validar si todas las variables obligatorias están completas
       const validacion = GPTPromptBuilder.validateVariables(
-        this.getAllGlobalVariables(),
+        todasLasGlobales,
         config.variablesRecopilar
       );
       
@@ -369,20 +385,30 @@ export class FlowExecutor {
       output.variables_faltantes = validacion.faltantes;
       
       console.log(`   ✅ Variables extraídas: ${Object.keys(variablesExtraidas).length}`);
-      console.log(`   📊 Completas: ${validacion.valido ? 'SÍ' : 'NO'}`);
+      console.log(`   📊 Validación completa: ${validacion.valido ? '✅ SÍ' : '❌ NO'}`);
       if (!validacion.valido) {
-        console.log(`   ⚠️  Faltantes: ${validacion.faltantes.join(', ')}`);
+        console.log(`   ⚠️  Variables faltantes: ${validacion.faltantes.join(', ')}`);
       }
+      console.log(''); // Línea en blanco para separar
     }
 
     // Detectar si el GPT marcó como completado
     if (config.accionesCompletado && config.accionesCompletado.length > 0) {
+      console.log(`\n   🎯 [COMPLETADO] Verificando token de completado...`);
       const accionMarcar = config.accionesCompletado.find(a => a.tipo === 'marcar_completado');
       if (accionMarcar && accionMarcar.token) {
+        console.log(`   Buscando token: "${accionMarcar.token}"`);
         const completado = GPTPromptBuilder.isCompletado(resultado.texto, accionMarcar.token);
         output.info_completa = completado;
-        console.log(`   ${completado ? '✅' : '⏳'} Info completa: ${completado}`);
+        console.log(`   ${completado ? '✅ ENCONTRADO' : '⏳ NO ENCONTRADO'} - Info completa: ${completado}`);
+        
+        if (completado) {
+          console.log(`   🎉 Recopilación completada exitosamente`);
+        }
+      } else {
+        console.log(`   ⚠️  No hay token de completado configurado`);
       }
+      console.log(''); // Línea en blanco
     }
 
     // Guardar variables globales si están configuradas (legacy)

@@ -4,6 +4,7 @@
  */
 
 import type { IGPTConversacionalConfig, ITopico, IVariableRecopilar } from '../types/gpt-config.types.js';
+import { obtenerRespuestaChat } from './openaiService.js';
 
 export class GPTPromptBuilder {
   /**
@@ -116,17 +117,96 @@ export class GPTPromptBuilder {
   }
 
   /**
-   * Extrae variables recopiladas de la respuesta del GPT
+   * Extrae variables recopiladas de la respuesta del GPT usando GPT-3.5 Turbo
    */
-  static extractVariables(
+  static async extractVariables(
     respuestaGPT: string,
     variablesConfig: IVariableRecopilar[]
-  ): Record<string, any> {
+  ): Promise<Record<string, any>> {
+    console.log('🔍 [EXTRACTOR] Iniciando extracción de variables...');
+    console.log('   Respuesta GPT:', respuestaGPT.substring(0, 150) + '...');
+    console.log('   Variables a buscar:', variablesConfig.map(v => v.nombre).join(', '));
+
     const variables: Record<string, any> = {};
 
-    // TODO: Implementar extracción inteligente de variables
-    // Por ahora, esto es un placeholder
-    // En el futuro, podríamos usar otro GPT para extraer las variables
+    // Si no hay variables configuradas, retornar vacío
+    if (!variablesConfig || variablesConfig.length === 0) {
+      console.log('   ⚠️  No hay variables configuradas para extraer');
+      return variables;
+    }
+
+    try {
+      // Construir prompt para el extractor
+      const extractorPrompt = `Eres un extractor de datos. Tu tarea es extraer información específica de un texto.
+
+VARIABLES A EXTRAER:
+${variablesConfig.map(v => `- ${v.nombre}: ${v.descripcion} (tipo: ${v.tipo})`).join('\n')}
+
+TEXTO DEL USUARIO:
+${respuestaGPT}
+
+INSTRUCCIONES:
+1. Extrae SOLO las variables que estén presentes en el texto
+2. Si una variable no está presente, NO la incluyas en el JSON
+3. Respeta el tipo de cada variable
+4. Si el usuario menciona algo relacionado pero no exacto, usa tu mejor interpretación
+5. Tolera errores de ortografía
+
+Responde ÚNICAMENTE con un objeto JSON válido. Ejemplo:
+{
+  "titulo": "Harry Potter",
+  "editorial": "Salamandra"
+}
+
+Si NO encuentras ninguna variable, responde con: {}`;
+
+      console.log('   📤 Enviando a GPT-3.5 Turbo para extracción...');
+
+      // Llamar a GPT-3.5 Turbo para extraer
+      const resultado = await obtenerRespuestaChat({
+        modelo: 'gpt-3.5-turbo',
+        historial: [
+          {
+            role: 'system',
+            content: 'Eres un extractor de datos preciso. Respondes SOLO con JSON válido.'
+          },
+          {
+            role: 'user',
+            content: extractorPrompt
+          }
+        ]
+      });
+
+      console.log('   📥 Respuesta del extractor:', resultado.texto);
+
+      // Parsear JSON
+      try {
+        // Limpiar respuesta (remover markdown si existe)
+        let jsonString = resultado.texto.trim();
+        
+        // Remover bloques de código markdown si existen
+        if (jsonString.startsWith('```')) {
+          jsonString = jsonString.replace(/```json?\n?/g, '').replace(/```\n?/g, '').trim();
+        }
+
+        const extracted = JSON.parse(jsonString);
+        
+        // Validar que sea un objeto
+        if (typeof extracted === 'object' && extracted !== null && !Array.isArray(extracted)) {
+          Object.assign(variables, extracted);
+          console.log('   ✅ Variables extraídas:', Object.keys(variables).join(', '));
+          console.log('   📊 Valores:', JSON.stringify(variables, null, 2));
+        } else {
+          console.warn('   ⚠️  Respuesta no es un objeto válido');
+        }
+      } catch (parseError) {
+        console.error('   ❌ Error parseando JSON del extractor:', parseError);
+        console.error('   Respuesta recibida:', resultado.texto);
+      }
+
+    } catch (error) {
+      console.error('   ❌ Error en extractVariables:', error);
+    }
 
     return variables;
   }
