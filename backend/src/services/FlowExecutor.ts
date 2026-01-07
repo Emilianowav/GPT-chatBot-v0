@@ -3,6 +3,8 @@ import { obtenerRespuestaChat } from './openaiService.js';
 import { enviarMensajeWhatsAppTexto } from './metaService.js';
 import type { ChatCompletionMessageParam } from './openaiService.js';
 import { ContactoEmpresaModel } from '../models/ContactoEmpresa.js';
+import { GPTPromptBuilder } from './GPTPromptBuilder.js';
+import type { IGPTConversacionalConfig } from '../types/gpt-config.types.js';
 
 interface FlowContext {
   [nodeId: string]: {
@@ -242,7 +244,7 @@ export class FlowExecutor {
    * Ejecuta un nodo GPT (Conversacional, Formateador, Procesador, Transform)
    */
   private async executeGPTNode(node: any, input: any): Promise<NodeExecutionResult> {
-    const config = node.data.config;
+    const config = node.data.config as IGPTConversacionalConfig;
     
     console.log(`   Tipo GPT: ${config.tipo}`);
     console.log(`   Modelo: ${config.modelo}`);
@@ -259,16 +261,27 @@ export class FlowExecutor {
       userMessage = input.mensaje_usuario || input.message || JSON.stringify(input);
     }
 
+    // NUEVO: Construir systemPrompt dinámico desde los 3 bloques
+    let systemPrompt: string;
+    if (config.personalidad || config.topicos || config.variablesRecopilar) {
+      console.log(`   🔧 Construyendo prompt desde bloques dinámicos...`);
+      systemPrompt = GPTPromptBuilder.buildSystemPrompt(config);
+      console.log(`   📝 Prompt generado (${systemPrompt.length} caracteres)`);
+    } else {
+      // Fallback: usar systemPrompt legacy
+      systemPrompt = config.systemPrompt || 'Eres un asistente útil.';
+    }
+
     // Construir mensajes para GPT
     const messages: ChatCompletionMessageParam[] = [
       {
         role: 'system',
-        content: config.systemPrompt || 'Eres un asistente útil.',
+        content: systemPrompt,
       },
     ];
 
     // Resolver variables globales en el systemPrompt
-    const systemPromptResolved = this.resolveVariableInString(config.systemPrompt || 'Eres un asistente útil.');
+    const systemPromptResolved = this.resolveVariableInString(systemPrompt);
     messages[0].content = systemPromptResolved;
 
     // Si es conversacional, agregar historial completo
@@ -319,6 +332,68 @@ export class FlowExecutor {
         console.warn('⚠️  No se pudo parsear respuesta como JSON');
         console.warn('   Respuesta:', resultado.texto);
         output.datos_estructurados = null;
+      }
+    }
+
+    // Guardar en historial si es conversacional
+    if (config.tipo === 'conversacional') {
+      await this.saveToHistorial(userMessage);
+      await this.saveToHistorial(resultado.texto);
+    }
+
+    // NUEVO: Procesar variables recopiladas automáticamente
+    if (config.variablesRecopilar && config.variablesRecopilar.length > 0) {
+      console.log(`   🔍 Extrayendo variables recopiladas...`);
+      
+      // Extraer variables de la respuesta del GPT
+      const variablesExtraidas = GPTPromptBuilder.extractVariables(
+        resultado.texto,
+        config.variablesRecopilar
+      );
+      
+      // Guardar cada variable extraída en variables globales
+      for (const [nombre, valor] of Object.entries(variablesExtraidas)) {
+        if (valor !== undefined && valor !== null && valor !== '') {
+          this.setGlobalVariable(nombre, valor);
+          output[nombre] = valor;
+        }
+      }
+      
+      // Validar si todas las variables obligatorias están completas
+      const validacion = GPTPromptBuilder.validateVariables(
+        this.getAllGlobalVariables(),
+        config.variablesRecopilar
+      );
+      
+      output.variables_completas = validacion.valido;
+      output.variables_faltantes = validacion.faltantes;
+      
+      console.log(`   ✅ Variables extraídas: ${Object.keys(variablesExtraidas).length}`);
+      console.log(`   📊 Completas: ${validacion.valido ? 'SÍ' : 'NO'}`);
+      if (!validacion.valido) {
+        console.log(`   ⚠️  Faltantes: ${validacion.faltantes.join(', ')}`);
+      }
+    }
+
+    // Detectar si el GPT marcó como completado
+    if (config.accionesCompletado && config.accionesCompletado.length > 0) {
+      const accionMarcar = config.accionesCompletado.find(a => a.tipo === 'marcar_completado');
+      if (accionMarcar && accionMarcar.token) {
+        const completado = GPTPromptBuilder.isCompletado(resultado.texto, accionMarcar.token);
+        output.info_completa = completado;
+        console.log(`   ${completado ? '✅' : '⏳'} Info completa: ${completado}`);
+      }
+    }
+
+    // Guardar variables globales si están configuradas (legacy)
+    if (config.globalVariablesOutput && Array.isArray(config.globalVariablesOutput)) {
+      for (const globalVar of config.globalVariablesOutput) {
+        // Intentar extraer del output
+        if (output[globalVar] !== undefined) {
+          this.setGlobalVariable(globalVar, output[globalVar]);
+        } else if (output.datos_estructurados && output.datos_estructurados[globalVar] !== undefined) {
+          this.setGlobalVariable(globalVar, output.datos_estructurados[globalVar]);
+        }
       }
     }
 

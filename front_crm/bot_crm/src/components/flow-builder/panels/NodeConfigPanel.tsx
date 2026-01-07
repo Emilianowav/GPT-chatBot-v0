@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { X } from 'lucide-react';
 import styles from './NodeConfigPanel.module.css';
+import GPTConfigPanel from './GPTConfigPanel';
 
 interface NodeConfigPanelProps {
   node: any;
@@ -24,105 +25,33 @@ const NodeConfigPanel: React.FC<NodeConfigPanelProps> = ({ node, onClose, onSave
     onClose();
   };
 
-  const renderGPTConfig = () => (
-    <>
-      <div className={styles.formGroup}>
-        <label>Tipo de GPT</label>
-        <select 
-          value={config.tipo || 'conversacional'}
-          onChange={(e) => setConfig({ ...config, tipo: e.target.value })}
-        >
-          <option value="conversacional">Conversacional</option>
-          <option value="formateador">Formateador</option>
-          <option value="procesador">Procesador</option>
-        </select>
-      </div>
+  const renderGPTConfig = () => {
+    // Inicializar config con valores por defecto si no existen
+    const gptConfig = {
+      tipo: config.tipo || 'conversacional',
+      module: config.module || 'conversacional',
+      modelo: config.modelo || 'gpt-4',
+      temperatura: config.temperatura || 0.7,
+      maxTokens: config.maxTokens || 500,
+      personalidad: config.personalidad || '',
+      topicos: config.topicos || [],
+      variablesRecopilar: config.variablesRecopilar || [],
+      accionesCompletado: config.accionesCompletado || [],
+      variablesEntrada: config.variablesEntrada || [],
+      variablesSalida: config.variablesSalida || [],
+      globalVariablesOutput: config.globalVariablesOutput || [],
+      outputFormat: config.outputFormat || 'text',
+      jsonSchema: config.jsonSchema,
+      systemPrompt: config.systemPrompt
+    };
 
-      <div className={styles.formGroup}>
-        <label>Modelo</label>
-        <select 
-          value={config.modelo || 'gpt-4'}
-          onChange={(e) => setConfig({ ...config, modelo: e.target.value })}
-        >
-          <option value="gpt-4">GPT-4</option>
-          <option value="gpt-4-turbo">GPT-4 Turbo</option>
-          <option value="gpt-3.5-turbo">GPT-3.5 Turbo</option>
-        </select>
-      </div>
-
-      <div className={styles.formGroup}>
-        <label>Temperatura (0-1)</label>
-        <input 
-          type="number" 
-          min="0" 
-          max="1" 
-          step="0.1"
-          value={config.temperatura || 0.7}
-          onChange={(e) => setConfig({ ...config, temperatura: parseFloat(e.target.value) })}
-        />
-      </div>
-
-      <div className={styles.formGroup}>
-        <label>Max Tokens</label>
-        <input 
-          type="number"
-          value={config.maxTokens || 500}
-          onChange={(e) => setConfig({ ...config, maxTokens: parseInt(e.target.value) })}
-        />
-      </div>
-
-      <div className={styles.formGroup}>
-        <label>System Prompt</label>
-        <textarea 
-          rows={10}
-          value={config.systemPrompt || ''}
-          onChange={(e) => setConfig({ ...config, systemPrompt: e.target.value })}
-          placeholder="Instrucciones para el modelo..."
-          style={{ fontFamily: 'monospace', fontSize: '12px' }}
-        />
-        <small>Personalidad, instrucciones y formato de respuesta del GPT</small>
-      </div>
-
-      <div className={styles.formGroup}>
-        <label>Variables de Entrada (separadas por coma)</label>
-        <input 
-          type="text"
-          value={config.variablesEntrada?.join(', ') || ''}
-          onChange={(e) => setConfig({ 
-            ...config, 
-            variablesEntrada: e.target.value.split(',').map(v => v.trim()).filter(v => v)
-          })}
-          placeholder="mensaje_usuario, telefono_usuario"
-        />
-      </div>
-
-      <div className={styles.formGroup}>
-        <label>Variables de Salida (separadas por coma)</label>
-        <input 
-          type="text"
-          value={config.variablesSalida?.join(', ') || ''}
-          onChange={(e) => setConfig({ 
-            ...config, 
-            variablesSalida: e.target.value.split(',').map(v => v.trim()).filter(v => v)
-          })}
-          placeholder="respuesta_gpt, datos_estructurados"
-        />
-      </div>
-
-      {config.tipo === 'transform' && (
-        <div className={styles.formGroup}>
-          <label>Output Format</label>
-          <select 
-            value={config.outputFormat || 'json'}
-            onChange={(e) => setConfig({ ...config, outputFormat: e.target.value })}
-          >
-            <option value="text">Text</option>
-            <option value="json">JSON</option>
-          </select>
-        </div>
-      )}
-    </>
-  );
+    return (
+      <GPTConfigPanel 
+        config={gptConfig}
+        onChange={(newConfig) => setConfig(newConfig)}
+      />
+    );
+  };
 
   const renderWhatsAppConfig = () => {
     // Si es Watch Events, mostrar configuración de webhook
