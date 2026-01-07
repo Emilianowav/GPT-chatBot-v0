@@ -98,39 +98,23 @@ function RouterNode({ id, data, selected }: NodeProps<RouterNodeData>) {
         </div>
       </div>
 
-      {/* Handles de salida múltiples (derecha) - distribuidos verticalmente */}
+      {/* Handles de salida múltiples (derecha) - SOLO handles invisibles */}
       {Array.from({ length: totalRoutes }).map((_, index) => {
         const topPosition = ((index + 1) * 100) / (totalRoutes + 1);
         const handleId = `source-${index}`;
         
         return (
-          <React.Fragment key={handleId}>
-            <Handle
-              type="source"
-              position={Position.Right}
-              id={handleId}
-              style={{
-                top: `${topPosition}%`,
-                opacity: 0,
-                background: color,
-              }}
-            />
-            
-            {/* Botón + para cada salida del router */}
-            <div
-              className={styles.handlePlusRoute}
-              style={{ 
-                background: color,
-                top: `${topPosition}%`,
-              }}
-              onClick={handlePlusClick(handleId)}
-              role="button"
-              tabIndex={0}
-              aria-label={`Add module to route ${index + 1}`}
-            >
-              <Plus size={20} color="white" strokeWidth={3} />
-            </div>
-          </React.Fragment>
+          <Handle
+            key={handleId}
+            type="source"
+            position={Position.Right}
+            id={handleId}
+            style={{
+              top: `${topPosition}%`,
+              opacity: 0,
+              background: color,
+            }}
+          />
         );
       })}
 
