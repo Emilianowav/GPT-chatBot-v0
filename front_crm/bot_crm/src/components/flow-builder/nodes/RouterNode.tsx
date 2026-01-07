@@ -128,7 +128,7 @@ function RouterNode({ id, data, selected }: NodeProps<RouterNodeData>) {
               tabIndex={0}
               aria-label={`Add module to route ${index + 1}`}
             >
-              <Plus size={16} color="white" strokeWidth={3} />
+              <Plus size={20} color="white" strokeWidth={3} />
             </div>
           </React.Fragment>
         );
