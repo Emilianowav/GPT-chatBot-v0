@@ -1,6 +1,6 @@
 import React, { memo } from 'react';
 import { NodeProps, Handle, Position } from 'reactflow';
-import { MessageCircle, Plus } from 'lucide-react';
+import { Plus } from 'lucide-react';
 import styles from './AppNode.module.css';
 
 interface WhatsAppNodeData {
@@ -57,9 +57,13 @@ function WhatsAppNode({ id, data, selected }: NodeProps<WhatsAppNodeData>) {
         style={{ background: color }}
         onClick={handleNodeClick}
       >
-        <MessageCircle size={48} color="white" strokeWidth={2} />
+        <img 
+          src="/logos tecnologias/whatsapp.svg" 
+          alt="WhatsApp" 
+          className={styles.nodeLogo}
+        />
 
-        {/* Badge de ejecución (arriba derecha) */}
+        {/* Badge de ejecución (arriba derecha) */
         <div 
           className={styles.executionBadge}
           style={{ background: '#ef4444' }}
@@ -67,12 +71,16 @@ function WhatsAppNode({ id, data, selected }: NodeProps<WhatsAppNodeData>) {
           {executionCount}
         </div>
 
-        {/* Badge de WhatsApp (abajo izquierda) */}
+        // {/* Badge de WhatsApp (abajo izquierda) */}
         <div 
           className={styles.appBadge}
           style={{ background: color }}
         >
-          <MessageCircle size={16} color="white" strokeWidth={2.5} />
+          <img 
+            src="/logos tecnologias/whatsapp.svg" 
+            alt="WhatsApp" 
+            style={{ width: '16px', height: '16px' }}
+          />
         </div>
       </div>
 

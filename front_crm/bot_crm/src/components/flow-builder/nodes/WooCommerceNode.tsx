@@ -1,6 +1,6 @@
 import React, { memo } from 'react';
 import { NodeProps, Handle, Position } from 'reactflow';
-import { ShoppingCart, Plus } from 'lucide-react';
+import { Plus } from 'lucide-react';
 import styles from './AppNode.module.css';
 
 interface WooCommerceNodeData {
@@ -57,7 +57,11 @@ function WooCommerceNode({ id, data, selected }: NodeProps<WooCommerceNodeData>)
         style={{ background: color }}
         onClick={handleNodeClick}
       >
-        <ShoppingCart size={48} color="white" strokeWidth={2} />
+        <img 
+          src="/logos tecnologias/woocommerce.png" 
+          alt="WooCommerce" 
+          className={styles.nodeLogo}
+        />
 
         <div 
           className={styles.executionBadge}
@@ -70,7 +74,11 @@ function WooCommerceNode({ id, data, selected }: NodeProps<WooCommerceNodeData>)
           className={styles.appBadge}
           style={{ background: color }}
         >
-          <ShoppingCart size={16} color="white" strokeWidth={2.5} />
+          <img 
+            src="/logos tecnologias/woocommerce.png" 
+            alt="WooCommerce" 
+            style={{ width: '16px', height: '16px' }}
+          />
         </div>
       </div>
 

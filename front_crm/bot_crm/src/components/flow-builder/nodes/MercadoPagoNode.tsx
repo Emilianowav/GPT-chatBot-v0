@@ -1,6 +1,6 @@
 import React, { memo } from 'react';
 import { NodeProps, Handle, Position } from 'reactflow';
-import { CreditCard, Plus } from 'lucide-react';
+import { Plus } from 'lucide-react';
 import styles from './AppNode.module.css';
 
 interface MercadoPagoNodeData {
@@ -49,7 +49,11 @@ function MercadoPagoNode({ id, data, selected }: NodeProps<MercadoPagoNodeData>)
         style={{ background: color }}
         onClick={handleNodeClick}
       >
-        <CreditCard size={48} color="white" strokeWidth={2} />
+        <img 
+          src="/logos tecnologias/mercado-pago.svg" 
+          alt="Mercado Pago" 
+          className={styles.nodeLogo}
+        />
 
         <div 
           className={styles.executionBadge}
@@ -62,7 +66,11 @@ function MercadoPagoNode({ id, data, selected }: NodeProps<MercadoPagoNodeData>)
           className={styles.appBadge}
           style={{ background: color }}
         >
-          <CreditCard size={16} color="white" strokeWidth={2.5} />
+          <img 
+            src="/logos tecnologias/mercado-pago.svg" 
+            alt="Mercado Pago" 
+            style={{ width: '16px', height: '16px' }}
+          />
         </div>
       </div>
 

@@ -1,6 +1,6 @@
 import React, { memo } from 'react';
 import { NodeProps, Handle, Position } from 'reactflow';
-import { Brain, Settings, MessageSquare, Plus } from 'lucide-react';
+import { Plus } from 'lucide-react';
 import styles from './AppNode.module.css';
 
 interface GPTNodeData {
@@ -34,16 +34,13 @@ function GPTNode({ id, data, selected }: NodeProps<GPTNodeData>) {
   const color = '#10a37f'; // OpenAI green
 
   const getIconForType = () => {
-    switch (config?.tipo) {
-      case 'conversacional':
-        return <MessageSquare size={48} color="white" strokeWidth={2} />;
-      case 'formateador':
-        return <Settings size={48} color="white" strokeWidth={2} />;
-      case 'procesador':
-        return <Brain size={48} color="white" strokeWidth={2} />;
-      default:
-        return <Brain size={48} color="white" strokeWidth={2} />;
-    }
+    return (
+      <img 
+        src="/logos tecnologias/chatgpt.svg" 
+        alt="ChatGPT" 
+        className={styles.nodeLogo}
+      />
+    );
   };
 
   const handleNodeClick = () => {
@@ -79,7 +76,11 @@ function GPTNode({ id, data, selected }: NodeProps<GPTNodeData>) {
           className={styles.appBadge}
           style={{ background: color }}
         >
-          <Brain size={16} color="white" strokeWidth={2.5} />
+          <img 
+            src="/logos tecnologias/chatgpt.svg" 
+            alt="ChatGPT" 
+            style={{ width: '16px', height: '16px' }}
+          />
         </div>
       </div>
 
