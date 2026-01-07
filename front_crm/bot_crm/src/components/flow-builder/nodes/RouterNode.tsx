@@ -1,4 +1,4 @@
-import { memo } from 'react';
+import React, { memo } from 'react';
 import { NodeProps, Handle, Position } from 'reactflow';
 import { GitBranch, Plus } from 'lucide-react';
 import styles from './RouterNode.module.css';
