@@ -1,0 +1,157 @@
+.wooConfigPanel {
+  padding: 20px;
+  background: white;
+}
+
+.section {
+  margin-bottom: 24px;
+}
+
+.formGroup {
+  margin-bottom: 20px;
+}
+
+.formGroup label {
+  display: block;
+  margin-bottom: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  color: #374151;
+}
+
+.indicator {
+  color: #9ca3af;
+  margin-right: 4px;
+}
+
+.required {
+  color: #ef4444;
+}
+
+.formGroup input[type="text"],
+.formGroup input[type="number"],
+.formGroup select {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  font-size: 14px;
+  transition: all 0.2s;
+}
+
+.formGroup input:focus,
+.formGroup select:focus {
+  outline: none;
+  border-color: #7c3aed;
+  box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.1);
+}
+
+.connectionSelected {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  background: #f9fafb;
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+}
+
+.connectionInfo {
+  flex: 1;
+}
+
+.connectionName {
+  font-size: 14px;
+  font-weight: 600;
+  color: #111827;
+  margin-bottom: 4px;
+}
+
+.connectionUrl {
+  font-size: 12px;
+  color: #6b7280;
+  font-family: 'Monaco', 'Courier New', monospace;
+}
+
+.editButton {
+  padding: 6px 12px;
+  background: white;
+  border: 1px solid #d1d5db;
+  border-radius: 4px;
+  font-size: 13px;
+  font-weight: 500;
+  color: #374151;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.editButton:hover {
+  background: #f9fafb;
+  border-color: #9ca3af;
+}
+
+.createConnectionButton {
+  width: 100%;
+  padding: 12px 16px;
+  background: #7c3aed;
+  border: none;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 500;
+  color: white;
+  cursor: pointer;
+  transition: all 0.2s;
+  text-align: left;
+}
+
+.createConnectionButton:hover {
+  background: #6d28d9;
+}
+
+.helpText {
+  margin-top: 6px;
+  font-size: 13px;
+  color: #6b7280;
+  line-height: 1.5;
+}
+
+.helpText a {
+  color: #7c3aed;
+  text-decoration: none;
+}
+
+.helpText a:hover {
+  text-decoration: underline;
+}
+
+.divider {
+  height: 1px;
+  background: #e5e7eb;
+  margin: 24px 0;
+}
+
+.moduleConfig {
+  animation: fadeIn 0.3s ease-in;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.emptyState {
+  padding: 40px 20px;
+  text-align: center;
+  color: #9ca3af;
+}
+
+.emptyState p {
+  margin: 0;
+  font-size: 14px;
+}

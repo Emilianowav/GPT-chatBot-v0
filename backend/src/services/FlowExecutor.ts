@@ -5,6 +5,7 @@ import type { ChatCompletionMessageParam } from './openaiService.js';
 import { ContactoEmpresaModel } from '../models/ContactoEmpresa.js';
 import { GPTPromptBuilder } from './GPTPromptBuilder.js';
 import type { IGPTConversacionalConfig } from '../types/gpt-config.types.js';
+import { createWooCommerceService } from './woocommerceService.js';
 
 interface FlowContext {
   [nodeId: string]: {
@@ -102,10 +103,18 @@ export class FlowExecutor {
       console.log(`      Verify Token: ${config.verifyToken}`);
     }
     
-    // TODO: Detectar otros nodos fuente (WooCommerce, APIs, etc.)
-    // const wooCommerceSource = nodes.find(n => 
-    //   n.type === 'woocommerce' && n.data?.config?.isSource === true
-    // );
+    // Detectar primer nodo WooCommerce con conexión
+    const wooCommerceSource = nodes.find(n => 
+      n.type === 'woocommerce' && n.data?.config?.connection
+    );
+    
+    if (wooCommerceSource) {
+      const connection = wooCommerceSource.data.config.connection;
+      this.flowConfig.woocommerce = connection;
+      console.log(`   ✅ WooCommerce configurado:`);
+      console.log(`      Eshop URL: ${connection.eshopUrl}`);
+      console.log(`      Consumer Key: ${connection.consumerKey.substring(0, 10)}...`);
+    }
     
     console.log('');
   }
@@ -268,6 +277,9 @@ export class FlowExecutor {
       
       case 'router':
         return await this.executeRouterNode(node, input);
+      
+      case 'woocommerce':
+        return await this.executeWooCommerceNode(node, input);
       
       default:
         console.warn(`⚠️  Tipo de nodo no soportado: ${node.type}`);
@@ -506,6 +518,92 @@ export class FlowExecutor {
         to: telefono,
       },
     };
+  }
+
+  /**
+   * Ejecuta un nodo WooCommerce
+   */
+  private async executeWooCommerceNode(node: any, input: any): Promise<NodeExecutionResult> {
+    const config = node.data.config;
+    
+    console.log(`   🛍️  Módulo WooCommerce: ${config.module}`);
+    
+    // Obtener conexión (del nodo o del flowConfig)
+    const connection = config.connection || this.flowConfig.woocommerce;
+    
+    if (!connection) {
+      throw new Error('No hay conexión de WooCommerce configurada');
+    }
+    
+    if (!config.connection && this.flowConfig.woocommerce) {
+      console.log(`   🔗 Usando conexión del nodo fuente`);
+    }
+    
+    // Crear servicio WooCommerce
+    const wooService = createWooCommerceService(connection);
+    
+    // Resolver variables en params (crear mapping de params)
+    const paramsMapping: Record<string, string> = {};
+    for (const [key, value] of Object.entries(config.params || {})) {
+      paramsMapping[key] = String(value);
+    }
+    const params = this.resolveVariables(paramsMapping);
+    
+    console.log(`   📦 Parámetros:`, JSON.stringify(params).substring(0, 100) + '...');
+    
+    // Ejecutar módulo específico
+    let result: any;
+    
+    try {
+      switch (config.module) {
+        case 'get-product':
+          result = await wooService.getProduct(params.productId);
+          break;
+        
+        case 'search-product':
+          result = await wooService.searchProducts({
+            search: params.search,
+            category: params.category,
+            limit: params.limit,
+            orderBy: params.orderBy
+          });
+          break;
+        
+        case 'create-order':
+          result = await wooService.createOrder({
+            customerId: params.customerId,
+            productId: params.productId,
+            quantity: parseInt(params.quantity) || 1,
+            customerPhone: params.customerPhone,
+            customerName: params.customerName,
+            customerEmail: params.customerEmail
+          });
+          break;
+        
+        case 'get-customer':
+          result = await wooService.getCustomer(params.customerId);
+          break;
+        
+        case 'search-customer':
+          result = await wooService.searchCustomers({
+            search: params.search,
+            email: params.email,
+            limit: params.limit
+          });
+          break;
+        
+        default:
+          throw new Error(`Módulo WooCommerce no soportado: ${config.module}`);
+      }
+      
+      console.log(`   ✅ Módulo ejecutado exitosamente`);
+      
+      return { output: result };
+      
+    } catch (error: any) {
+      console.error(`   ❌ Error en módulo WooCommerce:`, error.message);
+      throw error;
+    }
   }
 
   /**
