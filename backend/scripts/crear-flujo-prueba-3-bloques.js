@@ -268,8 +268,8 @@ Para realizar tu pedido, comunicate con un asesor:
             message: `✅ Variables guardadas correctamente:
 
 📘 Título: {{global.titulo}}
-📚 Editorial: {{global.editorial}}
-📅 Edición: {{global.edicion}}
+📚 Editorial: {{global.editorial || "cualquier editorial"}}
+📅 Edición: {{global.edicion || "última edición"}}
 
 🔍 Próximo paso: Buscar en WooCommerce...`
           }

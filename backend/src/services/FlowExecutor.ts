@@ -612,15 +612,38 @@ export class FlowExecutor {
   }
 
   /**
-   * Resuelve variables en un string
-   * Ejemplo: "Hola {{1.message}}" → "Hola mundo"
+   * Resuelve una variable en un string (reemplaza {{variable}} con su valor)
+   * Soporta fallbacks: {{variable || "default"}}
    */
   private resolveVariableInString(str: string): string {
     if (!str) return '';
 
-    return str.replace(/\{\{([^}]+)\}\}/g, (match, varPath) => {
-      const value = this.getVariableValue(varPath.trim());
-      return value !== undefined ? String(value) : match;
+    // Buscar todas las variables en el formato {{variable}} o {{variable || "default"}}
+    const regex = /\{\{([^}]+)\}\}/g;
+    
+    return str.replace(regex, (match, expression) => {
+      expression = expression.trim();
+      
+      // Verificar si hay operador de fallback ||
+      if (expression.includes('||')) {
+        const parts = expression.split('||').map(p => p.trim());
+        const varPath = parts[0];
+        let fallback = parts[1];
+        
+        // Remover comillas del fallback si existen
+        if (fallback.startsWith('"') && fallback.endsWith('"')) {
+          fallback = fallback.slice(1, -1);
+        } else if (fallback.startsWith("'") && fallback.endsWith("'")) {
+          fallback = fallback.slice(1, -1);
+        }
+        
+        const value = this.getVariableValue(varPath);
+        return value !== undefined && value !== null && value !== '' ? String(value) : fallback;
+      }
+      
+      // Sin fallback, comportamiento normal
+      const value = this.getVariableValue(expression);
+      return value !== undefined && value !== null && value !== '' ? String(value) : match;
     });
   }
 }
