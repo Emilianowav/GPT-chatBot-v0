@@ -31,7 +31,7 @@ const NodeConfigPanel: React.FC<NodeConfigPanelProps> = ({ node, onClose, onSave
       tipo: config.tipo || 'conversacional',
       module: config.module || 'conversacional',
       modelo: config.modelo || 'gpt-4',
-      temperatura: config.temperatura || 0.7,
+      temperatura: config.temperatura !== undefined ? config.temperatura : 0.7,
       maxTokens: config.maxTokens || 500,
       personalidad: config.personalidad || '',
       topicos: config.topicos || [],
@@ -46,10 +46,12 @@ const NodeConfigPanel: React.FC<NodeConfigPanelProps> = ({ node, onClose, onSave
     };
 
     return (
-      <GPTConfigPanel 
-        config={gptConfig}
-        onChange={(newConfig) => setConfig(newConfig)}
-      />
+      <div style={{ height: '100%', overflow: 'hidden' }}>
+        <GPTConfigPanel 
+          config={gptConfig}
+          onChange={(newConfig) => setConfig(newConfig)}
+        />
+      </div>
     );
   };
 
