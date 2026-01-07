@@ -22,6 +22,7 @@ interface NodeExecutionResult {
 export class FlowExecutor {
   private context: FlowContext = {};
   private globalVariables: Record<string, any> = {};
+  private flowConfig: Record<string, any> = {}; // Configuraciones técnicas de nodos fuente
   private contactoId?: string;
   private historialConversacion: string[] = [];
 
@@ -79,6 +80,37 @@ export class FlowExecutor {
   }
 
   /**
+   * Detecta nodos fuente y guarda sus configuraciones técnicas
+   */
+  private detectSourceNodes(nodes: any[]): void {
+    console.log('🔍 [FLOW CONFIG] Detectando nodos fuente...');
+    
+    // Detectar WhatsApp Watch Events (trigger)
+    const whatsappTrigger = nodes.find(n => 
+      n.type === 'whatsapp' && 
+      n.data?.config?.module === 'watch-events'
+    );
+    
+    if (whatsappTrigger) {
+      const config = whatsappTrigger.data.config;
+      this.flowConfig.whatsapp = {
+        phoneNumberId: config.phoneNumberId,
+        verifyToken: config.verifyToken
+      };
+      console.log(`   ✅ WhatsApp configurado:`);
+      console.log(`      Phone Number ID: ${config.phoneNumberId}`);
+      console.log(`      Verify Token: ${config.verifyToken}`);
+    }
+    
+    // TODO: Detectar otros nodos fuente (WooCommerce, APIs, etc.)
+    // const wooCommerceSource = nodes.find(n => 
+    //   n.type === 'woocommerce' && n.data?.config?.isSource === true
+    // );
+    
+    console.log('');
+  }
+
+  /**
    * Ejecuta un flujo visual completo
    */
   async execute(flowId: string, triggerData: any, contactoId?: string): Promise<FlowContext> {
@@ -96,6 +128,9 @@ export class FlowExecutor {
       if (!flow) {
         throw new Error(`Flujo ${flowId} no encontrado`);
       }
+
+      // 2. Detectar y guardar configuraciones técnicas de nodos fuente
+      this.detectSourceNodes(flow.nodes);
 
       if (!flow.nodes || !flow.edges) {
         throw new Error(`Flujo ${flowId} no tiene nodos o edges`);
@@ -444,14 +479,22 @@ export class FlowExecutor {
     const mensaje = this.resolveVariableInString(config.message || input.message);
     const telefono = this.resolveVariableInString(config.to || input.to || input.telefono_usuario);
 
+    // Usar phoneNumberId del flowConfig si no está especificado en el nodo
+    const phoneNumberId = config.phoneNumberId || 
+                         this.flowConfig.whatsapp?.phoneNumberId || 
+                         process.env.META_PHONE_NUMBER_ID || '';
+
     console.log(`   To: ${telefono}`);
     console.log(`   Message: ${mensaje.substring(0, 100)}...`);
+    if (!config.phoneNumberId && this.flowConfig.whatsapp?.phoneNumberId) {
+      console.log(`   📱 Usando Phone Number ID del nodo fuente: ${phoneNumberId}`);
+    }
 
     // Enviar mensaje
     const resultado = await enviarMensajeWhatsAppTexto(
       telefono,
       mensaje,
-      config.phoneNumberId || process.env.META_PHONE_NUMBER_ID || ''
+      phoneNumberId
     );
 
     console.log(`   Mensaje enviado. ID: ${resultado.messageId}`);

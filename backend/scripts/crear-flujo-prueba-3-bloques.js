@@ -223,7 +223,7 @@ Para realizar tu pedido, comunicate con un asesor:
           hasConnection: true,
           config: {
             module: 'send-message',
-            phoneNumberId: '906667632531979',
+            // phoneNumberId se usa automáticamente del Watch Events
             to: '{{1.from}}',
             message: '{{gpt-conversacional-3-bloques.respuesta_gpt}}'
           }
@@ -243,7 +243,7 @@ Para realizar tu pedido, comunicate con un asesor:
           hasConnection: true,
           config: {
             module: 'send-message',
-            phoneNumberId: '906667632531979',
+            // phoneNumberId se usa automáticamente del Watch Events
             to: '{{1.from}}',
             message: '{{gpt-conversacional-3-bloques.respuesta_gpt}}'
           }
@@ -263,7 +263,7 @@ Para realizar tu pedido, comunicate con un asesor:
           hasConnection: true,
           config: {
             module: 'send-message',
-            phoneNumberId: '906667632531979',
+            // phoneNumberId se usa automáticamente del Watch Events
             to: '{{1.from}}',
             message: `✅ Variables guardadas correctamente:
 
