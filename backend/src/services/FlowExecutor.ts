@@ -365,10 +365,13 @@ export class FlowExecutor {
       // Guardar cada variable extraída en variables globales
       for (const [nombre, valor] of Object.entries(variablesExtraidas)) {
         if (valor !== undefined && valor !== null && valor !== '') {
+          console.log(`   💾 Guardando variable global: ${nombre} = ${JSON.stringify(valor)?.substring(0, 100)}`);
           this.setGlobalVariable(nombre, valor);
           output[nombre] = valor;
         }
       }
+      
+      console.log(`   📋 globalVariables después de guardar: ${JSON.stringify(Object.keys(this.globalVariables))}`);
       
       // Validar si todas las variables obligatorias están completas
       const todasLasGlobales = this.getAllGlobalVariables();
@@ -612,12 +615,15 @@ export class FlowExecutor {
           break;
         
         case 'search-product':
-          result = await wooService.searchProducts({
-            search: params.search,
-            category: params.category,
-            limit: params.limit,
-            orderBy: params.orderBy
-          });
+          result = await wooService.searchProducts(params);
+          console.log(`   ✅ Productos encontrados: ${result.length}`);
+          // Retornar en formato { productos: [...] } para que sea accesible como woocommerce-search.productos
+          return {
+            output: {
+              productos: result,
+              count: result.length
+            }
+          };
           break;
         
         case 'create-order':
