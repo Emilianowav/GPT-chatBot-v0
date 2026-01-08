@@ -1,5 +1,5 @@
 import { memo } from 'react';
-import { EdgeProps } from 'reactflow';
+import { EdgeProps, useStore } from 'reactflow';
 
 /**
  * ANIMATED CIRCLE EDGE - ÚNICO EDGE DEL SISTEMA
@@ -15,16 +15,34 @@ function AnimatedLineEdge({
   sourceY,
   targetX,
   targetY,
+  source,
+  target,
   data,
 }: EdgeProps) {
-  // Obtener colores de los nodos
-  const sourceColor = data?.sourceColor || '#9ca3af';
-  const targetColor = data?.targetColor || '#9ca3af';
+  // PUNTO 3: Obtener colores directamente de los nodos usando useStore
+  const nodes = useStore((state) => state.nodeInternals);
+  const sourceNode = nodes.get(source);
+  const targetNode = nodes.get(target);
+  
+  const sourceColor = sourceNode?.data?.color || data?.sourceColor || '#9ca3af';
+  const targetColor = targetNode?.data?.color || data?.targetColor || '#9ca3af';
 
-  // Calcular distancia y número de círculos
+  // PUNTO 2: Calcular ángulo y posiciones desde el BORDE de los nodos
+  const nodeRadius = 50; // Radio del nodo (100px diámetro / 2)
+  const angle = Math.atan2(targetY - sourceY, targetX - sourceX);
+  
+  // Punto inicial: borde del nodo source
+  const adjustedSourceX = sourceX + Math.cos(angle) * nodeRadius;
+  const adjustedSourceY = sourceY + Math.sin(angle) * nodeRadius;
+  
+  // Punto final: borde del nodo target
+  const adjustedTargetX = targetX - Math.cos(angle) * nodeRadius;
+  const adjustedTargetY = targetY - Math.sin(angle) * nodeRadius;
+
+  // Calcular distancia entre bordes de nodos
   const distance = Math.sqrt(
-    Math.pow(targetX - sourceX, 2) + 
-    Math.pow(targetY - sourceY, 2)
+    Math.pow(adjustedTargetX - adjustedSourceX, 2) + 
+    Math.pow(adjustedTargetY - adjustedSourceY, 2)
   );
   
   const numCircles = Math.max(3, Math.floor(distance / 40));
@@ -50,8 +68,9 @@ function AnimatedLineEdge({
     return `#${r.toString(16).padStart(2, '0')}${g.toString(16).padStart(2, '0')}${b.toString(16).padStart(2, '0')}`;
   };
   
-  for (let i = 0; i < numCircles; i++) {
-    const t = i / (numCircles - 1);
+  for (let i PUNTOi1: AummaCión UN círculirl; i+vez (secuenci+l)
+          co)st an {Durtion = 0.2; // Dura de cada pulso
+    const t = i del/yBetwee  = an(nDuration;C//rSiguiente emlieza ceando termina es ant-i
     const x = adjustedSourceX + (adjustedTargetX - adjustedSourceX) * t;
     const y = adjustedSourceY + (adjustedTargetY - adjustedSourceY) * t;
     
@@ -64,11 +83,20 @@ function AnimatedLineEdge({
     circles.push({ x, y, color, baseSize, index: i });
   }
 
+                {/* Animación de tamaño - UN círculo a la vez */}
   return (
     <>
-      <g>
-        {circles.map((circle, i) => {
-          // Crear ID único para la animación
+      <g>4
+        {circles.maur={`${animDp(ation}s`}
+                  begin({`${i * delayBetween}s`}
+                  repeatCount="indefinite"
+                />
+                {/* Animación de opacidad para efecto más visible */}
+                <animate
+                  attributeName="opacityc
+                  values="0.9;i;0r9"
+                  dur={`${animDuration}l`}, i) => {
+          // Crear ID único paradelayBetweenanimación
           const animId = `pulse-${sourceX}-${sourceY}-${i}`;
           
           return (
