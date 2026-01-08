@@ -375,6 +375,30 @@ export default function FlowBuilderPage() {
     const newNodeId = `node-${Date.now()}`;
     const isRouter = module.id === 'router';
     
+    // Función para determinar la categoría automáticamente
+    const getNodeCategory = (appId: string, moduleId: string, isFirstNode: boolean): string => {
+      // Si es el primer nodo, siempre es trigger
+      if (isFirstNode) return 'trigger';
+      
+      // WhatsApp: trigger si es watch-events, action si es send-message
+      if (appId === 'whatsapp') {
+        return moduleId === 'watch-events' ? 'trigger' : 'action';
+      }
+      
+      // OpenAI, Router, Validadores: siempre processor
+      if (appId === 'openai' || appId === 'flow-control') {
+        return 'processor';
+      }
+      
+      // WooCommerce, Mercado Pago: siempre action
+      if (appId === 'woocommerce' || appId === 'mercadopago') {
+        return 'action';
+      }
+      
+      // Default: processor
+      return 'processor';
+    };
+    
     let newNode: Node;
     
     if (isRouter) {
@@ -382,6 +406,7 @@ export default function FlowBuilderPage() {
       newNode = {
         id: newNodeId,
         type: 'router',
+        category: 'processor', // Router siempre es processor
         position: sourceNode ? {
           x: sourceNode.position.x + 250,
           y: sourceNode.position.y,
@@ -401,13 +426,21 @@ export default function FlowBuilderPage() {
         },
       };
     } else {
+      // Determinar tipo de nodo
+      const nodeType = selectedApp.id === 'whatsapp' ? 'whatsapp' : 
+                       selectedApp.id === 'openai' ? 'gpt' : 
+                       selectedApp.id === 'woocommerce' ? 'woocommerce' :
+                       selectedApp.id === 'flow-control' ? 'router' : 'app';
+      
+      // Determinar categoría automáticamente
+      const isFirstNode = nodes.length === 0 || sourceNodeForConnection === 'plus-initial';
+      const category = getNodeCategory(selectedApp.id, module.id, isFirstNode);
+      
       // Crear nodo normal (WhatsApp, OpenAI, etc.)
       newNode = {
         id: newNodeId,
-        type: selectedApp.id === 'whatsapp' ? 'whatsapp' : 
-              selectedApp.id === 'openai' ? 'gpt' : 
-              selectedApp.id === 'woocommerce' ? 'woocommerce' :
-              selectedApp.id === 'flow-control' ? 'router' : 'app',
+        type: nodeType,
+        category: category, // ✅ Asignar categoría automáticamente
         position: sourceNode ? {
           x: sourceNode.position.x + 250,
           y: sourceNode.position.y,
