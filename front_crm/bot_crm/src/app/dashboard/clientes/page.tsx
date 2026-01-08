@@ -19,11 +19,8 @@ export default function ClientesPage() {
   const [clienteEditar, setClienteEditar] = useState<any>(null);
   const [paginaActual, setPaginaActual] = useState(1);
   
-  const [filtros, setFiltros] = useState({
-    busqueda: '',
-    estado: 'todos',
-    origen: 'todos'
-  });
+  const [busqueda, setBusqueda] = useState('');
+  const [ordenarPor, setOrdenarPor] = useState('mas-recientes');
 
   if (authLoading) {
     return (
@@ -81,38 +78,55 @@ export default function ClientesPage() {
     }
   };
 
-  const clientesFiltrados = clientes.filter(cliente => {
-    // Filtro de búsqueda
-    if (filtros.busqueda) {
-      const busqueda = filtros.busqueda.toLowerCase();
-      const nombreCompleto = `${cliente.nombre} ${cliente.apellido}`.toLowerCase();
-      const telefono = cliente.telefono?.toLowerCase() || '';
-      const email = cliente.email?.toLowerCase() || '';
+  const clientesFiltrados = clientes
+    .filter(cliente => {
+      // Filtro de búsqueda
+      if (busqueda) {
+        const busquedaLower = busqueda.toLowerCase();
+        const nombreCompleto = `${cliente.nombre} ${cliente.apellido}`.toLowerCase();
+        const telefono = cliente.telefono?.toLowerCase() || '';
+        const email = cliente.email?.toLowerCase() || '';
+        
+        if (!nombreCompleto.includes(busquedaLower) && 
+            !telefono.includes(busquedaLower) && 
+            !email.includes(busquedaLower)) {
+          return false;
+        }
+      }
       
-      if (!nombreCompleto.includes(busqueda) && 
-          !telefono.includes(busqueda) && 
-          !email.includes(busqueda)) {
-        return false;
+      // Filtros específicos según ordenamiento
+      if (ordenarPor === 'origen-chatbot') {
+        return cliente.origen === 'chatbot';
       }
-    }
-    
-    // Filtro de estado
-    if (filtros.estado !== 'todos') {
-      const activo = filtros.estado === 'activo';
-      if (cliente.activo !== activo) {
-        return false;
+      if (ordenarPor === 'origen-manual') {
+        return cliente.origen === 'manual';
       }
-    }
-    
-    // Filtro de origen
-    if (filtros.origen !== 'todos') {
-      if (cliente.origen !== filtros.origen) {
-        return false;
+      if (ordenarPor === 'activos') {
+        return cliente.activo === true;
       }
-    }
-    
-    return true;
-  });
+      if (ordenarPor === 'inactivos') {
+        return cliente.activo === false;
+      }
+      
+      return true;
+    })
+    .sort((a, b) => {
+      // Ordenamiento según selección
+      if (ordenarPor === 'mas-recientes') {
+        return new Date(b.creadoEn).getTime() - new Date(a.creadoEn).getTime();
+      }
+      if (ordenarPor === 'mas-antiguos') {
+        return new Date(a.creadoEn).getTime() - new Date(b.creadoEn).getTime();
+      }
+      if (ordenarPor === 'nombre-az') {
+        return `${a.nombre} ${a.apellido}`.localeCompare(`${b.nombre} ${b.apellido}`);
+      }
+      if (ordenarPor === 'nombre-za') {
+        return `${b.nombre} ${b.apellido}`.localeCompare(`${a.nombre} ${a.apellido}`);
+      }
+      // Para filtros de origen y estado, mantener orden por fecha reciente
+      return new Date(b.creadoEn).getTime() - new Date(a.creadoEn).getTime();
+    });
 
   return (
     <DashboardLayout title="Clientes">
@@ -135,39 +149,31 @@ export default function ClientesPage() {
 
         {/* Filtros */}
         <div className={styles.filtrosCard}>
-          <h3>Filtros</h3>
           <div className={styles.filtrosGrid}>
             <div className={styles.filtroItem}>
               <label>Buscar</label>
               <input
                 type="text"
                 placeholder="Nombre, teléfono o email..."
-                value={filtros.busqueda}
-                onChange={(e) => setFiltros({ ...filtros, busqueda: e.target.value })}
+                value={busqueda}
+                onChange={(e) => setBusqueda(e.target.value)}
               />
             </div>
 
             <div className={styles.filtroItem}>
-              <label>Estado</label>
+              <label>Ordenar por</label>
               <select
-                value={filtros.estado}
-                onChange={(e) => setFiltros({ ...filtros, estado: e.target.value })}
+                value={ordenarPor}
+                onChange={(e) => setOrdenarPor(e.target.value)}
               >
-                <option value="todos">Todos</option>
-                <option value="activo">Activos</option>
-                <option value="inactivo">Inactivos</option>
-              </select>
-            </div>
-
-            <div className={styles.filtroItem}>
-              <label>Origen</label>
-              <select
-                value={filtros.origen}
-                onChange={(e) => setFiltros({ ...filtros, origen: e.target.value })}
-              >
-                <option value="todos">Todos</option>
-                <option value="chatbot">Chatbot</option>
-                <option value="manual">Manual</option>
+                <option value="mas-recientes">Más recientes</option>
+                <option value="mas-antiguos">Más antiguos</option>
+                <option value="nombre-az">Nombre (A-Z)</option>
+                <option value="nombre-za">Nombre (Z-A)</option>
+                <option value="origen-chatbot">Origen: Chatbot</option>
+                <option value="origen-manual">Origen: Manual</option>
+                <option value="activos">Solo activos</option>
+                <option value="inactivos">Solo inactivos</option>
               </select>
             </div>
 
@@ -175,9 +181,12 @@ export default function ClientesPage() {
               <label>&nbsp;</label>
               <button 
                 className={styles.btnLimpiar}
-                onClick={() => setFiltros({ busqueda: '', estado: 'todos', origen: 'todos' })}
+                onClick={() => {
+                  setBusqueda('');
+                  setOrdenarPor('mas-recientes');
+                }}
               >
-                Limpiar Filtros
+                Limpiar
               </button>
             </div>
           </div>

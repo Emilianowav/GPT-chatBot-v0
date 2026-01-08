@@ -5,23 +5,23 @@ import { useState, useEffect, useRef } from 'react';
 import type { Cliente, CrearClienteData } from '@/lib/clientesApi';
 import styles from './FormularioCliente.module.css';
 
-// Lista de códigos de país
-const COUNTRY_CODES = [
-  { code: '54', country: 'Argentina', flag: '🇦🇷' },
-  { code: '55', country: 'Brasil', flag: '🇧🇷' },
-  { code: '56', country: 'Chile', flag: '🇨🇱' },
-  { code: '57', country: 'Colombia', flag: '🇨🇴' },
-  { code: '52', country: 'México', flag: '🇲🇽' },
-  { code: '51', country: 'Perú', flag: '🇵🇪' },
-  { code: '598', country: 'Uruguay', flag: '🇺🇾' },
-  { code: '58', country: 'Venezuela', flag: '🇻🇪' },
-  { code: '1', country: 'Estados Unidos', flag: '🇺🇸' },
-  { code: '34', country: 'España', flag: '🇪🇸' },
-  { code: '593', country: 'Ecuador', flag: '🇪🇨' },
-  { code: '591', country: 'Bolivia', flag: '🇧🇴' },
-  { code: '595', country: 'Paraguay', flag: '🇵🇾' },
-  { code: '506', country: 'Costa Rica', flag: '🇨🇷' },
-  { code: '507', country: 'Panamá', flag: '🇵🇦' },
+// Metadata de países con formato WhatsApp
+const COUNTRY_METADATA = [
+  { code: 'AR', countryCode: '54', mobilePrefix: '9', country: 'Argentina', flag: '🇦🇷' },
+  { code: 'BR', countryCode: '55', mobilePrefix: '', country: 'Brasil', flag: '🇧🇷' },
+  { code: 'CL', countryCode: '56', mobilePrefix: '', country: 'Chile', flag: '🇨🇱' },
+  { code: 'CO', countryCode: '57', mobilePrefix: '', country: 'Colombia', flag: '🇨🇴' },
+  { code: 'MX', countryCode: '52', mobilePrefix: '', country: 'México', flag: '🇲🇽' },
+  { code: 'PE', countryCode: '51', mobilePrefix: '', country: 'Perú', flag: '🇵🇪' },
+  { code: 'UY', countryCode: '598', mobilePrefix: '', country: 'Uruguay', flag: '🇺🇾' },
+  { code: 'VE', countryCode: '58', mobilePrefix: '', country: 'Venezuela', flag: '🇻🇪' },
+  { code: 'US', countryCode: '1', mobilePrefix: '', country: 'Estados Unidos', flag: '🇺🇸' },
+  { code: 'ES', countryCode: '34', mobilePrefix: '', country: 'España', flag: '🇪🇸' },
+  { code: 'EC', countryCode: '593', mobilePrefix: '', country: 'Ecuador', flag: '🇪🇨' },
+  { code: 'BO', countryCode: '591', mobilePrefix: '', country: 'Bolivia', flag: '🇧🇴' },
+  { code: 'PY', countryCode: '595', mobilePrefix: '', country: 'Paraguay', flag: '🇵🇾' },
+  { code: 'CR', countryCode: '506', mobilePrefix: '', country: 'Costa Rica', flag: '🇨🇷' },
+  { code: 'PA', countryCode: '507', mobilePrefix: '', country: 'Panamá', flag: '🇵🇦' },
 ];
 
 interface FormularioClienteProps {
@@ -36,7 +36,7 @@ export default function FormularioCliente({
   clienteInicial 
 }: FormularioClienteProps) {
   const [step, setStep] = useState(1);
-  const [countryCode, setCountryCode] = useState('54');
+  const [selectedCountry, setSelectedCountry] = useState('AR');
   const [showCountryDropdown, setShowCountryDropdown] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
   
@@ -72,26 +72,46 @@ export default function FormularioCliente({
     if (clienteInicial) {
       // Extraer código de país del teléfono si existe
       const tel = clienteInicial.telefono || '';
-      const matchedCode = COUNTRY_CODES.find(c => tel.startsWith(c.code));
-      if (matchedCode) {
-        setCountryCode(matchedCode.code);
+      const matchedCountry = COUNTRY_METADATA.find(c => tel.startsWith(c.countryCode));
+      if (matchedCountry) {
+        setSelectedCountry(matchedCountry.code);
+        // Remover código de país y prefijo móvil si existe
+        let phoneNumber = tel.substring(matchedCountry.countryCode.length);
+        if (matchedCountry.mobilePrefix && phoneNumber.startsWith(matchedCountry.mobilePrefix)) {
+          phoneNumber = phoneNumber.substring(matchedCountry.mobilePrefix.length);
+        }
+        setFormData({
+          nombre: clienteInicial.nombre,
+          apellido: clienteInicial.apellido,
+          telefono: phoneNumber,
+          email: clienteInicial.email || '',
+          direccion: clienteInicial.direccion || '',
+          ciudad: clienteInicial.ciudad || '',
+          provincia: clienteInicial.provincia || '',
+          codigoPostal: clienteInicial.codigoPostal || '',
+          fechaNacimiento: clienteInicial.fechaNacimiento 
+            ? clienteInicial.fechaNacimiento.split('T')[0] 
+            : '',
+          dni: clienteInicial.dni || '',
+          notas: clienteInicial.notas || ''
+        });
+      } else {
+        setFormData({
+          nombre: clienteInicial.nombre,
+          apellido: clienteInicial.apellido,
+          telefono: tel,
+          email: clienteInicial.email || '',
+          direccion: clienteInicial.direccion || '',
+          ciudad: clienteInicial.ciudad || '',
+          provincia: clienteInicial.provincia || '',
+          codigoPostal: clienteInicial.codigoPostal || '',
+          fechaNacimiento: clienteInicial.fechaNacimiento 
+            ? clienteInicial.fechaNacimiento.split('T')[0] 
+            : '',
+          dni: clienteInicial.dni || '',
+          notas: clienteInicial.notas || ''
+        });
       }
-      
-      setFormData({
-        nombre: clienteInicial.nombre,
-        apellido: clienteInicial.apellido,
-        telefono: matchedCode ? tel.replace(matchedCode.code, '') : tel,
-        email: clienteInicial.email || '',
-        direccion: clienteInicial.direccion || '',
-        ciudad: clienteInicial.ciudad || '',
-        provincia: clienteInicial.provincia || '',
-        codigoPostal: clienteInicial.codigoPostal || '',
-        fechaNacimiento: clienteInicial.fechaNacimiento 
-          ? clienteInicial.fechaNacimiento.split('T')[0] 
-          : '',
-        dni: clienteInicial.dni || '',
-        notas: clienteInicial.notas || ''
-      });
     }
   }, [clienteInicial]);
 
@@ -176,8 +196,10 @@ export default function FormularioCliente({
     try {
       setLoading(true);
       
-      // Limpiar campos vacíos y agregar código de país
-      const telefonoCompleto = countryCode + formData.telefono.trim().replace(/^0+/, '');
+      // Construir teléfono en formato WhatsApp
+      const country = COUNTRY_METADATA.find(c => c.code === selectedCountry) || COUNTRY_METADATA[0];
+      const phoneNumber = formData.telefono.trim().replace(/^0+/, ''); // Remover ceros iniciales
+      const telefonoCompleto = country.countryCode + country.mobilePrefix + phoneNumber;
       
       const dataLimpia: any = {
         nombre: formData.nombre.trim(),
@@ -202,7 +224,7 @@ export default function FormularioCliente({
     }
   };
 
-  const selectedCountry = COUNTRY_CODES.find(c => c.code === countryCode) || COUNTRY_CODES[0];
+  const currentCountry = COUNTRY_METADATA.find(c => c.code === selectedCountry) || COUNTRY_METADATA[0];
 
   return (
     <div className={styles.modalOverlay} onClick={(e) => e.target === e.currentTarget && onCancel()}>
@@ -338,8 +360,8 @@ export default function FormularioCliente({
                     className={styles.countrySelector}
                     onClick={() => setShowCountryDropdown(!showCountryDropdown)}
                   >
-                    <span className={styles.flag}>{selectedCountry.flag}</span>
-                    <span className={styles.code}>{selectedCountry.code}</span>
+                    <span className={styles.flag}>{currentCountry.flag}</span>
+                    <span className={styles.countryName}>{currentCountry.country}</span>
                     <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                       <polyline points="6 9 12 15 18 9"/>
                     </svg>
@@ -347,19 +369,19 @@ export default function FormularioCliente({
                   
                   {showCountryDropdown && (
                     <div className={styles.countryDropdown}>
-                      {COUNTRY_CODES.map((country) => (
+                      {COUNTRY_METADATA.map((country) => (
                         <button
                           key={country.code}
                           type="button"
-                          className={`${styles.countryOption} ${country.code === countryCode ? styles.countryOptionActive : ''}`}
+                          className={`${styles.countryOption} ${country.code === selectedCountry ? styles.countryOptionActive : ''}`}
                           onClick={() => {
-                            setCountryCode(country.code);
+                            setSelectedCountry(country.code);
                             setShowCountryDropdown(false);
                           }}
                         >
                           <span className={styles.flag}>{country.flag}</span>
                           <span className={styles.countryName}>{country.country}</span>
-                          <span className={styles.code}>{country.code}</span>
+                          <span className={styles.code}>+{country.countryCode}</span>
                         </button>
                       ))}
                     </div>
@@ -371,11 +393,14 @@ export default function FormularioCliente({
                     name="telefono"
                     value={formData.telefono}
                     onChange={handleChange}
-                    placeholder="1112345678"
+                    placeholder={selectedCountry === 'AR' ? '3794123456' : '1112345678'}
                     className={styles.phoneNumber}
                     autoFocus
                   />
                 </div>
+                {selectedCountry === 'AR' && (
+                  <small className={styles.helperText}>Colocar número sin 15</small>
+                )}
               </div>
 
               <div className={styles.field}>
