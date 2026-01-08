@@ -182,8 +182,139 @@
 .flowCanvas {
   flex: 1;
   position: relative;
-  width: 100%;
-  height: 100%;
+  background: #f5f5f7;
+}
+
+/* ========================================
+   MEJORAS DE CONEXIÓN - SISTEMA MAGNÉTICO
+   ======================================== */
+
+/* Estilo para edges en hover - más visibles */
+.flowCanvas :global(.react-flow__edge):hover :global(.react-flow__edge-path) {
+  stroke-width: 4px !important;
+  cursor: pointer;
+}
+
+/* Estilo para edges seleccionados */
+.flowCanvas :global(.react-flow__edge.selected) :global(.react-flow__edge-path) {
+  stroke-width: 4px !important;
+  stroke: #6366f1 !important;
+}
+
+/* Handles más grandes y visibles en hover */
+.flowCanvas :global(.react-flow__handle) {
+  width: 12px;
+  height: 12px;
+  border: 2px solid #fff;
+  background: #6366f1;
+  opacity: 0;
+  transition: all 0.2s ease;
+}
+
+.flowCanvas :global(.react-flow__node):hover :global(.react-flow__handle) {
+  opacity: 1;
+  transform: scale(1.2);
+}
+
+/* Handle en estado de conexión activa */
+.flowCanvas :global(.react-flow__handle.connecting) {
+  opacity: 1;
+  transform: scale(1.5);
+  box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.2);
+  animation: pulse 1s ease-in-out infinite;
+}
+
+/* Handle cuando está cerca (efecto magnético) */
+.flowCanvas :global(.react-flow__handle.valid) {
+  opacity: 1;
+  transform: scale(1.5);
+  background: #10b981;
+  box-shadow: 0 0 0 6px rgba(16, 185, 129, 0.3);
+  animation: magneticPulse 0.6s ease-in-out infinite;
+}
+
+/* Animación de pulso para handles activos */
+@keyframes pulse {
+  0%, 100% {
+    box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.2);
+  }
+  50% {
+    box-shadow: 0 0 0 8px rgba(99, 102, 241, 0.1);
+  }
+}
+
+/* Animación magnética cuando está cerca */
+@keyframes magneticPulse {
+  0%, 100% {
+    box-shadow: 0 0 0 6px rgba(16, 185, 129, 0.3);
+    transform: scale(1.5);
+  }
+  50% {
+    box-shadow: 0 0 0 10px rgba(16, 185, 129, 0.2);
+    transform: scale(1.6);
+  }
+}
+
+/* Línea de conexión temporal (mientras se arrastra) */
+.flowCanvas :global(.react-flow__connection-path) {
+  stroke: #6366f1;
+  stroke-width: 2px;
+  stroke-dasharray: 5, 5;
+  animation: dashAnimation 0.5s linear infinite;
+}
+
+@keyframes dashAnimation {
+  to {
+    stroke-dashoffset: -10;
+  }
+}
+
+/* Edge update line (cuando se reconecta) */
+.flowCanvas :global(.react-flow__edgeupdater) {
+  width: 16px;
+  height: 16px;
+  background: #6366f1;
+  border: 2px solid #fff;
+  border-radius: 50%;
+  cursor: grab;
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+
+.flowCanvas :global(.react-flow__edge):hover :global(.react-flow__edgeupdater) {
+  opacity: 1;
+}
+
+.flowCanvas :global(.react-flow__edgeupdater):hover {
+  background: #4f46e5;
+  transform: scale(1.2);
+  box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.2);
+}
+
+/* Snap grid visual feedback */
+.flowCanvas :global(.react-flow__node.dragging) {
+  opacity: 0.8;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+  cursor: grabbing !important;
+}
+
+/* Nodo siendo arrastrado - efecto visual mejorado */
+.flowCanvas :global(.react-flow__node.dragging) {
+  opacity: 0.85;
+  transform: scale(1.05);
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.2);
+  transition: none;
+  z-index: 1000;
+}
+
+/* Ocultar handles mientras se arrastra */
+.flowCanvas :global(.react-flow__node.dragging) :global(.react-flow__handle) {
+  opacity: 0 !important;
+}
+
+/* Cursor mientras se arrastra */
+.flowCanvas :global(.react-flow__node.dragging) * {
+  cursor: grabbing !important;
 }
 
 /* ========================================
