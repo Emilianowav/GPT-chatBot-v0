@@ -356,9 +356,10 @@ export class FlowExecutor {
 
     // NUEVO: Procesar variables recopiladas automáticamente
     if (config.variablesRecopilar && config.variablesRecopilar.length > 0) {
-      // Extraer variables de la respuesta del GPT (ahora es async)
+      // Extraer variables del mensaje del USUARIO, no de la respuesta del GPT
+      // Las variables están en lo que dice el usuario, no en lo que responde el asistente
       const variablesExtraidas = await GPTPromptBuilder.extractVariables(
-        resultado.texto,
+        userMessage,
         config.variablesRecopilar
       );
       
