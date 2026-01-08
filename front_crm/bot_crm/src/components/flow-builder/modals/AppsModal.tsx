@@ -90,16 +90,16 @@ const AVAILABLE_APPS: App[] = [
     color: '#ea4335',
   },
   {
+    id: 'woocommerce',
+    name: 'WooCommerce',
+    icon: <WooCommerceIcon />,
+    color: '#96588a',
+  },
+  {
     id: 'whatsapp',
     name: 'WhatsApp Business Cloud',
     icon: <WhatsAppIcon />,
     color: '#25D366',
-  },
-  {
-    id: 'woocommerce',
-    name: 'WooCommerce',
-    icon: <div style={{ fontSize: '20px' }}>🛒</div>,
-    color: '#96588a',
   },
 ];
 
