@@ -189,14 +189,30 @@ export const recibirMensaje = async (req: Request, res: Response, next: NextFunc
       return;
     }
 
-    // 🆕 SISTEMA DE FLUJOS VISUALES: Verificar si existe flujo visual activo
+    // 🆕 SISTEMA DE FLUJOS VISUALES: Usar flujo configurado en empresa.flujoActivo
     console.log('\n🆕 ========== VERIFICANDO SISTEMA DE FLUJOS VISUALES ==========');
     
-    const flowVisual = await FlowModel.findOne({ 
-      empresaId: empresaMongoId,
-      activo: true,
-      botType: 'visual' // ← FILTRAR SOLO FLUJOS VISUALES
-    });
+    // Prioridad 1: Usar flujoActivo de la empresa si está configurado
+    let flowVisual = null;
+    if (empresaDoc?.flujoActivo) {
+      console.log(`🎯 Empresa tiene flujoActivo configurado: ${empresaDoc.flujoActivo}`);
+      flowVisual = await FlowModel.findById(empresaDoc.flujoActivo);
+      if (flowVisual) {
+        console.log(`✅ Flujo activo cargado: ${flowVisual.nombre}`);
+      } else {
+        console.log(`⚠️  Flujo activo no encontrado, buscando fallback...`);
+      }
+    }
+    
+    // Fallback: Buscar flujo activo por empresaId (compatibilidad con flujos viejos)
+    if (!flowVisual) {
+      console.log('🔍 Buscando flujo activo por empresaId (fallback)...');
+      flowVisual = await FlowModel.findOne({ 
+        empresaId: empresaMongoId,
+        activo: true,
+        botType: 'visual'
+      });
+    }
 
     if (flowVisual && flowVisual.nodes && flowVisual.edges) {
       console.log(`✅ Flujo visual encontrado: ${flowVisual.nombre} (${flowVisual._id})`);

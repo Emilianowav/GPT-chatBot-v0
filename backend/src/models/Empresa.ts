@@ -5,6 +5,7 @@ import type { EmpresaConfig, EmpresaUbicacion } from '../types/Types.js';
 export interface IEmpresa extends Omit<EmpresaConfig, 'ubicaciones'>, Document {
   _id: mongoose.Types.ObjectId;
   ubicaciones?: EmpresaUbicacion[];
+  flujoActivo?: mongoose.Types.ObjectId;
   toEmpresaConfig(): EmpresaConfig;
 }
 
@@ -79,6 +80,13 @@ const EmpresaSchema = new Schema<IEmpresa>(
     },
     ubicaciones: [UbicacionSchema],
     phoneNumberId: String,
+    
+    // Flujo visual activo (ID del flujo que debe ejecutarse)
+    flujoActivo: { 
+      type: Schema.Types.ObjectId, 
+      ref: 'Flow',
+      required: false 
+    },
     
     // Configuración de GPT (opcional)
     gptConfig: {
