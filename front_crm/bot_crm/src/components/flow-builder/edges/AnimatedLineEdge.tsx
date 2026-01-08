@@ -37,47 +37,30 @@ function AnimatedLineEdge({
 
   return (
     <>
-      <defs>
-        {/* Degradado suave de source a target */}
-        <linearGradient id={`gradient-${edgeId}`} x1="0%" y1="0%" x2="100%" y2="0%">
-          <stop offset="0%" stopColor={sourceColor} stopOpacity="0.3" />
-          <stop offset="100%" stopColor={targetColor} stopOpacity="0.3" />
-        </linearGradient>
-        
-        {/* Filtro de brillo para las partículas */}
-        <filter id={`glow-${edgeId}`} x="-50%" y="-50%" width="200%" height="200%">
-          <feGaussianBlur stdDeviation="3" result="coloredBlur"/>
-          <feMerge>
-            <feMergeNode in="coloredBlur"/>
-            <feMergeNode in="SourceGraphic"/>
-          </feMerge>
-        </filter>
-      </defs>
-      
-      {/* Línea base sutil */}
+      {/* Línea plana simple */}
       <path
         d={`M ${sourceX},${sourceY} L ${targetX},${targetY}`}
-        stroke={`url(#gradient-${edgeId})`}
+        stroke="#d1d5db"
         strokeWidth={2}
         fill="none"
+        opacity={0.6}
       />
       
       {/* Partículas de energía que viajan */}
       {particles.map((index) => {
-        const delay = index * 0.4;
+        const delay = index * 1.2;
         
         return (
           <g key={index}>
             {/* Partícula principal */}
             <circle
               r="4"
-              fill={sourceColor}
-              filter={`url(#glow-${edgeId})`}
+              fill="#9ca3af"
               opacity="0"
             >
               {/* Animación de movimiento a lo largo de la línea */}
               <animateMotion
-                dur="1.2s"
+                dur="3.6s"
                 begin={`${delay}s`}
                 repeatCount="indefinite"
                 path={`M ${sourceX},${sourceY} L ${targetX},${targetY}`}
@@ -88,16 +71,7 @@ function AnimatedLineEdge({
                 attributeName="opacity"
                 values="0;1;1;0"
                 keyTimes="0;0.2;0.8;1"
-                dur="1.2s"
-                begin={`${delay}s`}
-                repeatCount="indefinite"
-              />
-              
-              {/* Animación de color (de source a target) */}
-              <animate
-                attributeName="fill"
-                values={`${sourceColor};${targetColor}`}
-                dur="1.2s"
+                dur="3.6s"
                 begin={`${delay}s`}
                 repeatCount="indefinite"
               />
@@ -106,7 +80,7 @@ function AnimatedLineEdge({
               <animate
                 attributeName="r"
                 values="3;5;3"
-                dur="1.2s"
+                dur="3.6s"
                 begin={`${delay}s`}
                 repeatCount="indefinite"
               />
@@ -115,11 +89,11 @@ function AnimatedLineEdge({
             {/* Estela de la partícula */}
             <circle
               r="2"
-              fill={sourceColor}
+              fill="#9ca3af"
               opacity="0"
             >
               <animateMotion
-                dur="1.2s"
+                dur="3.6s"
                 begin={`${delay}s`}
                 repeatCount="indefinite"
                 path={`M ${sourceX},${sourceY} L ${targetX},${targetY}`}
@@ -129,16 +103,8 @@ function AnimatedLineEdge({
                 attributeName="opacity"
                 values="0;0.5;0.5;0"
                 keyTimes="0;0.2;0.8;1"
-                dur="1.2s"
+                dur="3.6s"
                 begin={`${delay + 0.1}s`}
-                repeatCount="indefinite"
-              />
-              
-              <animate
-                attributeName="fill"
-                values={`${sourceColor};${targetColor}`}
-                dur="1.2s"
-                begin={`${delay}s`}
                 repeatCount="indefinite"
               />
             </circle>
