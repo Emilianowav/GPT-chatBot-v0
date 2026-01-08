@@ -846,37 +846,112 @@ export class FlowExecutor {
 
   /**
    * Resuelve una variable en un string (reemplaza {{variable}} con su valor)
-   * Soporta fallbacks: {{variable || "default"}}
+   * Soporta:
+   * - Variables simples: {{titulo_libro}}
+   * - Propiedades anidadas: {{woocommerce-search.productos}}
+   * - Acceso a propiedades: {{woocommerce-search.productos.length}}
+   * - Fallbacks: {{variable || "default"}}
+   * - Expresiones: {{woocommerce-search.productos.length || 0}}
    */
   private resolveVariableInString(str: string): string {
     if (!str) return '';
 
-    // Buscar todas las variables en el formato {{variable}} o {{variable || "default"}}
+    // Buscar todas las variables en el formato {{...}}
     const regex = /\{\{([^}]+)\}\}/g;
     
     return str.replace(regex, (match, expression) => {
       expression = expression.trim();
       
-      // Verificar si hay operador de fallback ||
-      if (expression.includes('||')) {
-        const parts = expression.split('||').map(p => p.trim());
-        const varPath = parts[0];
-        let fallback = parts[1];
+      try {
+        // Evaluar la expresión de forma segura
+        const result = this.evaluateExpression(expression);
         
-        // Remover comillas del fallback si existen
-        if (fallback.startsWith('"') && fallback.endsWith('"')) {
-          fallback = fallback.slice(1, -1);
-        } else if (fallback.startsWith("'") && fallback.endsWith("'")) {
-          fallback = fallback.slice(1, -1);
+        // Si el resultado es un array de productos, formatearlo
+        if (Array.isArray(result) && result.length > 0 && result[0].name) {
+          return this.formatProductsForWhatsApp(result);
         }
         
-        const value = this.getVariableValue(varPath);
-        return value !== undefined && value !== null && value !== '' ? String(value) : fallback;
+        // Si es un objeto complejo, convertirlo a string legible
+        if (typeof result === 'object' && result !== null) {
+          return JSON.stringify(result, null, 2);
+        }
+        
+        // Retornar el valor como string
+        return result !== undefined && result !== null ? String(result) : match;
+      } catch (error) {
+        console.warn(`      ⚠️  Error evaluando expresión "${expression}":`, error);
+        return match; // Mantener el placeholder si hay error
+      }
+    });
+  }
+
+  /**
+   * Evalúa una expresión de forma segura
+   * Soporta: variables, propiedades, operadores lógicos (||), acceso a length
+   */
+  private evaluateExpression(expression: string): any {
+    // Caso 1: Expresión con fallback (||)
+    if (expression.includes('||')) {
+      const parts = expression.split('||').map(p => p.trim());
+      const leftValue = this.evaluateExpression(parts[0]);
+      
+      // Si el valor izquierdo existe y no está vacío, usarlo
+      if (leftValue !== undefined && leftValue !== null && leftValue !== '') {
+        return leftValue;
       }
       
-      // Sin fallback, comportamiento normal
-      const value = this.getVariableValue(expression);
-      return value !== undefined && value !== null && value !== '' ? String(value) : match;
-    });
+      // Sino, evaluar el fallback
+      const fallback = parts[1];
+      
+      // Si el fallback es un número
+      if (/^\d+$/.test(fallback)) {
+        return parseInt(fallback, 10);
+      }
+      
+      // Si el fallback es un string con comillas, removerlas
+      if ((fallback.startsWith('"') && fallback.endsWith('"')) ||
+          (fallback.startsWith("'") && fallback.endsWith("'"))) {
+        return fallback.slice(1, -1);
+      }
+      
+      return fallback;
+    }
+    
+    // Caso 2: Acceso a propiedad .length
+    if (expression.endsWith('.length')) {
+      const varPath = expression.slice(0, -7); // Remover '.length'
+      const value = this.getVariableValue(varPath);
+      
+      if (Array.isArray(value)) {
+        return value.length;
+      }
+      
+      if (typeof value === 'string') {
+        return value.length;
+      }
+      
+      return 0;
+    }
+    
+    // Caso 3: Variable simple o anidada
+    return this.getVariableValue(expression);
+  }
+
+  /**
+   * Formatea un array de productos de WooCommerce para WhatsApp
+   */
+  private formatProductsForWhatsApp(productos: any[]): string {
+    if (!productos || productos.length === 0) {
+      return 'No se encontraron productos.';
+    }
+    
+    return productos.map((producto, index) => {
+      const numero = index + 1;
+      const nombre = producto.name || 'Sin nombre';
+      const precio = producto.price ? `$${producto.price}` : 'Consultar';
+      const stock = producto.in_stock ? '✅ Disponible' : '❌ Sin stock';
+      
+      return `${numero}. *${nombre}*\n   💰 ${precio}\n   ${stock}`;
+    }).join('\n\n');
   }
 }
