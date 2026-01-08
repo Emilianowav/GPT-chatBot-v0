@@ -356,10 +356,22 @@ export class FlowExecutor {
 
     // NUEVO: Procesar variables recopiladas automáticamente
     if (config.variablesRecopilar && config.variablesRecopilar.length > 0) {
-      // Extraer variables del mensaje del USUARIO, no de la respuesta del GPT
-      // Las variables están en lo que dice el usuario, no en lo que responde el asistente
+      // Extraer variables del HISTORIAL COMPLETO, no solo del mensaje actual
+      // Construir contexto completo para el extractor
+      let contextoCompleto = '';
+      
+      if (config.tipo === 'conversacional' && this.historialConversacion.length > 0) {
+        // Incluir historial completo (solo mensajes del usuario)
+        for (let i = 0; i < this.historialConversacion.length; i += 2) {
+          contextoCompleto += this.historialConversacion[i] + '\n';
+        }
+      }
+      
+      // Agregar mensaje actual
+      contextoCompleto += userMessage;
+      
       const variablesExtraidas = await GPTPromptBuilder.extractVariables(
-        userMessage,
+        contextoCompleto,
         config.variablesRecopilar
       );
       
