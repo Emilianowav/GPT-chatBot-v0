@@ -32,6 +32,27 @@ interface AccionCompletado {
   apiEndpoint?: string;
 }
 
+// Configuración para GPT Formateador
+interface CampoEsperado {
+  nombre: string;
+  descripcion: string;
+  tipoDato: 'string' | 'number' | 'boolean' | 'array' | 'object';
+  requerido: boolean;
+  valorPorDefecto?: any;
+}
+
+interface ConfiguracionExtraccion {
+  instruccionesExtraccion: string;
+  fuenteDatos: 'historial_completo' | 'ultimo_mensaje' | 'ultimos_n_mensajes';
+  cantidadMensajes?: number;
+  formatoSalida: {
+    tipo: 'json' | 'texto' | 'lista';
+    estructura?: string;
+    ejemplo?: string;
+  };
+  camposEsperados: CampoEsperado[];
+}
+
 export interface GPTConversacionalConfig {
   tipo: 'conversacional' | 'transform' | 'formateador' | 'procesador';
   module: string;
@@ -39,17 +60,20 @@ export interface GPTConversacionalConfig {
   temperatura: number;
   maxTokens: number;
   
-  // BLOQUE 1: PERSONALIDAD
-  personalidad: string;
+  // BLOQUE 1: PERSONALIDAD (solo conversacional)
+  personalidad?: string;
   
-  // BLOQUE 2: INFORMACIÓN ESTÁTICA (Tópicos)
-  topicos: Topico[];
+  // BLOQUE 2: INFORMACIÓN ESTÁTICA (Tópicos) (solo conversacional)
+  topicos?: Topico[];
   
-  // BLOQUE 3: RECOPILACIÓN DE DATOS
-  variablesRecopilar: VariableRecopilar[];
+  // BLOQUE 3: RECOPILACIÓN DE DATOS (solo conversacional)
+  variablesRecopilar?: VariableRecopilar[];
   
-  // BLOQUE 4: ACCIONES POST-RECOPILACIÓN
-  accionesCompletado: AccionCompletado[];
+  // BLOQUE 4: ACCIONES POST-RECOPILACIÓN (solo conversacional)
+  accionesCompletado?: AccionCompletado[];
+  
+  // CONFIGURACIÓN PARA FORMATEADOR/TRANSFORM
+  configuracionExtraccion?: ConfiguracionExtraccion;
   
   // Legacy
   variablesEntrada?: string[];
@@ -66,7 +90,10 @@ interface GPTConfigPanelProps {
 }
 
 const GPTConfigPanel: React.FC<GPTConfigPanelProps> = ({ config, onChange }) => {
-  const [activeTab, setActiveTab] = useState<'basico' | 'personalidad' | 'topicos' | 'variables' | 'acciones'>('basico');
+  const [activeTab, setActiveTab] = useState<'basico' | 'personalidad' | 'topicos' | 'variables' | 'acciones' | 'extraccion'>('basico');
+  
+  const esFormateador = config.tipo === 'formateador' || config.tipo === 'transform';
+  const esConversacional = config.tipo === 'conversacional';
 
   // Inicializar valores por defecto si no existen
   useEffect(() => {
@@ -180,6 +207,67 @@ const GPTConfigPanel: React.FC<GPTConfigPanelProps> = ({ config, onChange }) => 
     onChange({ ...config, accionesCompletado: acciones });
   };
 
+  // FUNCIONES PARA CONFIGURACIÓN DE EXTRACCIÓN
+  const agregarCampoEsperado = () => {
+    const nuevoCampo: CampoEsperado = {
+      nombre: '',
+      descripcion: '',
+      tipoDato: 'string',
+      requerido: false,
+      valorPorDefecto: null
+    };
+    onChange({
+      ...config,
+      configuracionExtraccion: {
+        ...config.configuracionExtraccion!,
+        camposEsperados: [...(config.configuracionExtraccion?.camposEsperados || []), nuevoCampo]
+      }
+    });
+  };
+
+  const actualizarCampoEsperado = (index: number, campo: keyof CampoEsperado, valor: any) => {
+    const campos = [...(config.configuracionExtraccion?.camposEsperados || [])];
+    (campos[index] as any)[campo] = valor;
+    onChange({
+      ...config,
+      configuracionExtraccion: {
+        ...config.configuracionExtraccion!,
+        camposEsperados: campos
+      }
+    });
+  };
+
+  const eliminarCampoEsperado = (index: number) => {
+    const campos = [...(config.configuracionExtraccion?.camposEsperados || [])];
+    campos.splice(index, 1);
+    onChange({
+      ...config,
+      configuracionExtraccion: {
+        ...config.configuracionExtraccion!,
+        camposEsperados: campos
+      }
+    });
+  };
+
+  // Inicializar configuración de extracción si es formateador y no existe
+  useEffect(() => {
+    if (esFormateador && !config.configuracionExtraccion) {
+      onChange({
+        ...config,
+        configuracionExtraccion: {
+          instruccionesExtraccion: '',
+          fuenteDatos: 'historial_completo',
+          formatoSalida: {
+            tipo: 'json',
+            estructura: '',
+            ejemplo: ''
+          },
+          camposEsperados: []
+        }
+      });
+    }
+  }, [esFormateador]);
+
   return (
     <div className={styles.gptConfigPanel}>
       {/* Tabs */}
@@ -190,30 +278,46 @@ const GPTConfigPanel: React.FC<GPTConfigPanelProps> = ({ config, onChange }) => 
         >
           Básico
         </button>
-        <button
-          className={activeTab === 'personalidad' ? styles.tabActive : styles.tab}
-          onClick={() => setActiveTab('personalidad')}
-        >
-          Personalidad
-        </button>
-        <button
-          className={activeTab === 'topicos' ? styles.tabActive : styles.tab}
-          onClick={() => setActiveTab('topicos')}
-        >
-          Tópicos ({config.topicos?.length || 0})
-        </button>
-        <button
-          className={activeTab === 'variables' ? styles.tabActive : styles.tab}
-          onClick={() => setActiveTab('variables')}
-        >
-          Variables ({config.variablesRecopilar?.length || 0})
-        </button>
-        <button
-          className={activeTab === 'acciones' ? styles.tabActive : styles.tab}
-          onClick={() => setActiveTab('acciones')}
-        >
-          Acciones ({config.accionesCompletado?.length || 0})
-        </button>
+        
+        {/* Tabs para GPT Conversacional */}
+        {esConversacional && (
+          <>
+            <button
+              className={activeTab === 'personalidad' ? styles.tabActive : styles.tab}
+              onClick={() => setActiveTab('personalidad')}
+            >
+              Personalidad
+            </button>
+            <button
+              className={activeTab === 'topicos' ? styles.tabActive : styles.tab}
+              onClick={() => setActiveTab('topicos')}
+            >
+              Tópicos ({config.topicos?.length || 0})
+            </button>
+            <button
+              className={activeTab === 'variables' ? styles.tabActive : styles.tab}
+              onClick={() => setActiveTab('variables')}
+            >
+              Variables ({config.variablesRecopilar?.length || 0})
+            </button>
+            <button
+              className={activeTab === 'acciones' ? styles.tabActive : styles.tab}
+              onClick={() => setActiveTab('acciones')}
+            >
+              Acciones ({config.accionesCompletado?.length || 0})
+            </button>
+          </>
+        )}
+        
+        {/* Tab para GPT Formateador */}
+        {esFormateador && (
+          <button
+            className={activeTab === 'extraccion' ? styles.tabActive : styles.tab}
+            onClick={() => setActiveTab('extraccion')}
+          >
+            Extracción
+          </button>
+        )}
       </div>
 
       {/* Contenido según tab activo */}
@@ -586,6 +690,237 @@ const GPTConfigPanel: React.FC<GPTConfigPanelProps> = ({ config, onChange }) => 
             <button className={styles.addButton} onClick={agregarAccion}>
               <Plus size={16} />
               Agregar Acción
+            </button>
+          </div>
+        )}
+
+        {/* TAB: EXTRACCIÓN (para Formateador) */}
+        {activeTab === 'extraccion' && esFormateador && (
+          <div className={styles.section}>
+            <div className={styles.sectionHeader}>
+              <h3>Configuración de Extracción y Formateo</h3>
+              <div className={styles.infoBox}>
+                <Info size={16} />
+                <span>Este nodo NO habla con el usuario. Analiza el historial y extrae datos estructurados.</span>
+              </div>
+            </div>
+
+            {/* Instrucciones de Extracción */}
+            <div className={styles.formGroup}>
+              <label>Instrucciones de Extracción</label>
+              <textarea
+                rows={8}
+                placeholder="Ejemplo:\nAnaliza la conversación y extrae la información sobre el libro que el usuario está buscando.\nIdentifica el título del libro, la editorial (si la mencionó), y la edición (si la mencionó).\nSi el usuario dijo 'cualquiera', deja ese campo como null."
+                value={config.configuracionExtraccion?.instruccionesExtraccion || ''}
+                onChange={(e) => onChange({
+                  ...config,
+                  configuracionExtraccion: {
+                    ...config.configuracionExtraccion!,
+                    instruccionesExtraccion: e.target.value
+                  }
+                })}
+              />
+              <small>Describe qué información debe extraer del historial de conversación</small>
+            </div>
+
+            {/* Fuente de Datos */}
+            <div className={styles.formGroup}>
+              <label>Fuente de Datos</label>
+              <select
+                value={config.configuracionExtraccion?.fuenteDatos || 'historial_completo'}
+                onChange={(e) => onChange({
+                  ...config,
+                  configuracionExtraccion: {
+                    ...config.configuracionExtraccion!,
+                    fuenteDatos: e.target.value as any
+                  }
+                })}
+              >
+                <option value="historial_completo">Historial Completo</option>
+                <option value="ultimo_mensaje">Último Mensaje</option>
+                <option value="ultimos_n_mensajes">Últimos N Mensajes</option>
+              </select>
+            </div>
+
+            {config.configuracionExtraccion?.fuenteDatos === 'ultimos_n_mensajes' && (
+              <div className={styles.formGroup}>
+                <label>Cantidad de Mensajes</label>
+                <input
+                  type="number"
+                  min="1"
+                  max="20"
+                  value={config.configuracionExtraccion?.cantidadMensajes || 5}
+                  onChange={(e) => onChange({
+                    ...config,
+                    configuracionExtraccion: {
+                      ...config.configuracionExtraccion!,
+                      cantidadMensajes: Number(e.target.value)
+                    }
+                  })}
+                />
+                <small>Número de mensajes recientes a analizar</small>
+              </div>
+            )}
+
+            {/* Formato de Salida */}
+            <div className={styles.formGroup}>
+              <label>Tipo de Formato de Salida</label>
+              <select
+                value={config.configuracionExtraccion?.formatoSalida?.tipo || 'json'}
+                onChange={(e) => onChange({
+                  ...config,
+                  configuracionExtraccion: {
+                    ...config.configuracionExtraccion!,
+                    formatoSalida: {
+                      ...config.configuracionExtraccion!.formatoSalida,
+                      tipo: e.target.value as any
+                    }
+                  }
+                })}
+              >
+                <option value="json">JSON</option>
+                <option value="texto">Texto</option>
+                <option value="lista">Lista</option>
+              </select>
+            </div>
+
+            {config.configuracionExtraccion?.formatoSalida?.tipo === 'json' && (
+              <>
+                <div className={styles.formGroup}>
+                  <label>Estructura JSON Esperada</label>
+                  <textarea
+                    rows={3}
+                    placeholder='Ejemplo: { "titulo_libro": string, "editorial": string | null, "edicion": string | null }'
+                    value={config.configuracionExtraccion?.formatoSalida?.estructura || ''}
+                    onChange={(e) => onChange({
+                      ...config,
+                      configuracionExtraccion: {
+                        ...config.configuracionExtraccion!,
+                        formatoSalida: {
+                          ...config.configuracionExtraccion!.formatoSalida,
+                          estructura: e.target.value
+                        }
+                      }
+                    })}
+                  />
+                  <small>Define la estructura del JSON que esperas recibir</small>
+                </div>
+
+                <div className={styles.formGroup}>
+                  <label>Ejemplo de Salida</label>
+                  <textarea
+                    rows={3}
+                    placeholder='Ejemplo: { "titulo_libro": "Harry Potter 3", "editorial": null, "edicion": null }'
+                    value={config.configuracionExtraccion?.formatoSalida?.ejemplo || ''}
+                    onChange={(e) => onChange({
+                      ...config,
+                      configuracionExtraccion: {
+                        ...config.configuracionExtraccion!,
+                        formatoSalida: {
+                          ...config.configuracionExtraccion!.formatoSalida,
+                          ejemplo: e.target.value
+                        }
+                      }
+                    })}
+                  />
+                  <small>Proporciona un ejemplo concreto de la salida esperada</small>
+                </div>
+              </>
+            )}
+
+            {/* Campos Esperados */}
+            <div className={styles.sectionHeader} style={{ marginTop: '2rem' }}>
+              <h4>Campos a Extraer</h4>
+              <div className={styles.infoBox}>
+                <Info size={16} />
+                <span>Define qué campos específicos debe extraer del historial</span>
+              </div>
+            </div>
+
+            {config.configuracionExtraccion?.camposEsperados && config.configuracionExtraccion.camposEsperados.length > 0 ? (
+              config.configuracionExtraccion.camposEsperados.map((campo, index) => (
+                <div key={index} className={styles.itemCard}>
+                  <div className={styles.itemHeader}>
+                    <h4>Campo {index + 1}</h4>
+                    <button
+                      className={styles.deleteButton}
+                      onClick={() => eliminarCampoEsperado(index)}
+                      title="Eliminar campo"
+                    >
+                      <Trash2 size={16} />
+                    </button>
+                  </div>
+
+                  <div className={styles.formRow}>
+                    <div className={styles.formGroup}>
+                      <label>Nombre del Campo</label>
+                      <input
+                        type="text"
+                        placeholder="Ej: titulo_libro"
+                        value={campo.nombre}
+                        onChange={(e) => actualizarCampoEsperado(index, 'nombre', e.target.value)}
+                      />
+                    </div>
+
+                    <div className={styles.formGroup}>
+                      <label>Tipo de Dato</label>
+                      <select
+                        value={campo.tipoDato}
+                        onChange={(e) => actualizarCampoEsperado(index, 'tipoDato', e.target.value)}
+                      >
+                        <option value="string">String</option>
+                        <option value="number">Number</option>
+                        <option value="boolean">Boolean</option>
+                        <option value="array">Array</option>
+                        <option value="object">Object</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  <div className={styles.formGroup}>
+                    <label>Descripción</label>
+                    <input
+                      type="text"
+                      placeholder="Ej: Título del libro que el usuario mencionó"
+                      value={campo.descripcion}
+                      onChange={(e) => actualizarCampoEsperado(index, 'descripcion', e.target.value)}
+                    />
+                  </div>
+
+                  <div className={styles.formRow}>
+                    <div className={styles.formGroup}>
+                      <label className={styles.checkboxLabel}>
+                        <input
+                          type="checkbox"
+                          checked={campo.requerido}
+                          onChange={(e) => actualizarCampoEsperado(index, 'requerido', e.target.checked)}
+                        />
+                        <span>Campo Requerido</span>
+                      </label>
+                    </div>
+
+                    <div className={styles.formGroup}>
+                      <label>Valor por Defecto</label>
+                      <input
+                        type="text"
+                        placeholder="null"
+                        value={campo.valorPorDefecto || ''}
+                        onChange={(e) => actualizarCampoEsperado(index, 'valorPorDefecto', e.target.value || null)}
+                      />
+                    </div>
+                  </div>
+                </div>
+              ))
+            ) : (
+              <div className={styles.emptyState}>
+                <p>No hay campos configurados</p>
+                <small>Define qué campos debe extraer el formateador del historial</small>
+              </div>
+            )}
+
+            <button className={styles.addButton} onClick={agregarCampoEsperado}>
+              <Plus size={16} />
+              Agregar Campo
             </button>
           </div>
         )}
