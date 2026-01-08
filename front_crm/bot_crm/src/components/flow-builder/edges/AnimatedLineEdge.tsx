@@ -51,9 +51,10 @@ function AnimatedLineEdge({
       <path
         d={`M ${sourceX},${sourceY} L ${targetX},${targetY}`}
         stroke={`url(#gradient-${edgeId})`}
-        strokeWidth={2}
+        strokeWidth={3}
         fill="none"
-        opacity={0.6}
+        opacity={0.9}
+        strokeDasharray="5,3"
       />
       
       {/* Partículas de energía que viajan */}
