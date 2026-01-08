@@ -28,22 +28,10 @@ function AnimatedLineEdge({
   const sourceColor = sourceNode?.data?.color || data?.sourceColor || '#9ca3af';
   const targetColor = targetNode?.data?.color || data?.targetColor || '#9ca3af';
 
-  // PUNTO 2: Calcular ángulo y posiciones desde el BORDE de los nodos
-  const nodeRadius = 50; // Radio del nodo (100px diámetro / 2)
-  const angle = Math.atan2(targetY - sourceY, targetX - sourceX);
-  
-  // Punto inicial: borde del nodo source
-  const adjustedSourceX = sourceX + Math.cos(angle) * nodeRadius;
-  const adjustedSourceY = sourceY + Math.sin(angle) * nodeRadius;
-  
-  // Punto final: borde del nodo target
-  const adjustedTargetX = targetX - Math.cos(angle) * nodeRadius;
-  const adjustedTargetY = targetY - Math.sin(angle) * nodeRadius;
-
-  // Calcular distancia entre bordes de nodos
+  // Calcular distancia entre centros de nodos
   const distance = Math.sqrt(
-    Math.pow(adjustedTargetX - adjustedSourceX, 2) + 
-    Math.pow(adjustedTargetY - adjustedSourceY, 2)
+    Math.pow(targetX - sourceX, 2) + 
+    Math.pow(targetY - sourceY, 2)
   );
   
   const numCircles = Math.max(3, Math.floor(distance / 40));
@@ -71,8 +59,8 @@ function AnimatedLineEdge({
   
   for (let i = 0; i < numCircles; i++) {
     const t = i / (numCircles - 1);
-    const x = adjustedSourceX + (adjustedTargetX - adjustedSourceX) * t;
-    const y = adjustedSourceY + (adjustedTargetY - adjustedSourceY) * t;
+    const x = sourceX + (targetX - sourceX) * t;
+    const y = sourceY + (targetY - sourceY) * t;
     
     // Mezclar colores según posición
     const color = interpolateColor(sourceColor, targetColor, t);
