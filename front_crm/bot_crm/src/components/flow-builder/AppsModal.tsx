@@ -217,7 +217,7 @@ export default function AppsModal({ onClose, onSelectModule, position }: AppsMod
                       className={styles.appIcon}
                       style={{ background: app.color }}
                     >
-                      <Icon size={24} />
+                      <Icon />
                     </div>
                     <div className={styles.appInfo}>
                       <div className={styles.appName}>{app.name}</div>
