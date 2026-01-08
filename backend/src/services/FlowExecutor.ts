@@ -424,9 +424,25 @@ export class FlowExecutor {
       return { output: input };
     }
 
-    // Resolver variables en el mensaje
-    const mensaje = this.resolveVariableInString(config.message || input.message);
-    const telefono = this.resolveVariableInString(config.to || input.to || input.telefono_usuario);
+    // Resolver mensaje usando estrategia en cascada
+    const mensaje = this.resolveWhatsAppMessage(config, input);
+    
+    // Validar que el mensaje no esté vacío
+    if (!mensaje || mensaje.trim() === '') {
+      const error = `Nodo WhatsApp ${node.id}: No se pudo resolver el mensaje. Verifica la configuración del nodo.`;
+      console.error(`   ❌ ${error}`);
+      throw new Error(error);
+    }
+
+    // Resolver teléfono usando estrategia en cascada
+    const telefono = this.resolveWhatsAppPhone(config, input);
+    
+    // Validar que el teléfono no esté vacío
+    if (!telefono || telefono.trim() === '') {
+      const error = `Nodo WhatsApp ${node.id}: No se pudo resolver el número de teléfono.`;
+      console.error(`   ❌ ${error}`);
+      throw new Error(error);
+    }
 
     // Usar phoneNumberId del flowConfig si no está especificado en el nodo
     const phoneNumberId = config.phoneNumberId || 
@@ -446,8 +462,96 @@ export class FlowExecutor {
       output: {
         status: 'sent',
         to: telefono,
+        message: mensaje,
       },
     };
+  }
+
+  /**
+   * Resuelve el mensaje de WhatsApp usando estrategia en cascada
+   * Prioridad:
+   * 1. config.message (inglés)
+   * 2. config.mensaje (español)
+   * 3. input.message (del edge mapping)
+   * 4. input.mensaje (del edge mapping)
+   * 5. Buscar en output del nodo anterior si input tiene referencia
+   */
+  private resolveWhatsAppMessage(config: any, input: any): string {
+    // 1. Intentar desde config del nodo (normalizar message/mensaje)
+    const configMessage = config.message || config.mensaje;
+    if (configMessage) {
+      const resolved = this.resolveVariableInString(configMessage);
+      if (resolved && resolved.trim() !== '') {
+        return resolved;
+      }
+    }
+
+    // 2. Intentar desde input (edge mapping)
+    const inputMessage = input.message || input.mensaje;
+    if (inputMessage) {
+      const resolved = this.resolveVariableInString(String(inputMessage));
+      if (resolved && resolved.trim() !== '') {
+        return resolved;
+      }
+    }
+
+    // 3. Si input tiene una referencia a otro nodo, intentar obtener su output
+    if (typeof input === 'object' && Object.keys(input).length > 0) {
+      // Buscar campos que puedan contener el mensaje
+      const possibleFields = ['respuesta_gpt', 'texto', 'content', 'body'];
+      for (const field of possibleFields) {
+        if (input[field]) {
+          return String(input[field]);
+        }
+      }
+    }
+
+    return '';
+  }
+
+  /**
+   * Resuelve el teléfono de WhatsApp usando estrategia en cascada
+   * Prioridad:
+   * 1. config.to
+   * 2. input.to
+   * 3. input.telefono_usuario
+   * 4. input.from (del trigger)
+   * 5. Variable global 'telefono_usuario'
+   */
+  private resolveWhatsAppPhone(config: any, input: any): string {
+    // 1. Desde config del nodo
+    if (config.to) {
+      const resolved = this.resolveVariableInString(config.to);
+      if (resolved && resolved.trim() !== '') {
+        return resolved;
+      }
+    }
+
+    // 2. Desde input (edge mapping)
+    if (input.to) {
+      const resolved = this.resolveVariableInString(String(input.to));
+      if (resolved && resolved.trim() !== '') {
+        return resolved;
+      }
+    }
+
+    // 3. Desde input.telefono_usuario
+    if (input.telefono_usuario) {
+      return String(input.telefono_usuario);
+    }
+
+    // 4. Desde input.from (trigger de WhatsApp)
+    if (input.from) {
+      return String(input.from);
+    }
+
+    // 5. Desde variable global
+    const globalPhone = this.getGlobalVariable('telefono_usuario');
+    if (globalPhone) {
+      return String(globalPhone);
+    }
+
+    return '';
   }
 
   /**
