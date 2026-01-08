@@ -52,10 +52,10 @@ function AnimatedLineEdge({
   
   for (let i = 0; i < numCircles; i++) {
     const t = i / (numCircles - 1);
-    const x = sourceX + (targetX - sourceX) * t;
-    const y = sourceY + (targetY - sourceY) * t;
+    const x = adjustedSourceX + (adjustedTargetX - adjustedSourceX) * t;
+    const y = adjustedSourceY + (adjustedTargetY - adjustedSourceY) * t;
     
-    // Mezclar colores según posición
+    // Mezclar colores según posición (interpolación correcta)
     const color = interpolateColor(sourceColor, targetColor, t);
     
     // Tamaño base del círculo
