@@ -117,6 +117,83 @@ export class GPTPromptBuilder {
   }
 
   /**
+   * Extrae datos usando configuración avanzada (para GPT Formateador)
+   */
+  static async extractWithCustomConfig(
+    contexto: string,
+    configuracion: any // IConfiguracionExtraccion
+  ): Promise<Record<string, any>> {
+    const resultado: Record<string, any> = {};
+
+    if (!configuracion || !configuracion.camposEsperados) {
+      return resultado;
+    }
+
+    try {
+      // Construir prompt personalizado
+      const extractorPrompt = `${configuracion.instruccionesExtraccion}
+
+CONVERSACIÓN:
+${contexto}
+
+${configuracion.formatoSalida?.estructura ? `FORMATO DE SALIDA ESPERADO:\n${configuracion.formatoSalida.estructura}\n\n` : ''}${configuracion.formatoSalida?.ejemplo ? `EJEMPLO:\n${configuracion.formatoSalida.ejemplo}\n\n` : ''}CAMPOS A EXTRAER:
+${configuracion.camposEsperados.map((c: any) => `- ${c.nombre}: ${c.descripcion} (tipo: ${c.tipoDato}, ${c.requerido ? 'requerido' : 'opcional'})`).join('\n')}
+
+Responde ÚNICAMENTE con un objeto JSON válido. No incluyas texto adicional.`;
+
+      console.log('   📤 Enviando a GPT-3.5 Turbo con configuración personalizada...');
+
+      // Llamar a GPT-3.5 Turbo
+      const respuesta = await obtenerRespuestaChat({
+        modelo: 'gpt-3.5-turbo',
+        historial: [
+          {
+            role: 'system',
+            content: 'Eres un extractor de datos preciso. Respondes SOLO con JSON válido.'
+          },
+          {
+            role: 'user',
+            content: extractorPrompt
+          }
+        ]
+      });
+
+      // Parsear JSON
+      try {
+        let jsonString = respuesta.texto.trim();
+        
+        // Remover bloques de código markdown si existen
+        if (jsonString.startsWith('```')) {
+          jsonString = jsonString.replace(/```json?\n?/g, '').replace(/```\n?/g, '').trim();
+        }
+
+        const extracted = JSON.parse(jsonString);
+        
+        // Validar que sea un objeto
+        if (typeof extracted === 'object' && extracted !== null && !Array.isArray(extracted)) {
+          // Aplicar valores por defecto si faltan campos requeridos
+          for (const campo of configuracion.camposEsperados) {
+            if (extracted[campo.nombre] === undefined || extracted[campo.nombre] === null) {
+              if (campo.requerido && campo.valorPorDefecto !== undefined) {
+                extracted[campo.nombre] = campo.valorPorDefecto;
+              }
+            }
+          }
+          Object.assign(resultado, extracted);
+        }
+      } catch (parseError) {
+        console.error('   ❌ Error parseando JSON del extractor:', parseError);
+        console.error('   Respuesta recibida:', respuesta.texto);
+      }
+
+    } catch (error) {
+      console.error('   ❌ Error en extractWithCustomConfig:', error);
+    }
+
+    return resultado;
+  }
+
+  /**
    * Extrae variables recopiladas de la respuesta del GPT usando GPT-3.5 Turbo
    */
   static async extractVariables(

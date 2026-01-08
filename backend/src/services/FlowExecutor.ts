@@ -354,10 +354,62 @@ export class FlowExecutor {
       await this.saveToHistorial(resultado.texto);
     }
 
-    // NUEVO: Procesar variables recopiladas automáticamente
-    if (config.variablesRecopilar && config.variablesRecopilar.length > 0) {
+    // NUEVO: Procesar extracción de datos
+    // Soporta dos modos: configuracionExtraccion (avanzado) o variablesRecopilar (legacy)
+    if (config.configuracionExtraccion) {
+      // MODO AVANZADO: GPT Formateador con configuración personalizada
+      console.log('   🔧 Usando configuración de extracción avanzada');
+      
+      // Construir contexto según fuente de datos configurada
+      let contexto = '';
+      const fuenteDatos = config.configuracionExtraccion.fuenteDatos || 'historial_completo';
+      
+      if (fuenteDatos === 'historial_completo' && this.historialConversacion.length > 0) {
+        // Incluir todo el historial (solo mensajes del usuario)
+        for (let i = 0; i < this.historialConversacion.length; i += 2) {
+          contexto += this.historialConversacion[i] + '\n';
+        }
+        contexto += userMessage;
+      } else if (fuenteDatos === 'ultimos_n_mensajes' && this.historialConversacion.length > 0) {
+        // Incluir últimos N mensajes
+        const n = config.configuracionExtraccion.cantidadMensajes || 5;
+        const mensajesUsuario = [];
+        for (let i = 0; i < this.historialConversacion.length; i += 2) {
+          mensajesUsuario.push(this.historialConversacion[i]);
+        }
+        const ultimos = mensajesUsuario.slice(-n);
+        contexto = ultimos.join('\n') + '\n' + userMessage;
+      } else {
+        // ultimo_mensaje o fallback
+        contexto = userMessage;
+      }
+      
+      console.log(`   📝 Contexto para extracción (${fuenteDatos}): ${contexto.substring(0, 150)}...`);
+      
+      // Usar método de extracción avanzado
+      const datosExtraidos = await GPTPromptBuilder.extractWithCustomConfig(
+        contexto,
+        config.configuracionExtraccion
+      );
+      
+      console.log(`   ✅ Datos extraídos: ${JSON.stringify(datosExtraidos)}`);
+      
+      // Guardar cada dato extraído en variables globales
+      for (const [nombre, valor] of Object.entries(datosExtraidos)) {
+        if (valor !== undefined && valor !== null && valor !== '') {
+          console.log(`   💾 Guardando variable global: ${nombre} = ${JSON.stringify(valor)?.substring(0, 100)}`);
+          this.setGlobalVariable(nombre, valor);
+          output[nombre] = valor;
+        }
+      }
+      
+      console.log(`   📋 globalVariables después de guardar: ${JSON.stringify(Object.keys(this.globalVariables))}`);
+      
+    } else if (config.variablesRecopilar && config.variablesRecopilar.length > 0) {
+      // MODO LEGACY: Extracción simple con variablesRecopilar
+      console.log('   🔧 Usando extracción legacy (variablesRecopilar)');
+      
       // Extraer variables del HISTORIAL COMPLETO, no solo del mensaje actual
-      // Construir contexto completo para el extractor
       let contextoCompleto = '';
       
       if (config.tipo === 'conversacional' && this.historialConversacion.length > 0) {
