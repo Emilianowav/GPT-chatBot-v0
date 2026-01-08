@@ -45,6 +45,7 @@ function AnimatedLineEdge({
         d={`M ${sourceX},${sourceY} L ${targetX},${targetY}`}
         stroke={`url(#gradient-${edgeId})`}
         strokeWidth={2}
+        strokeDasharray="5,5"
         fill="none"
         opacity={0.8}
       />
