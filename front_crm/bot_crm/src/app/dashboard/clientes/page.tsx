@@ -133,7 +133,7 @@ export default function ClientesPage() {
       <div className={styles.container}>
         <div className={styles.header}>
           <div>
-            <h1>👤 Gestión de Clientes</h1>
+            <h1>Gestión de Clientes</h1>
             <p>Administra tu base de datos de clientes</p>
           </div>
           <button 

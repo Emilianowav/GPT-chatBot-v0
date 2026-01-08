@@ -22,7 +22,7 @@ import WooCommerceNode from '@/components/flow-builder/nodes/WooCommerceNode';
 import GPTNode from '@/components/flow-builder/nodes/GPTNode';
 import MercadoPagoNode from '@/components/flow-builder/nodes/MercadoPagoNode';
 import WebhookNode from '@/components/flow-builder/nodes/WebhookNode';
-import SimpleEdge from '@/components/flow-builder/edges/SimpleEdge';
+import AnimatedLineEdge from '@/components/flow-builder/edges/AnimatedLineEdge';
 import AppsModal from '@/components/flow-builder/modals/AppsModal';
 import ModuleSelectionModal from '@/components/flow-builder/modals/ModuleSelectionModal';
 import WebhookConfigModal from '@/components/flow-builder/modals/WebhookConfigModal';
@@ -42,7 +42,7 @@ const nodeTypes = {
 };
 
 const edgeTypes = {
-  simple: SimpleEdge,
+  default: AnimatedLineEdge,
 };
 
 const WhatsAppIcon = () => (
