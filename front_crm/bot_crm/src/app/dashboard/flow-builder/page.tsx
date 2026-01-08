@@ -261,10 +261,10 @@ export default function FlowBuilderPage() {
   }, [setNodes]);
 
   useEffect(() => {
-    // Cargar flow de Veo Veo automáticamente
+    // Cargar flow de WooCommerce automáticamente
     const loadVeoVeoFlow = async () => {
       try {
-        const flowId = '695a156681f6d67f0ae9cf39'; // Veo Veo - Test 3 Bloques
+        const flowId = '695a156681f6d67f0ae9cf40'; // WooCommerce - Búsqueda de Productos
         const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';
         const response = await fetch(`${apiUrl}/api/flows/detail/${flowId}`);
         const flow = await response.json();
@@ -486,11 +486,18 @@ export default function FlowBuilderPage() {
         edges
       };
 
-      const response = await fetch('/api/flows', {
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';
+      const url = currentFlowId ? `${apiUrl}/api/flows/${currentFlowId}` : `${apiUrl}/api/flows`;
+      
+      const response = await fetch(url, {
         method: currentFlowId ? 'PUT' : 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(currentFlowId ? { ...flowData, _id: currentFlowId } : flowData)
+        body: JSON.stringify(flowData)
       });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
 
       const savedFlow = await response.json();
       setCurrentFlowId(savedFlow._id);
