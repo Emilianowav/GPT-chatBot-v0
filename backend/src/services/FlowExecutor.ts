@@ -472,12 +472,18 @@ export class FlowExecutor {
     // Crear servicio WooCommerce
     const wooService = createWooCommerceService(connection);
     
-    // Resolver variables en params (crear mapping de params)
-    const paramsMapping: Record<string, string> = {};
+    // Resolver variables en params (soporta {{variable}} y referencias directas)
+    const params: Record<string, any> = {};
     for (const [key, value] of Object.entries(config.params || {})) {
-      paramsMapping[key] = String(value);
+      const stringValue = String(value);
+      // Si tiene formato {{variable}}, usar resolveVariableInString
+      if (stringValue.includes('{{')) {
+        params[key] = this.resolveVariableInString(stringValue);
+      } else {
+        // Si no, intentar resolver como referencia directa
+        params[key] = this.getVariableValue(stringValue) || stringValue;
+      }
     }
-    const params = this.resolveVariables(paramsMapping);
     
     console.log(`   📦 Parámetros:`, JSON.stringify(params).substring(0, 100) + '...');
     
