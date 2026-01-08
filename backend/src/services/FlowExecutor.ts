@@ -590,8 +590,11 @@ export class FlowExecutor {
   private evaluateCondition(condition: any, input: any): boolean {
     if (!condition) return false;
 
+    console.log(`      🔍 evaluateCondition - tipo: ${typeof condition}, valor: ${JSON.stringify(condition)?.substring(0, 100)}`);
+
     // Si la condición es un string, parsearla
     if (typeof condition === 'string') {
+      console.log(`      ✅ Detectado string, llamando evaluateStringCondition`);
       return this.evaluateStringCondition(condition);
     }
 
