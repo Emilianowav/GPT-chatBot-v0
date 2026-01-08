@@ -37,10 +37,20 @@ function AnimatedLineEdge({
 
   return (
     <>
-      {/* Línea plana simple */}
+      <defs>
+        {/* Degradado 50/50: centro hacia nodos */}
+        <linearGradient id={`gradient-${edgeId}`} x1="0%" y1="0%" x2="100%" y2="0%">
+          <stop offset="0%" stopColor={sourceColor} />
+          <stop offset="50%" stopColor={sourceColor} />
+          <stop offset="50%" stopColor={targetColor} />
+          <stop offset="100%" stopColor={targetColor} />
+        </linearGradient>
+      </defs>
+      
+      {/* Línea con degradado 50/50 */}
       <path
         d={`M ${sourceX},${sourceY} L ${targetX},${targetY}`}
-        stroke="#d1d5db"
+        stroke={`url(#gradient-${edgeId})`}
         strokeWidth={2}
         fill="none"
         opacity={0.6}
