@@ -590,6 +590,12 @@ export class FlowExecutor {
   private evaluateCondition(condition: any, input: any): boolean {
     if (!condition) return false;
 
+    // Si la condición es un string, parsearla
+    if (typeof condition === 'string') {
+      return this.evaluateStringCondition(condition);
+    }
+
+    // Si es un objeto, usar formato estructurado
     const { field, operator, value } = condition;
     
     // Resolver el valor del campo (puede ser una variable como "gpt-conversacional.respuesta_gpt")
@@ -637,6 +643,42 @@ export class FlowExecutor {
         console.warn(`      ⚠️  Operador desconocido: ${operator}`);
         return false;
     }
+  }
+
+  /**
+   * Evalúa una condición en formato string
+   * Ejemplos: "{{titulo_libro}} exists", "{{titulo_libro}} empty", "true", "false"
+   */
+  private evaluateStringCondition(condition: string): boolean {
+    // Resolver variables en la condición
+    const resolvedCondition = this.resolveVariableInString(condition);
+    
+    console.log(`      Condición: ${condition}`);
+    console.log(`      Resuelta: ${resolvedCondition}`);
+
+    // Casos especiales
+    if (resolvedCondition === 'true') return true;
+    if (resolvedCondition === 'false') return false;
+
+    // Parsear condiciones tipo "{{variable}} exists/empty"
+    const existsMatch = resolvedCondition.match(/^(.+?)\s+exists$/i);
+    if (existsMatch) {
+      const value = existsMatch[1].trim();
+      const exists = value !== '' && value !== 'undefined' && value !== 'null';
+      console.log(`      → exists: ${exists}`);
+      return exists;
+    }
+
+    const emptyMatch = resolvedCondition.match(/^(.+?)\s+empty$/i);
+    if (emptyMatch) {
+      const value = emptyMatch[1].trim();
+      const empty = value === '' || value === 'undefined' || value === 'null';
+      console.log(`      → empty: ${empty}`);
+      return empty;
+    }
+
+    // Si no coincide con ningún patrón, evaluar como booleano
+    return !!resolvedCondition && resolvedCondition !== 'false';
   }
 
   /**
