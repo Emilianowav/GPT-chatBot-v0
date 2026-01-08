@@ -101,7 +101,7 @@ function RouterNode({ id, data, selected }: NodeProps<RouterNodeData>) {
       {/* Handles de salida múltiples (derecha) - SOLO handles invisibles */}
       {Array.from({ length: totalRoutes }).map((_, index) => {
         const topPosition = ((index + 1) * 100) / (totalRoutes + 1);
-        const handleId = `source-${index}`;
+        const handleId = `route-${index + 1}`;
         
         return (
           <Handle

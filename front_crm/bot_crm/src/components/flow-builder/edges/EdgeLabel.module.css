@@ -1,0 +1,63 @@
+/* ========================================
+   EDGE LABEL - MOSTRAR CONDICIONES
+   ======================================== */
+
+.edgeLabelContainer {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  z-index: 100;
+}
+
+.conditionLabel {
+  background: white;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  padding: 4px 10px;
+  font-size: 12px;
+  font-weight: 500;
+  color: #374151;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  max-width: 200px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  transition: all 0.2s;
+}
+
+.conditionLabel:hover {
+  max-width: 400px;
+  z-index: 101;
+}
+
+.conditionText {
+  font-family: 'Courier New', monospace;
+  color: #8b5cf6;
+}
+
+.configButton {
+  width: 24px;
+  height: 24px;
+  background: white;
+  border: 1px solid #d1d5db;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  color: #6b7280;
+}
+
+.configButton:hover {
+  background: #f3f4f6;
+  border-color: #8b5cf6;
+  color: #8b5cf6;
+  transform: scale(1.1);
+  box-shadow: 0 4px 12px rgba(139, 92, 246, 0.3);
+}
+
+.configButton:active {
+  transform: scale(0.95);
+}
