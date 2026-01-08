@@ -2,11 +2,10 @@ import { memo } from 'react';
 import { EdgeProps, useStore } from 'reactflow';
 
 /**
- * DISRUPTIVE ANIMATED EDGE
+ * SIMPLE DOTTED EDGE - ESTILO MAKE.COM
  * 
- * Animación innovadora con partículas de energía que fluyen
- * desde el nodo source hacia el target, con efecto de pulso
- * y cambio de color gradual.
+ * Línea punteada simple con círculos espaciados uniformemente.
+ * Sin animaciones complejas, diseño limpio y profesional.
  */
 
 function AnimatedLineEdge({
@@ -16,123 +15,48 @@ function AnimatedLineEdge({
   targetY,
   source,
   target,
-  data,
 }: EdgeProps) {
   const nodes = useStore((state) => state.nodeInternals);
   const sourceNode = nodes.get(source);
   const targetNode = nodes.get(target);
   
-  const sourceColor = sourceNode?.data?.color || data?.sourceColor || '#9ca3af';
-  const targetColor = targetNode?.data?.color || data?.targetColor || '#9ca3af';
+  const sourceColor = sourceNode?.data?.color || '#9ca3af';
+  const targetColor = targetNode?.data?.color || '#9ca3af';
 
-  const edgeId = `${source}-${target}`;
-  
-  // Calcular ángulo y distancia
+  // Calcular distancia y número de círculos
   const dx = targetX - sourceX;
   const dy = targetY - sourceY;
   const distance = Math.sqrt(dx * dx + dy * dy);
   
-  // Crear 3 partículas de energía que viajan por la línea
-  const particles = [0, 1, 2];
-
-  // Calcular el gradiente en la dirección correcta de la línea
-  const angle = Math.atan2(targetY - sourceY, targetX - sourceX) * (180 / Math.PI);
+  // Espaciado entre círculos (similar a Make.com)
+  const spacing = 20;
+  const numDots = Math.floor(distance / spacing);
   
+  const dots = [];
+  for (let i = 0; i <= numDots; i++) {
+    const t = i / numDots;
+    const x = sourceX + (targetX - sourceX) * t;
+    const y = sourceY + (targetY - sourceY) * t;
+    
+    // Color: mezcla gradual de source a target
+    const color = t < 0.5 ? sourceColor : targetColor;
+    
+    dots.push({ x, y, color, key: i });
+  }
+
   return (
-    <>
-      <defs>
-        {/* Degradado 50/50: centro hacia nodos */}
-        <linearGradient 
-          id={`gradient-${edgeId}`} 
-          x1="0%" 
-          y1="0%" 
-          x2="100%" 
-          y2="0%"
-          gradientTransform={`rotate(${angle} 0.5 0.5)`}
-        >
-          <stop offset="0%" stopColor={sourceColor} stopOpacity="1" />
-          <stop offset="50%" stopColor={sourceColor} stopOpacity="1" />
-          <stop offset="50%" stopColor={targetColor} stopOpacity="1" />
-          <stop offset="100%" stopColor={targetColor} stopOpacity="1" />
-        </linearGradient>
-      </defs>
-      
-      {/* Línea con degradado 50/50 */}
-      <path
-        d={`M ${sourceX},${sourceY} L ${targetX},${targetY}`}
-        stroke={`url(#gradient-${edgeId})`}
-        strokeWidth={3}
-        fill="none"
-        strokeDasharray="5,3"
-        strokeLinecap="round"
-      />
-      
-      {/* Partículas de energía que viajan */}
-      {particles.map((index) => {
-        const delay = index * 1.2;
-        
-        return (
-          <g key={index}>
-            {/* Partícula principal */}
-            <circle
-              r="4"
-              fill="#9ca3af"
-              opacity="0"
-            >
-              {/* Animación de movimiento a lo largo de la línea */}
-              <animateMotion
-                dur="3.6s"
-                begin={`${delay}s`}
-                repeatCount="indefinite"
-                path={`M ${sourceX},${sourceY} L ${targetX},${targetY}`}
-              />
-              
-              {/* Animación de opacidad (aparece y desaparece) */}
-              <animate
-                attributeName="opacity"
-                values="0;1;1;0"
-                keyTimes="0;0.2;0.8;1"
-                dur="3.6s"
-                begin={`${delay}s`}
-                repeatCount="indefinite"
-              />
-              
-              {/* Animación de tamaño (pulso) */}
-              <animate
-                attributeName="r"
-                values="3;5;3"
-                dur="3.6s"
-                begin={`${delay}s`}
-                repeatCount="indefinite"
-              />
-            </circle>
-            
-            {/* Estela de la partícula */}
-            <circle
-              r="2"
-              fill="#9ca3af"
-              opacity="0"
-            >
-              <animateMotion
-                dur="3.6s"
-                begin={`${delay}s`}
-                repeatCount="indefinite"
-                path={`M ${sourceX},${sourceY} L ${targetX},${targetY}`}
-              />
-              
-              <animate
-                attributeName="opacity"
-                values="0;0.5;0.5;0"
-                keyTimes="0;0.2;0.8;1"
-                dur="3.6s"
-                begin={`${delay + 0.1}s`}
-                repeatCount="indefinite"
-              />
-            </circle>
-          </g>
-        );
-      })}
-    </>
+    <g>
+      {dots.map((dot) => (
+        <circle
+          key={dot.key}
+          cx={dot.x}
+          cy={dot.y}
+          r={3}
+          fill={dot.color}
+          opacity={0.6}
+        />
+      ))}
+    </g>
   );
 }
 
