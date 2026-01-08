@@ -710,12 +710,19 @@ export class FlowExecutor {
    * Ejemplo: 'global.titulo' → globalVariables['titulo']
    */
   private getVariableValue(varPath: string): any {
-    // Soporte para variables globales
+    // Soporte para variables globales con prefijo 'global.'
     if (varPath.startsWith('global.')) {
       const globalKey = varPath.substring(7); // Remover 'global.'
       return this.getGlobalVariable(globalKey);
     }
 
+    // Intentar buscar primero en globalVariables (sin prefijo)
+    const globalValue = this.getGlobalVariable(varPath);
+    if (globalValue !== undefined && globalValue !== null) {
+      return globalValue;
+    }
+
+    // Si no está en globalVariables, buscar en contexto de nodos
     const parts = varPath.split('.');
     const nodeId = parts[0];
     const path = parts.slice(1);
