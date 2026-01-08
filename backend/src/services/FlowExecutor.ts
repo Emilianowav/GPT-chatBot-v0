@@ -365,11 +365,15 @@ export class FlowExecutor {
       const fuenteDatos = config.configuracionExtraccion.fuenteDatos || 'historial_completo';
       
       if (fuenteDatos === 'historial_completo' && this.historialConversacion.length > 0) {
-        // Incluir todo el historial (solo mensajes del usuario)
+        // Incluir todo el historial (usuario + asistente)
+        // Formato: Usuario: ... / Asistente: ...
         for (let i = 0; i < this.historialConversacion.length; i += 2) {
-          contexto += this.historialConversacion[i] + '\n';
+          contexto += `Usuario: ${this.historialConversacion[i]}\n`;
+          if (this.historialConversacion[i + 1]) {
+            contexto += `Asistente: ${this.historialConversacion[i + 1]}\n`;
+          }
         }
-        contexto += userMessage;
+        contexto += `Usuario: ${userMessage}`;
       } else if (fuenteDatos === 'ultimos_n_mensajes' && this.historialConversacion.length > 0) {
         // Incluir últimos N mensajes
         const n = config.configuracionExtraccion.cantidadMensajes || 5;
