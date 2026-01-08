@@ -101,6 +101,12 @@
   z-index: 10;
   pointer-events: auto;
   box-shadow: 0 3px 10px rgba(0, 0, 0, 0.15);
+  opacity: 0;
+}
+
+/* Mostrar handler solo en hover del nodo */
+.appNodeContainer:hover .handlePlus {
+  opacity: 1;
 }
 
 .handlePlus:hover {
