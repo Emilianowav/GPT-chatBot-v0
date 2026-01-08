@@ -825,33 +825,53 @@ export class FlowExecutor {
    * Ejemplo: 'global.titulo' → globalVariables['titulo']
    */
   private getVariableValue(varPath: string): any {
+    console.log(`         🔎 [getVariableValue] Buscando: "${varPath}"`);
+    
     // Soporte para variables globales con prefijo 'global.'
     if (varPath.startsWith('global.')) {
       const globalKey = varPath.substring(7); // Remover 'global.'
-      return this.getGlobalVariable(globalKey);
+      const value = this.getGlobalVariable(globalKey);
+      console.log(`         → global.${globalKey} = ${JSON.stringify(value)?.substring(0, 100)}`);
+      return value;
     }
 
     // Intentar buscar primero en globalVariables (sin prefijo)
     const globalValue = this.getGlobalVariable(varPath);
     if (globalValue !== undefined && globalValue !== null) {
+      console.log(`         ✅ Encontrado en globalVariables: ${JSON.stringify(globalValue)?.substring(0, 100)}`);
       return globalValue;
     }
+    console.log(`         ⚠️  No encontrado en globalVariables`);
+    console.log(`         📋 globalVariables actuales: ${JSON.stringify(Object.keys(this.globalVariables))}`);
 
     // Si no está en globalVariables, buscar en contexto de nodos
     const parts = varPath.split('.');
     const nodeId = parts[0];
     const path = parts.slice(1);
 
+    console.log(`         🔎 Buscando en contexto de nodo: "${nodeId}"`);
+    console.log(`         📋 Nodos en contexto: ${JSON.stringify(Object.keys(this.context))}`);
+    
     let value = this.context[nodeId]?.output;
+    
+    if (!value) {
+      console.log(`         ❌ Nodo "${nodeId}" no encontrado en contexto`);
+      return undefined;
+    }
+    
+    console.log(`         ✅ Nodo encontrado, output: ${JSON.stringify(value)?.substring(0, 150)}`);
 
     for (const part of path) {
       if (value && typeof value === 'object') {
         value = value[part];
+        console.log(`         → Accediendo a .${part}: ${JSON.stringify(value)?.substring(0, 100)}`);
       } else {
+        console.log(`         ❌ No se puede acceder a .${part} (valor no es objeto)`);
         return undefined;
       }
     }
 
+    console.log(`         ✅ Valor final: ${JSON.stringify(value)?.substring(0, 100)}`);
     return value;
   }
 
@@ -901,18 +921,25 @@ export class FlowExecutor {
    * Soporta: variables, propiedades, operadores lógicos (||), acceso a length
    */
   private evaluateExpression(expression: string): any {
+    console.log(`      🧮 [evaluateExpression] Evaluando: "${expression}"`);
+    
     // Caso 1: Expresión con fallback (||)
     if (expression.includes('||')) {
+      console.log(`      → Detectado fallback (||)`);
       const parts = expression.split('||').map(p => p.trim());
       const leftValue = this.evaluateExpression(parts[0]);
       
+      console.log(`      → Valor izquierdo: ${JSON.stringify(leftValue)}`);
+      
       // Si el valor izquierdo existe y no está vacío, usarlo
       if (leftValue !== undefined && leftValue !== null && leftValue !== '') {
+        console.log(`      ✅ Usando valor izquierdo`);
         return leftValue;
       }
       
       // Sino, evaluar el fallback
       const fallback = parts[1];
+      console.log(`      → Usando fallback: "${fallback}"`);
       
       // Si el fallback es un número
       if (/^\d+$/.test(fallback)) {
@@ -930,22 +957,29 @@ export class FlowExecutor {
     
     // Caso 2: Acceso a propiedad .length
     if (expression.endsWith('.length')) {
+      console.log(`      → Detectado acceso a .length`);
       const varPath = expression.slice(0, -7); // Remover '.length'
       const value = this.getVariableValue(varPath);
       
       if (Array.isArray(value)) {
+        console.log(`      ✅ Es array, length: ${value.length}`);
         return value.length;
       }
       
       if (typeof value === 'string') {
+        console.log(`      ✅ Es string, length: ${value.length}`);
         return value.length;
       }
       
+      console.log(`      ⚠️  No es array ni string, retornando 0`);
       return 0;
     }
     
     // Caso 3: Variable simple o anidada
-    return this.getVariableValue(expression);
+    console.log(`      → Variable simple/anidada`);
+    const result = this.getVariableValue(expression);
+    console.log(`      → Resultado: ${JSON.stringify(result)?.substring(0, 100)}`);
+    return result;
   }
 
   /**
