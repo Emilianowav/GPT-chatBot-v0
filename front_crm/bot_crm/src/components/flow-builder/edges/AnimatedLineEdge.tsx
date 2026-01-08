@@ -44,11 +44,20 @@ function AnimatedLineEdge({
       <path
         d={`M ${sourceX},${sourceY} L ${targetX},${targetY}`}
         stroke={`url(#gradient-${edgeId})`}
-        strokeWidth={2}
-        strokeDasharray="5,5"
+        strokeWidth={2.5}
+        strokeDasharray="8,4"
         fill="none"
-        opacity={0.8}
-      />
+        opacity={0.9}
+        strokeLinecap="round"
+      >
+        <animate
+          attributeName="stroke-dashoffset"
+          from="0"
+          to="12"
+          dur="0.8s"
+          repeatCount="indefinite"
+        />
+      </path>
     </>
   );
 }
