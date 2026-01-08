@@ -35,15 +35,25 @@ function AnimatedLineEdge({
   // Crear 3 partículas de energía que viajan por la línea
   const particles = [0, 1, 2];
 
+  // Calcular el gradiente en la dirección correcta de la línea
+  const angle = Math.atan2(targetY - sourceY, targetX - sourceX) * (180 / Math.PI);
+  
   return (
     <>
       <defs>
         {/* Degradado 50/50: centro hacia nodos */}
-        <linearGradient id={`gradient-${edgeId}`} x1="0%" y1="0%" x2="100%" y2="0%">
-          <stop offset="0%" stopColor={sourceColor} />
-          <stop offset="50%" stopColor={sourceColor} />
-          <stop offset="50%" stopColor={targetColor} />
-          <stop offset="100%" stopColor={targetColor} />
+        <linearGradient 
+          id={`gradient-${edgeId}`} 
+          x1="0%" 
+          y1="0%" 
+          x2="100%" 
+          y2="0%"
+          gradientTransform={`rotate(${angle} 0.5 0.5)`}
+        >
+          <stop offset="0%" stopColor={sourceColor} stopOpacity="1" />
+          <stop offset="50%" stopColor={sourceColor} stopOpacity="1" />
+          <stop offset="50%" stopColor={targetColor} stopOpacity="1" />
+          <stop offset="100%" stopColor={targetColor} stopOpacity="1" />
         </linearGradient>
       </defs>
       
@@ -53,8 +63,8 @@ function AnimatedLineEdge({
         stroke={`url(#gradient-${edgeId})`}
         strokeWidth={3}
         fill="none"
-        opacity={0.9}
         strokeDasharray="5,3"
+        strokeLinecap="round"
       />
       
       {/* Partículas de energía que viajan */}
