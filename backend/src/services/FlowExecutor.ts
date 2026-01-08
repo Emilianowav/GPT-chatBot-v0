@@ -477,10 +477,18 @@ export class FlowExecutor {
    * 5. Buscar en output del nodo anterior si input tiene referencia
    */
   private resolveWhatsAppMessage(config: any, input: any): string {
+    console.log('   🔍 [resolveWhatsAppMessage] Iniciando resolución...');
+    console.log('      config.message:', config.message?.substring(0, 100));
+    console.log('      config.mensaje:', config.mensaje?.substring(0, 100));
+    console.log('      input:', JSON.stringify(input)?.substring(0, 200));
+    
     // 1. Intentar desde config del nodo (normalizar message/mensaje)
     const configMessage = config.message || config.mensaje;
     if (configMessage) {
+      console.log('      ✅ Usando config.message/mensaje');
+      console.log('      Antes de resolver:', configMessage.substring(0, 150));
       const resolved = this.resolveVariableInString(configMessage);
+      console.log('      Después de resolver:', resolved.substring(0, 150));
       if (resolved && resolved.trim() !== '') {
         return resolved;
       }
@@ -489,6 +497,7 @@ export class FlowExecutor {
     // 2. Intentar desde input (edge mapping)
     const inputMessage = input.message || input.mensaje;
     if (inputMessage) {
+      console.log('      ✅ Usando input.message/mensaje');
       const resolved = this.resolveVariableInString(String(inputMessage));
       if (resolved && resolved.trim() !== '') {
         return resolved;
@@ -501,11 +510,13 @@ export class FlowExecutor {
       const possibleFields = ['respuesta_gpt', 'texto', 'content', 'body'];
       for (const field of possibleFields) {
         if (input[field]) {
+          console.log(`      ✅ Usando input.${field}`);
           return String(input[field]);
         }
       }
     }
 
+    console.log('      ⚠️  No se encontró mensaje');
     return '';
   }
 
