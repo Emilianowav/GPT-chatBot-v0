@@ -32,7 +32,6 @@ export class FlowExecutor {
    */
   setGlobalVariable(key: string, value: any): void {
     this.globalVariables[key] = value;
-    console.log(`🌐 [GLOBAL] ${key} = ${JSON.stringify(value).substring(0, 100)}`);
   }
 
   /**
@@ -145,22 +144,7 @@ export class FlowExecutor {
         throw new Error(`Flujo ${flowId} no tiene nodos o edges`);
       }
 
-      console.log(`📊 Flujo cargado: ${flow.nombre}`);
-      console.log(`   Nodos: ${flow.nodes.length}`);
-      console.log(`   Edges: ${flow.edges.length}`);
-      
-      // 🔍 DEBUG: Ver objeto completo del primer nodo
-      console.log('\n🔍 DEBUG - Primer nodo RAW:', JSON.stringify(flow.nodes[0], null, 2));
-
-      // 🔍 DEBUG: Logear estructura completa de nodos
-      console.log('\n🔍 DEBUG - Estructura de nodos:');
-      flow.nodes.forEach((node: any, index: number) => {
-        console.log(`   Nodo ${index + 1}:`);
-        console.log(`      id: ${node.id}`);
-        console.log(`      type: ${node.type}`);
-        console.log(`      category: ${node.category || '❌ UNDEFINED'}`);
-        console.log(`      data.label: ${node.data?.label || 'N/A'}`);
-      });
+      console.log(`📊 Flujo: ${flow.nombre} (${flow.nodes.length} nodos, ${flow.edges.length} edges)`);
 
       // 2. Inicializar contexto con datos del trigger
       this.context = {
@@ -170,20 +154,12 @@ export class FlowExecutor {
       };
 
       // 3. Encontrar nodo trigger
-      console.log('\n🔍 Buscando nodo con category === "trigger"...');
       const triggerNode = flow.nodes.find((n: any) => n.category === 'trigger');
       
       if (!triggerNode) {
         console.error('❌ NO SE ENCONTRÓ NODO TRIGGER');
-        console.error('   Nodos disponibles:', flow.nodes.map((n: any) => ({
-          id: n.id,
-          category: n.category,
-          type: n.type
-        })));
         throw new Error('No se encontró nodo trigger en el flujo');
       }
-
-      console.log(`✅ Trigger encontrado: ${triggerNode.id}`);
 
       // 4. Ejecutar nodos secuencialmente siguiendo los edges
       let currentNodeId = triggerNode.id;
@@ -229,13 +205,12 @@ export class FlowExecutor {
           break;
         }
 
-        console.log(`\n🔄 Ejecutando nodo ${executionCount}: ${nextNode.data.label} (${nextNode.type})`);
+        console.log(`🔄 ${executionCount}. ${nextNode.data.label}`);
 
         // Ejecutar nodo
         try {
           const result = await this.executeNode(nextNode, nextEdge);
           this.context[nextNode.id] = result;
-          console.log(`✅ Nodo ejecutado exitosamente`);
         } catch (error: any) {
           console.error(`❌ Error ejecutando nodo ${nextNode.id}:`, error.message);
           this.context[nextNode.id] = {
@@ -292,10 +267,6 @@ export class FlowExecutor {
    */
   private async executeGPTNode(node: any, input: any): Promise<NodeExecutionResult> {
     const config = node.data.config as IGPTConversacionalConfig;
-    
-    console.log(`   Tipo GPT: ${config.tipo}`);
-    console.log(`   Modelo: ${config.modelo}`);
-    console.log(`   Input:`, JSON.stringify(input).substring(0, 100) + '...');
 
     let userMessage: string;
     
@@ -311,20 +282,10 @@ export class FlowExecutor {
     // NUEVO: Construir systemPrompt dinámico desde los 3 bloques
     let systemPrompt: string;
     if (config.personalidad || config.topicos || config.variablesRecopilar) {
-      console.log(`\n   🔧 [PROMPT] Construyendo desde bloques dinámicos...`);
-      console.log(`   Personalidad: ${config.personalidad ? '✅' : '❌'}`);
-      console.log(`   Tópicos: ${config.topicos?.length || 0}`);
-      console.log(`   Variables: ${config.variablesRecopilar?.length || 0}`);
-      console.log(`   Acciones: ${config.accionesCompletado?.length || 0}`);
-      
       systemPrompt = GPTPromptBuilder.buildSystemPrompt(config);
-      
-      console.log(`   📝 Prompt generado: ${systemPrompt.length} caracteres`);
-      console.log(`   📄 Preview del prompt:\n${systemPrompt.substring(0, 300)}...\n`);
     } else {
       // Fallback: usar systemPrompt legacy
       systemPrompt = config.systemPrompt || 'Eres un asistente útil.';
-      console.log(`   📝 Usando systemPrompt legacy (${systemPrompt.length} caracteres)`);
     }
 
     // Construir mensajes para GPT
@@ -341,8 +302,6 @@ export class FlowExecutor {
 
     // Si es conversacional, agregar historial completo
     if (config.tipo === 'conversacional' && this.historialConversacion.length > 0) {
-      console.log(`   📚 Agregando historial: ${this.historialConversacion.length} mensajes`);
-      
       // Agregar historial (alternando user/assistant)
       for (let i = 0; i < this.historialConversacion.length; i++) {
         const msg = this.historialConversacion[i];
@@ -366,8 +325,7 @@ export class FlowExecutor {
       historial: messages,
     });
 
-    console.log(`   Respuesta GPT: ${resultado.texto.substring(0, 100)}...`);
-    console.log(`   Tokens: ${resultado.tokens}, Costo: $${resultado.costo}`);
+    console.log(`   ✅ ${resultado.tokens} tokens`);
 
     // Preparar output según tipo de GPT
     const output: any = {
@@ -398,31 +356,22 @@ export class FlowExecutor {
 
     // NUEVO: Procesar variables recopiladas automáticamente
     if (config.variablesRecopilar && config.variablesRecopilar.length > 0) {
-      console.log(`\n   🔍 [VARIABLES] Procesando recopilación automática...`);
-      console.log(`   Variables configuradas: ${config.variablesRecopilar.map(v => v.nombre).join(', ')}`);
-      
       // Extraer variables de la respuesta del GPT (ahora es async)
       const variablesExtraidas = await GPTPromptBuilder.extractVariables(
         resultado.texto,
         config.variablesRecopilar
       );
       
-      console.log(`   📦 Variables extraídas por GPT: ${Object.keys(variablesExtraidas).length}`);
-      
       // Guardar cada variable extraída en variables globales
       for (const [nombre, valor] of Object.entries(variablesExtraidas)) {
         if (valor !== undefined && valor !== null && valor !== '') {
-          console.log(`   💾 Guardando global: ${nombre} = ${JSON.stringify(valor)}`);
           this.setGlobalVariable(nombre, valor);
           output[nombre] = valor;
         }
       }
       
-      // Mostrar estado actual de variables globales
-      const todasLasGlobales = this.getAllGlobalVariables();
-      console.log(`   🌐 Variables globales actuales:`, JSON.stringify(todasLasGlobales, null, 2));
-      
       // Validar si todas las variables obligatorias están completas
+      const todasLasGlobales = this.getAllGlobalVariables();
       const validacion = GPTPromptBuilder.validateVariables(
         todasLasGlobales,
         config.variablesRecopilar
@@ -431,31 +380,21 @@ export class FlowExecutor {
       output.variables_completas = validacion.valido;
       output.variables_faltantes = validacion.faltantes;
       
-      console.log(`   ✅ Variables extraídas: ${Object.keys(variablesExtraidas).length}`);
-      console.log(`   📊 Validación completa: ${validacion.valido ? '✅ SÍ' : '❌ NO'}`);
-      if (!validacion.valido) {
-        console.log(`   ⚠️  Variables faltantes: ${validacion.faltantes.join(', ')}`);
+      if (Object.keys(variablesExtraidas).length > 0) {
+        console.log(`   📝 Variables: ${Object.keys(variablesExtraidas).join(', ')}`);
       }
-      console.log(''); // Línea en blanco para separar
     }
 
     // Detectar si el GPT marcó como completado
     if (config.accionesCompletado && config.accionesCompletado.length > 0) {
-      console.log(`\n   🎯 [COMPLETADO] Verificando token de completado...`);
       const accionMarcar = config.accionesCompletado.find(a => a.tipo === 'marcar_completado');
       if (accionMarcar && accionMarcar.token) {
-        console.log(`   Buscando token: "${accionMarcar.token}"`);
         const completado = GPTPromptBuilder.isCompletado(resultado.texto, accionMarcar.token);
         output.info_completa = completado;
-        console.log(`   ${completado ? '✅ ENCONTRADO' : '⏳ NO ENCONTRADO'} - Info completa: ${completado}`);
-        
         if (completado) {
-          console.log(`   🎉 Recopilación completada exitosamente`);
+          console.log(`   ✅ Info completa`);
         }
-      } else {
-        console.log(`   ⚠️  No hay token de completado configurado`);
       }
-      console.log(''); // Línea en blanco
     }
 
     // Guardar variables globales si están configuradas (legacy)
@@ -485,8 +424,6 @@ export class FlowExecutor {
       return { output: input };
     }
 
-    console.log(`   Enviando mensaje de WhatsApp`);
-    
     // Resolver variables en el mensaje
     const mensaje = this.resolveVariableInString(config.message || input.message);
     const telefono = this.resolveVariableInString(config.to || input.to || input.telefono_usuario);
@@ -496,24 +433,17 @@ export class FlowExecutor {
                          this.flowConfig.whatsapp?.phoneNumberId || 
                          process.env.META_PHONE_NUMBER_ID || '';
 
-    console.log(`   To: ${telefono}`);
-    console.log(`   Message: ${mensaje.substring(0, 100)}...`);
-    if (!config.phoneNumberId && this.flowConfig.whatsapp?.phoneNumberId) {
-      console.log(`   📱 Usando Phone Number ID del nodo fuente: ${phoneNumberId}`);
-    }
+    console.log(`   → ${telefono}`);
 
     // Enviar mensaje
-    const resultado = await enviarMensajeWhatsAppTexto(
+    await enviarMensajeWhatsAppTexto(
       telefono,
       mensaje,
       phoneNumberId
     );
 
-    console.log(`   Mensaje enviado. ID: ${resultado.messageId}`);
-
     return {
       output: {
-        message_id: resultado.messageId,
         status: 'sent',
         to: telefono,
       },

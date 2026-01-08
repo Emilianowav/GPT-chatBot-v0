@@ -123,15 +123,11 @@ export class GPTPromptBuilder {
     respuestaGPT: string,
     variablesConfig: IVariableRecopilar[]
   ): Promise<Record<string, any>> {
-    console.log('🔍 [EXTRACTOR] Iniciando extracción de variables...');
-    console.log('   Respuesta GPT:', respuestaGPT.substring(0, 150) + '...');
-    console.log('   Variables a buscar:', variablesConfig.map(v => v.nombre).join(', '));
 
     const variables: Record<string, any> = {};
 
     // Si no hay variables configuradas, retornar vacío
     if (!variablesConfig || variablesConfig.length === 0) {
-      console.log('   ⚠️  No hay variables configuradas para extraer');
       return variables;
     }
 
@@ -177,8 +173,6 @@ Si NO encuentras ninguna variable, responde con: {}`;
         ]
       });
 
-      console.log('   📥 Respuesta del extractor:', resultado.texto);
-
       // Parsear JSON
       try {
         // Limpiar respuesta (remover markdown si existe)
@@ -194,10 +188,6 @@ Si NO encuentras ninguna variable, responde con: {}`;
         // Validar que sea un objeto
         if (typeof extracted === 'object' && extracted !== null && !Array.isArray(extracted)) {
           Object.assign(variables, extracted);
-          console.log('   ✅ Variables extraídas:', Object.keys(variables).join(', '));
-          console.log('   📊 Valores:', JSON.stringify(variables, null, 2));
-        } else {
-          console.warn('   ⚠️  Respuesta no es un objeto válido');
         }
       } catch (parseError) {
         console.error('   ❌ Error parseando JSON del extractor:', parseError);
