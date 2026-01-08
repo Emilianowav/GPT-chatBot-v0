@@ -1,16 +1,20 @@
 'use client';
 
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 import ReactFlow, {
+  Node,
+  Edge,
   Controls,
   Background,
+  BackgroundVariant,
   useNodesState,
   useEdgesState,
   addEdge,
   Connection,
-  Edge,
-  Node,
-  BackgroundVariant,
+  ConnectionMode,
+  OnEdgeUpdateFunc,
+  EdgeChange,
+  applyEdgeChanges,
 } from 'reactflow';
 import 'reactflow/dist/style.css';
 import DashboardLayout from '@/components/DashboardLayout/DashboardLayout';
@@ -210,7 +214,8 @@ const WOOCOMMERCE_MODULES = [
 
 export default function FlowBuilderPage() {
   const [nodes, setNodes, onNodesChange] = useNodesState([]);
-  const [edges, setEdges, onEdgesChange] = useEdgesState([]);
+  const [edges, setEdges] = useEdgesState([]);
+  const edgeUpdateSuccessful = useRef(true);
   const [showAppsModal, setShowAppsModal] = useState(false);
   const [showModuleModal, setShowModuleModal] = useState(false);
   const [showWebhookConfigModal, setShowWebhookConfigModal] = useState(false);
@@ -460,8 +465,47 @@ export default function FlowBuilderPage() {
     }
   };
 
+  // Manejar cambios en edges con soporte para reconexión
+  const onEdgesChange = useCallback(
+    (changes: EdgeChange[]) => {
+      setEdges((eds) => applyEdgeChanges(changes, eds));
+    },
+    [setEdges]
+  );
+
+  // Conectar nodos con snap magnético
   const onConnect = useCallback(
-    (params: Connection) => setEdges((eds) => addEdge(params, eds)),
+    (params: Connection) => {
+      setEdges((eds) => addEdge({ ...params, type: 'animatedLine' }, eds));
+    },
+    [setEdges]
+  );
+
+  // Iniciar actualización de edge (reconexión)
+  const onEdgeUpdateStart = useCallback(() => {
+    edgeUpdateSuccessful.current = false;
+  }, []);
+
+  // Actualizar edge (reconectar a otro nodo)
+  const onEdgeUpdate: OnEdgeUpdateFunc = useCallback(
+    (oldEdge, newConnection) => {
+      edgeUpdateSuccessful.current = true;
+      setEdges((els) => {
+        const updatedEdges = els.filter((e) => e.id !== oldEdge.id);
+        return addEdge({ ...newConnection, type: 'animatedLine' }, updatedEdges);
+      });
+    },
+    [setEdges]
+  );
+
+  // Finalizar actualización de edge
+  const onEdgeUpdateEnd = useCallback(
+    (_: any, edge: Edge) => {
+      if (!edgeUpdateSuccessful.current) {
+        setEdges((eds) => eds.filter((e) => e.id !== edge.id));
+      }
+      edgeUpdateSuccessful.current = true;
+    },
     [setEdges]
   );
 
@@ -569,11 +613,22 @@ export default function FlowBuilderPage() {
             onNodesChange={onNodesChange}
             onEdgesChange={onEdgesChange}
             onConnect={onConnect}
+            onEdgeUpdate={onEdgeUpdate}
+            onEdgeUpdateStart={onEdgeUpdateStart}
+            onEdgeUpdateEnd={onEdgeUpdateEnd}
             nodeTypes={nodeTypes}
             edgeTypes={edgeTypes}
+            connectionMode={ConnectionMode.Loose}
+            snapToGrid={true}
+            snapGrid={[15, 15]}
+            connectionRadius={50}
             fitView
             minZoom={0.5}
             maxZoom={1.5}
+            defaultEdgeOptions={{
+              type: 'animatedLine',
+              animated: true,
+            }}
           >
             <Controls />
             <Background variant={BackgroundVariant.Dots} gap={20} size={1} color="#e5e7eb" />
