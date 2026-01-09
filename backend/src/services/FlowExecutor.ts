@@ -846,59 +846,80 @@ export class FlowExecutor {
 
   /**
    * Evalúa una condición en formato string
-   * Ejemplos: "{{titulo_libro}} exists", "{{titulo_libro}} empty", "true", "false"
+   * Ejemplos: "{{titulo_libro}} exists", "{{cualquier_variable}} empty", "true", "false"
    */
   private evaluateStringCondition(condition: string): boolean {
-    // Resolver variables en la condición
-    const resolvedCondition = this.resolveVariableInString(condition);
+    console.log(`      Condición original: ${condition}`);
+
+    // Casos especiales: true/false literales
+    if (condition.trim() === 'true') return true;
+    if (condition.trim() === 'false') return false;
+
+    // CRÍTICO: Parsear condiciones ANTES de resolver variables
+    // Esto permite evaluar 'exists' sobre el valor RAW de la variable
     
-    console.log(`      Condición: ${condition}`);
-    console.log(`      Resuelta: ${resolvedCondition}`);
-
-    // Casos especiales
-    if (resolvedCondition === 'true') return true;
-    if (resolvedCondition === 'false') return false;
-
-    // Parsear condiciones tipo "{{variable}} exists/empty"
-    const existsMatch = resolvedCondition.match(/^(.+?)\s+exists$/i);
+    // Patrón: "{{variable}} exists"
+    const existsMatch = condition.match(/\{\{([^}]+)\}\}\s+exists$/i);
     if (existsMatch) {
-      const value = existsMatch[1].trim();
-      // CRÍTICO: exists debe validar que el valor NO sea:
-      // - string vacío ''
-      // - string 'undefined'
-      // - string 'null'
-      // - string '[object Object]' (objeto vacío mal formateado)
-      const exists = value !== '' && 
-                     value !== 'undefined' && 
-                     value !== 'null' &&
-                     value !== '[object Object]' &&
-                     value.length > 0;
-      console.log(`      → exists check: value="${value}", exists=${exists}`);
+      const varName = existsMatch[1].trim();
+      console.log(`      → Detectado 'exists' para variable: "${varName}"`);
+      
+      // Obtener el valor RAW de la variable
+      const value = this.getVariableValue(varName);
+      
+      // Validar que el valor exista y no sea null/undefined/vacío
+      const exists = value !== undefined && 
+                     value !== null && 
+                     value !== '' &&
+                     (typeof value !== 'string' || value.trim().length > 0);
+      
+      console.log(`      → Variable "${varName}" = ${JSON.stringify(value)?.substring(0, 100)}`);
+      console.log(`      → exists = ${exists}`);
       return exists;
     }
 
-    const emptyMatch = resolvedCondition.match(/^(.+?)\s+empty$/i);
-    if (emptyMatch) {
-      const value = emptyMatch[1].trim();
-      const empty = value === '' || value === 'undefined' || value === 'null' || value === '[object Object]';
-      console.log(`      → empty check: value="${value}", empty=${empty}`);
-      return empty;
-    }
-
-    // Parsear condiciones tipo "{{variable}} not exists"
-    const notExistsMatch = resolvedCondition.match(/^(.+?)\s+not\s+exists?$/i);
+    // Patrón: "{{variable}} not exists"
+    const notExistsMatch = condition.match(/\{\{([^}]+)\}\}\s+not\s+exists?$/i);
     if (notExistsMatch) {
-      const value = notExistsMatch[1].trim();
-      const notExists = value === '' || 
-                        value === 'undefined' || 
-                        value === 'null' ||
-                        value === '[object Object]' ||
-                        value.length === 0;
-      console.log(`      → not exists check: value="${value}", notExists=${notExists}`);
+      const varName = notExistsMatch[1].trim();
+      console.log(`      → Detectado 'not exists' para variable: "${varName}"`);
+      
+      const value = this.getVariableValue(varName);
+      
+      const notExists = value === undefined || 
+                        value === null || 
+                        value === '' ||
+                        (typeof value === 'string' && value.trim().length === 0);
+      
+      console.log(`      → Variable "${varName}" = ${JSON.stringify(value)?.substring(0, 100)}`);
+      console.log(`      → not exists = ${notExists}`);
       return notExists;
     }
 
-    // Si no coincide con ningún patrón, evaluar como booleano
+    // Patrón: "{{variable}} empty"
+    const emptyMatch = condition.match(/\{\{([^}]+)\}\}\s+empty$/i);
+    if (emptyMatch) {
+      const varName = emptyMatch[1].trim();
+      console.log(`      → Detectado 'empty' para variable: "${varName}"`);
+      
+      const value = this.getVariableValue(varName);
+      
+      const empty = value === undefined || 
+                    value === null || 
+                    value === '' ||
+                    (typeof value === 'string' && value.trim().length === 0) ||
+                    (Array.isArray(value) && value.length === 0);
+      
+      console.log(`      → Variable "${varName}" = ${JSON.stringify(value)?.substring(0, 100)}`);
+      console.log(`      → empty = ${empty}`);
+      return empty;
+    }
+
+    // Si no coincide con patrones especiales, resolver y evaluar normalmente
+    const resolvedCondition = this.resolveVariableInString(condition);
+    console.log(`      Condición resuelta: ${resolvedCondition}`);
+    
+    // Evaluar como booleano
     return !!resolvedCondition && resolvedCondition !== 'false';
   }
 
