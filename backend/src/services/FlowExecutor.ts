@@ -863,17 +863,39 @@ export class FlowExecutor {
     const existsMatch = resolvedCondition.match(/^(.+?)\s+exists$/i);
     if (existsMatch) {
       const value = existsMatch[1].trim();
-      const exists = value !== '' && value !== 'undefined' && value !== 'null';
-      console.log(`      → exists: ${exists}`);
+      // CRÍTICO: exists debe validar que el valor NO sea:
+      // - string vacío ''
+      // - string 'undefined'
+      // - string 'null'
+      // - string '[object Object]' (objeto vacío mal formateado)
+      const exists = value !== '' && 
+                     value !== 'undefined' && 
+                     value !== 'null' &&
+                     value !== '[object Object]' &&
+                     value.length > 0;
+      console.log(`      → exists check: value="${value}", exists=${exists}`);
       return exists;
     }
 
     const emptyMatch = resolvedCondition.match(/^(.+?)\s+empty$/i);
     if (emptyMatch) {
       const value = emptyMatch[1].trim();
-      const empty = value === '' || value === 'undefined' || value === 'null';
-      console.log(`      → empty: ${empty}`);
+      const empty = value === '' || value === 'undefined' || value === 'null' || value === '[object Object]';
+      console.log(`      → empty check: value="${value}", empty=${empty}`);
       return empty;
+    }
+
+    // Parsear condiciones tipo "{{variable}} not exists"
+    const notExistsMatch = resolvedCondition.match(/^(.+?)\s+not\s+exists?$/i);
+    if (notExistsMatch) {
+      const value = notExistsMatch[1].trim();
+      const notExists = value === '' || 
+                        value === 'undefined' || 
+                        value === 'null' ||
+                        value === '[object Object]' ||
+                        value.length === 0;
+      console.log(`      → not exists check: value="${value}", notExists=${notExists}`);
+      return notExists;
     }
 
     // Si no coincide con ningún patrón, evaluar como booleano
