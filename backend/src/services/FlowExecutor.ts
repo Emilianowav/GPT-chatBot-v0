@@ -1185,12 +1185,13 @@ export class FlowExecutor {
     // Caso 3: Variable simple o anidada
     console.log(`      → Variable simple/anidada`);
     const result = this.getVariableValue(expression);
-    console.log(`      → Resultado: ${JSON.stringify(result)?.substring(0, 100)}`);
+    console.log(`      ✅ Resultado: ${JSON.stringify(result)?.substring(0, 100)}`);
     return result;
   }
 
   /**
-   * Ejecuta un nodo que usa el sistema de integraciones (API Call)
+   * Ejecuta un nodo de llamada a API usando el sistema de integraciones
+   * GENÉRICO: Funciona con cualquier tipo de endpoint (GET, POST, PUT, DELETE)
    */
   private async executeAPICallNode(node: any, input: any): Promise<NodeExecutionResult> {
     const config = node.data.config;
@@ -1200,11 +1201,11 @@ export class FlowExecutor {
     console.log(`   Endpoint ID: ${config.endpointId}`);
     
     try {
-      // Importar dinámicamente el módulo de integraciones
+      // Importar dinámicamente el modelo y el ejecutor
       const { ApiConfigurationModel } = await import('../modules/integrations/models/index.js');
       const { apiExecutor } = await import('../modules/integrations/services/apiExecutor.js');
       
-      // Obtener configuración de la API
+      // Obtener la configuración de la API
       const apiConfig = await ApiConfigurationModel.findById(config.apiConfigId);
       
       if (!apiConfig) {
@@ -1222,7 +1223,8 @@ export class FlowExecutor {
       }
       
       console.log(`   ✅ Endpoint encontrado: ${endpoint.nombre}`);
-      console.log(`   ${endpoint.metodo} ${endpoint.path}`);
+      console.log(`   Método: ${endpoint.metodo}`);
+      console.log(`   Path: ${endpoint.path}`);
       
       // Resolver variables en parámetros
       const resolvedParams: Record<string, any> = {};
@@ -1235,28 +1237,49 @@ export class FlowExecutor {
         }
       }
       
+      console.log(`   📦 Parámetros originales:`, JSON.stringify(config.parametros || {}, null, 2));
       console.log(`   📦 Parámetros resueltos:`, JSON.stringify(resolvedParams, null, 2));
       
+      // DETECCIÓN AUTOMÁTICA: Determinar dónde van los parámetros según el método HTTP
+      const apiParams: any = {};
+      
+      if (endpoint.metodo === 'GET' || endpoint.metodo === 'DELETE') {
+        // GET y DELETE: parámetros van en query string
+        apiParams.query = resolvedParams;
+        console.log(`   🔍 Método ${endpoint.metodo}: Parámetros en query string`);
+      } else if (endpoint.metodo === 'POST' || endpoint.metodo === 'PUT' || endpoint.metodo === 'PATCH') {
+        // POST, PUT, PATCH: parámetros van en body
+        apiParams.body = resolvedParams;
+        console.log(`   📝 Método ${endpoint.metodo}: Parámetros en body`);
+      } else {
+        // Fallback: intentar detectar automáticamente
+        console.log(`   ⚠️  Método desconocido: ${endpoint.metodo}, usando query por defecto`);
+        apiParams.query = resolvedParams;
+      }
+      
       // Ejecutar la llamada a la API
-      // Para GET requests, los parámetros van en 'query'
       const result = await apiExecutor.ejecutar(
         config.apiConfigId,
         config.endpointId,
-        { query: resolvedParams }, // Pasar en formato correcto
-        {} // contexto adicional si es necesario
+        apiParams,
+        {} // contexto adicional
       );
       
       if (!result.success) {
-        throw new Error(result.error?.mensaje || 'Error ejecutando API');
+        const errorMsg = result.error?.mensaje || 'Error ejecutando API';
+        console.error(`   ❌ Error en API:`, errorMsg);
+        throw new Error(errorMsg);
       }
       
       console.log(`   ✅ API ejecutada exitosamente`);
-      console.log(`   Resultados: ${Array.isArray(result.data) ? result.data.length : 'N/A'} items`);
+      console.log(`   📊 Tipo de respuesta: ${Array.isArray(result.data) ? 'Array' : typeof result.data}`);
+      console.log(`   📊 Cantidad de items: ${Array.isArray(result.data) ? result.data.length : 'N/A'}`);
       
       return { output: result.data };
       
     } catch (error: any) {
       console.error(`   ❌ Error ejecutando API:`, error.message);
+      console.error(`   Stack:`, error.stack);
       throw error;
     }
   }
