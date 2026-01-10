@@ -968,6 +968,29 @@ export class FlowExecutor {
     if (condition.trim() === 'true') return true;
     if (condition.trim() === 'false') return false;
 
+    // SOPORTE PARA OPERADORES LÓGICOS (OR, AND)
+    // Evaluar OR primero (menor precedencia)
+    if (condition.includes(' OR ')) {
+      console.log(`      → Detectado operador OR`);
+      const parts = condition.split(' OR ').map(p => p.trim());
+      const results = parts.map(part => this.evaluateStringCondition(part));
+      console.log(`      → Partes: ${parts.length}, Resultados: ${results.join(', ')}`);
+      const result = results.some(r => r === true);
+      console.log(`      → OR resultado: ${result}`);
+      return result;
+    }
+
+    // Evaluar AND (mayor precedencia)
+    if (condition.includes(' AND ')) {
+      console.log(`      → Detectado operador AND`);
+      const parts = condition.split(' AND ').map(p => p.trim());
+      const results = parts.map(part => this.evaluateStringCondition(part));
+      console.log(`      → Partes: ${parts.length}, Resultados: ${results.join(', ')}`);
+      const result = results.every(r => r === true);
+      console.log(`      → AND resultado: ${result}`);
+      return result;
+    }
+
     // CRÍTICO: Parsear condiciones ANTES de resolver variables
     // Esto permite evaluar 'exists' sobre el valor RAW de la variable
     
