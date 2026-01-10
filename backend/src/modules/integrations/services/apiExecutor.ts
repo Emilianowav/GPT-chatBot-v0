@@ -87,20 +87,23 @@ export class ApiExecutor {
           data: typeof response.data === 'string' ? response.data.substring(0, 500) : response.data
         });
 
-        // PAGINACIÓN AUTOMÁTICA: Detectar si hay más páginas (WooCommerce)
+        // PAGINACIÓN AUTOMÁTICA: Solo si NO hay búsqueda específica
+        const hasSearchParam = requestConfig.params?.search || requestConfig.params?.q || requestConfig.params?.query;
+        
         console.log('🔍 [PAGINACIÓN] Headers recibidos:', {
           'x-wp-total': response.headers['x-wp-total'],
           'x-wp-totalpages': response.headers['x-wp-totalpages'],
-          'link': response.headers['link']?.substring(0, 100)
+          'hasSearchParam': !!hasSearchParam
         });
         
         const totalPages = parseInt(response.headers['x-wp-totalpages'] || '1');
         const currentPage = parseInt(requestConfig.params?.page || '1');
         
-        console.log(`🔍 [PAGINACIÓN] totalPages: ${totalPages}, currentPage: ${currentPage}`);
+        console.log(`🔍 [PAGINACIÓN] totalPages: ${totalPages}, currentPage: ${currentPage}, search: ${hasSearchParam || 'none'}`);
         
-        if (totalPages > 1 && currentPage === 1) {
-          console.log(`📄 Paginación detectada: ${totalPages} páginas totales`);
+        // Solo paginar automáticamente si NO hay búsqueda (para evitar traer todo el catálogo)
+        if (totalPages > 1 && currentPage === 1 && !hasSearchParam) {
+          console.log(`📄 Paginación detectada: ${totalPages} páginas totales (sin búsqueda, trayendo todo)`);
           
           // Combinar datos de todas las páginas
           allData = Array.isArray(response.data) ? [...response.data] : response.data;
@@ -130,6 +133,9 @@ export class ApiExecutor {
           console.log(`✅ Paginación completa: ${allData.length} items totales`);
         } else {
           allData = response.data;
+          if (hasSearchParam) {
+            console.log(`✅ Búsqueda específica: ${Array.isArray(allData) ? allData.length : 1} resultados (sin paginación automática)`);
+          }
         }
       } catch (err: any) {
         error = err;
