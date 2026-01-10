@@ -135,23 +135,9 @@ const FlowSchema = new Schema<IFlow>(
     apiConfig: ApiConfigSchema,
     
     // Flow Builder Visual: Nodos y edges (solo para botType === 'visual')
-    nodes: [{
-      id: { type: String, required: true },
-      type: { type: String, required: true },
-      category: { type: String }, // ← CRÍTICO: trigger, processor, action
-      position: {
-        x: { type: Number, required: true },
-        y: { type: Number, required: true }
-      },
-      data: { type: Schema.Types.Mixed, required: true }
-    }],
-    edges: [{
-      id: { type: String, required: true },
-      source: { type: String, required: true },
-      target: { type: String, required: true },
-      type: { type: String, required: true },
-      data: { type: Schema.Types.Mixed }
-    }],
+    // CRÍTICO: Usar Mixed para que Mongoose NO modifique la estructura
+    nodes: { type: Schema.Types.Mixed, default: [] },
+    edges: { type: Schema.Types.Mixed, default: [] },
     
     settings: {
       timeout: { type: Number, default: 300 },

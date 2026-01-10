@@ -34,6 +34,12 @@ function AnimatedLineEdge({
   const sourceColor = sourceNode?.data?.color || '#9ca3af';
   const targetColor = targetNode?.data?.color || '#9ca3af';
 
+  // Validar coordenadas
+  if (!isFinite(sourceX) || !isFinite(sourceY) || !isFinite(targetX) || !isFinite(targetY)) {
+    console.warn(`Invalid edge coordinates for edge ${id}:`, { sourceX, sourceY, targetX, targetY });
+    return null;
+  }
+
   // Calcular distancia y número de círculos
   const dx = targetX - sourceX;
   const dy = targetY - sourceY;
@@ -41,13 +47,16 @@ function AnimatedLineEdge({
   
   // Espaciado entre círculos (similar a Make.com)
   const spacing = 20;
-  const numDots = Math.floor(distance / spacing);
+  const numDots = Math.max(1, Math.floor(distance / spacing)); // Mínimo 1 para evitar división por 0
   
   const dots = [];
   for (let i = 0; i <= numDots; i++) {
-    const t = i / numDots;
+    const t = numDots > 0 ? i / numDots : 0;
     const x = sourceX + (targetX - sourceX) * t;
     const y = sourceY + (targetY - sourceY) * t;
+    
+    // Validar que x e y sean números válidos
+    if (!isFinite(x) || !isFinite(y)) continue;
     
     // Color: mezcla gradual de source a target
     const color = t < 0.5 ? sourceColor : targetColor;

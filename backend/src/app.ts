@@ -126,7 +126,7 @@ app.use("/api/modules/afip", afipRoutes);
 console.log('🟢 [APP] Montando rutas de OCR en /api/modules/ocr');
 app.use("/api/modules/ocr", ocrRoutes);
 app.use("/api/flujos", flujosRoutes);
-app.use("/api/flows", flowRoutes);
+app.use("/api/flows", flowRoutes); // DEBE IR ANTES que nodeFlowRoutes para que /detail/:flowId funcione
 app.use("/api", nodeFlowRoutes); // Sistema de nodos configurables
 app.use("/api/chatbots", chatbotRoutes);
 app.use("/api/intervencion", intervencionRoutes);

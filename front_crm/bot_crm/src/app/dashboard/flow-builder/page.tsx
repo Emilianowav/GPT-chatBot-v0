@@ -213,7 +213,7 @@ const WOOCOMMERCE_MODULES = [
 ];
 
 export default function FlowBuilderPage() {
-  const [nodes, setNodes, onNodesChange] = useNodesState([]);
+  const [nodes, setNodes, onNodesChangeOriginal] = useNodesState([]);
   const [edges, setEdges] = useEdgesState([]);
   const edgeUpdateSuccessful = useRef(true);
   const [showAppsModal, setShowAppsModal] = useState(false);
@@ -265,53 +265,127 @@ export default function FlowBuilderPage() {
     ));
   }, [setNodes]);
 
+  // Custom onNodesChange para manejar eliminación de nodos
+  const onNodesChange = useCallback((changes: any[]) => {
+    onNodesChangeOriginal(changes);
+    
+    // Detectar si se eliminó un nodo
+    const removeChange = changes.find(c => c.type === 'remove');
+    if (removeChange) {
+      // Después de eliminar, seleccionar el último nodo restante (sin abrir modal)
+      setTimeout(() => {
+        setNodes(currentNodes => {
+          if (currentNodes.length > 0) {
+            const lastNode = currentNodes[currentNodes.length - 1];
+            setSelectedNode(lastNode);
+            // NO abrir modal, solo seleccionar para poder seguir eliminando rápido
+          }
+          return currentNodes;
+        });
+      }, 0);
+    }
+  }, [onNodesChangeOriginal, setNodes]);
+
+  // Handler para el nodo + inicial
+  const handleInitialPlusClick = useCallback(() => {
+    setShowAppsModal(true);
+    setAppsModalPosition(undefined);
+    setSourceNodeForConnection('plus-initial'); // Identificador especial para nodo inicial
+  }, []);
+
+  // Detectar cuando nodes está vacío y agregar nodo +
   useEffect(() => {
-    // Cargar flow de WooCommerce automáticamente
+    if (nodes.length === 0) {
+      const initialNode: Node = {
+        id: 'plus-initial',
+        type: 'plus',
+        position: { x: 400, y: 300 },
+        data: {
+          onAddClick: handleInitialPlusClick
+        },
+      };
+      setNodes([initialNode]);
+    }
+  }, [nodes.length, setNodes, handleInitialPlusClick]);
+
+  useEffect(() => {
+    let isMounted = true;
+    
     const loadVeoVeoFlow = async () => {
       try {
-        const flowId = '695a156681f6d67f0ae9cf40'; // WooCommerce - Búsqueda de Productos
+        const flowId = '695a156681f6d67f0ae9cf40';
         const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';
-        const response = await fetch(`${apiUrl}/api/flows/detail/${flowId}`);
+        
+        const timestamp = new Date().getTime();
+        const response = await fetch(`${apiUrl}/api/flows/by-id/${flowId}?t=${timestamp}`, {
+          cache: 'no-store'
+        });
         const flow = await response.json();
         
-        if (flow && flow.nodes && flow.edges) {
-          // Calcular qué nodos tienen conexiones salientes
-          const nodesWithConnections = new Set(flow.edges.map((e: Edge) => e.source));
+        if (!isMounted) return;
+        
+        console.log('🔄 Flow recibido desde MongoDB:', {
+          nombre: flow.nombre,
+          nodos: flow.nodes?.length,
+          edges: flow.edges?.length
+        });
+        
+        if (flow && flow.nodes && flow.edges && flow.nodes.length > 0) {
+          console.log('📋 IDs de nodos:', flow.nodes.map((n: Node) => n.id));
           
+          // Agregar handlers a cada nodo
           const nodesWithHandlers = flow.nodes.map((node: Node) => ({
             ...node,
             data: {
               ...node.data,
-              hasConnection: nodesWithConnections.has(node.id),
               onNodeClick: handleNodeClick,
               onHandleClick: handlePlusNodeClick,
+              hasConnection: flow.edges.some((e: Edge) => e.source === node.id)
             }
           }));
+          
           setNodes(nodesWithHandlers);
           setEdges(flow.edges);
           setFlowName(flow.nombre);
           setCurrentFlowId(flow._id);
-          console.log('✅ Flow de Veo Veo cargado:', flow.nombre);
-          console.log('📊 Nodos cargados:', nodesWithHandlers.length);
-          console.log('🔗 Edges cargados:', flow.edges.length);
+          
+          console.log('✅ Flow cargado con handlers');
+          console.log('📊 Nodos:', flow.nodes.length);
+          console.log('🔗 Edges:', flow.edges.length);
+        } else {
+          // Si no hay nodos, mostrar nodo + inicial
+          const initialNode: Node = {
+            id: 'plus-initial',
+            type: 'plus',
+            position: { x: 400, y: 300 },
+            data: {
+              onAddClick: handleInitialPlusClick
+            },
+          };
+          setNodes([initialNode]);
         }
       } catch (error) {
         console.error('❌ Error cargando flow:', error);
-        // Si falla, mostrar nodo inicial
-        const initialNode: Node = {
-          id: 'plus-initial',
-          type: 'plus',
-          position: { x: 400, y: 300 },
-          data: {
-            onAddClick: handlePlusNodeClick,
-          },
-        };
-        setNodes([initialNode]);
+        if (isMounted) {
+          const initialNode: Node = {
+            id: 'plus-initial',
+            type: 'plus',
+            position: { x: 400, y: 300 },
+            data: {
+              onAddClick: handleInitialPlusClick
+            },
+          };
+          setNodes([initialNode]);
+        }
       }
     };
     
     loadVeoVeoFlow();
-  }, [handleNodeClick, handlePlusNodeClick]);
+    
+    return () => {
+      isMounted = false;
+    };
+  }, [handleNodeClick, handlePlusNodeClick, handleInitialPlusClick]); // Agregar dependencias
 
   const handleAppSelect = (app: any) => {
     setSelectedApp(app);
@@ -461,24 +535,41 @@ export default function FlowBuilderPage() {
     }
 
     if (sourceNodeForConnection === 'plus-initial') {
-      setNodes([newNode]);
+      // Reemplazar nodo + inicial con el nuevo nodo
+      setNodes([{
+        ...newNode,
+        data: {
+          ...newNode.data,
+          hasConnection: false // Primer nodo nunca tiene conexión
+        }
+      }]);
     } else {
       const newEdge: Edge = {
         id: `${sourceNodeForConnection}-${sourceHandleForConnection || 'default'}-${newNodeId}`,
         source: sourceNodeForConnection,
         sourceHandle: sourceHandleForConnection,
         target: newNodeId,
-        type: 'simple',
+        type: 'default',
+        animated: true,
       };
 
-      setNodes(prev => [
-        ...prev.map(n => 
-          n.id === sourceNodeForConnection 
-            ? { ...n, data: { ...n.data, hasConnection: true } }
-            : n
-        ),
-        newNode
-      ]);
+      setNodes(prev => {
+        const updatedNodes = [
+          ...prev.map(n => 
+            n.id === sourceNodeForConnection 
+              ? { ...n, data: { ...n.data, hasConnection: true } }
+              : n
+          ),
+          {
+            ...newNode,
+            data: {
+              ...newNode.data,
+              hasConnection: false // Nuevo nodo no tiene conexión aún
+            }
+          }
+        ];
+        return updatedNodes;
+      });
       setEdges(prev => [...prev, newEdge]);
     }
 
@@ -566,9 +657,22 @@ export default function FlowBuilderPage() {
       const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';
       const url = currentFlowId ? `${apiUrl}/api/flows/${currentFlowId}` : `${apiUrl}/api/flows`;
       
+      const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
+      console.log('🔑 Token para guardar:', token ? `${token.substring(0, 20)}...` : 'NO TOKEN');
+      
+      const headers: Record<string, string> = {
+        'Content-Type': 'application/json'
+      };
+      
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
+      
+      console.log('📤 Headers:', headers);
+      
       const response = await fetch(url, {
         method: currentFlowId ? 'PUT' : 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers,
         body: JSON.stringify(flowData)
       });
 

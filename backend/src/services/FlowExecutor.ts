@@ -153,6 +153,22 @@ export class FlowExecutor {
         },
       };
 
+      // 3. Inicializar variables globales estándar desde triggerData
+      if (triggerData.from) {
+        this.setGlobalVariable('telefono_cliente', triggerData.from);
+      }
+      if (triggerData.to) {
+        this.setGlobalVariable('telefono_empresa', triggerData.to);
+      }
+      if (triggerData.phoneNumberId) {
+        this.setGlobalVariable('phoneNumberId', triggerData.phoneNumberId);
+      }
+      if (triggerData.message) {
+        this.setGlobalVariable('mensaje_usuario', triggerData.message);
+      }
+      
+      console.log(`📋 Variables globales inicializadas:`, Object.keys(this.globalVariables));
+
       // 3. Encontrar nodo trigger
       const triggerNode = flow.nodes.find((n: any) => n.category === 'trigger');
       

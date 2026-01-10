@@ -4,6 +4,7 @@ import { authenticate } from '../middlewares/authMiddleware.js';
 import { flowManager } from '../flows/FlowManager.js';
 import { ConversationStateModel } from '../models/ConversationState.js';
 import { FlowModel } from '../models/Flow.js';
+import mongoose from 'mongoose';
 
 const router = express.Router();
 
@@ -27,22 +28,46 @@ router.get('/:empresaId', authenticate, async (req: Request, res: Response): Pro
 });
 
 /**
- * GET /api/flows/detail/:flowId
- * Obtener un flow específico por ID
+ * GET /api/flows/by-id/:flowId
+ * Obtener un flow específico por _id de MongoDB
+ * CRÍTICO: Usa MongoDB driver directamente para evitar caché de Mongoose
  */
-router.get('/detail/:flowId', async (req: Request, res: Response): Promise<void> => {
+router.get('/by-id/:flowId', async (req: Request, res: Response): Promise<void> => {
   try {
     const { flowId } = req.params;
-    const flow = await FlowModel.findById(flowId);
+    
+    console.log(`\n🔍 REQUEST /api/flows/by-id/${flowId}`);
+    
+    // Usar MongoDB driver directamente, NO Mongoose
+    const db = mongoose.connection.db;
+    console.log(`📊 Base de datos: ${db.databaseName}`);
+    
+    const flowsCollection = db.collection('flows');
+    
+    const flow = await flowsCollection.findOne({ 
+      _id: new mongoose.Types.ObjectId(flowId) 
+    });
+    
+    console.log(`🔍 Query ejecutado: { _id: ObjectId("${flowId}") }`);
     
     if (!flow) {
+      console.log('❌ Flow no encontrado en MongoDB');
       res.status(404).json({ error: 'Flow not found' });
       return;
     }
     
-    res.json(flow);
+    console.log(`✅ Flow encontrado en MongoDB:`);
+    console.log(`   Nombre: ${flow.nombre}`);
+    console.log(`   Nodos: ${flow.nodes?.length}`);
+    console.log(`   IDs de nodos: ${flow.nodes?.map((n: any) => n.id).join(', ')}`);
+    
+    // Verificar qué se va a enviar
+    const responseData = flow;
+    console.log(`📤 Enviando al cliente: ${responseData.nodes?.length} nodos`);
+    
+    res.json(responseData);
   } catch (error: any) {
-    console.error('Error obteniendo flow:', error);
+    console.error('❌ Error obteniendo flow:', error);
     res.status(500).json({ error: error.message });
   }
 });
