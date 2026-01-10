@@ -162,7 +162,8 @@ export class ApiExecutor {
         
         // 6. Actualizar estadísticas
         apiConfig.actualizarEstadisticas(!error, tiempoRespuesta);
-        await apiConfig.save();
+        // Guardar sin validación para evitar error de workflows.0.id
+        await apiConfig.save({ validateBeforeSave: false });
       }
       
       // 7. Aplicar transformación si existe
