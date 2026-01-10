@@ -291,8 +291,12 @@ export class FlowExecutor {
       // Para transform, pasar todo el input como contexto
       userMessage = typeof input === 'string' ? input : JSON.stringify(input, null, 2);
     } else {
-      // Para conversacional, usar el mensaje del usuario
-      userMessage = input.mensaje_usuario || input.message || JSON.stringify(input);
+      // Para conversacional/formateador, usar el mensaje del usuario
+      // Prioridad: input.mensaje_usuario > input.message > variable global mensaje_usuario
+      userMessage = input.mensaje_usuario 
+        || input.message 
+        || this.getGlobalVariable('mensaje_usuario') 
+        || JSON.stringify(input);
     }
 
     // NUEVO: Construir systemPrompt dinámico desde los 3 bloques
