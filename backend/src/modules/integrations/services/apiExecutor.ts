@@ -87,55 +87,50 @@ export class ApiExecutor {
           data: typeof response.data === 'string' ? response.data.substring(0, 500) : response.data
         });
 
-        // PAGINACIÓN AUTOMÁTICA: Solo si NO hay búsqueda específica
+        // PAGINACIÓN: Detectar tipo de API y aplicar estrategia correcta
+        const isWooCommerce = apiConfig.baseUrl?.includes('wp-json/wc');
         const hasSearchParam = requestConfig.params?.search || requestConfig.params?.q || requestConfig.params?.query;
         
-        console.log('🔍 [PAGINACIÓN] Headers recibidos:', {
-          'x-wp-total': response.headers['x-wp-total'],
-          'x-wp-totalpages': response.headers['x-wp-totalpages'],
-          'hasSearchParam': !!hasSearchParam
+        console.log('🔍 [PAGINACIÓN] Análisis:', {
+          isWooCommerce,
+          hasSearchParam: !!hasSearchParam,
+          searchValue: hasSearchParam || 'none',
+          perPage: requestConfig.params?.per_page,
+          headers: {
+            'x-wp-total': response.headers['x-wp-total'],
+            'x-wp-totalpages': response.headers['x-wp-totalpages']
+          }
         });
         
-        const totalPages = parseInt(response.headers['x-wp-totalpages'] || '1');
-        const currentPage = parseInt(requestConfig.params?.page || '1');
+        // ESTRATEGIA DE PAGINACIÓN:
+        // 1. WooCommerce con búsqueda: NO paginar (ya tiene per_page alto)
+        // 2. WooCommerce sin búsqueda: NO paginar (listados completos usan per_page=100)
+        // 3. Otras APIs: Aplicar paginación si está configurada
         
-        console.log(`🔍 [PAGINACIÓN] totalPages: ${totalPages}, currentPage: ${currentPage}, search: ${hasSearchParam || 'none'}`);
-        
-        // Solo paginar automáticamente si NO hay búsqueda (para evitar traer todo el catálogo)
-        if (totalPages > 1 && currentPage === 1 && !hasSearchParam) {
-          console.log(`📄 Paginación detectada: ${totalPages} páginas totales (sin búsqueda, trayendo todo)`);
-          
-          // Combinar datos de todas las páginas
-          allData = Array.isArray(response.data) ? [...response.data] : response.data;
-          
-          // Traer el resto de las páginas
-          for (let page = 2; page <= totalPages; page++) {
-            console.log(`📄 Obteniendo página ${page}/${totalPages}...`);
-            
-            const nextPageConfig = {
-              ...requestConfig,
-              params: {
-                ...requestConfig.params,
-                page
-              }
-            };
-            
-            const nextResponse = await this.ejecutarConReintentos(
-              nextPageConfig,
-              apiConfig.configuracion
-            );
-            
-            if (Array.isArray(nextResponse.data)) {
-              allData = allData.concat(nextResponse.data);
-            }
-          }
-          
-          console.log(`✅ Paginación completa: ${allData.length} items totales`);
-        } else {
+        if (isWooCommerce) {
+          // WooCommerce: NUNCA paginar automáticamente
+          // El nodo debe configurar per_page alto (100) para obtener suficientes resultados
           allData = response.data;
+          const totalItems = parseInt(response.headers['x-wp-total'] || '0');
+          const totalPages = parseInt(response.headers['x-wp-totalpages'] || '1');
+          
+          console.log(`✅ WooCommerce: ${Array.isArray(allData) ? allData.length : 0} items obtenidos`);
+          console.log(`   Total disponible: ${totalItems} items en ${totalPages} páginas`);
+          
           if (hasSearchParam) {
-            console.log(`✅ Búsqueda específica: ${Array.isArray(allData) ? allData.length : 1} resultados (sin paginación automática)`);
+            console.log(`   🔍 Búsqueda: "${hasSearchParam}" - Resultados filtrados`);
+          } else {
+            console.log(`   📋 Listado completo con per_page=${requestConfig.params?.per_page || 'default'}`);
           }
+          
+          // Advertencia si hay más páginas disponibles
+          if (totalPages > 1 && Array.isArray(allData)) {
+            console.log(`   ⚠️  Hay ${totalPages} páginas disponibles. Considera aumentar per_page en el nodo.`);
+          }
+        } else {
+          // Otras APIs: Aplicar paginación genérica si está configurada
+          allData = response.data;
+          console.log(`✅ API genérica: ${Array.isArray(allData) ? allData.length : 'N/A'} items`);
         }
       } catch (err: any) {
         error = err;
