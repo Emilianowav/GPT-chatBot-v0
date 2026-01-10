@@ -1238,23 +1238,37 @@ export class FlowExecutor {
       }
       
       console.log(`   📦 Parámetros originales:`, JSON.stringify(config.parametros || {}, null, 2));
-      console.log(`   📦 Parámetros resueltos:`, JSON.stringify(resolvedParams, null, 2));
+      console.log(`   📦 Parámetros resueltos (raw):`, JSON.stringify(resolvedParams, null, 2));
+      
+      // Convertir strings numéricos a números (per_page, page, etc.)
+      const normalizedParams: Record<string, any> = {};
+      for (const [key, value] of Object.entries(resolvedParams)) {
+        // Si es un string que representa un número, convertirlo
+        if (typeof value === 'string' && /^\d+$/.test(value)) {
+          normalizedParams[key] = parseInt(value, 10);
+          console.log(`   🔢 Convertido: ${key} = "${value}" → ${normalizedParams[key]}`);
+        } else {
+          normalizedParams[key] = value;
+        }
+      }
+      
+      console.log(`   📦 Parámetros normalizados:`, JSON.stringify(normalizedParams, null, 2));
       
       // DETECCIÓN AUTOMÁTICA: Determinar dónde van los parámetros según el método HTTP
       const apiParams: any = {};
       
       if (endpoint.metodo === 'GET' || endpoint.metodo === 'DELETE') {
         // GET y DELETE: parámetros van en query string
-        apiParams.query = resolvedParams;
+        apiParams.query = normalizedParams;
         console.log(`   🔍 Método ${endpoint.metodo}: Parámetros en query string`);
       } else if (endpoint.metodo === 'POST' || endpoint.metodo === 'PUT' || endpoint.metodo === 'PATCH') {
         // POST, PUT, PATCH: parámetros van en body
-        apiParams.body = resolvedParams;
+        apiParams.body = normalizedParams;
         console.log(`   📝 Método ${endpoint.metodo}: Parámetros en body`);
       } else {
         // Fallback: intentar detectar automáticamente
         console.log(`   ⚠️  Método desconocido: ${endpoint.metodo}, usando query por defecto`);
-        apiParams.query = resolvedParams;
+        apiParams.query = normalizedParams;
       }
       
       // Ejecutar la llamada a la API
