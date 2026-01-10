@@ -26,6 +26,7 @@ export class FlowExecutor {
   private flowConfig: Record<string, any> = {}; // Configuraciones técnicas de nodos fuente
   private contactoId?: string;
   private historialConversacion: string[] = [];
+  private flow: any; // Flujo actual en ejecución
 
   /**
    * Guarda una variable global
@@ -132,19 +133,19 @@ export class FlowExecutor {
       console.log(`🚀 Ejecutando flujo: ${flowId}`);
       
       // 1. Cargar flujo de BD
-      const flow = await FlowModel.findById(flowId).lean(); // ← USAR .lean() para obtener objeto plano
-      if (!flow) {
+      this.flow = await FlowModel.findById(flowId).lean(); // ← USAR .lean() para obtener objeto plano
+      if (!this.flow) {
         throw new Error(`Flujo ${flowId} no encontrado`);
       }
 
       // 2. Detectar y guardar configuraciones técnicas de nodos fuente
-      this.detectSourceNodes(flow.nodes);
+      this.detectSourceNodes(this.flow.nodes);
 
-      if (!flow.nodes || !flow.edges) {
+      if (!this.flow.nodes || !this.flow.edges) {
         throw new Error(`Flujo ${flowId} no tiene nodos o edges`);
       }
 
-      console.log(`📊 Flujo: ${flow.nombre} (${flow.nodes.length} nodos, ${flow.edges.length} edges)`);
+      console.log(`📊 Flujo: ${this.flow.nombre} (${this.flow.nodes.length} nodos, ${this.flow.edges.length} edges)`);
 
       // 2. Inicializar contexto con datos del trigger
       this.context = {
@@ -170,23 +171,24 @@ export class FlowExecutor {
       console.log(`📋 Variables globales inicializadas:`, Object.keys(this.globalVariables));
 
       // 3. Encontrar nodo trigger
-      const triggerNode = flow.nodes.find((n: any) => n.category === 'trigger');
+      const triggerNode = this.flow.nodes.find((n: any) => n.category === 'trigger');
       
       if (!triggerNode) {
         console.error('❌ NO SE ENCONTRÓ NODO TRIGGER');
         throw new Error('No se encontró nodo trigger en el flujo');
       }
 
-      // 4. Ejecutar nodos secuencialmente siguiendo los edges
-      let currentNodeId = triggerNode.id;
-      let executionCount = 0;
-      const maxExecutions = 20; // Prevenir loops infinitos
+      console.log(`🔄 1. ${triggerNode.data.label}`);
 
-      while (currentNodeId && executionCount < maxExecutions) {
+      // 4. Ejecutar flujo desde el trigger
+      let currentNodeId = triggerNode.id;
+      let executionCount = 1;
+
+      while (executionCount < 50) { // Límite de seguridad
         executionCount++;
 
         // Buscar siguiente edge(s)
-        const possibleEdges = flow.edges.filter((e: any) => e.source === currentNodeId);
+        const possibleEdges = this.flow.edges.filter((e: any) => e.source === currentNodeId);
         
         if (possibleEdges.length === 0) {
           console.log(`✅ Fin del flujo (no hay más edges desde ${currentNodeId})`);
@@ -215,7 +217,7 @@ export class FlowExecutor {
         }
 
         // Buscar siguiente nodo
-        const nextNode = flow.nodes.find((n: any) => n.id === nextEdge.target);
+        const nextNode = this.flow.nodes.find((n: any) => n.id === nextEdge.target);
         if (!nextNode) {
           console.error(`❌ Nodo ${nextEdge.target} no encontrado`);
           break;
@@ -239,8 +241,8 @@ export class FlowExecutor {
         currentNodeId = nextNode.id;
       }
 
-      if (executionCount >= maxExecutions) {
-        console.warn(`⚠️  Flujo detenido: máximo de ${maxExecutions} ejecuciones alcanzado`);
+      if (executionCount >= 50) {
+        console.warn(`⚠️  Flujo detenido: máximo de 50 ejecuciones alcanzado`);
       }
 
       console.log(`\n✅ Flujo completado. Nodos ejecutados: ${executionCount}`);
