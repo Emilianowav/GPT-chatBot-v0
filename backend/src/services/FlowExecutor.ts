@@ -1222,7 +1222,7 @@ export class FlowExecutor {
       }
       
       console.log(`   ✅ Endpoint encontrado: ${endpoint.nombre}`);
-      console.log(`   ${endpoint.method} ${endpoint.path}`);
+      console.log(`   ${endpoint.metodo} ${endpoint.path}`);
       
       // Resolver variables en parámetros
       const params: Record<string, any> = {};
@@ -1238,17 +1238,21 @@ export class FlowExecutor {
       console.log(`   📦 Parámetros resueltos:`, JSON.stringify(params, null, 2));
       
       // Ejecutar la llamada a la API
-      const result = await apiExecutor.executeEndpoint(
-        apiConfig,
-        endpoint,
+      const result = await apiExecutor.ejecutar(
+        config.apiConfigId,
+        config.endpointId,
         params,
-        {} // headers adicionales si es necesario
+        {} // contexto adicional si es necesario
       );
       
-      console.log(`   ✅ API ejecutada exitosamente`);
-      console.log(`   Resultados: ${Array.isArray(result) ? result.length : 'N/A'} items`);
+      if (!result.success) {
+        throw new Error(result.error?.mensaje || 'Error ejecutando API');
+      }
       
-      return { output: result };
+      console.log(`   ✅ API ejecutada exitosamente`);
+      console.log(`   Resultados: ${Array.isArray(result.data) ? result.data.length : 'N/A'} items`);
+      
+      return { output: result.data };
       
     } catch (error: any) {
       console.error(`   ❌ Error ejecutando API:`, error.message);
