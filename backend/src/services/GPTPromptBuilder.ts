@@ -117,7 +117,70 @@ export class GPTPromptBuilder {
   }
 
   /**
+   * Extrae datos usando extractionConfig del frontend (SOLO lo que viene del frontend)
+   */
+  static async extractWithFrontendConfig(
+    contexto: string,
+    extractionConfig: any
+  ): Promise<Record<string, any>> {
+    const resultado: Record<string, any> = {};
+
+    if (!extractionConfig || !extractionConfig.systemPrompt) {
+      console.error('   ❌ extractionConfig.systemPrompt no está configurado');
+      return resultado;
+    }
+
+    try {
+      // Usar SOLO el systemPrompt del frontend (sin agregar nada)
+      const systemPrompt = extractionConfig.systemPrompt;
+      
+      console.log('   📤 Enviando a GPT con systemPrompt del frontend...');
+
+      // Llamar a GPT
+      const respuesta = await obtenerRespuestaChat({
+        modelo: 'gpt-3.5-turbo',
+        historial: [
+          {
+            role: 'system',
+            content: systemPrompt
+          },
+          {
+            role: 'user',
+            content: contexto
+          }
+        ]
+      });
+
+      // Parsear JSON
+      try {
+        let jsonString = respuesta.texto.trim();
+        
+        // Remover bloques de código markdown si existen
+        if (jsonString.startsWith('```')) {
+          jsonString = jsonString.replace(/```json?\n?/g, '').replace(/```\n?/g, '').trim();
+        }
+
+        const extracted = JSON.parse(jsonString);
+        
+        // Validar que sea un objeto
+        if (typeof extracted === 'object' && extracted !== null && !Array.isArray(extracted)) {
+          Object.assign(resultado, extracted);
+        }
+      } catch (parseError) {
+        console.error('   ❌ Error parseando JSON del extractor:', parseError);
+        console.error('   Respuesta recibida:', respuesta.texto);
+      }
+
+    } catch (error) {
+      console.error('   ❌ Error en extractWithFrontendConfig:', error);
+    }
+
+    return resultado;
+  }
+
+  /**
    * Extrae datos usando configuración avanzada (para GPT Formateador)
+   * @deprecated Usar extractWithFrontendConfig en su lugar
    */
   static async extractWithCustomConfig(
     contexto: string,

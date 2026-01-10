@@ -82,8 +82,22 @@ export interface IGPTConversacionalConfig {
   // BLOQUE 4: ACCIONES POST-RECOPILACIÓN (solo para conversacional)
   accionesCompletado?: IAccionCompletado[];
   
-  // CONFIGURACIÓN PARA FORMATEADOR/TRANSFORM
+  // CONFIGURACIÓN PARA FORMATEADOR/TRANSFORM (LEGACY)
   configuracionExtraccion?: IConfiguracionExtraccion;
+  
+  // CONFIGURACIÓN PARA FORMATEADOR (NUEVO - desde frontend)
+  extractionConfig?: {
+    enabled: boolean;
+    method?: 'simple' | 'advanced';
+    contextSource?: 'historial_completo' | 'ultimo_mensaje' | 'ultimos_n_mensajes';
+    systemPrompt: string; // Prompt del frontend (sin agregar nada)
+    variables?: {
+      nombre: string;
+      tipo: string;
+      requerido: boolean;
+      descripcion: string;
+    }[];
+  };
   
   // Variables de entrada/salida (ya existente)
   variablesEntrada?: string[];

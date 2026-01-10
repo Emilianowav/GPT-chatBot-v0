@@ -310,18 +310,19 @@ export class FlowExecutor {
     console.log('\n📨 USER MESSAGE:');
     console.log(`"${userMessage}"`);
 
-    // NUEVO: Construir systemPrompt dinámico desde los 3 bloques
+    // Usar SOLO el systemPrompt del frontend (sin agregar nada)
     let systemPrompt: string;
-    if (config.personalidad || config.topicos || config.variablesRecopilar) {
-      console.log('\n🔧 Construyendo systemPrompt desde:');
-      console.log(`   - Personalidad: ${config.personalidad ? 'SÍ' : 'NO'}`);
-      console.log(`   - Tópicos: ${config.topicos?.length || 0}`);
-      console.log(`   - Variables a recopilar: ${config.variablesRecopilar?.length || 0}`);
-      systemPrompt = GPTPromptBuilder.buildSystemPrompt(config);
+    if (config.tipo === 'formateador' && config.extractionConfig?.systemPrompt) {
+      // Para formateador: usar extractionConfig.systemPrompt
+      console.log('\n🔧 Usando extractionConfig.systemPrompt del frontend');
+      systemPrompt = config.extractionConfig.systemPrompt;
+    } else if (config.systemPrompt) {
+      // Para otros tipos: usar systemPrompt directo
+      console.log('\n🔧 Usando systemPrompt del frontend');
+      systemPrompt = config.systemPrompt;
     } else {
-      console.log('\n🔧 Usando systemPrompt legacy o fallback');
-      // Fallback: usar systemPrompt legacy
-      systemPrompt = config.systemPrompt || 'Eres un asistente útil.';
+      console.log('\n🔧 Fallback: systemPrompt por defecto');
+      systemPrompt = 'Eres un asistente útil.';
     }
 
     console.log('\n📋 SYSTEM PROMPT CONSTRUIDO:');
@@ -402,19 +403,15 @@ export class FlowExecutor {
       console.log(`   ✅ Historial actualizado (${this.historialConversacion.length} mensajes totales)`);
     }
 
-    // NUEVO: Procesar extracción de datos
-    // Soporta dos modos: configuracionExtraccion (avanzado) o variablesRecopilar (legacy)
-    if (config.configuracionExtraccion) {
-      // MODO AVANZADO: GPT Formateador con configuración personalizada
-      console.log('   🔧 Usando configuración de extracción avanzada');
+    // Procesar extracción de datos SOLO si es formateador
+    if (config.tipo === 'formateador' && config.extractionConfig?.enabled) {
+      console.log('   🔧 Usando extractionConfig del frontend');
       
-      // Construir contexto según fuente de datos configurada
+      // Construir contexto según fuente configurada
       let contexto = '';
-      const fuenteDatos = config.configuracionExtraccion.fuenteDatos || 'historial_completo';
+      const fuenteDatos = config.extractionConfig.contextSource || 'historial_completo';
       
       if (fuenteDatos === 'historial_completo' && this.historialConversacion.length > 0) {
-        // Incluir todo el historial (usuario + asistente)
-        // Formato: Usuario: ... / Asistente: ...
         for (let i = 0; i < this.historialConversacion.length; i += 2) {
           contexto += `Usuario: ${this.historialConversacion[i]}\n`;
           if (this.historialConversacion[i + 1]) {
@@ -422,29 +419,18 @@ export class FlowExecutor {
           }
         }
         contexto += `Usuario: ${userMessage}`;
-      } else if (fuenteDatos === 'ultimos_n_mensajes' && this.historialConversacion.length > 0) {
-        // Incluir últimos N mensajes
-        const n = config.configuracionExtraccion.cantidadMensajes || 5;
-        const mensajesUsuario = [];
-        for (let i = 0; i < this.historialConversacion.length; i += 2) {
-          mensajesUsuario.push(this.historialConversacion[i]);
-        }
-        const ultimos = mensajesUsuario.slice(-n);
-        contexto = ultimos.join('\n') + '\n' + userMessage;
       } else {
-        // ultimo_mensaje o fallback
         contexto = userMessage;
       }
       
       console.log(`\n📝 CONTEXTO PARA EXTRACCIÓN (${fuenteDatos}):`);
-
       console.log(contexto);
       console.log('\n🔍 Extrayendo variables...');
       
-      // Usar método de extracción avanzado
-      const datosExtraidos = await GPTPromptBuilder.extractWithCustomConfig(
+      // Usar extractionConfig.systemPrompt + extractionConfig.variables
+      const datosExtraidos = await GPTPromptBuilder.extractWithFrontendConfig(
         contexto,
-        config.configuracionExtraccion
+        config.extractionConfig
       );
       
       console.log('\n✅ DATOS EXTRAÍDOS:');
