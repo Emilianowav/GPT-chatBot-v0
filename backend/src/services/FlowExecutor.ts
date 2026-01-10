@@ -812,21 +812,20 @@ export class FlowExecutor {
    * Ejecuta un nodo Router (evalúa condiciones)
    */
   private async executeRouterNode(node: any, input: any): Promise<NodeExecutionResult> {
-    const config = node.data.config;
-    
     console.log('\n═══════════════════════════════════════════════════════════');
     console.log(`🔀 NODO ROUTER`);
     console.log('═══════════════════════════════════════════════════════════');
-    console.log(`\n📋 Rutas configuradas: ${config.routes?.length || 0}`);
     
     console.log('\n📊 VARIABLES GLOBALES DISPONIBLES:');
     Object.entries(this.globalVariables).forEach(([key, value]) => {
       console.log(`   ${key} = "${JSON.stringify(value)?.substring(0, 100)}"`);
     });
 
-    // Si no hay rutas configuradas, usar ruta por defecto
-    if (!config.routes || config.routes.length === 0) {
-      console.log(`   ⚠️  No hay rutas configuradas, usando ruta por defecto`);
+    // Obtener edges que salen de este router
+    const routerEdges = this.flow.edges.filter((e: any) => e.source === node.id);
+    
+    if (routerEdges.length === 0) {
+      console.log(`   ⚠️  No hay edges desde este router, usando ruta por defecto`);
       return { 
         output: { 
           ...input, 
@@ -835,36 +834,59 @@ export class FlowExecutor {
       };
     }
 
-    // Evaluar cada ruta en orden
+    console.log(`\n📋 Rutas disponibles: ${routerEdges.length}`);
+
+    // Evaluar cada edge en orden
     console.log('\n🔍 EVALUANDO RUTAS:');
-    for (const route of config.routes) {
-      console.log(`\n   Ruta: ${route.label || route.id} (${route.id})`);
-      console.log(`   Condición: ${route.condition}`);
+    for (const edge of routerEdges) {
+      const routeId = edge.sourceHandle || edge.id;
+      const label = edge.data?.label || routeId;
+      const condition = edge.data?.condition;
       
-      const conditionMet = this.evaluateCondition(route.condition, input);
+      console.log(`\n   Ruta: ${label} (${routeId})`);
+      console.log(`   Condición: ${condition || 'SIN CONDICIÓN'}`);
+      
+      if (!condition) {
+        console.log(`   ⚠️  Sin condición, se considera TRUE por defecto`);
+        console.log(`\n✅ RUTA SELECCIONADA: ${label}`);
+        return { 
+          output: { 
+            ...input, 
+            _routerPath: routeId,
+            _routerLabel: label 
+          } 
+        };
+      }
+      
+      const conditionMet = this.evaluateStringCondition(condition);
       
       console.log(`   Resultado: ${conditionMet ? '✅ TRUE' : '❌ FALSE'}`);
       
       if (conditionMet) {
-        console.log(`\n✅ RUTA SELECCIONADA: ${route.label || route.id}`);
-        console.log(`   _routerPath = ${route.id}`);
-        console.log(`   _routerLabel = ${route.label}`);
+        console.log(`\n✅ RUTA SELECCIONADA: ${label}`);
+        console.log(`   _routerPath = ${routeId}`);
+        console.log(`   _routerLabel = ${label}`);
         return { 
           output: { 
             ...input, 
-            _routerPath: route.id,
-            _routerLabel: route.label 
+            _routerPath: routeId,
+            _routerLabel: label 
           } 
         };
       }
     }
 
-    // Si ninguna condición se cumple, usar ruta fallback
-    console.log(`\n⚠️  NINGUNA CONDICIÓN CUMPLIDA - Usando ruta fallback`);
+    // Si ninguna condición se cumple, usar la primera ruta como fallback
+    console.log(`\n⚠️  NINGUNA CONDICIÓN CUMPLIDA - Usando primera ruta como fallback`);
+    const fallbackEdge = routerEdges[0];
+    const fallbackRouteId = fallbackEdge.sourceHandle || fallbackEdge.id;
+    const fallbackLabel = fallbackEdge.data?.label || fallbackRouteId;
+    
     return { 
       output: { 
         ...input, 
-        _routerPath: 'fallback' 
+        _routerPath: fallbackRouteId,
+        _routerLabel: fallbackLabel 
       } 
     };
   }
