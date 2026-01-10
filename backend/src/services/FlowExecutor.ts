@@ -1225,23 +1225,24 @@ export class FlowExecutor {
       console.log(`   ${endpoint.metodo} ${endpoint.path}`);
       
       // Resolver variables en parámetros
-      const params: Record<string, any> = {};
+      const resolvedParams: Record<string, any> = {};
       for (const [key, value] of Object.entries(config.parametros || {})) {
         const stringValue = String(value);
         if (stringValue.includes('{{')) {
-          params[key] = this.resolveVariableInString(stringValue);
+          resolvedParams[key] = this.resolveVariableInString(stringValue);
         } else {
-          params[key] = this.getVariableValue(stringValue) || stringValue;
+          resolvedParams[key] = this.getVariableValue(stringValue) || stringValue;
         }
       }
       
-      console.log(`   📦 Parámetros resueltos:`, JSON.stringify(params, null, 2));
+      console.log(`   📦 Parámetros resueltos:`, JSON.stringify(resolvedParams, null, 2));
       
       // Ejecutar la llamada a la API
+      // Para GET requests, los parámetros van en 'query'
       const result = await apiExecutor.ejecutar(
         config.apiConfigId,
         config.endpointId,
-        params,
+        { query: resolvedParams }, // Pasar en formato correcto
         {} // contexto adicional si es necesario
       );
       
