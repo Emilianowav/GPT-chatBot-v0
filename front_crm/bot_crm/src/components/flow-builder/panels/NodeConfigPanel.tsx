@@ -56,48 +56,15 @@ const NodeConfigPanel: React.FC<NodeConfigPanelProps> = ({ node, onClose, onSave
   };
 
   const renderWhatsAppConfig = () => {
-    // Si es Watch Events, mostrar configuración de webhook
+    // Si es Watch Events, mostrar configuración simplificada
     if (config.module === 'watch-events') {
       return (
         <>
           <div className={styles.section}>
-            <h3>Webhook Configuration</h3>
-            
-            <div className={styles.formGroup}>
-              <label>Webhook Name</label>
-              <input 
-                type="text"
-                value={config.webhookName || ''}
-                onChange={(e) => setConfig({ ...config, webhookName: e.target.value })}
-                placeholder="My WhatsApp Events webhook"
-              />
-            </div>
-
-            <div className={styles.formGroup}>
-              <label>Webhook URL</label>
-              <input 
-                type="text"
-                value={config.webhookUrl || ''}
-                onChange={(e) => setConfig({ ...config, webhookUrl: e.target.value })}
-                placeholder="https://api.momentoia.co/webhook/whatsapp"
-                disabled
-              />
-              <small>Esta URL se configura en WhatsApp Business Cloud</small>
-            </div>
-
-            <div className={styles.formGroup}>
-              <label>Verify Token</label>
-              <input 
-                type="text"
-                value={config.verifyToken || ''}
-                onChange={(e) => setConfig({ ...config, verifyToken: e.target.value })}
-                placeholder="2001-ic"
-              />
-            </div>
-          </div>
-
-          <div className={styles.section}>
-            <h3>WhatsApp Business Cloud</h3>
+            <h3>WhatsApp Watch Events (Listener)</h3>
+            <p style={{ fontSize: '14px', color: '#666', marginBottom: '16px' }}>
+              Este nodo escucha automáticamente los mensajes entrantes de WhatsApp.
+            </p>
             
             <div className={styles.formGroup}>
               <label>Phone Number ID</label>
@@ -107,50 +74,18 @@ const NodeConfigPanel: React.FC<NodeConfigPanelProps> = ({ node, onClose, onSave
                 onChange={(e) => setConfig({ ...config, phoneNumberId: e.target.value })}
                 placeholder="906667632531979"
               />
+              <small>ID del número de WhatsApp Business</small>
             </div>
 
             <div className={styles.formGroup}>
-              <label>Connection Name</label>
+              <label>Empresa ID</label>
               <input 
                 type="text"
-                value={config.connectionName || ''}
-                onChange={(e) => setConfig({ ...config, connectionName: e.target.value })}
-                placeholder="My WhatsApp Connection"
+                value={config.empresaId || ''}
+                onChange={(e) => setConfig({ ...config, empresaId: e.target.value })}
+                placeholder="6940a9a181b92bfce970fdb5"
               />
-            </div>
-          </div>
-
-          <div className={styles.section}>
-            <h3>Empresa</h3>
-            
-            <div className={styles.formGroup}>
-              <label>Nombre</label>
-              <input 
-                type="text"
-                value={config.empresaNombre || ''}
-                onChange={(e) => setConfig({ ...config, empresaNombre: e.target.value })}
-                placeholder="Veo Veo"
-              />
-            </div>
-
-            <div className={styles.formGroup}>
-              <label>Teléfono</label>
-              <input 
-                type="text"
-                value={config.empresaTelefono || ''}
-                onChange={(e) => setConfig({ ...config, empresaTelefono: e.target.value })}
-                placeholder="+5493794057297"
-              />
-            </div>
-
-            <div className={styles.formGroup}>
-              <label>Mensaje de Bienvenida</label>
-              <textarea 
-                rows={8}
-                value={config.mensajeBienvenida || ''}
-                onChange={(e) => setConfig({ ...config, mensajeBienvenida: e.target.value })}
-                placeholder="Hola 👋..."
-              />
+              <small>ID de la empresa en la base de datos</small>
             </div>
           </div>
         </>
