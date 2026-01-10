@@ -618,7 +618,15 @@ export class FlowExecutor {
    * 5. Variable global 'telefono_usuario'
    */
   private resolveWhatsAppPhone(config: any, input: any): string {
-    // 1. Desde config del nodo
+    // 1. Desde config.telefono (nuevo estándar)
+    if (config.telefono) {
+      const resolved = this.resolveVariableInString(config.telefono);
+      if (resolved && resolved.trim() !== '') {
+        return resolved;
+      }
+    }
+
+    // 2. Desde config.to (legacy)
     if (config.to) {
       const resolved = this.resolveVariableInString(config.to);
       if (resolved && resolved.trim() !== '') {
@@ -626,7 +634,7 @@ export class FlowExecutor {
       }
     }
 
-    // 2. Desde input (edge mapping)
+    // 3. Desde input (edge mapping)
     if (input.to) {
       const resolved = this.resolveVariableInString(String(input.to));
       if (resolved && resolved.trim() !== '') {
@@ -634,17 +642,23 @@ export class FlowExecutor {
       }
     }
 
-    // 3. Desde input.telefono_usuario
+    // 4. Desde input.telefono_usuario
     if (input.telefono_usuario) {
       return String(input.telefono_usuario);
     }
 
-    // 4. Desde input.from (trigger de WhatsApp)
+    // 5. Desde input.from (trigger de WhatsApp)
     if (input.from) {
       return String(input.from);
     }
 
-    // 5. Desde variable global
+    // 6. Desde variable global telefono_cliente (nuevo estándar)
+    const telefonoCliente = this.getGlobalVariable('telefono_cliente');
+    if (telefonoCliente) {
+      return String(telefonoCliente);
+    }
+
+    // 7. Desde variable global telefono_usuario (legacy)
     const globalPhone = this.getGlobalVariable('telefono_usuario');
     if (globalPhone) {
       return String(globalPhone);
