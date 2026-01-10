@@ -33,6 +33,7 @@ const NodeConfigPanel: React.FC<NodeConfigPanelProps> = ({ node, onClose, onSave
       modelo: config.modelo || 'gpt-4',
       temperatura: config.temperatura !== undefined ? config.temperatura : 0.7,
       maxTokens: config.maxTokens || 500,
+      instrucciones: config.instrucciones || '',
       personalidad: config.personalidad || '',
       topicos: config.topicos || [],
       variablesRecopilar: config.variablesRecopilar || [],
@@ -42,7 +43,8 @@ const NodeConfigPanel: React.FC<NodeConfigPanelProps> = ({ node, onClose, onSave
       globalVariablesOutput: config.globalVariablesOutput || [],
       outputFormat: config.outputFormat || 'text',
       jsonSchema: config.jsonSchema,
-      systemPrompt: config.systemPrompt
+      systemPrompt: config.systemPrompt,
+      configuracionExtraccion: config.configuracionExtraccion || undefined
     };
 
     return (
