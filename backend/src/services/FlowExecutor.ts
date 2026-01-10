@@ -284,6 +284,12 @@ export class FlowExecutor {
   private async executeGPTNode(node: any, input: any): Promise<NodeExecutionResult> {
     const config = node.data.config as IGPTConversacionalConfig;
 
+    console.log('\n═══════════════════════════════════════════════════════════');
+    console.log(`📝 NODO GPT: ${node.data.label} (${config.tipo})`);
+    console.log('═══════════════════════════════════════════════════════════');
+    console.log('\n📥 INPUT RECIBIDO:');
+    console.log(JSON.stringify(input, null, 2));
+
     let userMessage: string;
     
     // Determinar contenido del mensaje según tipo de GPT
@@ -299,14 +305,25 @@ export class FlowExecutor {
         || JSON.stringify(input);
     }
 
+    console.log('\n📨 USER MESSAGE:');
+    console.log(`"${userMessage}"`);
+
     // NUEVO: Construir systemPrompt dinámico desde los 3 bloques
     let systemPrompt: string;
     if (config.personalidad || config.topicos || config.variablesRecopilar) {
+      console.log('\n🔧 Construyendo systemPrompt desde:');
+      console.log(`   - Personalidad: ${config.personalidad ? 'SÍ' : 'NO'}`);
+      console.log(`   - Tópicos: ${config.topicos?.length || 0}`);
+      console.log(`   - Variables a recopilar: ${config.variablesRecopilar?.length || 0}`);
       systemPrompt = GPTPromptBuilder.buildSystemPrompt(config);
     } else {
+      console.log('\n🔧 Usando systemPrompt legacy o fallback');
       // Fallback: usar systemPrompt legacy
       systemPrompt = config.systemPrompt || 'Eres un asistente útil.';
     }
+
+    console.log('\n📋 SYSTEM PROMPT CONSTRUIDO:');
+    console.log(systemPrompt.substring(0, 300) + '...');
 
     // Construir mensajes para GPT
     const messages: ChatCompletionMessageParam[] = [
@@ -322,15 +339,19 @@ export class FlowExecutor {
 
     // Si es conversacional, agregar historial completo
     if (config.tipo === 'conversacional' && this.historialConversacion.length > 0) {
+      console.log(`\n📚 Agregando historial: ${this.historialConversacion.length} mensajes`);
       // Agregar historial (alternando user/assistant)
       for (let i = 0; i < this.historialConversacion.length; i++) {
         const msg = this.historialConversacion[i];
         const role = i % 2 === 0 ? 'user' : 'assistant';
+        console.log(`   ${i + 1}. ${role}: ${msg.substring(0, 60)}${msg.length > 60 ? '...' : ''}`);
         messages.push({
           role: role as 'user' | 'assistant',
           content: msg,
         });
       }
+    } else if (config.tipo === 'conversacional') {
+      console.log('\n📚 Historial vacío (primera conversación)');
     }
 
     // Agregar mensaje actual
@@ -340,12 +361,15 @@ export class FlowExecutor {
     });
 
     // Llamar a OpenAI
+    console.log(`\n🤖 Llamando a OpenAI (${config.modelo || 'gpt-4'})...`);
     const resultado = await obtenerRespuestaChat({
       modelo: config.modelo || 'gpt-4',
       historial: messages,
     });
 
-    console.log(`   ✅ ${resultado.tokens} tokens`);
+    console.log(`\n✅ RESPUESTA DE GPT:`);
+    console.log(`"${resultado.texto}"`);
+    console.log(`Tokens: ${resultado.tokens}, Costo: $${resultado.costo}`);
 
     // Preparar output según tipo de GPT
     const output: any = {
@@ -370,8 +394,10 @@ export class FlowExecutor {
 
     // Guardar en historial si es conversacional
     if (config.tipo === 'conversacional') {
+      console.log('\n💾 Guardando en historial de BD...');
       await this.saveToHistorial(userMessage);
       await this.saveToHistorial(resultado.texto);
+      console.log(`   ✅ Historial actualizado (${this.historialConversacion.length} mensajes totales)`);
     }
 
     // NUEVO: Procesar extracción de datos
@@ -408,7 +434,10 @@ export class FlowExecutor {
         contexto = userMessage;
       }
       
-      console.log(`   📝 Contexto para extracción (${fuenteDatos}): ${contexto.substring(0, 150)}...`);
+      console.log(`\n📝 CONTEXTO PARA EXTRACCIÓN (${fuenteDatos}):`);
+
+      console.log(contexto);
+      console.log('\n🔍 Extrayendo variables...');
       
       // Usar método de extracción avanzado
       const datosExtraidos = await GPTPromptBuilder.extractWithCustomConfig(
@@ -416,18 +445,25 @@ export class FlowExecutor {
         config.configuracionExtraccion
       );
       
-      console.log(`   ✅ Datos extraídos: ${JSON.stringify(datosExtraidos)}`);
+      console.log('\n✅ DATOS EXTRAÍDOS:');
+      console.log(JSON.stringify(datosExtraidos, null, 2));
       
       // Guardar cada dato extraído en variables globales
+      console.log('\n💾 Guardando variables globales:');
       for (const [nombre, valor] of Object.entries(datosExtraidos)) {
         if (valor !== undefined && valor !== null && valor !== '') {
-          console.log(`   💾 Guardando variable global: ${nombre} = ${JSON.stringify(valor)?.substring(0, 100)}`);
+          console.log(`   ✅ ${nombre} = "${JSON.stringify(valor)?.substring(0, 100)}"`);
           this.setGlobalVariable(nombre, valor);
           output[nombre] = valor;
+        } else {
+          console.log(`   ⚠️  ${nombre} = ${valor} (no guardado)`);
         }
       }
       
-      console.log(`   📋 globalVariables después de guardar: ${JSON.stringify(Object.keys(this.globalVariables))}`);
+      console.log('\n📋 VARIABLES GLOBALES ACTUALES:');
+      Object.entries(this.globalVariables).forEach(([key, value]) => {
+        console.log(`   ${key} = "${JSON.stringify(value)?.substring(0, 100)}"`);
+      });
       
     } else if (config.variablesRecopilar && config.variablesRecopilar.length > 0) {
       // MODO LEGACY: Extracción simple con variablesRecopilar
@@ -679,6 +715,12 @@ export class FlowExecutor {
     
     console.log(`   🛍️  Módulo WooCommerce: ${config.module}`);
     
+    // Si tiene apiConfigId, usar el sistema de integraciones
+    if (config.apiConfigId) {
+      console.log(`   🔗 Usando API de integraciones: ${config.apiConfigId}`);
+      return await this.executeAPICallNode(node, input);
+    }
+    
     // Obtener conexión (del nodo o del flowConfig)
     const connection = config.connection || this.flowConfig.woocommerce;
     
@@ -772,8 +814,15 @@ export class FlowExecutor {
   private async executeRouterNode(node: any, input: any): Promise<NodeExecutionResult> {
     const config = node.data.config;
     
-    console.log(`   Evaluando condiciones del router`);
-    console.log(`   Rutas configuradas: ${config.routes?.length || 0}`);
+    console.log('\n═══════════════════════════════════════════════════════════');
+    console.log(`🔀 NODO ROUTER`);
+    console.log('═══════════════════════════════════════════════════════════');
+    console.log(`\n📋 Rutas configuradas: ${config.routes?.length || 0}`);
+    
+    console.log('\n📊 VARIABLES GLOBALES DISPONIBLES:');
+    Object.entries(this.globalVariables).forEach(([key, value]) => {
+      console.log(`   ${key} = "${JSON.stringify(value)?.substring(0, 100)}"`);
+    });
 
     // Si no hay rutas configuradas, usar ruta por defecto
     if (!config.routes || config.routes.length === 0) {
@@ -787,13 +836,19 @@ export class FlowExecutor {
     }
 
     // Evaluar cada ruta en orden
+    console.log('\n🔍 EVALUANDO RUTAS:');
     for (const route of config.routes) {
-      console.log(`   🔍 Evaluando ruta: ${route.label || route.id}`);
+      console.log(`\n   Ruta: ${route.label || route.id} (${route.id})`);
+      console.log(`   Condición: ${route.condition}`);
       
       const conditionMet = this.evaluateCondition(route.condition, input);
       
+      console.log(`   Resultado: ${conditionMet ? '✅ TRUE' : '❌ FALSE'}`);
+      
       if (conditionMet) {
-        console.log(`   ✅ Condición cumplida: ${route.label || route.id}`);
+        console.log(`\n✅ RUTA SELECCIONADA: ${route.label || route.id}`);
+        console.log(`   _routerPath = ${route.id}`);
+        console.log(`   _routerLabel = ${route.label}`);
         return { 
           output: { 
             ...input, 
@@ -805,7 +860,7 @@ export class FlowExecutor {
     }
 
     // Si ninguna condición se cumple, usar ruta fallback
-    console.log(`   ⚠️  Ninguna condición cumplida, usando ruta fallback`);
+    console.log(`\n⚠️  NINGUNA CONDICIÓN CUMPLIDA - Usando ruta fallback`);
     return { 
       output: { 
         ...input, 
@@ -1132,6 +1187,73 @@ export class FlowExecutor {
     const result = this.getVariableValue(expression);
     console.log(`      → Resultado: ${JSON.stringify(result)?.substring(0, 100)}`);
     return result;
+  }
+
+  /**
+   * Ejecuta un nodo que usa el sistema de integraciones (API Call)
+   */
+  private async executeAPICallNode(node: any, input: any): Promise<NodeExecutionResult> {
+    const config = node.data.config;
+    
+    console.log(`\n🔗 Ejecutando llamada a API de integraciones`);
+    console.log(`   API Config ID: ${config.apiConfigId}`);
+    console.log(`   Endpoint ID: ${config.endpointId}`);
+    
+    try {
+      // Importar dinámicamente el módulo de integraciones
+      const { ApiConfigurationModel } = await import('../modules/integrations/models/index.js');
+      const { apiExecutor } = await import('../modules/integrations/services/apiExecutor.js');
+      
+      // Obtener configuración de la API
+      const apiConfig = await ApiConfigurationModel.findById(config.apiConfigId);
+      
+      if (!apiConfig) {
+        throw new Error(`API Configuration no encontrada: ${config.apiConfigId}`);
+      }
+      
+      console.log(`   ✅ API encontrada: ${apiConfig.nombre}`);
+      console.log(`   Base URL: ${apiConfig.baseUrl}`);
+      
+      // Buscar el endpoint
+      const endpoint = apiConfig.endpoints?.find((e: any) => e.id === config.endpointId);
+      
+      if (!endpoint) {
+        throw new Error(`Endpoint no encontrado: ${config.endpointId}`);
+      }
+      
+      console.log(`   ✅ Endpoint encontrado: ${endpoint.nombre}`);
+      console.log(`   ${endpoint.method} ${endpoint.path}`);
+      
+      // Resolver variables en parámetros
+      const params: Record<string, any> = {};
+      for (const [key, value] of Object.entries(config.parametros || {})) {
+        const stringValue = String(value);
+        if (stringValue.includes('{{')) {
+          params[key] = this.resolveVariableInString(stringValue);
+        } else {
+          params[key] = this.getVariableValue(stringValue) || stringValue;
+        }
+      }
+      
+      console.log(`   📦 Parámetros resueltos:`, JSON.stringify(params, null, 2));
+      
+      // Ejecutar la llamada a la API
+      const result = await apiExecutor.executeEndpoint(
+        apiConfig,
+        endpoint,
+        params,
+        {} // headers adicionales si es necesario
+      );
+      
+      console.log(`   ✅ API ejecutada exitosamente`);
+      console.log(`   Resultados: ${Array.isArray(result) ? result.length : 'N/A'} items`);
+      
+      return { output: result };
+      
+    } catch (error: any) {
+      console.error(`   ❌ Error ejecutando API:`, error.message);
+      throw error;
+    }
   }
 
   /**

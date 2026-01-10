@@ -1,0 +1,442 @@
+{
+  "flowId": "695a156681f6d67f0ae9cf40",
+  "timestamp": "2026-01-10T10:01:53.156Z",
+  "nodes": [
+    {
+      "index": 1,
+      "id": "webhook-whatsapp",
+      "type": "webhook",
+      "label": "WhatsApp Business Cloud",
+      "config": {
+        "module": "watch-events",
+        "phoneNumberId": "906667632531979",
+        "empresaId": "6940a9a181b92bfce970fdb5"
+      },
+      "purpose": "Recibe mensajes de WhatsApp vía webhook de Meta",
+      "inputs": [],
+      "outputs": [
+        "message (texto del mensaje)",
+        "from (teléfono del cliente)",
+        "to (teléfono de la empresa)",
+        "phoneNumberId",
+        "timestamp",
+        "profileName"
+      ],
+      "variables": []
+    },
+    {
+      "index": 2,
+      "id": "gpt-conversacional",
+      "type": "gpt",
+      "label": "OpenAI (ChatGPT, Sera...",
+      "config": {
+        "tipo": "conversacional",
+        "modelo": "gpt-3.5-turbo",
+        "temperatura": 0.7,
+        "maxTokens": 500,
+        "instrucciones": "Eres un asistente de ventas de Veo Veo Libros, una librería especializada en libros de inglés.\n\nTU MISIÓN PRINCIPAL:\nAyudar al cliente a encontrar libros recopilando EXACTAMENTE esta información en orden:\n\n1. TÍTULO del libro (OBLIGATORIO)\n2. EDITORIAL (OBLIGATORIO - no aceptes \"no sé\" o \"cualquiera\")\n3. EDICIÓN (OBLIGATORIO - no aceptes \"no sé\" o \"cualquiera\")\n\nREGLAS ESTRICTAS:\n- Si el cliente ya mencionó el título, NO vuelvas a preguntarlo\n- Si el cliente dice \"no sé\" la editorial, INSISTE amablemente: \"Es importante que me des la editorial para encontrar el libro exacto que buscas\"\n- Si el cliente dice \"no sé\" la edición, INSISTE amablemente: \"Necesito la edición específica para asegurarme de que sea el libro correcto\"\n- NO busques el libro hasta tener los 3 datos completos\n- NO pidas fotografías de libros, solo información por escrito\n- Sé conversacional pero FIRME en recopilar los 3 datos\n\nINFORMACIÓN ESTÁTICA (menciona solo si el cliente pregunta):\n- Especialidad: Libros en inglés\n- Formas de pago: Efectivo, transferencia, tarjeta de crédito/débito\n- Envíos: A todo el país\n- Consultas: WhatsApp, email, tienda física\n\nEJEMPLO CORRECTO:\nCliente: \"Quiero harry potter 3\"\nTú: \"¡Perfecto! Para buscar el libro exacto que necesitas, ¿podrías decirme la editorial y la edición? Por ejemplo: Salamandra, edición 2020.\"\n\nCliente: \"No sé la editorial\"\nTú: \"Entiendo. Es importante que me des la editorial para encontrar el libro exacto. ¿Podrías revisar si tienes esa información? Si no, puedo ayudarte a identificarla.\"",
+        "personalidad": "Eres amigable, profesional y persistente. Ayudas a los clientes de manera conversacional pero SIEMPRE recopilas los 3 datos: título, editorial, edición.",
+        "topicos": [
+          {
+            "id": "topico-1",
+            "titulo": "Especialidad en Libros de Inglés",
+            "contenido": "Veo Veo Libros es una librería especializada en libros en inglés. Ofrecemos una amplia variedad de títulos, desde clásicos hasta novedades.",
+            "keywords": [
+              "libros",
+              "inglés",
+              "especialidad",
+              "variedad"
+            ]
+          },
+          {
+            "id": "topico-2",
+            "titulo": "Formas de Pago",
+            "contenido": "Aceptamos efectivo, transferencia bancaria, tarjeta de crédito y débito. Ofrecemos facilidades de pago para compras mayores.",
+            "keywords": [
+              "pago",
+              "efectivo",
+              "transferencia",
+              "tarjeta"
+            ]
+          },
+          {
+            "id": "topico-3",
+            "titulo": "Envíos",
+            "contenido": "Realizamos envíos a todo el país. El costo y tiempo de entrega dependen de la ubicación. Envíos gratis en compras mayores a $50000.",
+            "keywords": [
+              "envíos",
+              "entrega",
+              "país",
+              "gratis"
+            ]
+          },
+          {
+            "id": "topico-4",
+            "titulo": "Búsqueda de Libros",
+            "contenido": "Para buscar un libro necesitamos: Título (obligatorio), Editorial (obligatorio), Edición (obligatorio). No aceptamos fotografías, solo información por escrito.",
+            "keywords": [
+              "búsqueda",
+              "título",
+              "editorial",
+              "edición"
+            ]
+          }
+        ]
+      },
+      "purpose": "Conversa con el usuario y recopila información",
+      "inputs": [],
+      "outputs": [
+        "respuesta_gpt",
+        "tokens",
+        "costo",
+        "titulo",
+        "editorial",
+        "edicion"
+      ],
+      "variables": [
+        {
+          "nombre": "titulo",
+          "tipo": "texto",
+          "obligatorio": true,
+          "descripcion": "Título del libro que busca el cliente"
+        },
+        {
+          "nombre": "editorial",
+          "tipo": "texto",
+          "obligatorio": true,
+          "descripcion": "Editorial del libro - OBLIGATORIO, no aceptar \"no sé\""
+        },
+        {
+          "nombre": "edicion",
+          "tipo": "texto",
+          "obligatorio": true,
+          "descripcion": "Edición del libro - OBLIGATORIO, no aceptar \"no sé\""
+        }
+      ]
+    },
+    {
+      "index": 3,
+      "id": "gpt-formateador",
+      "type": "gpt",
+      "label": "OpenAI (ChatGPT, Sera...",
+      "config": {
+        "tipo": "formateador",
+        "modelo": "gpt-3.5-turbo",
+        "configuracionExtraccion": {
+          "instruccionesExtraccion": "Analiza el historial de conversación y extrae la información de búsqueda del cliente.\n\nCAMPOS A EXTRAER:\n1. \"titulo\": Título del libro mencionado por el cliente (OBLIGATORIO)\n2. \"editorial\": Editorial del libro si fue mencionada (OPCIONAL)\n3. \"edicion\": Edición del libro si fue mencionada (OPCIONAL)\n\nREGLAS:\n- Si el cliente mencionó el título, extráelo aunque no sea exacto\n- Si no mencionó editorial o edición, deja esos campos como null\n- NO inventes información que el cliente no proporcionó\n- Devuelve SOLO el JSON, sin texto adicional\n\nFORMATO DE SALIDA:\n{\n  \"titulo\": \"título mencionado por el cliente o null\",\n  \"editorial\": \"editorial mencionada o null\",\n  \"edicion\": \"edición mencionada o null\"\n}",
+          "fuenteDatos": "historial_completo",
+          "cantidadMensajes": 10,
+          "formatoSalida": {
+            "tipo": "json",
+            "estructura": "{ \"titulo\": string, \"editorial\": string | null, \"edicion\": string | null }",
+            "ejemplo": "{ \"titulo\": \"Harry Potter 3\", \"editorial\": \"Salamandra\", \"edicion\": \"2020\" }"
+          },
+          "camposEsperados": [
+            {
+              "nombre": "titulo",
+              "descripcion": "Título del libro que busca el cliente",
+              "tipoDato": "string",
+              "requerido": true,
+              "valorPorDefecto": null
+            },
+            {
+              "nombre": "editorial",
+              "descripcion": "Editorial del libro",
+              "tipoDato": "string",
+              "requerido": false,
+              "valorPorDefecto": null
+            },
+            {
+              "nombre": "edicion",
+              "descripcion": "Edición del libro",
+              "tipoDato": "string",
+              "requerido": false,
+              "valorPorDefecto": null
+            }
+          ]
+        }
+      },
+      "purpose": "Extrae y estructura datos del historial de conversación",
+      "inputs": [],
+      "outputs": [
+        "respuesta_gpt",
+        "tokens",
+        "costo",
+        "titulo",
+        "editorial",
+        "edicion"
+      ],
+      "variables": [
+        {
+          "nombre": "titulo",
+          "tipo": "texto",
+          "obligatorio": true,
+          "descripcion": "Título del libro"
+        },
+        {
+          "nombre": "editorial",
+          "tipo": "texto",
+          "obligatorio": false,
+          "descripcion": "Editorial del libro"
+        },
+        {
+          "nombre": "edicion",
+          "tipo": "texto",
+          "obligatorio": false,
+          "descripcion": "Edición del libro"
+        }
+      ]
+    },
+    {
+      "index": 4,
+      "id": "router",
+      "type": "router",
+      "label": "Router",
+      "config": {
+        "routes": [
+          {
+            "id": "route-1",
+            "label": "Faltan datos",
+            "condition": "{{titulo}} not exists",
+            "descripcion": "Si no se extrajo el título del libro"
+          },
+          {
+            "id": "route-2",
+            "label": "Datos completos",
+            "condition": "{{titulo}} exists",
+            "descripcion": "Si ya tenemos al menos el título para buscar"
+          }
+        ]
+      },
+      "purpose": "Evalúa condiciones y dirige el flujo por diferentes rutas",
+      "inputs": [],
+      "outputs": [
+        "_routerPath",
+        "_routerLabel"
+      ],
+      "variables": []
+    },
+    {
+      "index": 5,
+      "id": "gpt-pedir-datos",
+      "type": "gpt",
+      "label": "OpenAI (ChatGPT, Sera...",
+      "config": {
+        "tipo": "conversacional",
+        "modelo": "gpt-3.5-turbo",
+        "temperatura": 0.7,
+        "maxTokens": 200,
+        "instrucciones": "El cliente no ha especificado el título del libro que busca.\n\nCONTEXTO:\n- Título: {{titulo}}\n- Editorial: {{editorial}}\n- Edición: {{edicion}}\n\nTU TAREA:\nPregunta de manera amable y específica qué libro está buscando. Pide el título del libro.\n\nIMPORTANTE:\n- Sé amigable y conversacional\n- NO pidas fotografías, solo información por escrito\n- Si ya tiene el título, pregunta por editorial y edición de manera opcional\n\nEJEMPLO:\n\"¡Hola! Para ayudarte a encontrar el libro que buscas, ¿podrías decirme el título? Y si recuerdas la editorial y edición, también me ayudaría mucho 😊\""
+      },
+      "purpose": "Conversa con el usuario y recopila información",
+      "inputs": [],
+      "outputs": [
+        "respuesta_gpt",
+        "tokens",
+        "costo"
+      ],
+      "variables": []
+    },
+    {
+      "index": 6,
+      "id": "whatsapp-preguntar",
+      "type": "whatsapp",
+      "label": "WhatsApp Business Cloud",
+      "config": {
+        "message": "{{gpt-pedir-datos.respuesta_gpt}}",
+        "telefono": "{{telefono_cliente}}"
+      },
+      "purpose": "Envía mensaje de WhatsApp al cliente",
+      "inputs": [
+        "message",
+        "telefono"
+      ],
+      "outputs": [
+        "status",
+        "to",
+        "message"
+      ],
+      "variables": []
+    },
+    {
+      "index": 7,
+      "id": "woocommerce",
+      "type": "woocommerce",
+      "label": "WooCommerce",
+      "config": {
+        "apiConfigId": "695320fda03785dacc8d950b",
+        "endpointId": "buscar-productos",
+        "parametros": {
+          "search": "{{busqueda}}",
+          "category": "{{categoria}}",
+          "per_page": "5",
+          "orderby": "relevance"
+        }
+      },
+      "purpose": "Consulta productos en WooCommerce",
+      "inputs": [
+        "titulo",
+        "editorial",
+        "edicion"
+      ],
+      "outputs": [
+        "productos",
+        "total_encontrados"
+      ],
+      "variables": []
+    },
+    {
+      "index": 8,
+      "id": "gpt-resultados",
+      "type": "gpt",
+      "label": "OpenAI (ChatGPT, Sera...",
+      "config": {
+        "tipo": "formateador",
+        "modelo": "gpt-3.5-turbo",
+        "temperatura": 0.7,
+        "maxTokens": 800,
+        "instrucciones": "Toma los productos de WooCommerce (variable {{productos}}) y genera un mensaje amigable para WhatsApp mostrando las opciones disponibles. Para cada libro muestra: título, precio y si hay stock. Usa emojis para hacerlo más atractivo. Si no hay resultados, usa el mensaje de {{mensajeSinResultados}}."
+      },
+      "purpose": "Extrae y estructura datos del historial de conversación",
+      "inputs": [],
+      "outputs": [
+        "respuesta_gpt",
+        "tokens",
+        "costo"
+      ],
+      "variables": []
+    },
+    {
+      "index": 9,
+      "id": "whatsapp-resultados",
+      "type": "whatsapp",
+      "label": "WhatsApp Business Cloud",
+      "config": {
+        "message": "{{gpt-resultados.respuesta_gpt}}",
+        "telefono": "{{telefono_cliente}}"
+      },
+      "purpose": "Envía mensaje de WhatsApp al cliente",
+      "inputs": [
+        "message",
+        "telefono"
+      ],
+      "outputs": [
+        "status",
+        "to",
+        "message"
+      ],
+      "variables": []
+    }
+  ],
+  "edges": [
+    {
+      "index": 1,
+      "id": "e1",
+      "from": {
+        "id": "webhook-whatsapp",
+        "label": "WhatsApp Business Cloud"
+      },
+      "to": {
+        "id": "gpt-conversacional",
+        "label": "OpenAI (ChatGPT, Sera..."
+      }
+    },
+    {
+      "index": 2,
+      "id": "e2",
+      "from": {
+        "id": "gpt-conversacional",
+        "label": "OpenAI (ChatGPT, Sera..."
+      },
+      "to": {
+        "id": "gpt-formateador",
+        "label": "OpenAI (ChatGPT, Sera..."
+      }
+    },
+    {
+      "index": 3,
+      "id": "e3",
+      "from": {
+        "id": "gpt-formateador",
+        "label": "OpenAI (ChatGPT, Sera..."
+      },
+      "to": {
+        "id": "router",
+        "label": "Router"
+      }
+    },
+    {
+      "index": 4,
+      "id": "router-route-1-gpt-pedir-datos",
+      "from": {
+        "id": "router",
+        "label": "Router"
+      },
+      "to": {
+        "id": "gpt-pedir-datos",
+        "label": "OpenAI (ChatGPT, Sera..."
+      },
+      "sourceHandle": "route-1",
+      "routeId": "route-1",
+      "routeLabel": "Faltan datos"
+    },
+    {
+      "index": 5,
+      "id": "e5",
+      "from": {
+        "id": "gpt-pedir-datos",
+        "label": "OpenAI (ChatGPT, Sera..."
+      },
+      "to": {
+        "id": "whatsapp-preguntar",
+        "label": "WhatsApp Business Cloud"
+      }
+    },
+    {
+      "index": 6,
+      "id": "router-route-2-woocommerce",
+      "from": {
+        "id": "router",
+        "label": "Router"
+      },
+      "to": {
+        "id": "woocommerce",
+        "label": "WooCommerce"
+      },
+      "sourceHandle": "route-2",
+      "routeId": "route-2",
+      "routeLabel": "Datos completos"
+    },
+    {
+      "index": 7,
+      "id": "e7",
+      "from": {
+        "id": "woocommerce",
+        "label": "WooCommerce"
+      },
+      "to": {
+        "id": "gpt-resultados",
+        "label": "OpenAI (ChatGPT, Sera..."
+      }
+    },
+    {
+      "index": 8,
+      "id": "e8",
+      "from": {
+        "id": "gpt-resultados",
+        "label": "OpenAI (ChatGPT, Sera..."
+      },
+      "to": {
+        "id": "whatsapp-resultados",
+        "label": "WhatsApp Business Cloud"
+      }
+    }
+  ],
+  "globalVariables": [],
+  "executionFlow": [
+    {
+      "step": "Historial cargado",
+      "messages": []
+    }
+  ]
+}

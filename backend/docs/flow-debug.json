@@ -1,0 +1,364 @@
+[
+  {
+    "index": 1,
+    "id": "webhook-whatsapp",
+    "type": "webhook",
+    "label": "WhatsApp Business Cloud",
+    "input": {},
+    "config": {
+      "module": "watch-events",
+      "phoneNumberId": "906667632531979",
+      "empresaId": "6940a9a181b92bfce970fdb5"
+    },
+    "systemPrompt": null,
+    "output": {
+      "message": "Quiero harry potter 3",
+      "from": "5493794946066",
+      "to": "906667632531979",
+      "phoneNumberId": "906667632531979",
+      "timestamp": "2026-01-10T10:14:14.721Z",
+      "profileName": "Usuario Test"
+    },
+    "errors": []
+  },
+  {
+    "index": 2,
+    "id": "gpt-conversacional",
+    "type": "gpt",
+    "label": "OpenAI (ChatGPT, Sera...",
+    "input": {
+      "telefono_cliente": "5493794946066",
+      "telefono_empresa": "906667632531979",
+      "phoneNumberId": "906667632531979",
+      "mensaje_usuario": "Quiero harry potter 3",
+      "empresaId": "6940a9a181b92bfce970fdb5"
+    },
+    "config": {
+      "tipo": "conversacional",
+      "modelo": "gpt-3.5-turbo",
+      "temperatura": 0.7,
+      "maxTokens": 500,
+      "personalidad": "Eres amigable, profesional y persistente. Ayudas a los clientes de manera conversacional pero SIEMPRE recopilas los 3 datos: título, editorial, edición.",
+      "topicos": [
+        {
+          "id": "topico-1",
+          "titulo": "Especialidad en Libros de Inglés",
+          "contenido": "Veo Veo Libros es una librería especializada en libros en inglés. Ofrecemos una amplia variedad de títulos, desde clásicos hasta novedades.",
+          "keywords": [
+            "libros",
+            "inglés",
+            "especialidad",
+            "variedad"
+          ]
+        },
+        {
+          "id": "topico-2",
+          "titulo": "Formas de Pago",
+          "contenido": "Aceptamos efectivo, transferencia bancaria, tarjeta de crédito y débito. Ofrecemos facilidades de pago para compras mayores.",
+          "keywords": [
+            "pago",
+            "efectivo",
+            "transferencia",
+            "tarjeta"
+          ]
+        },
+        {
+          "id": "topico-3",
+          "titulo": "Envíos",
+          "contenido": "Realizamos envíos a todo el país. El costo y tiempo de entrega dependen de la ubicación. Envíos gratis en compras mayores a $50000.",
+          "keywords": [
+            "envíos",
+            "entrega",
+            "país",
+            "gratis"
+          ]
+        },
+        {
+          "id": "topico-4",
+          "titulo": "Búsqueda de Libros",
+          "contenido": "Para buscar un libro necesitamos: Título (obligatorio), Editorial (obligatorio), Edición (obligatorio). No aceptamos fotografías, solo información por escrito.",
+          "keywords": [
+            "búsqueda",
+            "título",
+            "editorial",
+            "edición"
+          ]
+        }
+      ],
+      "variablesRecopilar": [
+        {
+          "nombre": "titulo",
+          "descripcion": "Título del libro que busca el cliente",
+          "obligatorio": true,
+          "tipo": "texto"
+        },
+        {
+          "nombre": "editorial",
+          "descripcion": "Editorial del libro - OBLIGATORIO, no aceptar \"no sé\"",
+          "obligatorio": true,
+          "tipo": "texto"
+        },
+        {
+          "nombre": "edicion",
+          "descripcion": "Edición del libro - OBLIGATORIO, no aceptar \"no sé\"",
+          "obligatorio": true,
+          "tipo": "texto"
+        }
+      ]
+    },
+    "systemPrompt": "# PERSONALIDAD\nEres amigable, profesional y persistente. Ayudas a los clientes de manera conversacional pero SIEMPRE recopilas los 3 datos: título, editorial, edición.\n\n# INFORMACIÓN DISPONIBLE\nTienes acceso a la siguiente información para responder consultas del usuario:\n\n## 1. Especialidad en Libros de Inglés\nVeo Veo Libros es una librería especializada en libros en inglés. Ofrecemos una amplia variedad de títulos, desde clásicos hasta novedades.\n📌 Palabras clave: libros, inglés, especialidad, variedad\n\n## 2. Formas de Pago\nAceptamos efectivo, transferencia bancaria, tarjeta de crédito y débito. Ofrecemos facilidades de pago para compras mayores.\n📌 Palabras clave: pago, efectivo, transferencia, tarjeta\n\n## 3. Envíos\nRealizamos envíos a todo el país. El costo y tiempo de entrega dependen de la ubicación. Envíos gratis en compras mayores a $50000.\n📌 Palabras clave: envíos, entrega, país, gratis\n\n## 4. Búsqueda de Libros\nPara buscar un libro necesitamos: Título (obligatorio), Editorial (obligatorio), Edición (obligatorio). No aceptamos fotografías, solo información por escrito.\n📌 Palabras clave: búsqueda, título, editorial, edición\n\n# RECOPILACIÓN DE DATOS\nTu tarea principal es recopilar los siguientes datos del cliente:\n\n## DATOS OBLIGATORIOS:\n1. **titulo** - Título del libro que busca el cliente\n   Tipo: texto\n\n2. **editorial** - Editorial del libro - OBLIGATORIO, no aceptar \"no sé\"\n   Tipo: texto\n\n3. **edicion** - Edición del libro - OBLIGATORIO, no aceptar \"no sé\"\n   Tipo: texto\n",
+    "output": {
+      "respuesta_gpt": "[Respuesta de GPT - no ejecutada]",
+      "tokens": 0,
+      "costo": 0,
+      "titulo": null,
+      "editorial": null,
+      "edicion": null
+    },
+    "errors": []
+  },
+  {
+    "index": 3,
+    "id": "gpt-formateador",
+    "type": "gpt",
+    "label": "OpenAI (ChatGPT, Sera...",
+    "input": {
+      "telefono_cliente": "5493794946066",
+      "telefono_empresa": "906667632531979",
+      "phoneNumberId": "906667632531979",
+      "mensaje_usuario": "Quiero harry potter 3",
+      "empresaId": "6940a9a181b92bfce970fdb5"
+    },
+    "config": {
+      "tipo": "formateador",
+      "modelo": "gpt-3.5-turbo",
+      "variablesRecopilar": [
+        {
+          "nombre": "titulo",
+          "descripcion": "Título del libro",
+          "obligatorio": true,
+          "tipo": "texto"
+        },
+        {
+          "nombre": "editorial",
+          "descripcion": "Editorial del libro",
+          "obligatorio": false,
+          "tipo": "texto"
+        },
+        {
+          "nombre": "edicion",
+          "descripcion": "Edición del libro",
+          "obligatorio": false,
+          "tipo": "texto"
+        }
+      ],
+      "configuracionExtraccion": {
+        "instruccionesExtraccion": "Analiza el historial de conversación y extrae la información de búsqueda del cliente.\n\nCAMPOS A EXTRAER:\n1. \"titulo\": Título del libro mencionado por el cliente (OBLIGATORIO)\n2. \"editorial\": Editorial del libro si fue mencionada (OPCIONAL)\n3. \"edicion\": Edición del libro si fue mencionada (OPCIONAL)\n\nREGLAS:\n- Si el cliente mencionó el título, extráelo aunque no sea exacto\n- Si no mencionó editorial o edición, deja esos campos como null\n- NO inventes información que el cliente no proporcionó\n- Devuelve SOLO el JSON, sin texto adicional\n\nFORMATO DE SALIDA:\n{\n  \"titulo\": \"título mencionado por el cliente o null\",\n  \"editorial\": \"editorial mencionada o null\",\n  \"edicion\": \"edición mencionada o null\"\n}",
+        "fuenteDatos": "historial_completo",
+        "cantidadMensajes": 10,
+        "formatoSalida": {
+          "tipo": "json",
+          "estructura": "{ \"titulo\": string, \"editorial\": string | null, \"edicion\": string | null }",
+          "ejemplo": "{ \"titulo\": \"Harry Potter 3\", \"editorial\": \"Salamandra\", \"edicion\": \"2020\" }"
+        },
+        "camposEsperados": [
+          {
+            "nombre": "titulo",
+            "descripcion": "Título del libro que busca el cliente",
+            "tipoDato": "string",
+            "requerido": true,
+            "valorPorDefecto": null
+          },
+          {
+            "nombre": "editorial",
+            "descripcion": "Editorial del libro",
+            "tipoDato": "string",
+            "requerido": false,
+            "valorPorDefecto": null
+          },
+          {
+            "nombre": "edicion",
+            "descripcion": "Edición del libro",
+            "tipoDato": "string",
+            "requerido": false,
+            "valorPorDefecto": null
+          }
+        ]
+      }
+    },
+    "systemPrompt": "# RECOPILACIÓN DE DATOS\nTu tarea principal es recopilar los siguientes datos del cliente:\n\n## DATOS OBLIGATORIOS:\n1. **titulo** - Título del libro\n   Tipo: texto\n",
+    "output": {
+      "respuesta_gpt": "[Respuesta de GPT - no ejecutada]",
+      "tokens": 0,
+      "costo": 0,
+      "titulo": null,
+      "editorial": null,
+      "edicion": null
+    },
+    "errors": []
+  },
+  {
+    "index": 4,
+    "id": "router",
+    "type": "router",
+    "label": "Router",
+    "input": {
+      "telefono_cliente": "5493794946066",
+      "telefono_empresa": "906667632531979",
+      "phoneNumberId": "906667632531979",
+      "mensaje_usuario": "Quiero harry potter 3",
+      "empresaId": "6940a9a181b92bfce970fdb5"
+    },
+    "config": {
+      "routes": [
+        {
+          "id": "route-1",
+          "label": "Faltan datos",
+          "condition": "{{titulo}} not exists",
+          "descripcion": "Si no se extrajo el título del libro"
+        },
+        {
+          "id": "route-2",
+          "label": "Datos completos",
+          "condition": "{{titulo}} exists",
+          "descripcion": "Si ya tenemos al menos el título para buscar"
+        }
+      ]
+    },
+    "systemPrompt": null,
+    "output": {
+      "_routerPath": "[Depende de evaluación]",
+      "_routerLabel": "[Depende de evaluación]"
+    },
+    "errors": []
+  },
+  {
+    "index": 5,
+    "id": "gpt-pedir-datos",
+    "type": "gpt",
+    "label": "OpenAI (ChatGPT, Sera...",
+    "input": {
+      "telefono_cliente": "5493794946066",
+      "telefono_empresa": "906667632531979",
+      "phoneNumberId": "906667632531979",
+      "mensaje_usuario": "Quiero harry potter 3",
+      "empresaId": "6940a9a181b92bfce970fdb5"
+    },
+    "config": {
+      "tipo": "conversacional",
+      "modelo": "gpt-3.5-turbo",
+      "temperatura": 0.7,
+      "maxTokens": 200
+    },
+    "systemPrompt": "Eres un asistente de Veo Veo Libros. El cliente no ha especificado qué libro busca.\n\nCONTEXTO ACTUAL:\n- Título: {{titulo}}\n- Editorial: {{editorial}}\n- Edición: {{edicion}}\n\nTU TAREA:\nPregunta de manera amable qué libro está buscando. Pide el título del libro.\n\nIMPORTANTE:\n- Sé breve y directo\n- NO pidas fotografías, solo información por escrito\n- Si ya tiene el título, pregunta por editorial y edición\n\nEJEMPLO:\n\"¡Hola! Para ayudarte a encontrar el libro que buscas, ¿podrías decirme el título? 😊\"",
+    "output": {
+      "respuesta_gpt": "[Respuesta de GPT - no ejecutada]",
+      "tokens": 0,
+      "costo": 0
+    },
+    "errors": []
+  },
+  {
+    "index": 6,
+    "id": "whatsapp-preguntar",
+    "type": "whatsapp",
+    "label": "WhatsApp Business Cloud",
+    "input": {
+      "telefono_cliente": "5493794946066",
+      "telefono_empresa": "906667632531979",
+      "phoneNumberId": "906667632531979",
+      "mensaje_usuario": "Quiero harry potter 3",
+      "empresaId": "6940a9a181b92bfce970fdb5"
+    },
+    "config": {
+      "message": "{{gpt-pedir-datos.respuesta_gpt}}",
+      "telefono": "{{telefono_cliente}}"
+    },
+    "systemPrompt": null,
+    "output": {
+      "status": "sent",
+      "to": "{{telefono_cliente}}",
+      "message": "{{gpt-pedir-datos.respuesta_gpt}}"
+    },
+    "errors": []
+  },
+  {
+    "index": 7,
+    "id": "woocommerce",
+    "type": "woocommerce",
+    "label": "WooCommerce",
+    "input": {
+      "telefono_cliente": "5493794946066",
+      "telefono_empresa": "906667632531979",
+      "phoneNumberId": "906667632531979",
+      "mensaje_usuario": "Quiero harry potter 3",
+      "empresaId": "6940a9a181b92bfce970fdb5"
+    },
+    "config": {
+      "apiConfigId": "695320fda03785dacc8d950b",
+      "endpointId": "buscar-productos",
+      "parametros": {
+        "search": "{{busqueda}}",
+        "category": "{{categoria}}",
+        "per_page": "5",
+        "orderby": "relevance"
+      }
+    },
+    "systemPrompt": null,
+    "output": {
+      "productos": "[Array de productos de WooCommerce]",
+      "total_encontrados": 0
+    },
+    "errors": []
+  },
+  {
+    "index": 8,
+    "id": "gpt-resultados",
+    "type": "gpt",
+    "label": "OpenAI (ChatGPT, Sera...",
+    "input": {
+      "telefono_cliente": "5493794946066",
+      "telefono_empresa": "906667632531979",
+      "phoneNumberId": "906667632531979",
+      "mensaje_usuario": "Quiero harry potter 3",
+      "empresaId": "6940a9a181b92bfce970fdb5"
+    },
+    "config": {
+      "tipo": "formateador",
+      "modelo": "gpt-3.5-turbo",
+      "temperatura": 0.7,
+      "maxTokens": 800
+    },
+    "systemPrompt": "Eres un asistente de Veo Veo Libros. Tienes que formatear los productos encontrados en WooCommerce para enviarlos por WhatsApp.\n\nDATOS DISPONIBLES:\n- Productos: {{productos}}\n- Búsqueda: {{titulo}} {{editorial}} {{edicion}}\n\nTU TAREA:\n1. Si hay productos ({{productos}} no está vacío):\n   - Muestra cada libro con: título, precio, stock\n   - Usa emojis para hacerlo atractivo (📚 💰 ✅)\n   - Sé breve y claro\n   - Máximo 5 productos\n   \n2. Si NO hay productos:\n   - Informa que no se encontraron resultados\n   - Sugiere verificar título, editorial o edición\n   - Ofrece ayuda para buscar de otra manera\n\nFORMATO EJEMPLO (con productos):\n📚 *Resultados de tu búsqueda:*\n\n1. **Harry Potter y el Prisionero de Azkaban**\n   💰 Precio: $15.990\n   ✅ Stock disponible\n   \n2. **Harry Potter 3 - Edición Ilustrada**\n   💰 Precio: $24.990\n   ⚠️ Últimas unidades\n\n¿Te interesa alguno? 😊\n\nFORMATO EJEMPLO (sin productos):\n❌ No encontré resultados para \"{{titulo}}\" de {{editorial}}.\n\n¿Podrías verificar el título o la editorial? También puedo ayudarte a buscar de otra manera 😊",
+    "output": {
+      "respuesta_gpt": "[Respuesta de GPT - no ejecutada]",
+      "tokens": 0,
+      "costo": 0
+    },
+    "errors": []
+  },
+  {
+    "index": 9,
+    "id": "whatsapp-resultados",
+    "type": "whatsapp",
+    "label": "WhatsApp Business Cloud",
+    "input": {
+      "telefono_cliente": "5493794946066",
+      "telefono_empresa": "906667632531979",
+      "phoneNumberId": "906667632531979",
+      "mensaje_usuario": "Quiero harry potter 3",
+      "empresaId": "6940a9a181b92bfce970fdb5"
+    },
+    "config": {
+      "message": "{{gpt-resultados.respuesta_gpt}}",
+      "telefono": "{{telefono_cliente}}"
+    },
+    "systemPrompt": null,
+    "output": {
+      "status": "sent",
+      "to": "{{telefono_cliente}}",
+      "message": "{{gpt-resultados.respuesta_gpt}}"
+    },
+    "errors": []
+  }
+]
