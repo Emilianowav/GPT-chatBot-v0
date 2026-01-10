@@ -16,10 +16,31 @@ export interface GPTConfig {
   temperatura: number;
   maxTokens: number;
   systemPrompt: string;
+  // NUEVO SISTEMA: Personalidad + Tópicos + Variables
+  personalidad?: string;
+  topicos?: Array<{
+    titulo: string;
+    contenido: string;
+  }>;
+  variablesRecopilar?: Array<{
+    nombre: string;
+    descripcion: string;
+    obligatoria: boolean;
+  }>;
+  // Legacy
   variablesEntrada?: string[];
   variablesSalida?: string[];
   outputFormat?: 'text' | 'json';
   jsonSchema?: string;
+  extractionConfig?: {
+    systemPrompt?: string;
+    variables?: Array<{
+      nombre: string;
+      tipo: string;
+      descripcion: string;
+      obligatoria: boolean;
+    }>;
+  };
 }
 
 const GPTConfigModal: React.FC<GPTConfigModalProps> = ({
