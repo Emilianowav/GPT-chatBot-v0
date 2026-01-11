@@ -20,6 +20,24 @@ interface NodeExecutionResult {
   error?: string;
 }
 
+/**
+ * Formato estándar de producto WooCommerce simplificado
+ */
+interface WooCommerceProductSimplified {
+  id: number;
+  name: string;
+  price: string;
+  regular_price?: string;
+  sale_price?: string;
+  stock_status: 'instock' | 'outofstock' | 'onbackorder';
+  stock_quantity: number | null;
+  permalink: string;
+  image?: string;
+  sku?: string;
+  categories?: Array<{ id: number; name: string }>;
+  on_sale?: boolean;
+}
+
 export class FlowExecutor {
   private context: FlowContext = {};
   private globalVariables: Record<string, any> = {};
@@ -27,6 +45,42 @@ export class FlowExecutor {
   private contactoId?: string;
   private historialConversacion: string[] = [];
   private flow: any; // Flujo actual en ejecución
+
+  /**
+   * Normaliza un producto de WooCommerce al formato estándar simplificado
+   * Esto asegura que GPT siempre reciba la misma estructura, sin importar qué módulo se use
+   */
+  private normalizeWooCommerceProduct(product: any): WooCommerceProductSimplified {
+    return {
+      id: product.id,
+      name: product.name,
+      price: product.price,
+      regular_price: product.regular_price,
+      sale_price: product.sale_price,
+      stock_status: product.stock_status || 'outofstock',
+      stock_quantity: product.stock_quantity ?? null,
+      permalink: product.permalink,
+      image: product.images?.[0]?.src || product.image,
+      sku: product.sku,
+      categories: product.categories?.map((cat: any) => ({
+        id: cat.id,
+        name: cat.name
+      })),
+      on_sale: product.on_sale || false
+    };
+  }
+
+  /**
+   * Normaliza respuesta de WooCommerce (array o single product)
+   */
+  private normalizeWooCommerceResponse(data: any): any {
+    if (Array.isArray(data)) {
+      return data.map(product => this.normalizeWooCommerceProduct(product));
+    } else if (data && typeof data === 'object' && data.id) {
+      return this.normalizeWooCommerceProduct(data);
+    }
+    return data;
+  }
 
   /**
    * Guarda una variable global
@@ -1382,7 +1436,22 @@ export class FlowExecutor {
       console.log(`   📊 Tipo de respuesta: ${Array.isArray(result.data) ? 'Array' : typeof result.data}`);
       console.log(`   📊 Cantidad de items: ${Array.isArray(result.data) ? result.data.length : 'N/A'}`);
       
-      return { output: result.data };
+      // NORMALIZACIÓN AUTOMÁTICA: Si es WooCommerce, simplificar la respuesta
+      let normalizedData = result.data;
+      if (node.type === 'woocommerce' || config.apiConfigId) {
+        // Detectar si es respuesta de WooCommerce (tiene campos típicos como name, price, stock_status)
+        const isWooCommerceResponse = Array.isArray(result.data) 
+          ? result.data.length > 0 && result.data[0].name && result.data[0].price !== undefined
+          : result.data?.name && result.data?.price !== undefined;
+        
+        if (isWooCommerceResponse) {
+          normalizedData = this.normalizeWooCommerceResponse(result.data);
+          console.log(`   🔄 Respuesta normalizada a formato estándar WooCommerce`);
+          console.log(`   📦 Campos incluidos: id, name, price, stock_status, stock_quantity, permalink, image, sku, categories, on_sale`);
+        }
+      }
+      
+      return { output: normalizedData };
       
     } catch (error: any) {
       console.error(`   ❌ Error ejecutando API:`, error.message);
