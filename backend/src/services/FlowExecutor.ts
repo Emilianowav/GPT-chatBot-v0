@@ -310,6 +310,23 @@ export class FlowExecutor {
     console.log('\n📨 USER MESSAGE:');
     console.log(`"${userMessage}"`);
 
+    // COMPATIBILIDAD: Convertir configuracionExtraccion (legacy) a extractionConfig ANTES de usarlo
+    if (config.tipo === 'formateador' && !config.extractionConfig && config.configuracionExtraccion) {
+      console.log('   🔄 Convirtiendo configuracionExtraccion (legacy) a extractionConfig');
+      config.extractionConfig = {
+        enabled: true,
+        method: 'advanced',
+        contextSource: config.configuracionExtraccion.fuenteDatos || 'historial_completo',
+        systemPrompt: config.configuracionExtraccion.instruccionesExtraccion,
+        variables: (config.configuracionExtraccion.camposEsperados || []).map((campo: any) => ({
+          nombre: campo.nombre,
+          tipo: campo.tipoDato,
+          requerido: campo.requerido,
+          descripcion: campo.descripcion
+        }))
+      };
+    }
+
     // Usar SOLO el systemPrompt del frontend (sin agregar nada)
     let systemPrompt: string;
     if (config.tipo === 'formateador' && config.extractionConfig?.systemPrompt) {
@@ -404,31 +421,11 @@ export class FlowExecutor {
     }
 
     // Procesar extracción de datos SOLO si es formateador
-    // COMPATIBILIDAD: Soportar tanto extractionConfig (nuevo) como configuracionExtraccion (legacy)
-    let extractionConfig = config.extractionConfig;
-    
-    // Si no existe extractionConfig pero sí configuracionExtraccion, convertir
-    if (!extractionConfig && config.configuracionExtraccion) {
-      console.log('   🔄 Convirtiendo configuracionExtraccion (legacy) a extractionConfig');
-      extractionConfig = {
-        enabled: true,
-        method: 'advanced',
-        contextSource: config.configuracionExtraccion.fuenteDatos || 'historial_completo',
-        systemPrompt: config.configuracionExtraccion.instruccionesExtraccion,
-        variables: (config.configuracionExtraccion.camposEsperados || []).map((campo: any) => ({
-          nombre: campo.nombre,
-          tipo: campo.tipoDato,
-          requerido: campo.requerido,
-          descripcion: campo.descripcion
-        }))
-      };
-    }
-    
-    if (config.tipo === 'formateador' && extractionConfig?.enabled) {
+    if (config.tipo === 'formateador' && config.extractionConfig?.enabled) {
       console.log('   🔧 Usando extractionConfig del frontend');
       
       // Determinar fuente de datos
-      const fuenteDatos = extractionConfig.contextSource || 'historial_completo';
+      const fuenteDatos = config.extractionConfig.contextSource || 'historial_completo';
       
       let contexto = '';
       if (fuenteDatos === 'historial_completo') {
@@ -453,7 +450,7 @@ export class FlowExecutor {
       // Usar extractionConfig.systemPrompt + extractionConfig.variables
       const datosExtraidos = await GPTPromptBuilder.extractWithFrontendConfig(
         contexto,
-        extractionConfig
+        config.extractionConfig
       );
       
       console.log('\n✅ DATOS EXTRAÍDOS:');
