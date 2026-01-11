@@ -18,10 +18,16 @@ import { Plus, Save, Play, Settings, Webhook, ArrowLeft, Trash2 } from 'lucide-r
 import NodeConfigPanel from '@/components/flow-builder/NodeConfigPanel';
 import NodePalette from '@/components/flow-builder/NodePalette';
 import CustomNode from '@/components/flow-builder/CustomNode';
+import AnimatedLineEdge from '@/components/flow-builder/edges/AnimatedLineEdge';
+import FilterModal from '@/components/flow-builder/FilterModal';
 import styles from './flows.module.css';
 
 const nodeTypes = {
   custom: CustomNode,
+};
+
+const edgeTypes = {
+  animated: AnimatedLineEdge,
 };
 
 interface FlowData {
@@ -53,6 +59,8 @@ export default function FlowsPage() {
   const [flowsList, setFlowsList] = useState<FlowListItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedFlowId, setSelectedFlowId] = useState<string | null>(null);
+  const [showFilterModal, setShowFilterModal] = useState(false);
+  const [selectedEdgeId, setSelectedEdgeId] = useState<string | null>(null);
 
   useEffect(() => {
     const storedEmpresa = localStorage.getItem('empresaId') || 'Veo Veo';
@@ -101,19 +109,41 @@ export default function FlowsPage() {
           setNodes(reactFlowNodes);
           
           const reactFlowEdges: Edge[] = [];
-          data.nodes.forEach((node: any) => {
-            if (node.next) {
-              const nextNodes = Array.isArray(node.next) ? node.next : [node.next];
-              nextNodes.forEach((nextId: string) => {
-                reactFlowEdges.push({
-                  id: `${node.id}-${nextId}`,
-                  source: node.id,
-                  target: nextId,
-                  animated: true,
-                });
+          
+          // Cargar edges desde data.edges si existe
+          if (data.edges && data.edges.length > 0) {
+            data.edges.forEach((edge: any) => {
+              reactFlowEdges.push({
+                id: edge.id,
+                source: edge.source,
+                target: edge.target,
+                type: 'animated',
+                data: {
+                  label: edge.data?.label,
+                  condition: edge.data?.condition,
+                  onConfigClick: handleEdgeConfigClick,
+                },
               });
-            }
-          });
+            });
+          } else {
+            // Fallback: crear edges desde node.next
+            data.nodes.forEach((node: any) => {
+              if (node.next) {
+                const nextNodes = Array.isArray(node.next) ? node.next : [node.next];
+                nextNodes.forEach((nextId: string) => {
+                  reactFlowEdges.push({
+                    id: `${node.id}-${nextId}`,
+                    source: node.id,
+                    target: nextId,
+                    type: 'animated',
+                    data: {
+                      onConfigClick: handleEdgeConfigClick,
+                    },
+                  });
+                });
+              }
+            });
+          }
           
           setEdges(reactFlowEdges);
         }
@@ -146,6 +176,32 @@ export default function FlowsPage() {
   const onNodeClick = useCallback((event: React.MouseEvent, node: Node) => {
     setSelectedNode(node);
   }, []);
+
+  const handleEdgeConfigClick = useCallback((edgeId: string) => {
+    setSelectedEdgeId(edgeId);
+    setShowFilterModal(true);
+  }, []);
+
+  const handleSaveFilter = useCallback((edgeId: string, filter: any) => {
+    setEdges((eds) =>
+      eds.map((edge) => {
+        if (edge.id === edgeId) {
+          return {
+            ...edge,
+            data: {
+              ...edge.data,
+              label: filter.label,
+              condition: filter.rules
+                .map((r: any) => `${r.field} ${r.operator} ${r.value}`)
+                .join(` ${filter.logicType} `),
+            },
+          };
+        }
+        return edge;
+      })
+    );
+    setShowFilterModal(false);
+  }, [setEdges]);
 
   const addNewNode = useCallback((nodeType: string) => {
     const newNode: Node = {
@@ -310,6 +366,7 @@ export default function FlowsPage() {
               onConnect={onConnect}
               onNodeClick={onNodeClick}
               nodeTypes={nodeTypes}
+              edgeTypes={edgeTypes}
               fitView
             >
               <Controls />
@@ -338,6 +395,14 @@ export default function FlowsPage() {
             <NodePalette
               onSelectNode={addNewNode}
               onClose={() => setShowPalette(false)}
+            />
+          )}
+
+          {showFilterModal && selectedEdgeId && (
+            <FilterModal
+              edgeId={selectedEdgeId}
+              onSave={handleSaveFilter}
+              onClose={() => setShowFilterModal(false)}
             />
           )}
         </div>
