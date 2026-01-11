@@ -437,14 +437,24 @@ export class FlowExecutor {
       console.log(JSON.stringify(datosExtraidos, null, 2));
       
       // Guardar cada dato extraído en variables globales
-      console.log('\n💾 Guardando variables globales:');
+      // IMPORTANTE: Hacer merge con variables existentes para mantener valores previos
+      console.log('\n💾 Guardando variables globales (con merge):');
       for (const [nombre, valor] of Object.entries(datosExtraidos)) {
-        if (valor !== undefined && valor !== null && valor !== '') {
+        // Si el valor es null/undefined/"", verificar si ya existe una variable con ese nombre
+        if (valor === undefined || valor === null || valor === '') {
+          const existingValue = this.getVariableValue(nombre);
+          if (existingValue !== undefined && existingValue !== null && existingValue !== '') {
+            // Mantener el valor existente
+            console.log(`   🔄 ${nombre} = "${JSON.stringify(existingValue)?.substring(0, 100)}" (mantenido del historial)`);
+            output[nombre] = existingValue;
+          } else {
+            console.log(`   ⚠️  ${nombre} = ${valor} (no guardado, no existe valor previo)`);
+          }
+        } else {
+          // Guardar el nuevo valor
           console.log(`   ✅ ${nombre} = "${JSON.stringify(valor)?.substring(0, 100)}"`);
           this.setGlobalVariable(nombre, valor);
           output[nombre] = valor;
-        } else {
-          console.log(`   ⚠️  ${nombre} = ${valor} (no guardado)`);
         }
       }
       
