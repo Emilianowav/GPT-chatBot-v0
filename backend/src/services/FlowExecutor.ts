@@ -804,10 +804,19 @@ export class FlowExecutor {
     console.log(`🔀 NODO ROUTER`);
     console.log('═══════════════════════════════════════════════════════════');
     
-    console.log('\n📊 VARIABLES GLOBALES DISPONIBLES:');
+    console.log('\n📊 VARIABLES GLOBALES DISPONIBLES (TODAS):');
     Object.entries(this.globalVariables).forEach(([key, value]) => {
-      console.log(`   ${key} = "${JSON.stringify(value)?.substring(0, 100)}"`);
+      console.log(`   ${key} = ${JSON.stringify(value)}`);
     });
+    
+    console.log('\n🔍 VERIFICACIÓN DE VARIABLES CRÍTICAS:');
+    console.log(`   titulo exists: ${this.getVariableValue('titulo') !== undefined && this.getVariableValue('titulo') !== null && this.getVariableValue('titulo') !== ''}`);
+    console.log(`   titulo value: ${JSON.stringify(this.getVariableValue('titulo'))}`);
+    console.log(`   editorial exists: ${this.getVariableValue('editorial') !== undefined && this.getVariableValue('editorial') !== null && this.getVariableValue('editorial') !== ''}`);
+    console.log(`   editorial value: ${JSON.stringify(this.getVariableValue('editorial'))}`);
+    console.log(`   edicion exists: ${this.getVariableValue('edicion') !== undefined && this.getVariableValue('edicion') !== null && this.getVariableValue('edicion') !== ''}`);
+    console.log(`   edicion value: ${JSON.stringify(this.getVariableValue('edicion'))}`);
+    console.log(`   Total variables: ${Object.keys(this.globalVariables).length}`);
 
     // Obtener edges que salen de este router
     const routerEdges = this.flow.edges.filter((e: any) => e.source === node.id);
