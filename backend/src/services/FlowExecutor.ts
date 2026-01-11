@@ -425,6 +425,12 @@ export class FlowExecutor {
     const systemPromptResolved = this.resolveVariableInString(systemPrompt);
     messages[0].content = systemPromptResolved;
 
+    // AUDITORÍA: Mostrar systemPrompt DESPUÉS de resolver variables
+    console.log('\n🔍 [AUDITORÍA] SYSTEM PROMPT DESPUÉS DE RESOLVER VARIABLES:');
+    console.log('─'.repeat(80));
+    console.log(systemPromptResolved);
+    console.log('─'.repeat(80));
+
     // Si es conversacional, agregar historial completo
     if (config.tipo === 'conversacional' && this.historialConversacion.length > 0) {
       console.log(`\n📚 Agregando historial: ${this.historialConversacion.length} mensajes`);
