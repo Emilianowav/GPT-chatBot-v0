@@ -229,6 +229,20 @@ export class FlowExecutor {
         try {
           const result = await this.executeNode(nextNode, nextEdge);
           this.context[nextNode.id] = result;
+          
+          // LOG DETALLADO: Ver qué se guardó en el contexto
+          console.log(`\n📊 [DEBUG] Contexto actualizado para nodo: ${nextNode.id}`);
+          console.log(`   Tipo de output: ${typeof result.output}`);
+          console.log(`   Es array: ${Array.isArray(result.output)}`);
+          if (Array.isArray(result.output)) {
+            console.log(`   Array length: ${result.output.length}`);
+            console.log(`   Primer elemento:`, JSON.stringify(result.output[0])?.substring(0, 200));
+          } else if (typeof result.output === 'object' && result.output !== null) {
+            console.log(`   Keys:`, Object.keys(result.output));
+            console.log(`   Output (primeros 300 chars):`, JSON.stringify(result.output)?.substring(0, 300));
+          } else {
+            console.log(`   Output:`, result.output);
+          }
         } catch (error: any) {
           console.error(`❌ Error ejecutando nodo ${nextNode.id}:`, error.message);
           this.context[nextNode.id] = {
