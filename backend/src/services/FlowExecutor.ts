@@ -404,18 +404,41 @@ export class FlowExecutor {
     }
 
     // Procesar extracción de datos SOLO si es formateador
-    if (config.tipo === 'formateador' && config.extractionConfig?.enabled) {
+    // COMPATIBILIDAD: Soportar tanto extractionConfig (nuevo) como configuracionExtraccion (legacy)
+    let extractionConfig = config.extractionConfig;
+    
+    // Si no existe extractionConfig pero sí configuracionExtraccion, convertir
+    if (!extractionConfig && config.configuracionExtraccion) {
+      console.log('   🔄 Convirtiendo configuracionExtraccion (legacy) a extractionConfig');
+      extractionConfig = {
+        enabled: true,
+        method: 'advanced',
+        contextSource: config.configuracionExtraccion.fuenteDatos || 'historial_completo',
+        systemPrompt: config.configuracionExtraccion.instruccionesExtraccion,
+        variables: (config.configuracionExtraccion.camposEsperados || []).map((campo: any) => ({
+          nombre: campo.nombre,
+          tipo: campo.tipoDato,
+          requerido: campo.requerido,
+          descripcion: campo.descripcion
+        }))
+      };
+    }
+    
+    if (config.tipo === 'formateador' && extractionConfig?.enabled) {
       console.log('   🔧 Usando extractionConfig del frontend');
       
-      // Construir contexto según fuente configurada
-      let contexto = '';
-      const fuenteDatos = config.extractionConfig.contextSource || 'historial_completo';
+      // Determinar fuente de datos
+      const fuenteDatos = extractionConfig.contextSource || 'historial_completo';
       
-      if (fuenteDatos === 'historial_completo' && this.historialConversacion.length > 0) {
+      let contexto = '';
+      if (fuenteDatos === 'historial_completo') {
+        // Construir contexto con TODO el historial
         for (let i = 0; i < this.historialConversacion.length; i += 2) {
-          contexto += `Usuario: ${this.historialConversacion[i]}\n`;
-          if (this.historialConversacion[i + 1]) {
-            contexto += `Asistente: ${this.historialConversacion[i + 1]}\n`;
+          const userMsg = this.historialConversacion[i];
+          const assistantMsg = this.historialConversacion[i + 1];
+          contexto += `Usuario: ${userMsg}\n`;
+          if (assistantMsg) {
+            contexto += `Asistente: ${assistantMsg}\n`;
           }
         }
         contexto += `Usuario: ${userMessage}`;
@@ -430,7 +453,7 @@ export class FlowExecutor {
       // Usar extractionConfig.systemPrompt + extractionConfig.variables
       const datosExtraidos = await GPTPromptBuilder.extractWithFrontendConfig(
         contexto,
-        config.extractionConfig
+        extractionConfig
       );
       
       console.log('\n✅ DATOS EXTRAÍDOS:');
