@@ -95,19 +95,6 @@ const GPTConfigPanel: React.FC<GPTConfigPanelProps> = ({ config, onChange }) => 
   const esFormateador = config.tipo === 'formateador' || config.tipo === 'transform';
   const esConversacional = config.tipo === 'conversacional';
 
-  // Inicializar valores por defecto si no existen
-  useEffect(() => {
-    if (!config.personalidad) {
-      onChange({
-        ...config,
-        personalidad: '',
-        topicos: config.topicos || [],
-        variablesRecopilar: config.variablesRecopilar || [],
-        accionesCompletado: config.accionesCompletado || []
-      });
-    }
-  }, []);
-
   // BLOQUE 2: TÓPICOS
   const agregarTopico = () => {
     const nuevoTopico: Topico = {
