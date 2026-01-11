@@ -380,43 +380,50 @@ export class FlowExecutor {
       content: userMessage,
     });
 
-    // Llamar a OpenAI
-    console.log(`\n🤖 Llamando a OpenAI (${config.modelo || 'gpt-4'})...`);
-    const resultado = await obtenerRespuestaChat({
-      modelo: config.modelo || 'gpt-4',
-      historial: messages,
-    });
+    // Preparar output
+    const output: any = {};
 
-    console.log(`\n✅ RESPUESTA DE GPT:`);
-    console.log(`"${resultado.texto}"`);
-    console.log(`Tokens: ${resultado.tokens}, Costo: $${resultado.costo}`);
+    // IMPORTANTE: Si es formateador, NO hacer llamada inicial a GPT
+    // El formateador SOLO extrae datos, no genera respuestas
+    if (config.tipo !== 'formateador') {
+      // Llamar a OpenAI
+      console.log(`\n🤖 Llamando a OpenAI (${config.modelo || 'gpt-4'})...`);
+      const resultado = await obtenerRespuestaChat({
+        modelo: config.modelo || 'gpt-4',
+        historial: messages,
+      });
 
-    // Preparar output según tipo de GPT
-    const output: any = {
-      respuesta_gpt: resultado.texto,
-      tokens: resultado.tokens,
-      costo: resultado.costo,
-    };
+      console.log(`\n✅ RESPUESTA DE GPT:`);
+      console.log(`"${resultado.texto}"`);
+      console.log(`Tokens: ${resultado.tokens}, Costo: $${resultado.costo}`);
+
+      // Guardar respuesta en output
+      output.respuesta_gpt = resultado.texto;
+      output.tokens = resultado.tokens;
+      output.costo = resultado.costo;
+    } else {
+      console.log('\n⏭️  Saltando llamada a GPT (formateador solo extrae datos)');
+    }
 
     // Si es tipo transform, intentar parsear JSON
-    if (config.tipo === 'transform' && config.outputFormat === 'json') {
+    if (config.tipo === 'transform' && config.outputFormat === 'json' && output.respuesta_gpt) {
       try {
-        const jsonMatch = resultado.texto.match(/\{[\s\S]*\}/);
-        const jsonString = jsonMatch ? jsonMatch[0] : resultado.texto;
+        const jsonMatch = output.respuesta_gpt.match(/\{[\s\S]*\}/);
+        const jsonString = jsonMatch ? jsonMatch[0] : output.respuesta_gpt;
         output.datos_estructurados = JSON.parse(jsonString);
         console.log(`   ✅ JSON parseado:`, output.datos_estructurados);
       } catch (e) {
         console.warn('⚠️  No se pudo parsear respuesta como JSON');
-        console.warn('   Respuesta:', resultado.texto);
+        console.warn('   Respuesta:', output.respuesta_gpt);
         output.datos_estructurados = null;
       }
     }
 
     // Guardar en historial si es conversacional
-    if (config.tipo === 'conversacional') {
+    if (config.tipo === 'conversacional' && output.respuesta_gpt) {
       console.log('\n💾 Guardando en historial de BD...');
       await this.saveToHistorial(userMessage);
-      await this.saveToHistorial(resultado.texto);
+      await this.saveToHistorial(output.respuesta_gpt);
       console.log(`   ✅ Historial actualizado (${this.historialConversacion.length} mensajes totales)`);
     }
 
@@ -532,10 +539,10 @@ export class FlowExecutor {
     }
 
     // Detectar si el GPT marcó como completado
-    if (config.accionesCompletado && config.accionesCompletado.length > 0) {
+    if (config.accionesCompletado && config.accionesCompletado.length > 0 && output.respuesta_gpt) {
       const accionMarcar = config.accionesCompletado.find(a => a.tipo === 'marcar_completado');
       if (accionMarcar && accionMarcar.token) {
-        const completado = GPTPromptBuilder.isCompletado(resultado.texto, accionMarcar.token);
+        const completado = GPTPromptBuilder.isCompletado(output.respuesta_gpt, accionMarcar.token);
         output.info_completa = completado;
         if (completado) {
           console.log(`   ✅ Info completa`);
