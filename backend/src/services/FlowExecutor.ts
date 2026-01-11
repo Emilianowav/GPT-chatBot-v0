@@ -1257,12 +1257,9 @@ export class FlowExecutor {
         // Evaluar la expresión de forma segura
         const result = this.evaluateExpression(expression);
         
-        // Si el resultado es un array de productos, formatearlo
-        if (Array.isArray(result) && result.length > 0 && result[0].name) {
-          return this.formatProductsForWhatsApp(result);
-        }
-        
-        // Si es un objeto complejo, convertirlo a string legible
+        // IMPORTANTE: NO formatear productos automáticamente
+        // Dejar que GPT interprete el JSON según su systemPrompt
+        // Si es un objeto complejo o array, convertirlo a JSON
         if (typeof result === 'object' && result !== null) {
           return JSON.stringify(result, null, 2);
         }
