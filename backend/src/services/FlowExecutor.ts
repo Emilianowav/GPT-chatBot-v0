@@ -405,8 +405,12 @@ export class FlowExecutor {
     
     // Determinar contenido del mensaje según tipo de GPT
     if (config.tipo === 'transform') {
-      // Para transform, pasar todo el input como contexto
-      userMessage = typeof input === 'string' ? input : JSON.stringify(input, null, 2);
+      // Para transform, si el input está vacío, usar mensaje_usuario de variables globales
+      if (!input || Object.keys(input).length === 0) {
+        userMessage = this.getGlobalVariable('mensaje_usuario') || '';
+      } else {
+        userMessage = typeof input === 'string' ? input : JSON.stringify(input, null, 2);
+      }
     } else {
       // Para conversacional/formateador, usar el mensaje del usuario
       // Prioridad: input.mensaje_usuario > input.message > variable global mensaje_usuario
@@ -1041,70 +1045,6 @@ export class FlowExecutor {
   }
 
   /**
-   * Evalúa una condición del router
-   */
-  private evaluateCondition(condition: any, input: any): boolean {
-    if (!condition) return false;
-
-    console.log(`      🔍 evaluateCondition - tipo: ${typeof condition}, valor: ${JSON.stringify(condition)?.substring(0, 100)}`);
-
-    // Si la condición es un string, parsearla
-    if (typeof condition === 'string') {
-      console.log(`      ✅ Detectado string, llamando evaluateStringCondition`);
-      return this.evaluateStringCondition(condition);
-    }
-
-    // Si es un objeto, usar formato estructurado
-    const { field, operator, value } = condition;
-    
-    // Resolver el valor del campo (puede ser una variable como "gpt-conversacional.respuesta_gpt")
-    const fieldValue = this.getVariableValue(field);
-    
-    console.log(`      Campo: ${field} = ${JSON.stringify(fieldValue)?.substring(0, 50)}...`);
-    console.log(`      Operador: ${operator}`);
-    console.log(`      Valor esperado: ${value}`);
-
-    switch (operator) {
-      case 'contains':
-        return String(fieldValue || '').toLowerCase().includes(String(value).toLowerCase());
-      
-      case 'not_contains':
-        return !String(fieldValue || '').toLowerCase().includes(String(value).toLowerCase());
-      
-      case 'equal':
-        return fieldValue === value;
-      
-      case 'not_equal':
-        return fieldValue !== value;
-      
-      case 'greater_than':
-        return Number(fieldValue) > Number(value);
-      
-      case 'less_than':
-        return Number(fieldValue) < Number(value);
-      
-      case 'is_empty':
-        return !fieldValue || String(fieldValue).trim() === '';
-      
-      case 'not_empty':
-        return !!fieldValue && String(fieldValue).trim() !== '';
-      
-      case 'regex':
-        try {
-          const regex = new RegExp(value);
-          return regex.test(String(fieldValue || ''));
-        } catch (e) {
-          console.warn(`      ⚠️  Regex inválido: ${value}`);
-          return false;
-        }
-      
-      default:
-        console.warn(`      ⚠️  Operador desconocido: ${operator}`);
-        return false;
-    }
-  }
-
-  /**
    * Evalúa una condición en formato string
    * Ejemplos: "{{titulo_libro}} exists", "{{cualquier_variable}} empty", "true", "false"
    */
@@ -1196,6 +1136,25 @@ export class FlowExecutor {
       console.log(`      → Variable "${varName}" = ${JSON.stringify(value)?.substring(0, 100)}`);
       console.log(`      → empty = ${empty}`);
       return empty;
+    }
+
+    // Patrón: "{{variable}} not_empty" o "{{variable}} not empty"
+    const notEmptyMatch = condition.match(/\{\{([^}]+)\}\}\s+not[_\s]empty$/i);
+    if (notEmptyMatch) {
+      const varName = notEmptyMatch[1].trim();
+      console.log(`      → Detectado 'not_empty' para variable: "${varName}"`);
+      
+      const value = this.getVariableValue(varName);
+      
+      const notEmpty = value !== undefined && 
+                       value !== null && 
+                       value !== '' &&
+                       !(typeof value === 'string' && value.trim().length === 0) &&
+                       !(Array.isArray(value) && value.length === 0);
+      
+      console.log(`      → Variable "${varName}" = ${JSON.stringify(value)?.substring(0, 100)}`);
+      console.log(`      → not_empty = ${notEmpty}`);
+      return notEmpty;
     }
 
     // Si no coincide con patrones especiales, resolver y evaluar normalmente
