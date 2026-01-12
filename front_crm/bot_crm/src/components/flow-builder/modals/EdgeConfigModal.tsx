@@ -30,6 +30,8 @@ const OPERATORS = [
   { value: 'not_contains', label: 'Does not contain' },
   { value: 'exists', label: 'Exists' },
   { value: 'not_exists', label: 'Does not exist' },
+  { value: 'empty', label: 'Is empty' },
+  { value: 'not_empty', label: 'Is not empty' },
 ];
 
 export default function EdgeConfigModal({
@@ -49,17 +51,41 @@ export default function EdgeConfigModal({
   useEffect(() => {
     if (currentConfig?.condition) {
       // Parse existing condition
-      const match = currentConfig.condition.match(/(.+?)\s*(==|!=|>|<|>=|<=|contains|not_contains|exists|not_exists)\s*(.+)/);
-      if (match) {
-        setLeftValue(match[1].trim());
-        setSelectedOperator(match[2].trim());
-        setRightValue(match[3]?.trim() || '');
+      // Soporta formatos:
+      // 1. {{variable}} operator (ej: {{gpt-conversacional.variables_faltantes}} empty)
+      // 2. variable operator value (ej: search != "")
+      
+      // Intentar formato {{variable}} operator primero
+      const bracketMatch = currentConfig.condition.match(/\{\{([^}]+)\}\}\s+(empty|not_empty|exists|not_exists)$/i);
+      if (bracketMatch) {
+        setLeftValue(`{{${bracketMatch[1]}}}`);
+        setSelectedOperator(bracketMatch[2].toLowerCase().replace(/\s+/g, '_'));
+        setRightValue('');
+        return;
+      }
+      
+      // Intentar formato estándar: variable operator value
+      const standardMatch = currentConfig.condition.match(/(.+?)\s*(==|!=|>|<|>=|<=|contains|not_contains|exists|not_exists|empty|not_empty)\s*(.+)?/);
+      if (standardMatch) {
+        setLeftValue(standardMatch[1].trim());
+        setSelectedOperator(standardMatch[2].trim());
+        setRightValue(standardMatch[3]?.trim() || '');
       }
     }
   }, [currentConfig]);
 
   const handleSave = () => {
-    const conditionString = `${leftValue} ${selectedOperator} ${rightValue}`;
+    // Construir condición según el operador
+    let conditionString = '';
+    
+    if (selectedOperator === 'empty' || selectedOperator === 'not_empty' || 
+        selectedOperator === 'exists' || selectedOperator === 'not_exists') {
+      // Para estos operadores, no incluir rightValue
+      conditionString = `${leftValue} ${selectedOperator}`;
+    } else {
+      // Para otros operadores, incluir rightValue
+      conditionString = `${leftValue} ${selectedOperator} ${rightValue}`;
+    }
     
     onSave({
       label: label || `Filter: ${conditionString}`,
@@ -156,7 +182,8 @@ export default function EdgeConfigModal({
               </div>
 
               {/* Right Value */}
-              {selectedOperator !== 'exists' && selectedOperator !== 'not_exists' && (
+              {selectedOperator !== 'exists' && selectedOperator !== 'not_exists' && 
+               selectedOperator !== 'empty' && selectedOperator !== 'not_empty' && (
                 <div className={styles.conditionPart}>
                   <label className={styles.smallLabel}>Value</label>
                   <input
@@ -177,7 +204,14 @@ export default function EdgeConfigModal({
             <div className={styles.preview}>
               <div className={styles.previewLabel}>Preview:</div>
               <code className={styles.previewCode}>
-                {leftValue || 'variable'} {selectedOperator} {selectedOperator !== 'exists' && selectedOperator !== 'not_exists' ? (rightValue || 'value') : ''}
+                {leftValue || 'variable'} {selectedOperator} {
+                  selectedOperator !== 'exists' && 
+                  selectedOperator !== 'not_exists' && 
+                  selectedOperator !== 'empty' && 
+                  selectedOperator !== 'not_empty' 
+                    ? (rightValue || 'value') 
+                    : ''
+                }
               </code>
             </div>
           </div>
@@ -195,6 +229,9 @@ export default function EdgeConfigModal({
               <div className={styles.example}>
                 <code>mensaje_usuario contains "ayuda"</code> - Message contains "ayuda"
               </div>
+              <div className={styles.example}>
+                <code>{`{{gpt.variables_faltantes}} empty`}</code> - Variables array is empty
+              </div>
             </div>
           </div>
         </div>
@@ -207,7 +244,12 @@ export default function EdgeConfigModal({
           <button 
             onClick={handleSave} 
             className={styles.btnPrimary}
-            disabled={!leftValue || (!rightValue && selectedOperator !== 'exists' && selectedOperator !== 'not_exists')}
+            disabled={!leftValue || (!rightValue && 
+              selectedOperator !== 'exists' && 
+              selectedOperator !== 'not_exists' &&
+              selectedOperator !== 'empty' &&
+              selectedOperator !== 'not_empty'
+            )}
           >
             Save
           </button>
