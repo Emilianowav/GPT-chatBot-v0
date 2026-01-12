@@ -6,6 +6,7 @@ import { ContactoEmpresaModel } from '../models/ContactoEmpresa.js';
 import { GPTPromptBuilder } from './GPTPromptBuilder.js';
 import type { IGPTConversacionalConfig } from '../types/gpt-config.types.js';
 import { createWooCommerceService } from './woocommerceService.js';
+import { executeCarritoNode, executeMercadoPagoNode } from './FlowExecutor.carrito.js';
 
 interface FlowContext {
   [nodeId: string]: {
@@ -78,6 +79,29 @@ export class FlowExecutor {
       return data.map(product => this.normalizeWooCommerceProduct(product));
     } else if (data && typeof data === 'object' && data.id) {
       return this.normalizeWooCommerceProduct(data);
+    }
+    return data;
+  }
+
+  /**
+   * Aplica mapeo de campos personalizado a la respuesta de la API
+   */
+  private applyOutputMapping(data: any, fieldMappings: any[]): any {
+    const mapObject = (obj: any) => {
+      const mapped: any = {};
+      for (const mapping of fieldMappings) {
+        const value = obj[mapping.source];
+        if (value !== undefined) {
+          mapped[mapping.target] = value;
+        }
+      }
+      return mapped;
+    };
+
+    if (Array.isArray(data)) {
+      return data.map(item => mapObject(item));
+    } else if (data && typeof data === 'object') {
+      return mapObject(data);
     }
     return data;
   }
@@ -224,11 +248,12 @@ export class FlowExecutor {
       
       console.log(`📋 Variables globales inicializadas:`, Object.keys(this.globalVariables));
 
-      // 3. Encontrar nodo trigger
-      const triggerNode = this.flow.nodes.find((n: any) => n.category === 'trigger');
+      // 3. Encontrar nodo trigger (webhook)
+      const triggerNode = this.flow.nodes.find((n: any) => n.type === 'webhook');
       
       if (!triggerNode) {
         console.error('❌ NO SE ENCONTRÓ NODO TRIGGER');
+        console.log('🔍 Nodos disponibles:', this.flow.nodes.map((n: any) => ({ id: n.id, type: n.type })));
         throw new Error('No se encontró nodo trigger en el flujo');
       }
 
@@ -341,6 +366,22 @@ export class FlowExecutor {
       
       case 'woocommerce':
         return await this.executeWooCommerceNode(node, input);
+      
+      case 'carrito':
+        return await executeCarritoNode(node, input, {
+          contactoId: this.contactoId!,
+          empresaId: this.getGlobalVariable('telefono_empresa'),
+          resolveVariableInString: this.resolveVariableInString.bind(this),
+          setGlobalVariable: this.setGlobalVariable.bind(this)
+        });
+      
+      case 'mercadopago':
+        return await executeMercadoPagoNode(node, input, {
+          contactoId: this.contactoId!,
+          empresaId: this.getGlobalVariable('telefono_empresa'),
+          resolveVariableInString: this.resolveVariableInString.bind(this),
+          setGlobalVariable: this.setGlobalVariable.bind(this)
+        });
       
       default:
         console.warn(`⚠️  Tipo de nodo no soportado: ${node.type}`);
@@ -502,7 +543,7 @@ export class FlowExecutor {
     }
 
     // Procesar extracción de datos SOLO si es formateador
-    if (config.tipo === 'formateador' && config.extractionConfig?.enabled) {
+    if (config.tipo === 'formateador' && config.extractionConfig?.systemPrompt) {
       console.log('   🔧 Usando extractionConfig del frontend');
       
       // Determinar fuente de datos
@@ -1452,6 +1493,13 @@ export class FlowExecutor {
           console.log(`   🔄 Respuesta normalizada a formato estándar WooCommerce`);
           console.log(`   📦 Campos incluidos: id, name, price, stock_status, stock_quantity, permalink, image, sku, categories, on_sale`);
         }
+      }
+
+      // MAPEO DE CAMPOS: Si hay outputMapping configurado, aplicar transformación
+      if (config.outputMapping?.enabled && config.outputMapping?.fields) {
+        console.log(`   🗺️  Aplicando mapeo de campos personalizado...`);
+        normalizedData = this.applyOutputMapping(normalizedData, config.outputMapping.fields);
+        console.log(`   ✅ Mapeo aplicado. Campos mapeados: ${config.outputMapping.fields.length}`);
       }
       
       return { output: normalizedData };

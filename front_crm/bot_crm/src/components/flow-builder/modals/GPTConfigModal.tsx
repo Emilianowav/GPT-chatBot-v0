@@ -121,33 +121,6 @@ const GPTConfigModal: React.FC<GPTConfigModalProps> = ({
             </select>
           </div>
 
-          {/* Temperatura */}
-          <div className={styles.formGroup}>
-            <label>Temperatura (0-1)</label>
-            <input
-              type="number"
-              min="0"
-              max="1"
-              step="0.1"
-              value={config.temperatura}
-              onChange={(e) => setConfig({ ...config, temperatura: parseFloat(e.target.value) })}
-            />
-            <small>Mayor = más creativo, Menor = más determinista</small>
-          </div>
-
-          {/* Max Tokens */}
-          <div className={styles.formGroup}>
-            <label>Max Tokens</label>
-            <input
-              type="number"
-              min="50"
-              max="4000"
-              step="50"
-              value={config.maxTokens}
-              onChange={(e) => setConfig({ ...config, maxTokens: parseInt(e.target.value) })}
-            />
-            <small>Límite de tokens en la respuesta</small>
-          </div>
 
           {/* System Prompt */}
           <div className={styles.formGroup}>

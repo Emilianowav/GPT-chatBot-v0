@@ -31,6 +31,7 @@ import AppsModal from '@/components/flow-builder/modals/AppsModal';
 import ModuleSelectionModal from '@/components/flow-builder/modals/ModuleSelectionModal';
 import WebhookConfigModal from '@/components/flow-builder/modals/WebhookConfigModal';
 import GPTConfigModal from '@/components/flow-builder/modals/GPTConfigModal';
+import MercadoPagoConfigModal from '@/components/flow-builder/modals/MercadoPagoConfigModal';
 import NodeConfigPanel from '@/components/flow-builder/panels/NodeConfigPanel';
 import styles from './flow-builder.module.css';
 
@@ -220,6 +221,7 @@ export default function FlowBuilderPage() {
   const [showModuleModal, setShowModuleModal] = useState(false);
   const [showWebhookConfigModal, setShowWebhookConfigModal] = useState(false);
   const [showGPTConfigModal, setShowGPTConfigModal] = useState(false);
+  const [showMercadoPagoConfigModal, setShowMercadoPagoConfigModal] = useState(false);
   const [appsModalPosition, setAppsModalPosition] = useState<{ x: number; y: number } | undefined>();
   const [selectedApp, setSelectedApp] = useState<any>(null);
   const [selectedModule, setSelectedModule] = useState<any>(null);
@@ -243,8 +245,14 @@ export default function FlowBuilderPage() {
     setNodes(currentNodes => {
       const node = currentNodes.find(n => n.id === nodeId);
       if (node) {
-        setSelectedNode(node);
-        setShowConfigPanel(true);
+        // Si es un nodo de MercadoPago, abrir modal específico
+        if (node.type === 'mercadopago') {
+          setSelectedNode(node);
+          setShowMercadoPagoConfigModal(true);
+        } else {
+          setSelectedNode(node);
+          setShowConfigPanel(true);
+        }
       }
       return currentNodes; // No modificar nodes
     });
@@ -333,16 +341,51 @@ export default function FlowBuilderPage() {
         if (flow && flow.nodes && flow.edges && flow.nodes.length > 0) {
           console.log('📋 IDs de nodos:', flow.nodes.map((n: Node) => n.id));
           
-          // Agregar handlers a cada nodo
-          const nodesWithHandlers = flow.nodes.map((node: Node) => ({
-            ...node,
-            data: {
-              ...node.data,
-              onNodeClick: handleNodeClick,
-              onHandleClick: handlePlusNodeClick,
-              hasConnection: flow.edges.some((e: Edge) => e.source === node.id)
+          // PRECALCULAR HANDLES DE ROUTERS
+          console.log('🔧 Extrayendo handles de routers...');
+          const routerHandles = new Map<string, string[]>();
+          flow.edges.forEach((edge: any) => {
+            if (edge.sourceHandle) {
+              console.log(`  Edge ${edge.id}: source=${edge.source}, handle=${edge.sourceHandle}`);
+              const handles = routerHandles.get(edge.source) || [];
+              if (!handles.includes(edge.sourceHandle)) {
+                handles.push(edge.sourceHandle);
+              }
+              routerHandles.set(edge.source, handles);
             }
-          }));
+          });
+          console.log('📋 Handles por router:', Object.fromEntries(routerHandles));
+          
+          // Agregar handlers a cada nodo
+          const nodesWithHandlers = flow.nodes.map((node: Node) => {
+            const processedNode = {
+              ...node,
+              data: {
+                ...node.data,
+                onNodeClick: handleNodeClick,
+                onHandleClick: handlePlusNodeClick,
+                hasConnection: flow.edges.some((e: Edge) => e.source === node.id),
+                // Pasar handles precalculados a routers
+                routeHandles: node.type === 'router' ? routerHandles.get(node.id) || [] : undefined,
+              }
+            };
+            
+            // Log para routers
+            if (node.type === 'router') {
+              console.log(`✅ Procesando router ${node.id}:`);
+              console.log(`   - Original type: "${node.type}"`);
+              console.log(`   - Processed type: "${processedNode.type}"`);
+              console.log(`   - Has config.routes: ${!!node.data?.config?.routes}`);
+              console.log(`   - routeHandles:`, processedNode.data.routeHandles);
+            }
+            
+            return processedNode;
+          });
+          
+          console.log('🎯 TIPOS FINALES DE NODOS:');
+          nodesWithHandlers.forEach(node => {
+            console.log(`  ${node.id}: type="${node.type}"`);
+          });
           
           setNodes(nodesWithHandlers);
           setEdges(flow.edges);
@@ -439,6 +482,13 @@ export default function FlowBuilderPage() {
   const handleGPTConfigSave = (gptConfig: any) => {
     setShowGPTConfigModal(false);
     createNodeFromModule(selectedModule, gptConfig);
+  };
+
+  const handleMercadoPagoConfigSave = (mpConfig: any) => {
+    if (selectedNode) {
+      handleSaveNodeConfig(selectedNode.id, mpConfig);
+    }
+    setShowMercadoPagoConfigModal(false);
   };
 
   const createNodeFromModule = (module: any, config: any) => {
@@ -600,7 +650,7 @@ export default function FlowBuilderPage() {
   // Conectar nodos con snap magnético
   const onConnect = useCallback(
     (params: Connection) => {
-      setEdges((eds) => addEdge({ ...params, type: 'animatedLine' }, eds));
+      setEdges((eds) => addEdge({ ...params, type: 'default' }, eds));
     },
     [setEdges]
   );
@@ -616,7 +666,7 @@ export default function FlowBuilderPage() {
       edgeUpdateSuccessful.current = true;
       setEdges((els) => {
         const updatedEdges = els.filter((e) => e.id !== oldEdge.id);
-        return addEdge({ ...newConnection, type: 'animatedLine' }, updatedEdges);
+        return addEdge({ ...newConnection, type: 'default' }, updatedEdges);
       });
     },
     [setEdges]
@@ -763,7 +813,7 @@ export default function FlowBuilderPage() {
             minZoom={0.5}
             maxZoom={1.5}
             defaultEdgeOptions={{
-              type: 'animatedLine',
+              type: 'default',
               animated: true,
             }}
           >
@@ -818,6 +868,16 @@ export default function FlowBuilderPage() {
             moduleName={selectedModule.name}
           />
         )}
+
+        <MercadoPagoConfigModal
+          isOpen={showMercadoPagoConfigModal}
+          onClose={() => {
+            setShowMercadoPagoConfigModal(false);
+            setSelectedNode(null);
+          }}
+          nodeData={selectedNode}
+          onSave={handleMercadoPagoConfigSave}
+        />
 
         {showConfigPanel && selectedNode && (
           <NodeConfigPanel

@@ -18,16 +18,21 @@ import { Plus, Save, Play, Settings, Webhook, ArrowLeft, Trash2 } from 'lucide-r
 import NodeConfigPanel from '@/components/flow-builder/NodeConfigPanel';
 import NodePalette from '@/components/flow-builder/NodePalette';
 import CustomNode from '@/components/flow-builder/CustomNode';
+import RouterNode from '@/components/flow-builder/RouterNode';
 import AnimatedLineEdge from '@/components/flow-builder/edges/AnimatedLineEdge';
+import SimpleEdge from '@/components/flow-builder/edges/SimpleEdge';
 import FilterModal from '@/components/flow-builder/FilterModal';
+import CanvasContextMenu from '@/components/flow-builder/CanvasContextMenu';
 import styles from './flows.module.css';
 
 const nodeTypes = {
   custom: CustomNode,
+  router: RouterNode,
 };
 
 const edgeTypes = {
-  animated: AnimatedLineEdge,
+  animated: SimpleEdge,
+  default: SimpleEdge,
 };
 
 interface FlowData {
@@ -61,6 +66,8 @@ export default function FlowsPage() {
   const [selectedFlowId, setSelectedFlowId] = useState<string | null>(null);
   const [showFilterModal, setShowFilterModal] = useState(false);
   const [selectedEdgeId, setSelectedEdgeId] = useState<string | null>(null);
+  const [contextMenu, setContextMenu] = useState<{ x: number; y: number } | null>(null);
+  const [contextMenuEdge, setContextMenuEdge] = useState<string | null>(null);
 
   useEffect(() => {
     const storedEmpresa = localStorage.getItem('empresaId') || 'Veo Veo';
@@ -88,21 +95,44 @@ export default function FlowsPage() {
   const loadFlow = async (flowId: string) => {
     try {
       setSelectedFlowId(flowId);
-      const response = await fetch(`http://localhost:3000/api/flows/${flowId}`);
+      console.log('🔍 Cargando flow:', flowId);
+      const response = await fetch(`http://localhost:3000/api/flows/by-id/${flowId}`);
       
       if (response.ok) {
         const data = await response.json();
-        setFlowData(data.flow);
+        console.log('📦 Datos recibidos:', data);
+        console.log('📦 Nodos:', data.nodes?.length);
+        console.log('📦 Edges:', data.edges?.length);
+        setFlowData(data);
         
         if (data.nodes && data.nodes.length > 0) {
+          // Primero, extraer handles de routers desde los edges
+          const routerHandles = new Map<string, string[]>();
+          if (data.edges && data.edges.length > 0) {
+            console.log('🔧 Extrayendo handles de routers...');
+            data.edges.forEach((edge: any) => {
+              if (edge.sourceHandle) {
+                console.log(`  Edge ${edge.id}: source=${edge.source}, handle=${edge.sourceHandle}`);
+                const handles = routerHandles.get(edge.source) || [];
+                if (!handles.includes(edge.sourceHandle)) {
+                  handles.push(edge.sourceHandle);
+                }
+                routerHandles.set(edge.source, handles);
+              }
+            });
+            console.log('📋 Handles por router:', Object.fromEntries(routerHandles));
+          }
+          
           const reactFlowNodes = data.nodes.map((node: any, index: number) => ({
             id: node.id,
-            type: 'custom',
-            position: node.metadata?.position || { x: 100 + index * 250, y: 100 },
+            type: node.type === 'router' ? 'router' : 'custom',
+            position: node.position || node.metadata?.position || { x: 100 + index * 250, y: 100 },
             data: {
               label: node.name || node.type,
               type: node.type,
               config: node,
+              // Pasar handles precalculados a routers
+              routeHandles: node.type === 'router' ? routerHandles.get(node.id) || [] : undefined,
             },
           }));
           
@@ -110,22 +140,41 @@ export default function FlowsPage() {
           
           const reactFlowEdges: Edge[] = [];
           
+          console.log('🔗 Procesando edges...');
+          
           // Cargar edges desde data.edges si existe
           if (data.edges && data.edges.length > 0) {
+            console.log(`✅ Encontrados ${data.edges.length} edges en BD`);
             data.edges.forEach((edge: any) => {
-              reactFlowEdges.push({
+              console.log(`  Edge: ${edge.id} (${edge.source} → ${edge.target})`);
+              const reactFlowEdge: any = {
                 id: edge.id,
                 source: edge.source,
                 target: edge.target,
-                type: 'animated',
+                type: edge.type || 'default',
                 data: {
                   label: edge.data?.label,
                   condition: edge.data?.condition,
                   onConfigClick: handleEdgeConfigClick,
                 },
-              });
+              };
+              
+              // Preservar sourceHandle para routers
+              if (edge.sourceHandle) {
+                reactFlowEdge.sourceHandle = edge.sourceHandle;
+              }
+              
+              // Preservar targetHandle si existe
+              if (edge.targetHandle) {
+                reactFlowEdge.targetHandle = edge.targetHandle;
+              }
+              
+              reactFlowEdges.push(reactFlowEdge);
+              console.log(`  ✅ Edge agregado:`, reactFlowEdge);
             });
+            console.log(`✅ Total edges procesados: ${reactFlowEdges.length}`);
           } else {
+            console.log('⚠️ No hay edges en data.edges, usando fallback node.next');
             // Fallback: crear edges desde node.next
             data.nodes.forEach((node: any) => {
               if (node.next) {
@@ -169,7 +218,16 @@ export default function FlowsPage() {
   };
 
   const onConnect = useCallback(
-    (params: Connection) => setEdges((eds) => addEdge(params, eds)),
+    (params: Connection) => {
+      const newEdge = {
+        ...params,
+        type: 'default',
+        data: {
+          onConfigClick: handleEdgeConfigClick,
+        },
+      };
+      setEdges((eds) => addEdge(newEdge, eds));
+    },
     [setEdges]
   );
 
@@ -180,6 +238,26 @@ export default function FlowsPage() {
   const handleEdgeConfigClick = useCallback((edgeId: string) => {
     setSelectedEdgeId(edgeId);
     setShowFilterModal(true);
+  }, []);
+
+  const onPaneContextMenu = useCallback((event: React.MouseEvent) => {
+    event.preventDefault();
+    setContextMenu({ x: event.clientX, y: event.clientY });
+    setContextMenuEdge(null);
+  }, []);
+
+  const onEdgeContextMenu = useCallback((event: React.MouseEvent, edge: Edge) => {
+    event.preventDefault();
+    setContextMenu({ x: event.clientX, y: event.clientY });
+    setContextMenuEdge(edge.id);
+  }, []);
+
+  const handleDeleteEdge = useCallback((edgeId: string) => {
+    setEdges((eds) => eds.filter((e) => e.id !== edgeId));
+  }, [setEdges]);
+
+  const handleAddNodeFromContext = useCallback((position: { x: number; y: number }) => {
+    setShowPalette(true);
   }, []);
 
   const handleSaveFilter = useCallback((edgeId: string, filter: any) => {
@@ -365,9 +443,13 @@ export default function FlowsPage() {
               onEdgesChange={onEdgesChange}
               onConnect={onConnect}
               onNodeClick={onNodeClick}
+              onPaneContextMenu={onPaneContextMenu}
+              onEdgeContextMenu={onEdgeContextMenu}
               nodeTypes={nodeTypes}
               edgeTypes={edgeTypes}
               fitView
+              deleteKeyCode="Delete"
+              multiSelectionKeyCode="Shift"
             >
               <Controls />
               <MiniMap />
@@ -403,6 +485,21 @@ export default function FlowsPage() {
               edgeId={selectedEdgeId}
               onSave={handleSaveFilter}
               onClose={() => setShowFilterModal(false)}
+            />
+          )}
+
+          {contextMenu && (
+            <CanvasContextMenu
+              x={contextMenu.x}
+              y={contextMenu.y}
+              onClose={() => {
+                setContextMenu(null);
+                setContextMenuEdge(null);
+              }}
+              onAddNode={handleAddNodeFromContext}
+              selectedEdge={contextMenuEdge}
+              onDeleteEdge={handleDeleteEdge}
+              onConfigureEdge={handleEdgeConfigClick}
             />
           )}
         </div>

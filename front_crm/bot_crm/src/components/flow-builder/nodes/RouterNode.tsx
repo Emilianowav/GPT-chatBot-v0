@@ -48,7 +48,16 @@ function RouterNode({ id, data, selected }: NodeProps<RouterNodeData>) {
   } = data;
 
   const color = '#f59e0b'; // Router yellow/orange
-  const totalRoutes = routes || config?.conditions?.length || config?.opciones?.length || 2;
+  
+  // Extraer handles dinámicos desde config.routes
+  const routeHandles = config?.routes?.map((route: any) => route.id) || [];
+  const totalRoutes = routeHandles.length || routes || 2;
+  
+  console.log(`🔷 RouterNode ${id}:`, {
+    routeHandles,
+    totalRoutes,
+    hasConfig: !!config?.routes
+  });
 
   const handleNodeClick = () => {
     if (onNodeClick) {
@@ -99,50 +108,96 @@ function RouterNode({ id, data, selected }: NodeProps<RouterNodeData>) {
       </div>
 
       {/* Handles de salida múltiples (derecha) con botones + */}
-      {Array.from({ length: totalRoutes }).map((_, index) => {
-        const topPosition = ((index + 1) * 100) / (totalRoutes + 1);
-        const handleId = `route-${index + 1}`;
-        
-        return (
-          <React.Fragment key={handleId}>
-            <Handle
-              type="source"
-              position={Position.Right}
-              id={handleId}
-              style={{
-                top: `${topPosition}%`,
-                opacity: 0,
-                background: color,
-              }}
-            />
-            
-            {/* Botón + para agregar nodo en esta ruta */}
-            <div
-              className={styles.handlePlus}
-              style={{
-                position: 'absolute',
-                right: '-40px',
-                top: `calc(${topPosition}% - 15px)`,
-                width: '30px',
-                height: '30px',
-                borderRadius: '50%',
-                background: color,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                cursor: 'pointer',
-                zIndex: 10,
-              }}
-              onClick={handlePlusClick(handleId)}
-              role="button"
-              tabIndex={0}
-              aria-label={`Add module to route ${index + 1}`}
-            >
-              <Plus size={16} color="white" strokeWidth={3} />
-            </div>
-          </React.Fragment>
-        );
-      })}
+      {routeHandles.length > 0 ? (
+        routeHandles.map((handleId: string, index: number) => {
+          const topPosition = ((index + 1) * 100) / (totalRoutes + 1);
+          
+          return (
+            <React.Fragment key={handleId}>
+              <Handle
+                type="source"
+                position={Position.Right}
+                id={handleId}
+                style={{
+                  top: `${topPosition}%`,
+                  opacity: 0,
+                  background: color,
+                }}
+              />
+              
+              {/* Botón + para agregar nodo en esta ruta */}
+              <div
+                className={styles.handlePlus}
+                style={{
+                  position: 'absolute',
+                  right: '-40px',
+                  top: `calc(${topPosition}% - 15px)`,
+                  width: '30px',
+                  height: '30px',
+                  borderRadius: '50%',
+                  background: color,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  cursor: 'pointer',
+                  zIndex: 10,
+                }}
+                onClick={handlePlusClick(handleId)}
+                role="button"
+                tabIndex={0}
+                aria-label={`Add module to route ${index + 1}`}
+              >
+                <Plus size={16} color="white" strokeWidth={3} />
+              </div>
+            </React.Fragment>
+          );
+        })
+      ) : (
+        // Fallback: usar route-1, route-2 si no hay config.routes
+        Array.from({ length: totalRoutes }).map((_, index) => {
+          const topPosition = ((index + 1) * 100) / (totalRoutes + 1);
+          const handleId = `route-${index + 1}`;
+          
+          return (
+            <React.Fragment key={handleId}>
+              <Handle
+                type="source"
+                position={Position.Right}
+                id={handleId}
+                style={{
+                  top: `${topPosition}%`,
+                  opacity: 0,
+                  background: color,
+                }}
+              />
+              
+              <div
+                className={styles.handlePlus}
+                style={{
+                  position: 'absolute',
+                  right: '-40px',
+                  top: `calc(${topPosition}% - 15px)`,
+                  width: '30px',
+                  height: '30px',
+                  borderRadius: '50%',
+                  background: color,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  cursor: 'pointer',
+                  zIndex: 10,
+                }}
+                onClick={handlePlusClick(handleId)}
+                role="button"
+                tabIndex={0}
+                aria-label={`Add module to route ${index + 1}`}
+              >
+                <Plus size={16} color="white" strokeWidth={3} />
+              </div>
+            </React.Fragment>
+          );
+        })
+      )}
 
       {/* Label */}
       <div className={styles.nodeLabel}>{label}</div>

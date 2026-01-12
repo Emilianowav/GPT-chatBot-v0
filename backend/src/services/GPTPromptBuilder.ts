@@ -123,10 +123,12 @@ export class GPTPromptBuilder {
     contexto: string,
     extractionConfig: any
   ): Promise<Record<string, any>> {
+    console.log('\n🔍 [extractWithFrontendConfig] INICIANDO EXTRACCIÓN');
     const resultado: Record<string, any> = {};
 
     if (!extractionConfig || !extractionConfig.systemPrompt) {
       console.error('   ❌ extractionConfig.systemPrompt no está configurado');
+      console.error('   extractionConfig:', extractionConfig);
       return resultado;
     }
 
@@ -135,8 +137,11 @@ export class GPTPromptBuilder {
       const systemPrompt = extractionConfig.systemPrompt;
       
       console.log('   📤 Enviando a GPT con systemPrompt del frontend...');
+      console.log('   📝 Contexto length:', contexto.length);
+      console.log('   📝 SystemPrompt length:', systemPrompt.length);
 
       // Llamar a GPT
+      console.log('   🤖 Llamando a obtenerRespuestaChat...');
       const respuesta = await obtenerRespuestaChat({
         modelo: 'gpt-3.5-turbo',
         historial: [
@@ -151,20 +156,29 @@ export class GPTPromptBuilder {
         ]
       });
 
+      console.log('   ✅ Respuesta recibida de GPT');
+      console.log('   📄 Respuesta:', respuesta.texto);
+
       // Parsear JSON
       try {
         let jsonString = respuesta.texto.trim();
         
         // Remover bloques de código markdown si existen
         if (jsonString.startsWith('```')) {
+          console.log('   🔧 Removiendo bloques de código markdown...');
           jsonString = jsonString.replace(/```json?\n?/g, '').replace(/```\n?/g, '').trim();
         }
 
+        console.log('   🔍 Parseando JSON...');
         const extracted = JSON.parse(jsonString);
+        console.log('   ✅ JSON parseado:', extracted);
         
         // Validar que sea un objeto
         if (typeof extracted === 'object' && extracted !== null && !Array.isArray(extracted)) {
           Object.assign(resultado, extracted);
+          console.log('   ✅ Datos extraídos asignados al resultado');
+        } else {
+          console.error('   ❌ El resultado no es un objeto válido:', typeof extracted);
         }
       } catch (parseError) {
         console.error('   ❌ Error parseando JSON del extractor:', parseError);
@@ -173,8 +187,10 @@ export class GPTPromptBuilder {
 
     } catch (error) {
       console.error('   ❌ Error en extractWithFrontendConfig:', error);
+      console.error('   Stack:', (error as Error).stack);
     }
 
+    console.log('   📊 Resultado final:', resultado);
     return resultado;
   }
 

@@ -1,5 +1,5 @@
-import { memo } from 'react';
-import { EdgeProps, useStore, EdgeLabelRenderer } from 'reactflow';
+import { memo, useState } from 'react';
+import { EdgeProps, useStore, EdgeLabelRenderer, getBezierPath } from 'reactflow';
 import { Settings } from 'lucide-react';
 
 /**
@@ -23,16 +23,30 @@ function AnimatedLineEdge({
   sourceY,
   targetX,
   targetY,
+  sourcePosition,
+  targetPosition,
   source,
   target,
   data,
+  selected,
 }: AnimatedLineEdgeProps) {
+  const [isHovered, setIsHovered] = useState(false);
   const nodes = useStore((state) => state.nodeInternals);
   const sourceNode = nodes.get(source);
   const targetNode = nodes.get(target);
   
   const sourceColor = sourceNode?.data?.color || '#9ca3af';
   const targetColor = targetNode?.data?.color || '#9ca3af';
+  
+  // Generar path bezier para línea suave
+  const [edgePath] = getBezierPath({
+    sourceX,
+    sourceY,
+    sourcePosition,
+    targetX,
+    targetY,
+    targetPosition,
+  });
 
   // Validar coordenadas
   if (!isFinite(sourceX) || !isFinite(sourceY) || !isFinite(targetX) || !isFinite(targetY)) {
@@ -40,29 +54,7 @@ function AnimatedLineEdge({
     return null;
   }
 
-  // Calcular distancia y número de círculos
-  const dx = targetX - sourceX;
-  const dy = targetY - sourceY;
-  const distance = Math.sqrt(dx * dx + dy * dy);
-  
-  // Espaciado entre círculos (similar a Make.com)
-  const spacing = 20;
-  const numDots = Math.max(1, Math.floor(distance / spacing)); // Mínimo 1 para evitar división por 0
-  
-  const dots = [];
-  for (let i = 0; i <= numDots; i++) {
-    const t = numDots > 0 ? i / numDots : 0;
-    const x = sourceX + (targetX - sourceX) * t;
-    const y = sourceY + (targetY - sourceY) * t;
-    
-    // Validar que x e y sean números válidos
-    if (!isFinite(x) || !isFinite(y)) continue;
-    
-    // Color: mezcla gradual de source a target
-    const color = t < 0.5 ? sourceColor : targetColor;
-    
-    dots.push({ x, y, color, key: i });
-  }
+  // No necesitamos círculos, solo línea sólida
 
   // Calculate midpoint for label
   const edgeCenterX = (sourceX + targetX) / 2;
@@ -78,16 +70,28 @@ function AnimatedLineEdge({
   return (
     <>
       <g>
-        {dots.map((dot) => (
-          <circle
-            key={dot.key}
-            cx={dot.x}
-            cy={dot.y}
-            r={3}
-            fill={dot.color}
-            opacity={0.6}
-          />
-        ))}
+        {/* Línea invisible MUY gruesa para hover (hitbox) */}
+        <path
+          d={edgePath}
+          fill="none"
+          stroke="transparent"
+          strokeWidth={40}
+          style={{ cursor: 'pointer' }}
+          onMouseEnter={() => setIsHovered(true)}
+          onMouseLeave={() => setIsHovered(false)}
+        />
+        
+        {/* Línea GRUESA y VISIBLE */}
+        <path
+          d={edgePath}
+          fill="none"
+          stroke={isHovered || selected ? '#8b5cf6' : '#374151'}
+          strokeWidth={isHovered || selected ? 6 : 4}
+          style={{ 
+            transition: 'all 0.2s ease',
+            pointerEvents: 'none'
+          }}
+        />
       </g>
 
       {/* Edge Label with Condition */}
