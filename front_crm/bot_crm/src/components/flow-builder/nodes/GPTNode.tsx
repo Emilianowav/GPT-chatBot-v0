@@ -112,9 +112,6 @@ function GPTNode({ id, data, selected }: NodeProps<GPTNodeData>) {
       />
 
       <div className={styles.nodeLabel}>{label}</div>
-      {config?.tipo && (
-        <div className={styles.nodeSubtitle}>{config.tipo}</div>
-      )}
     </div>
   );
 }

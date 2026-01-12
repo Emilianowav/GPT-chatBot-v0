@@ -859,14 +859,37 @@ export class FlowExecutor {
     
     console.log(`   🛍️  Módulo WooCommerce: ${config.module}`);
     
-    // Si tiene apiConfigId, usar el sistema de integraciones
-    if (config.apiConfigId) {
+    // Si tiene apiConfigId pero NO tiene module, usar el sistema de integraciones
+    if (config.apiConfigId && !config.module) {
       console.log(`   🔗 Usando API de integraciones: ${config.apiConfigId}`);
       return await this.executeAPICallNode(node, input);
     }
     
-    // Obtener conexión (del nodo o del flowConfig)
-    const connection = config.connection || this.flowConfig.woocommerce;
+    // Obtener conexión (del nodo o del flowConfig o de apiConfigId)
+    let connection = config.connection || this.flowConfig.woocommerce;
+    
+    // Si tiene apiConfigId y module, cargar conexión desde la BD
+    if (config.apiConfigId && config.module && !connection) {
+      console.log(`   🔗 Cargando conexión desde API Config: ${config.apiConfigId}`);
+      try {
+        const mongoose = await import('mongoose');
+        const apiConfigCollection = mongoose.connection.db.collection('api_configurations');
+        const apiConfig = await apiConfigCollection.findOne({ 
+          _id: new mongoose.Types.ObjectId(config.apiConfigId) 
+        });
+        
+        if (apiConfig && apiConfig.type === 'woocommerce') {
+          connection = {
+            url: apiConfig.baseUrl,
+            consumerKey: apiConfig.auth?.consumerKey,
+            consumerSecret: apiConfig.auth?.consumerSecret
+          };
+          console.log(`   ✅ Conexión WooCommerce cargada desde BD`);
+        }
+      } catch (error: any) {
+        console.error(`   ⚠️  Error cargando API config:`, error.message);
+      }
+    }
     
     if (!connection) {
       throw new Error('No hay conexión de WooCommerce configurada');

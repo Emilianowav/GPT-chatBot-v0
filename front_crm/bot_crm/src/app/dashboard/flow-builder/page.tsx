@@ -31,6 +31,7 @@ import AppsModal from '@/components/flow-builder/modals/AppsModal';
 import ModuleSelectionModal from '@/components/flow-builder/modals/ModuleSelectionModal';
 import WebhookConfigModal from '@/components/flow-builder/modals/WebhookConfigModal';
 import GPTConfigModal from '@/components/flow-builder/modals/GPTConfigModal';
+import EdgeConfigModal from '@/components/flow-builder/modals/EdgeConfigModal';
 import MercadoPagoConfigModal from '@/components/flow-builder/modals/MercadoPagoConfigModal';
 import NodeConfigPanel from '@/components/flow-builder/panels/NodeConfigPanel';
 import styles from './flow-builder.module.css';
@@ -222,6 +223,7 @@ export default function FlowBuilderPage() {
   const [showWebhookConfigModal, setShowWebhookConfigModal] = useState(false);
   const [showGPTConfigModal, setShowGPTConfigModal] = useState(false);
   const [showMercadoPagoConfigModal, setShowMercadoPagoConfigModal] = useState(false);
+  const [showEdgeConfigModal, setShowEdgeConfigModal] = useState(false);
   const [appsModalPosition, setAppsModalPosition] = useState<{ x: number; y: number } | undefined>();
   const [selectedApp, setSelectedApp] = useState<any>(null);
   const [selectedModule, setSelectedModule] = useState<any>(null);
@@ -232,6 +234,7 @@ export default function FlowBuilderPage() {
   const [isSaving, setIsSaving] = useState(false);
   const [selectedNode, setSelectedNode] = useState<Node | null>(null);
   const [showConfigPanel, setShowConfigPanel] = useState(false);
+  const [selectedEdgeId, setSelectedEdgeId] = useState<string | null>(null);
 
   const handlePlusNodeClick = useCallback((nodeId: string, handleId?: string) => {
     setSourceNodeForConnection(nodeId);
@@ -272,6 +275,30 @@ export default function FlowBuilderPage() {
         : node
     ));
   }, [setNodes]);
+
+  const handleEdgeConfigClick = useCallback((edgeId: string) => {
+    setSelectedEdgeId(edgeId);
+    setShowEdgeConfigModal(true);
+  }, []);
+
+  const handleSaveEdgeConfig = useCallback((config: any) => {
+    if (selectedEdgeId) {
+      setEdges(prev => prev.map(edge => 
+        edge.id === selectedEdgeId
+          ? {
+              ...edge,
+              data: {
+                ...edge.data,
+                label: config.label,
+                condition: config.condition,
+              }
+            }
+          : edge
+      ));
+    }
+    setShowEdgeConfigModal(false);
+    setSelectedEdgeId(null);
+  }, [selectedEdgeId, setEdges]);
 
   // Custom onNodesChange para manejar eliminación de nodos
   const onNodesChange = useCallback((changes: any[]) => {
@@ -387,8 +414,17 @@ export default function FlowBuilderPage() {
             console.log(`  ${node.id}: type="${node.type}"`);
           });
           
+          // Agregar handler onConfigClick a todos los edges
+          const edgesWithHandlers = flow.edges.map((edge: Edge) => ({
+            ...edge,
+            data: {
+              ...edge.data,
+              onConfigClick: handleEdgeConfigClick,
+            }
+          }));
+          
           setNodes(nodesWithHandlers);
-          setEdges(flow.edges);
+          setEdges(edgesWithHandlers);
           setFlowName(flow.nombre);
           setCurrentFlowId(flow._id);
           
@@ -877,6 +913,17 @@ export default function FlowBuilderPage() {
           }}
           nodeData={selectedNode}
           onSave={handleMercadoPagoConfigSave}
+        />
+
+        <EdgeConfigModal
+          isOpen={showEdgeConfigModal}
+          onClose={() => {
+            setShowEdgeConfigModal(false);
+            setSelectedEdgeId(null);
+          }}
+          onSave={handleSaveEdgeConfig}
+          edgeId={selectedEdgeId || ''}
+          currentConfig={edges.find(e => e.id === selectedEdgeId)?.data}
         />
 
         {showConfigPanel && selectedNode && (
