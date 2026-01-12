@@ -7,6 +7,7 @@ import { GPTPromptBuilder } from './GPTPromptBuilder.js';
 import type { IGPTConversacionalConfig } from '../types/gpt-config.types.js';
 import { createWooCommerceService } from './woocommerceService.js';
 import { executeCarritoNode, executeMercadoPagoNode } from './FlowExecutor.carrito.js';
+import mongoose from 'mongoose';
 
 interface FlowContext {
   [nodeId: string]: {
@@ -872,7 +873,6 @@ export class FlowExecutor {
     if (config.apiConfigId && config.module && !connection) {
       console.log(`   🔗 Cargando conexión desde API Config: ${config.apiConfigId}`);
       try {
-        const mongoose = await import('mongoose');
         const apiConfigCollection = mongoose.connection.db.collection('api_configurations');
         const apiConfig = await apiConfigCollection.findOne({ 
           _id: new mongoose.Types.ObjectId(config.apiConfigId) 
