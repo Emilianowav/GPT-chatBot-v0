@@ -7,7 +7,7 @@ import { GPTPromptBuilder } from './GPTPromptBuilder.js';
 import type { IGPTConversacionalConfig } from '../types/gpt-config.types.js';
 import { createWooCommerceService } from './woocommerceService.js';
 import { executeCarritoNode, executeMercadoPagoNode } from './FlowExecutor.carrito.js';
-import mongoose from 'mongoose';
+import { ApiConfigurationModel } from '../models/ApiConfiguration.js';
 
 interface FlowContext {
   [nodeId: string]: {
@@ -876,10 +876,7 @@ export class FlowExecutor {
     if (config.apiConfigId && config.module && !connection) {
       console.log(`   🔗 Cargando conexión desde API Config: ${config.apiConfigId}`);
       try {
-        const apiConfigCollection = mongoose.connection.db.collection('api_configurations');
-        const apiConfig = await apiConfigCollection.findOne({ 
-          _id: new mongoose.Types.ObjectId(config.apiConfigId) 
-        });
+        const apiConfig = await ApiConfigurationModel.findById(config.apiConfigId);
         
         if (apiConfig && apiConfig.type === 'woocommerce') {
           connection = {
@@ -888,6 +885,9 @@ export class FlowExecutor {
             consumerSecret: apiConfig.auth?.consumerSecret
           };
           console.log(`   ✅ Conexión WooCommerce cargada desde BD`);
+          console.log(`   📍 URL: ${connection.url}`);
+        } else {
+          console.log(`   ⚠️  API Config no encontrado o no es de tipo WooCommerce`);
         }
       } catch (error: any) {
         console.error(`   ⚠️  Error cargando API config:`, error.message);
