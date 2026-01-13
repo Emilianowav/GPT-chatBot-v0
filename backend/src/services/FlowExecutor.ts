@@ -7,7 +7,7 @@ import { GPTPromptBuilder } from './GPTPromptBuilder.js';
 import type { IGPTConversacionalConfig } from '../types/gpt-config.types.js';
 import { createWooCommerceService } from './woocommerceService.js';
 import { executeCarritoNode, executeMercadoPagoNode } from './FlowExecutor.carrito.js';
-import { ApiConfigurationModel } from '../models/ApiConfiguration.js';
+import { ApiConfigurationModel } from '../modules/integrations/models/ApiConfiguration.js';
 
 interface FlowContext {
   [nodeId: string]: {
