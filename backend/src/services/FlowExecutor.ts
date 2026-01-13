@@ -281,8 +281,9 @@ export class FlowExecutor {
           const routerPath = this.context[currentNodeId]?.output?._routerPath;
           console.log(`   🔀 Router detectado. Ruta elegida: ${routerPath || 'default'}`);
           
-          // Buscar edge que coincida con la ruta
+          // Buscar edge que coincida con la ruta (sourceHandle es donde está el routeId)
           nextEdge = possibleEdges.find((e: any) => 
+            e.sourceHandle === routerPath ||
             e.data?.routeId === routerPath || 
             e.id.includes(routerPath)
           );
@@ -291,6 +292,8 @@ export class FlowExecutor {
           if (!nextEdge) {
             console.log(`   ⚠️  No se encontró edge para ruta ${routerPath}, usando fallback`);
             nextEdge = possibleEdges[0];
+          } else {
+            console.log(`   ✅ Edge encontrado para ruta ${routerPath}: ${nextEdge.id}`);
           }
         } else {
           nextEdge = possibleEdges[0];
