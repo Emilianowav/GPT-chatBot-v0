@@ -358,7 +358,7 @@ Si NO encuentras ninguna variable, responde con: {}`;
   }
 
   /**
-   * Valida que todas las variables obligatorias estén completas
+   * Valida que todas las variables estén completas (obligatorias y opcionales)
    */
   static validateVariables(
     variables: Record<string, any>,
@@ -366,13 +366,12 @@ Si NO encuentras ninguna variable, responde con: {}`;
   ): { valido: boolean; faltantes: string[] } {
     const faltantes: string[] = [];
 
-    variablesConfig
-      .filter(v => v.obligatorio)
-      .forEach(v => {
-        if (!variables[v.nombre] || variables[v.nombre] === '') {
-          faltantes.push(v.nombre);
-        }
-      });
+    // Validar TODAS las variables, no solo las obligatorias
+    variablesConfig.forEach(v => {
+      if (!variables[v.nombre] || variables[v.nombre] === '') {
+        faltantes.push(v.nombre);
+      }
+    });
 
     return {
       valido: faltantes.length === 0,
