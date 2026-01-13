@@ -878,16 +878,17 @@ export class FlowExecutor {
       try {
         const apiConfig = await ApiConfigurationModel.findById(config.apiConfigId);
         
-        if (apiConfig && apiConfig.type === 'woocommerce') {
+        if (apiConfig) {
+          // WooCommerce usa autenticacion.tipo = "basic" con username/password
           connection = {
             url: apiConfig.baseUrl,
-            consumerKey: apiConfig.auth?.consumerKey,
-            consumerSecret: apiConfig.auth?.consumerSecret
+            consumerKey: apiConfig.autenticacion?.configuracion?.username || '',
+            consumerSecret: apiConfig.autenticacion?.configuracion?.password || ''
           };
           console.log(`   ✅ Conexión WooCommerce cargada desde BD`);
           console.log(`   📍 URL: ${connection.url}`);
         } else {
-          console.log(`   ⚠️  API Config no encontrado o no es de tipo WooCommerce`);
+          console.log(`   ⚠️  API Config no encontrado`);
         }
       } catch (error: any) {
         console.error(`   ⚠️  Error cargando API config:`, error.message);
