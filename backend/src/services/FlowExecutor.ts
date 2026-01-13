@@ -881,12 +881,12 @@ export class FlowExecutor {
         if (apiConfig) {
           // WooCommerce usa autenticacion.tipo = "basic" con username/password
           connection = {
-            url: apiConfig.baseUrl,
+            eshopUrl: apiConfig.baseUrl,
             consumerKey: apiConfig.autenticacion?.configuracion?.username || '',
             consumerSecret: apiConfig.autenticacion?.configuracion?.password || ''
           };
           console.log(`   ✅ Conexión WooCommerce cargada desde BD`);
-          console.log(`   📍 URL: ${connection.url}`);
+          console.log(`   📍 URL: ${connection.eshopUrl}`);
         } else {
           console.log(`   ⚠️  API Config no encontrado`);
         }
