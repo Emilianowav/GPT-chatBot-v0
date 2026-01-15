@@ -140,14 +140,21 @@ export class GPTPromptBuilder {
       console.log('   📝 Contexto length:', contexto.length);
       console.log('   📝 SystemPrompt length:', systemPrompt.length);
 
-      // Llamar a GPT
+      // Llamar a GPT con instrucciones JSON forzadas
       console.log('   🤖 Llamando a obtenerRespuestaChat...');
+      
+      // Agregar instrucciones JSON al final del systemPrompt si no las tiene
+      let finalSystemPrompt = systemPrompt;
+      if (!systemPrompt.includes('FORMATO DE RESPUESTA') && !systemPrompt.includes('JSON')) {
+        finalSystemPrompt += '\n\n**IMPORTANTE: Devuelve SOLO un objeto JSON válido, sin texto adicional.**';
+      }
+      
       const respuesta = await obtenerRespuestaChat({
         modelo: 'gpt-3.5-turbo',
         historial: [
           {
             role: 'system',
-            content: systemPrompt
+            content: finalSystemPrompt + '\n\nRECUERDA: Tu respuesta debe ser ÚNICAMENTE un objeto JSON válido. NO agregues explicaciones, NO agregues texto antes o después del JSON. SOLO el objeto JSON.'
           },
           {
             role: 'user',
@@ -167,6 +174,18 @@ export class GPTPromptBuilder {
         if (jsonString.startsWith('```')) {
           console.log('   🔧 Removiendo bloques de código markdown...');
           jsonString = jsonString.replace(/```json?\n?/g, '').replace(/```\n?/g, '').trim();
+        }
+        
+        // Si la respuesta tiene texto adicional, intentar extraer solo el JSON
+        if (!jsonString.startsWith('{') && !jsonString.startsWith('[')) {
+          console.log('   🔧 Respuesta tiene texto adicional, extrayendo JSON...');
+          const jsonMatch = jsonString.match(/\{[^}]*\}/);
+          if (jsonMatch) {
+            jsonString = jsonMatch[0];
+            console.log('   ✅ JSON extraído:', jsonString);
+          } else {
+            console.error('   ❌ No se pudo encontrar JSON en la respuesta');
+          }
         }
 
         console.log('   🔍 Parseando JSON...');
