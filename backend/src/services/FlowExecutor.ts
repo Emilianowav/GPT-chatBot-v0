@@ -44,6 +44,7 @@ export class FlowExecutor {
   private context: FlowContext = {};
   private globalVariables: Record<string, any> = {};
   private flowConfig: Record<string, any> = {}; // Configuraciones técnicas de nodos fuente
+  private topicos: Record<string, any> = {}; // Tópicos de conocimiento del flujo
   private contactoId?: string;
   private historialConversacion: string[] = [];
   private flow: any; // Flujo actual en ejecución
@@ -170,6 +171,16 @@ export class FlowExecutor {
   }
 
   /**
+   * Carga los tópicos de conocimiento del flujo
+   */
+  private loadTopicos(flow: any): void {
+    if (flow.config?.topicos && flow.config?.topicos_habilitados) {
+      this.topicos = flow.config.topicos;
+      console.log('📚 [TÓPICOS] Cargados:', Object.keys(this.topicos).join(', '));
+    }
+  }
+
+  /**
    * Carga el historial de conversación del contacto
    */
   private async loadHistorial(contactoId: string): Promise<void> {
@@ -258,7 +269,10 @@ export class FlowExecutor {
         throw new Error(`Flujo ${flowId} no encontrado`);
       }
 
-      // 2. Detectar y guardar configuraciones técnicas de nodos fuente
+      // 2. Cargar tópicos de conocimiento del flujo
+      this.loadTopicos(this.flow);
+
+      // 3. Detectar y guardar configuraciones técnicas de nodos fuente
       this.detectSourceNodes(this.flow.nodes);
 
       if (!this.flow.nodes || !this.flow.edges) {
@@ -1473,6 +1487,24 @@ export class FlowExecutor {
    */
   private getVariableValue(varPath: string): any {
     console.log(`         🔎 [getVariableValue] Buscando: "${varPath}"`);
+    
+    // Soporte para tópicos con prefijo 'topicos.'
+    if (varPath.startsWith('topicos.')) {
+      const topicoPath = varPath.substring(8).split('.'); // Remover 'topicos.' y dividir
+      let value: any = this.topicos;
+      
+      for (const part of topicoPath) {
+        if (value && typeof value === 'object') {
+          value = value[part];
+        } else {
+          console.log(`         ❌ Tópico "${varPath}" no encontrado`);
+          return undefined;
+        }
+      }
+      
+      console.log(`         📚 Tópico encontrado: ${JSON.stringify(value)?.substring(0, 200)}`);
+      return value;
+    }
     
     // Soporte para variables globales con prefijo 'global.'
     if (varPath.startsWith('global.')) {
