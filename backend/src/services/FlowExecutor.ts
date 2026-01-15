@@ -484,6 +484,12 @@ export class FlowExecutor {
   private async executeGPTNode(node: any, input: any): Promise<NodeExecutionResult> {
     const config = node.data.config as IGPTConversacionalConfig;
 
+    // DEBUG: Verificar qué se carga desde la BD
+    console.log(`\n🔍 [DEBUG CARGA] Nodo: ${node.id}`);
+    console.log(`   node.data.config.tipo desde BD: "${node.data.config?.tipo}"`);
+    console.log(`   config.tipo después de cast: "${config.tipo}"`);
+    console.log(`   node.data.config completo:`, JSON.stringify(node.data.config, null, 2).substring(0, 500));
+
     console.log('\n═══════════════════════════════════════════════════════════');
     console.log(`📝 NODO GPT: ${node.data.label} (${config.tipo})`);
     console.log('═══════════════════════════════════════════════════════════');
