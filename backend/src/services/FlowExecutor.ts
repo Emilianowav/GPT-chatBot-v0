@@ -647,15 +647,25 @@ export class FlowExecutor {
       console.log(`\n📝 CONTEXTO PARA EXTRACCIÓN (${fuenteDatos}):`);
       console.log(contexto);
       console.log('\n🔍 Extrayendo variables...');
+      console.log(`📋 Variables a extraer: ${config.extractionConfig.variables?.map((v: any) => `${v.nombre}${v.requerido ? '*' : ''}`).join(', ')}`);
       
       // Usar extractionConfig.systemPrompt + extractionConfig.variables
-      const datosExtraidos = await GPTPromptBuilder.extractWithFrontendConfig(
-        contexto,
-        config.extractionConfig
-      );
+      let datosExtraidos;
+      try {
+        datosExtraidos = await GPTPromptBuilder.extractWithFrontendConfig(
+          contexto,
+          config.extractionConfig
+        );
+      } catch (error: any) {
+        console.error('\n❌ ERROR EN EXTRACCIÓN GPT:');
+        console.error(`   Mensaje: ${error.message}`);
+        console.error(`   Stack: ${error.stack?.substring(0, 200)}`);
+        throw error;
+      }
       
-      console.log('\n✅ DATOS EXTRAÍDOS:');
+      console.log('\n✅ DATOS EXTRAÍDOS POR GPT:');
       console.log(JSON.stringify(datosExtraidos, null, 2));
+      console.log(`\n📊 Resumen: ${Object.keys(datosExtraidos).length} variable(s) extraída(s)`);
       
       // Guardar cada dato extraído en variables globales
       // IMPORTANTE: Hacer merge con variables existentes para mantener valores previos
@@ -688,6 +698,7 @@ export class FlowExecutor {
       if (config.extractionConfig.variables && config.extractionConfig.variables.length > 0) {
         const variablesFaltantes: string[] = [];
         
+        console.log('\n🔍 VALIDANDO VARIABLES (requerido vs opcional):');
         for (const varConfig of config.extractionConfig.variables) {
           const valor = output[varConfig.nombre] || this.getGlobalVariable(varConfig.nombre);
           
@@ -696,11 +707,15 @@ export class FlowExecutor {
           const estaVacia = valor === null || valor === undefined || valor === '';
           const esRequerida = varConfig.requerido === true;
           
+          console.log(`   📌 ${varConfig.nombre}: requerido=${esRequerida}, valor=${estaVacia ? 'VACÍO' : 'PRESENTE'}`);
+          
           if (estaVacia && esRequerida) {
             variablesFaltantes.push(varConfig.nombre);
-            console.log(`   ⚠️  Variable REQUERIDA faltante: ${varConfig.nombre}`);
+            console.log(`      ⚠️  → FALTANTE (requerida y vacía)`);
           } else if (estaVacia && !esRequerida) {
-            console.log(`   ℹ️  Variable opcional sin valor: ${varConfig.nombre} (OK, no es requerida)`);
+            console.log(`      ✅ → OK (opcional, puede estar vacía)`);
+          } else {
+            console.log(`      ✅ → OK (tiene valor)`);
           }
         }
         
@@ -1063,16 +1078,33 @@ export class FlowExecutor {
           result = await wooService.searchProducts(params);
           console.log(`   ✅ Productos encontrados: ${result.length}`);
           
+          if (result.length === 0) {
+            console.log(`   ⚠️  ADVERTENCIA: No se encontraron productos para "${params.search}"`);
+            console.log(`   💡 Sugerencia: Verificar que el término de búsqueda coincida con productos en WooCommerce`);
+          }
+          
           // Simplificar productos para GPT (solo título, precio, URL)
           // Configurable desde el frontend mediante config.productFieldMappings
-          const productosSimplificados = this.simplifyProductsForGPT(
-            result,
-            config.productFieldMappings,
-            connection.eshopUrl // Pasar baseUrl para construir URLs completas
-          );
+          let productosSimplificados;
+          try {
+            productosSimplificados = this.simplifyProductsForGPT(
+              result,
+              config.productFieldMappings,
+              connection.eshopUrl // Pasar baseUrl para construir URLs completas
+            );
+          } catch (error: any) {
+            console.error(`   ❌ ERROR simplificando productos: ${error.message}`);
+            throw error;
+          }
           
           console.log(`   📊 Productos simplificados para GPT: ${productosSimplificados.length}`);
           console.log(`   📋 Campos por producto: ${Object.keys(productosSimplificados[0] || {}).join(', ')}`);
+          
+          if (productosSimplificados.length > 0) {
+            const primerProducto = productosSimplificados[0];
+            console.log(`   🔗 Ejemplo URL generada: ${primerProducto.url}`);
+            console.log(`   💰 Ejemplo precio: $${primerProducto.precio}`);
+          }
           
           // Retornar en formato { productos: [...] } para que sea accesible como woocommerce.productos
           return {
