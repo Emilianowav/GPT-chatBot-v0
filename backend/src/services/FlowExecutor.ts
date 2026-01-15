@@ -650,9 +650,16 @@ export class FlowExecutor {
         for (const varConfig of config.extractionConfig.variables) {
           const valor = output[varConfig.nombre] || this.getGlobalVariable(varConfig.nombre);
           
-          // Una variable falta si es null, undefined o vacío
-          if (valor === null || valor === undefined || valor === '') {
+          // CRÍTICO: Solo marcar como faltante si es REQUERIDA y está vacía
+          // Variables opcionales (requerido: false) pueden ser null sin problema
+          const estaVacia = valor === null || valor === undefined || valor === '';
+          const esRequerida = varConfig.requerido === true;
+          
+          if (estaVacia && esRequerida) {
             variablesFaltantes.push(varConfig.nombre);
+            console.log(`   ⚠️  Variable REQUERIDA faltante: ${varConfig.nombre}`);
+          } else if (estaVacia && !esRequerida) {
+            console.log(`   ℹ️  Variable opcional sin valor: ${varConfig.nombre} (OK, no es requerida)`);
           }
         }
         
