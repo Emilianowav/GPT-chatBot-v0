@@ -1,0 +1,687 @@
+{
+  "_id": "695a156681f6d67f0ae9cf40",
+  "nombre": "WooCommerce Flow",
+  "empresaId": "6940a9a181b92bfce970fdb5",
+  "activo": true,
+  "nodes": [
+    {
+      "id": "webhook-whatsapp",
+      "type": "webhook",
+      "position": {
+        "x": 240,
+        "y": 195
+      },
+      "data": {
+        "label": "WhatsApp Business Clo...",
+        "subtitle": "Receive a Message",
+        "config": {
+          "trigger": "whatsapp_message"
+        },
+        "hasConnection": true,
+        "executionCount": 1
+      },
+      "width": 177,
+      "height": 135,
+      "category": "trigger",
+      "selected": false,
+      "positionAbsolute": {
+        "x": 240,
+        "y": 195
+      },
+      "dragging": false
+    },
+    {
+      "id": "gpt-formateador",
+      "type": "gpt",
+      "position": {
+        "x": 600,
+        "y": 200
+      },
+      "data": {
+        "label": "OpenAI (ChatGPT, Sera...",
+        "subtitle": "formateador",
+        "config": {
+          "model": "gpt-4o-mini",
+          "temperature": 0.1,
+          "maxTokens": 200,
+          "systemPrompt": "Eres un extractor de variables para búsqueda de libros en WooCommerce.\n\nVARIABLES A EXTRAER:\n- titulo: Título del libro (string) - **OBLIGATORIO**\n- editorial: Editorial del libro (string) - OPCIONAL\n- edicion: Edición o año del libro (string) - OPCIONAL\n\nCONTEXTO DEL HISTORIAL:\nAnaliza TODO el historial de la conversación para extraer las variables.\n\nREGLA CRÍTICA PARA TÍTULOS:\nDebes normalizar el título del usuario al título REAL que existe en WooCommerce.\nWooCommerce normaliza automáticamente mayúsculas/minúsculas y tildes, así que NO te preocupes por eso.\n\nEJEMPLOS DE PRODUCTOS REALES EN WOOCOMMERCE (VeoVeo):\n- \"HARRY POTTER Y LA ORDEN DEL FENIX\"\n- \"HARRY POTTER 03 PRISIONERO DE AZKABAN\"\n- \"HARRY POTTER 01 LA PIEDRA FILOSOFAL\"\n- \"HARRY POTTER 04 EL CALIZ DE FUEGO\"\n- \"HARRY POTTER Y LA CAMARA SECRETA\"\n- \"HARRY POTTER Y EL MISTERIO DEL PRINCIPE\"\n- \"HARRY POTTER VII Y LAS RELIQUIAS DE LA MUERTE\"\n\nNORMALIZACIÓN INTELIGENTE:\n\nUsuario dice: \"harry potter 5\"\n→ Título extraído: \"Harry Potter y la Orden del Fenix\"\n(Entiendes que \"5\" = quinto libro = \"Orden del Fenix\")\n\nUsuario dice: \"hp 5\"\n→ Título extraído: \"Harry Potter y la Orden del Fenix\"\n(Entiendes que \"hp\" = \"Harry Potter\")\n\nUsuario dice: \"arry poter 5\" (error ortográfico)\n→ Título extraído: \"Harry Potter y la Orden del Fenix\"\n(Toleras errores ortográficos)\n\nUsuario dice: \"señor de los anillos 2\"\n→ Título extraído: \"Las Dos Torres\"\n(Entiendes que \"2\" = segundo libro)\n\nUsuario dice: \"1984\"\n→ Título extraído: \"1984\"\n(Ya está completo)\n\nUsuario dice: \"cien años de soledad\"\n→ Título extraído: \"Cien Años de Soledad\"\n(Normalizas mayúsculas)\n\nIMPORTANTE SOBRE TILDES:\n- WooCommerce normaliza tildes automáticamente\n- Puedes usar \"Fénix\" o \"Fenix\", ambos funcionan\n- Puedes usar \"Edición\" o \"Edicion\", ambos funcionan\n- NO te preocupes por tildes, WooCommerce los maneja\n\nREGLA ESPECIAL PARA \"CUALQUIERA\":\nSi el usuario dice \"cualquiera\", \"cualquiera está bien\", \"no me importa\", \"da igual\", etc.:\n\n1. **Si ya existe un título extraído:**\n   → Aplica \"cualquiera\" SOLO a las variables OPCIONALES que aún sean null (editorial, edicion)\n\n2. **Si NO existe un título:**\n   → NO apliques \"cualquiera\" al título\n   → Deja titulo como null para que se pida específicamente\n\nEJEMPLOS COMPLETOS:\n\nHistorial:\nUsuario: \"Busco harry potter 5\"\nAsistente: \"¿De qué editorial y edición?\"\nUsuario: \"cualquiera\"\n\nExtracción correcta:\n{\n  \"titulo\": \"Harry Potter y la Orden del Fenix\",\n  \"editorial\": \"cualquiera\",\n  \"edicion\": \"cualquiera\"\n}\n\nHistorial:\nUsuario: \"Hola\"\nAsistente: \"¿Qué libro buscás?\"\nUsuario: \"cualquiera\"\n\nExtracción correcta:\n{\n  \"titulo\": null,\n  \"editorial\": null,\n  \"edicion\": null\n}\n\nHistorial:\nUsuario: \"Busco hp 3\"\nAsistente: \"¿Editorial?\"\nUsuario: \"cualquiera\"\n\nExtracción correcta:\n{\n  \"titulo\": \"Harry Potter 03 Prisionero de Azkaban\",\n  \"editorial\": \"cualquiera\",\n  \"edicion\": \"cualquiera\"\n}\n\nINSTRUCCIONES:\n1. Extrae variables del HISTORIAL COMPLETO, no solo del último mensaje\n2. Para el título: normaliza inteligentemente al título real de WooCommerce\n3. Tolera errores ortográficos y abreviaciones\n4. Entiende números de volumen (5 = quinto libro de la saga)\n5. Si una variable ya tiene valor, NO la sobrescribas con null\n6. \"cualquiera\" SOLO se aplica a variables OPCIONALES (editorial, edicion)\n7. \"cualquiera\" NUNCA se aplica al título (es obligatorio)\n8. NO te preocupes por tildes, WooCommerce los normaliza automáticamente\n\nIMPORTANTE: Responde ÚNICAMENTE con un objeto JSON válido:\n\n{\n  \"titulo\": \"...\",\n  \"editorial\": \"...\",\n  \"edicion\": \"...\"\n}\n\nSi el usuario solo saluda o no menciona ningún libro:\n{\n  \"titulo\": null,\n  \"editorial\": null,\n  \"edicion\": null\n}",
+          "topicHandling": "disabled",
+          "tipo": "formateador",
+          "extractionConfig": {
+            "enabled": true,
+            "method": "advanced",
+            "contextSource": "historial_completo",
+            "systemPrompt": "Eres un asistente experto que extrae información estructurada de conversaciones.\n\nTu trabajo es extraer las variables definidas en {{extractionConfig.variablesToExtract}} del contexto de la conversación.\n\nREGLA CRÍTICA:\nSi el usuario NO menciona información relevante → Devuelve null para esas variables\n\nBÚSQUEDA MÚLTIPLE (UNIVERSAL):\nSi el usuario menciona VARIOS productos/items → Extrae TODOS separados por \" | \" en la variable correspondiente\n\nEJEMPLOS GENERALES:\n\nUsuario: \"Hola\"\n→ Todas las variables en null (no mencionó nada específico)\n\nUsuario: \"Busco una remera roja\"\n→ Extrae: producto=\"remera roja\"\n\nUsuario: \"Busco una remera roja y un pantalón azul\"\n→ Extrae: producto=\"remera roja | pantalón azul\"\n\nUsuario: \"Quiero zapatillas Nike y Adidas\"\n→ Extrae: producto=\"zapatillas Nike | zapatillas Adidas\"\n\nEJEMPLOS ESPECÍFICOS (LIBROS):\n\nUsuario: \"Busco Harry Potter 2\"\n→ {\"titulo\": \"Harry Potter y la Cámara Secreta\", \"editorial\": null, \"edicion\": null}\n\nUsuario: \"Busco Harry Potter 2 y 5\"\n→ {\"titulo\": \"Harry Potter y la Cámara Secreta | Harry Potter y la Orden del Fénix\", \"editorial\": null, \"edicion\": null}\n\nUsuario: \"Quiero matemática 3, lengua 4 y ciencias 5\"\n→ {\"titulo\": \"Matemática 3 | Lengua 4 | Ciencias 5\", \"editorial\": null, \"edicion\": null}\n\nNORMALIZACIÓN INTELIGENTE:\nSi reconoces series conocidas, normaliza los títulos:\n\nHarry Potter:\n- \"Harry Potter 1\" → \"Harry Potter y la Piedra Filosofal\"\n- \"Harry Potter 2\" → \"Harry Potter y la Cámara Secreta\"\n- \"Harry Potter 3\" → \"Harry Potter y el Prisionero de Azkaban\"\n- \"Harry Potter 4\" → \"Harry Potter y el Cáliz de Fuego\"\n- \"Harry Potter 5\" → \"Harry Potter y la Orden del Fénix\"\n- \"Harry Potter 6\" → \"Harry Potter y el Misterio del Príncipe\"\n- \"Harry Potter 7\" → \"Harry Potter y las Reliquias de la Muerte\"\n\nINSTRUCCIONES:\n1. Lee el contexto de la conversación\n2. Identifica las variables definidas en {{extractionConfig.variablesToExtract}}\n3. Extrae la información mencionada por el usuario\n4. Si menciona VARIOS items → Separa con \" | \"\n5. Si NO menciona algo → Devuelve null\n6. Responde ÚNICAMENTE con JSON válido\n\nIMPORTANTE:\n- Adapta la extracción a las variables configuradas\n- No inventes información que el usuario no mencionó\n- Si hay múltiples items, sepáralos con \" | \"\n- Normaliza títulos de series conocidas",
+            "schema": {
+              "titulo": {
+                "type": "string",
+                "required": true
+              },
+              "editorial": {
+                "type": "string",
+                "required": false
+              },
+              "edicion": {
+                "type": "string",
+                "required": false
+              }
+            },
+            "variables": [
+              {
+                "nombre": "titulo",
+                "tipo": "string",
+                "requerido": true,
+                "descripcion": "Título del libro"
+              },
+              {
+                "nombre": "editorial",
+                "tipo": "string",
+                "requerido": false,
+                "descripcion": "Editorial del libro"
+              },
+              {
+                "nombre": "edicion",
+                "tipo": "string",
+                "requerido": false,
+                "descripcion": "Edición o año del libro"
+              }
+            ]
+          },
+          "variablesRecopilar": [],
+          "topicos": [],
+          "configuracionExtraccion": {
+            "instruccionesExtraccion": "Analiza el historial de la conversación y extrae las variables solicitadas.\n\nREGLAS GENERALES:\n- Tolera errores ortográficos en el input del usuario\n- Entiende abreviaciones comunes\n- Normaliza el texto a formato estándar\n- Si el usuario dice \"cualquiera\", aplícalo solo a variables opcionales\n- Extrae información del historial completo, no solo del último mensaje\n\nIMPORTANTE:\n- Responde ÚNICAMENTE con un objeto JSON válido\n- Si una variable no está presente, usa null\n- No inventes información que el usuario no mencionó",
+            "fuenteDatos": "historial_completo",
+            "formatoSalida": {
+              "tipo": "json",
+              "estructura": "{ \"titulo\": \"string\", \"editorial\": \"string | null\", \"edicion\": \"string | null\" }",
+              "ejemplo": "{ \"titulo\": \"Harry Potter\", \"editorial\": \"Salamandra\", \"edicion\": \"2023\" }"
+            },
+            "camposEsperados": [
+              {
+                "nombre": "titulo",
+                "tipoDato": "string",
+                "requerido": true,
+                "descripcion": "Título del libro",
+                "valorPorDefecto": null
+              },
+              {
+                "nombre": "editorial",
+                "tipoDato": "string",
+                "requerido": false,
+                "descripcion": "Editorial del libro",
+                "valorPorDefecto": null
+              },
+              {
+                "nombre": "edicion",
+                "tipoDato": "string",
+                "requerido": false,
+                "descripcion": "Edición o año del libro",
+                "valorPorDefecto": null
+              }
+            ]
+          }
+        },
+        "hasConnection": true,
+        "executionCount": 3
+      },
+      "width": 173,
+      "height": 135,
+      "category": "processing"
+    },
+    {
+      "id": "router",
+      "type": "router",
+      "position": {
+        "x": 885,
+        "y": 180
+      },
+      "data": {
+        "label": "Router",
+        "subtitle": "Búsqueda Inicial",
+        "config": {
+          "routes": [
+            {
+              "id": "route-1",
+              "label": "Pedir Datos",
+              "condition": "{{gpt-formateador.variables_faltantes}} not_empty"
+            },
+            {
+              "id": "route-2",
+              "label": "Buscar en WooCommerce",
+              "condition": "{{gpt-formateador.variables_completas}} equals true"
+            }
+          ]
+        },
+        "hasConnection": true,
+        "routeHandles": [
+          "route-1",
+          "route-2"
+        ],
+        "executionCount": 4
+      },
+      "width": 100,
+      "height": 157,
+      "category": "processing",
+      "selected": false,
+      "positionAbsolute": {
+        "x": 885,
+        "y": 180
+      },
+      "dragging": false
+    },
+    {
+      "id": "gpt-pedir-datos",
+      "type": "gpt",
+      "position": {
+        "x": 1100,
+        "y": 50
+      },
+      "data": {
+        "label": "OpenAI (ChatGPT, Sera...",
+        "subtitle": "conversacional",
+        "config": {
+          "tipo": "conversacional",
+          "module": "conversacional",
+          "modelo": "gpt-4",
+          "temperatura": 0.7,
+          "maxTokens": 150,
+          "instrucciones": "",
+          "personalidad": "El usuario está buscando un libro pero no proporcionó suficiente información.\n\nPregúntale de forma amable y específica qué libro está buscando.\n\nIMPORTANTE:\n- Sé breve y directo\n- Pregunta por el título del libro\n- Pregunta por la editorial y la edicion, dale la opcion de no elegir esta y que elija \" cualquiera \"",
+          "topicos": [],
+          "variablesRecopilar": [],
+          "accionesCompletado": [],
+          "variablesEntrada": [],
+          "variablesSalida": [],
+          "globalVariablesOutput": [],
+          "outputFormat": "text",
+          "systemPrompt": "Eres un asistente amigable de Librería Veo Veo.\n\nINFORMACIÓN DISPONIBLE (NO INVENTES, USA ESTO):\n{{topicos.horarios.descripcion}}\n{{topicos.medios_pago.descripcion}}\n{{topicos.productos.libros_ingles.descripcion}}\n{{topicos.politicas.descripcion}}\n\nUBICACIÓN: {{topicos.empresa.ubicacion}}\nWHATSAPP: {{topicos.empresa.whatsapp_link}}\n\nCONTEXTO DE LA CONVERSACIÓN:\n- Variables recopiladas: {{titulo}}, {{editorial}}, {{edicion}}\n- Variables faltantes: {{gpt-formateador.variables_faltantes}}\n\nTU TRABAJO:\n1. Si el usuario pregunta sobre horarios, medios de pago, libros de inglés, etc. → USA LA INFORMACIÓN DISPONIBLE ARRIBA\n2. Si el usuario busca un libro → Ayúdalo a completar los datos (título es requerido, editorial y edición son opcionales)\n3. Si faltan datos → Pregunta de forma relajada y natural\n\nIMPORTANTE:\n- NO inventes información sobre horarios, medios de pago, políticas, etc.\n- USA SIEMPRE la información disponible arriba\n- Sé conversacional y amigable\n- Variables opcionales (editorial, edicion): Pregunta de forma relajada, no son obligatorias\n- Variable requerida (titulo): Necesaria para buscar en el catálogo\n\nEJEMPLOS:\n\nUsuario: \"¿Qué horarios tienen?\"\n→ \"{{topicos.horarios.descripcion}}\"\n\nUsuario: \"¿Aceptan tarjeta?\"\n→ \"{{topicos.medios_pago.descripcion}}\"\n\nUsuario: \"¿Tienen libros de inglés?\"\n→ \"{{topicos.productos.libros_ingles.descripcion}}\"\n\nUsuario: \"Busco Harry Potter\"\n→ \"¡Genial! ¿Sabés la editorial o edición específica? (Si no, no hay problema, busco con el título)\"",
+          "label": "OpenAI (ChatGPT, Sera...",
+          "topicHandling": "disabled"
+        },
+        "hasConnection": true,
+        "executionCount": 5
+      },
+      "width": 173,
+      "height": 135,
+      "category": "processing",
+      "selected": false,
+      "dragging": false
+    },
+    {
+      "id": "whatsapp-preguntar",
+      "type": "whatsapp",
+      "position": {
+        "x": 1410,
+        "y": -150
+      },
+      "data": {
+        "label": "WhatsApp Business Clo...",
+        "subtitle": "Send a Message",
+        "config": {
+          "action": "send_message",
+          "message": "{{gpt-pedir-datos.respuesta_gpt}}",
+          "module": "send-message",
+          "phoneNumberId": "906667632531979"
+        },
+        "hasConnection": true,
+        "executionCount": 6
+      },
+      "width": 177,
+      "height": 155,
+      "selected": false,
+      "positionAbsolute": {
+        "x": 1410,
+        "y": -150
+      },
+      "dragging": false,
+      "category": "action"
+    },
+    {
+      "id": "woocommerce",
+      "type": "woocommerce",
+      "position": {
+        "x": 1185,
+        "y": 315
+      },
+      "data": {
+        "label": "WooCommerce",
+        "subtitle": "Get a Product",
+        "config": {
+          "apiConfigId": "695320fda03785dacc8d950b",
+          "module": "search-product",
+          "params": {
+            "search": "{{titulo}}",
+            "per_page": 10
+          },
+          "outputMapping": {
+            "productos": "productos",
+            "cantidad": "count"
+          }
+        },
+        "hasConnection": true,
+        "executionCount": 5
+      },
+      "width": 106,
+      "height": 155,
+      "selected": false,
+      "positionAbsolute": {
+        "x": 1185,
+        "y": 315
+      },
+      "dragging": false,
+      "category": "action"
+    },
+    {
+      "id": "gpt-asistente-ventas",
+      "type": "gpt",
+      "position": {
+        "x": 1380,
+        "y": 330
+      },
+      "data": {
+        "label": "OpenAI (ChatGPT, Sera...",
+        "subtitle": "conversacional",
+        "config": {
+          "model": "gpt-4o-mini",
+          "temperature": 0.7,
+          "maxTokens": 600,
+          "systemPrompt": "Eres un asistente de ventas de Librería Veo Veo.\n\nINFORMACIÓN DISPONIBLE (NO INVENTES):\nHorarios: {{topicos.horarios.descripcion}}\nMedios de pago: {{topicos.medios_pago.descripcion}}\nLibros de inglés: {{topicos.productos.libros_ingles.descripcion}}\nPolíticas: {{topicos.politicas.descripcion}}\n\nUBICACIÓN: {{topicos.empresa.ubicacion}}\nWHATSAPP: {{topicos.empresa.whatsapp_link}}\n\nPRODUCTOS DE WOOCOMMERCE:\n{{woocommerce.productos}}\n\nBÚSQUEDA MÚLTIPLE:\nSi el usuario pidió VARIOS libros y WooCommerce solo devolvió ALGUNOS:\n- Presenta los que SÍ encontraste\n- Indica claramente cuáles NO se encontraron\n- NO digas \"no dispongo de información\" si el producto no está en la lista\n- Di \"No encontré [título] en nuestro catálogo actual\"\n\nREGLAS CRÍTICAS:\n- ❌ NO inventes productos que no estén en {{woocommerce.productos}}\n- ❌ NO inventes información sobre horarios, medios de pago, políticas\n- ✅ USA SOLO la información disponible arriba\n- ✅ Si no sabes algo, deriva a: {{topicos.empresa.whatsapp_link}}\n\nFORMATO DE RESPUESTA (si hay productos):\n¡Encontré estos libros! 📚\n\n📖 *[Título]*\n💰 $[precio]\n📦 [Stock]\n🔗 [url]\n\n[Si falta algún libro que el usuario pidió]\nNo encontré [título] en nuestro catálogo actual. Podés consultar disponibilidad en: {{topicos.empresa.whatsapp_link}}\n\nIMPORTANTE:\n- Sé conversacional y amigable\n- NO inventes información\n- Usa emojis con moderación\n- Resuelve TODAS las variables {{topicos.*}}",
+          "topicHandling": "none",
+          "tipo": "conversacional",
+          "modelo": "gpt-4"
+        },
+        "hasConnection": true,
+        "executionCount": 6
+      },
+      "width": 173,
+      "height": 135,
+      "selected": false,
+      "positionAbsolute": {
+        "x": 1380,
+        "y": 330
+      },
+      "dragging": false,
+      "category": "processing"
+    },
+    {
+      "id": "whatsapp-asistente",
+      "type": "whatsapp",
+      "position": {
+        "x": 1605,
+        "y": 330
+      },
+      "data": {
+        "label": "WhatsApp Business Clo...",
+        "subtitle": "Send a Message",
+        "config": {
+          "action": "send_message",
+          "message": "{{gpt-asistente-ventas.respuesta_gpt}}",
+          "module": "send-message",
+          "phoneNumberId": "906667632531979"
+        },
+        "hasConnection": true,
+        "executionCount": 7
+      },
+      "width": 177,
+      "height": 155,
+      "selected": false,
+      "positionAbsolute": {
+        "x": 1605,
+        "y": 330
+      },
+      "dragging": false,
+      "category": "action"
+    },
+    {
+      "id": "gpt-clasificador",
+      "type": "gpt",
+      "position": {
+        "x": 1935,
+        "y": 330
+      },
+      "data": {
+        "label": "OpenAI (ChatGPT, Sera...",
+        "subtitle": "conversacional",
+        "config": {
+          "model": "gpt-4o-mini",
+          "temperature": 0.1,
+          "maxTokens": 50,
+          "systemPrompt": "Analiza la respuesta del usuario y clasifica su intención. Responde SOLO con una de estas opciones:\n- \"buscar_mas\" si quiere buscar más productos\n- \"agregar_carrito\" si quiere agregar un producto al carrito\n- \"finalizar_compra\" si quiere ir a checkout",
+          "topicHandling": "none"
+        },
+        "hasConnection": true,
+        "executionCount": 8
+      },
+      "width": 173,
+      "height": 135,
+      "selected": false,
+      "positionAbsolute": {
+        "x": 1935,
+        "y": 330
+      },
+      "dragging": false,
+      "category": "processing"
+    },
+    {
+      "id": "router-intencion",
+      "type": "router",
+      "position": {
+        "x": 2175,
+        "y": 315
+      },
+      "data": {
+        "label": "Router",
+        "subtitle": "Intención del Usuario",
+        "config": {
+          "routes": [
+            {
+              "id": "route-buscar",
+              "label": "Buscar Más",
+              "condition": "{{gpt-clasificador.respuesta_gpt}} contains buscar_mas"
+            },
+            {
+              "id": "route-agregar",
+              "label": "Agregar al Carrito",
+              "condition": "{{gpt-clasificador.respuesta_gpt}} contains agregar_carrito"
+            },
+            {
+              "id": "route-checkout",
+              "label": "Finalizar Compra",
+              "condition": "{{gpt-clasificador.respuesta_gpt}} contains finalizar_compra"
+            }
+          ]
+        },
+        "hasConnection": true,
+        "routeHandles": [
+          "route-agregar",
+          "route-checkout"
+        ],
+        "executionCount": 9
+      },
+      "width": 120,
+      "height": 157,
+      "selected": false,
+      "positionAbsolute": {
+        "x": 2175,
+        "y": 315
+      },
+      "dragging": false,
+      "category": "processing"
+    },
+    {
+      "id": "gpt-carrito",
+      "type": "gpt",
+      "position": {
+        "x": 2415,
+        "y": 180
+      },
+      "data": {
+        "label": "OpenAI (ChatGPT, Sera...",
+        "subtitle": "conversacional",
+        "config": {
+          "model": "gpt-4o-mini",
+          "temperature": 0.5,
+          "maxTokens": 400,
+          "systemPrompt": "El usuario quiere agregar un producto al carrito. Extrae el producto mencionado, actualiza el carrito global (formato JSON: {productos: [{id, nombre, precio, cantidad}], total: X}), confirma la acción y pregunta si quiere seguir comprando o finalizar.",
+          "topicHandling": "none"
+        },
+        "hasConnection": true,
+        "executionCount": 10
+      },
+      "width": 173,
+      "height": 135,
+      "selected": false,
+      "positionAbsolute": {
+        "x": 2415,
+        "y": 180
+      },
+      "dragging": false,
+      "category": "processing"
+    },
+    {
+      "id": "whatsapp-confirmacion",
+      "type": "whatsapp",
+      "position": {
+        "x": 2700,
+        "y": 60
+      },
+      "data": {
+        "label": "WhatsApp Business Clo...",
+        "subtitle": "Send a Message",
+        "config": {
+          "action": "send_message",
+          "message": "{{gpt-carrito.respuesta_gpt}}",
+          "module": "send-message",
+          "phoneNumberId": "906667632531979"
+        },
+        "hasConnection": false,
+        "executionCount": 11
+      },
+      "width": 177,
+      "height": 155,
+      "selected": false,
+      "positionAbsolute": {
+        "x": 2700,
+        "y": 60
+      },
+      "dragging": false,
+      "category": "action"
+    },
+    {
+      "id": "whatsapp-pago",
+      "type": "whatsapp",
+      "position": {
+        "x": 2700,
+        "y": 585
+      },
+      "data": {
+        "label": "WhatsApp Business Clo...",
+        "subtitle": "Send a Message",
+        "config": {
+          "action": "send_message",
+          "message": "{{mercadopago.payment_link}}",
+          "module": "send-message",
+          "phoneNumberId": "906667632531979"
+        },
+        "hasConnection": false,
+        "executionCount": 11
+      },
+      "width": 177,
+      "height": 155,
+      "selected": false,
+      "positionAbsolute": {
+        "x": 2700,
+        "y": 585
+      },
+      "dragging": false,
+      "category": "action"
+    },
+    {
+      "id": "mercadopago",
+      "type": "mercadopago",
+      "position": {
+        "x": 2445,
+        "y": 465
+      },
+      "data": {
+        "subtitle": "Generar Link de Pago",
+        "config": {
+          "action": "create_payment_link",
+          "items": "{{carrito.productos}}",
+          "total": "{{carrito.total}}"
+        },
+        "hasConnection": true,
+        "executionCount": 10,
+        "label": "MercadoPago"
+      },
+      "width": 100,
+      "height": 135,
+      "selected": false,
+      "positionAbsolute": {
+        "x": 2445,
+        "y": 465
+      },
+      "dragging": false,
+      "category": "action"
+    }
+  ],
+  "edges": [
+    {
+      "id": "edge-3",
+      "source": "gpt-formateador",
+      "target": "router",
+      "type": "default",
+      "data": {}
+    },
+    {
+      "id": "edge-4",
+      "source": "router",
+      "sourceHandle": "route-1",
+      "target": "gpt-pedir-datos",
+      "type": "default",
+      "data": {
+        "condition": "{{gpt-formateador.variables_faltantes}} not_empty",
+        "label": "Faltan variables"
+      }
+    },
+    {
+      "id": "edge-8",
+      "source": "woocommerce",
+      "target": "gpt-asistente-ventas",
+      "type": "default",
+      "data": {}
+    },
+    {
+      "id": "edge-9",
+      "source": "gpt-asistente-ventas",
+      "target": "whatsapp-asistente",
+      "type": "default",
+      "data": {}
+    },
+    {
+      "id": "edge-11",
+      "source": "gpt-clasificador",
+      "target": "router-intencion",
+      "type": "default",
+      "data": {}
+    },
+    {
+      "id": "edge-12",
+      "source": "router-intencion",
+      "sourceHandle": "route-agregar",
+      "target": "gpt-carrito",
+      "type": "default",
+      "data": {
+        "condition": "{{gpt-clasificador.respuesta_gpt}} contains agregar_carrito"
+      }
+    },
+    {
+      "id": "edge-13",
+      "source": "gpt-carrito",
+      "target": "whatsapp-confirmacion",
+      "type": "default",
+      "data": {}
+    },
+    {
+      "id": "edge-router-to-mercadopago",
+      "source": "router-intencion",
+      "sourceHandle": "route-checkout",
+      "target": "mercadopago",
+      "type": "default",
+      "data": {
+        "condition": "{{gpt-clasificador.respuesta_gpt}} contains finalizar_compra"
+      }
+    },
+    {
+      "id": "edge-mercadopago-to-whatsapp",
+      "source": "mercadopago",
+      "target": "whatsapp-pago",
+      "type": "default",
+      "data": {}
+    },
+    {
+      "type": "default",
+      "animated": true,
+      "source": "router",
+      "sourceHandle": "route-2",
+      "target": "woocommerce",
+      "targetHandle": null,
+      "id": "reactflow__edge-routerroute-2-woocommerce",
+      "data": {
+        "label": "Variables completas",
+        "condition": "{{gpt-formateador.variables_completas}} equals true"
+      }
+    },
+    {
+      "id": "edge-webhook-formateador",
+      "source": "webhook-whatsapp",
+      "target": "gpt-formateador",
+      "type": "default",
+      "data": {
+        "label": "Mensaje recibido"
+      }
+    },
+    {
+      "id": "edge-pedir-whatsapp",
+      "source": "gpt-pedir-datos",
+      "target": "whatsapp-preguntar",
+      "sourceHandle": "incomplete",
+      "targetHandle": null,
+      "type": "custom",
+      "animated": true,
+      "data": {
+        "label": "Faltan variables"
+      }
+    }
+  ],
+  "createdAt": "2026-01-10T07:24:16.313Z",
+  "updatedAt": "2026-01-15T06:19:36.547Z",
+  "actualizadoEn": "2026-01-10T10:42:46.534Z",
+  "config": {
+    "topicos": {
+      "empresa": {
+        "nombre": "Librería Veo Veo",
+        "ubicacion": "San Juan 1037, Corrientes Capital",
+        "whatsapp": "5493794732177",
+        "whatsapp_link": "https://wa.me/5493794732177"
+      },
+      "horarios": {
+        "lunes_viernes": "8:30-12:00 y 17:00-21:00",
+        "sabados": "9:00-13:00 y 17:00-21:00",
+        "domingos": "Cerrado",
+        "descripcion": "Atendemos de Lunes a Viernes de 8:30 a 12:00 y de 17:00 a 21:00. Sábados de 9:00 a 13:00 y de 17:00 a 21:00. Domingos cerrado."
+      },
+      "productos": {
+        "categorias": [
+          "Libros escolares",
+          "Libros de inglés (solo a pedido)",
+          "Útiles escolares",
+          "Material didáctico"
+        ],
+        "libros_ingles": {
+          "disponibilidad": "Solo a pedido con seña del 50%",
+          "tiempo_entrega": "7-15 días hábiles",
+          "descripcion": "Los libros de inglés se traen a pedido. Necesitamos una seña del 50% y el tiempo de entrega es de 7 a 15 días hábiles."
+        }
+      },
+      "medios_pago": {
+        "efectivo": "Aceptamos efectivo en el local",
+        "transferencia": "Transferencia bancaria",
+        "mercadopago": "Pago online con Mercado Pago (tarjetas de crédito y débito)",
+        "promociones": {
+          "banco_corrientes": "Lunes y Miércoles: 3 cuotas sin interés + 20% bonificación",
+          "banco_nacion": "Sábados: 10% reintegro + 3 cuotas sin interés"
+        },
+        "descripcion": "Aceptamos efectivo, transferencia bancaria y Mercado Pago. Tenemos promociones con Banco Corrientes (Lunes y Miércoles: 3 cuotas sin interés + 20% bonificación) y Banco Nación (Sábados: 10% reintegro + 3 cuotas sin interés)."
+      },
+      "politicas": {
+        "retiro": "24 horas después de confirmado el pago",
+        "envios": "A cargo del cliente, cotización con asesor",
+        "devoluciones": "Cambio por otro libro o nota de crédito",
+        "descripcion": "El retiro es 24 horas después de confirmado el pago. Los envíos son a cargo del cliente (cotización con asesor). Las devoluciones se hacen por cambio de libro o nota de crédito."
+      }
+    },
+    "topicos_habilitados": true
+  }
+}
