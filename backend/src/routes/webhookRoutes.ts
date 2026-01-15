@@ -1,9 +1,9 @@
-import express from 'express';
+import { Router } from 'express';
 import { MercadoPagoService } from '../services/MercadoPagoService.js';
-import { WhatsAppService } from '../services/WhatsAppService.js';
-import CarritoModel from '../models/Carrito.js';
+import WhatsAppService from '../services/WhatsAppService.js';
+import { CarritoModel } from '../models/Carrito.js';
 
-const router = express.Router();
+const router = Router();
 
 /**
  * Webhook de MercadoPago
