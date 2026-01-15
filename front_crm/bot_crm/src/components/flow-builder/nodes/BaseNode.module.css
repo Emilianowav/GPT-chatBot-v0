@@ -1,0 +1,116 @@
+/* BASE NODE - Estilos compartidos para nodos de integración */
+
+.baseNodeContainer {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.baseNode {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  position: relative;
+  transition: all 0.2s ease;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  border: 4px solid white;
+}
+
+.baseNode:hover {
+  transform: scale(1.05);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2);
+}
+
+.baseNode.selected {
+  border-color: #8b5cf6;
+  box-shadow: 0 0 0 4px rgba(139, 92, 246, 0.2);
+}
+
+/* Badge de ejecución (número rojo arriba derecha) */
+.executionBadge {
+  position: absolute;
+  top: -8px;
+  right: -8px;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 12px;
+  font-weight: 700;
+  border: 3px solid white;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+/* Badge de app (icono pequeño abajo derecha) */
+.appBadge {
+  position: absolute;
+  bottom: -8px;
+  right: -8px;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 3px solid white;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+/* Handles en órbita */
+.orbitHandle {
+  position: absolute;
+  border-radius: 50%;
+  z-index: 5;
+}
+
+.orbitHandle.connected:hover .disconnectButton {
+  opacity: 1;
+}
+
+/* Botón + para agregar siguiente nodo */
+.handlePlus {
+  animation: fadeIn 0.2s ease;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-50%) scale(0.8);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(-50%) scale(1);
+  }
+}
+
+/* Labels */
+.nodeLabel {
+  margin-top: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #1f2937;
+  text-align: center;
+  max-width: 150px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.nodeSubtitle {
+  margin-top: 2px;
+  font-size: 11px;
+  color: #6b7280;
+  text-align: center;
+  max-width: 150px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}

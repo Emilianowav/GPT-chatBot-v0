@@ -94,78 +94,80 @@ function AnimatedLineEdge({
         />
       </g>
 
-      {/* Edge Label with Condition */}
-      <EdgeLabelRenderer>
-        <div
-          style={{
-            position: 'absolute',
-            transform: `translate(-50%, -50%) translate(${edgeCenterX}px,${edgeCenterY}px)`,
-            pointerEvents: 'all',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '6px',
-            zIndex: 100,
-          }}
-        >
-          {/* Condition Label */}
-          {(data?.label || data?.condition) && (
-            <div
-              style={{
-                background: 'white',
-                border: '1px solid #d1d5db',
-                borderRadius: '6px',
-                padding: '4px 10px',
-                fontSize: '12px',
-                fontWeight: 500,
-                color: '#374151',
-                boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)',
-                maxWidth: '200px',
-                whiteSpace: 'nowrap',
-                overflow: 'hidden',
-                textOverflow: 'ellipsis',
-              }}
-            >
-              <span style={{ fontFamily: 'Courier New, monospace', color: '#8b5cf6' }}>
-                {data.label || data.condition}
-              </span>
-            </div>
-          )}
-
-          {/* Config Button */}
-          <button
-            onClick={handleConfigClick}
+      {/* Edge Label with Condition - Solo visible en hover */}
+      {isHovered && (
+        <EdgeLabelRenderer>
+          <div
             style={{
-              width: '24px',
-              height: '24px',
-              background: 'white',
-              border: '1px solid #d1d5db',
-              borderRadius: '50%',
+              position: 'absolute',
+              transform: `translate(-50%, -50%) translate(${edgeCenterX}px,${edgeCenterY}px)`,
+              pointerEvents: 'all',
               display: 'flex',
               alignItems: 'center',
-              justifyContent: 'center',
-              cursor: 'pointer',
-              boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)',
-              color: '#6b7280',
-              transition: 'all 0.2s',
-            }}
-            title="Configure filter"
-            onMouseEnter={(e) => {
-              e.currentTarget.style.background = '#f3f4f6';
-              e.currentTarget.style.borderColor = '#8b5cf6';
-              e.currentTarget.style.color = '#8b5cf6';
-              e.currentTarget.style.transform = 'scale(1.1)';
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.background = 'white';
-              e.currentTarget.style.borderColor = '#d1d5db';
-              e.currentTarget.style.color = '#6b7280';
-              e.currentTarget.style.transform = 'scale(1)';
+              gap: '6px',
+              zIndex: 100,
             }}
           >
-            <Settings size={14} />
-          </button>
-        </div>
-      </EdgeLabelRenderer>
+            {/* Condition Label */}
+            {(data?.label || data?.condition) && (
+              <div
+                style={{
+                  background: 'white',
+                  border: '1px solid #d1d5db',
+                  borderRadius: '6px',
+                  padding: '4px 10px',
+                  fontSize: '12px',
+                  fontWeight: 500,
+                  color: '#374151',
+                  boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)',
+                  maxWidth: '200px',
+                  whiteSpace: 'nowrap',
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                }}
+              >
+                <span style={{ fontFamily: 'Courier New, monospace', color: '#8b5cf6' }}>
+                  {data.label || data.condition}
+                </span>
+              </div>
+            )}
+
+            {/* Config Button */}
+            <button
+              onClick={handleConfigClick}
+              style={{
+                width: '24px',
+                height: '24px',
+                background: 'white',
+                border: '1px solid #d1d5db',
+                borderRadius: '50%',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                cursor: 'pointer',
+                boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)',
+                color: '#6b7280',
+                transition: 'all 0.2s',
+              }}
+              title="Configure filter"
+              onMouseEnter={(e) => {
+                e.currentTarget.style.background = '#f3f4f6';
+                e.currentTarget.style.borderColor = '#8b5cf6';
+                e.currentTarget.style.color = '#8b5cf6';
+                e.currentTarget.style.transform = 'scale(1.1)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.background = 'white';
+                e.currentTarget.style.borderColor = '#d1d5db';
+                e.currentTarget.style.color = '#6b7280';
+                e.currentTarget.style.transform = 'scale(1)';
+              }}
+            >
+              <Settings size={14} />
+            </button>
+          </div>
+        </EdgeLabelRenderer>
+      )}
     </>
   );
 }

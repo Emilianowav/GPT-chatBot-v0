@@ -1,7 +1,6 @@
 import React, { memo } from 'react';
-import { NodeProps, Handle, Position } from 'reactflow';
-import { Plus } from 'lucide-react';
-import styles from './AppNode.module.css';
+import { NodeProps } from 'reactflow';
+import BaseNode from './BaseNode';
 
 const OpenAIIcon = () => (
   <svg viewBox="0 0 24 24" fill="white" width="48" height="48">
@@ -33,87 +32,17 @@ interface GPTNodeData {
   };
 }
 
-function GPTNode({ id, data, selected }: NodeProps<GPTNodeData>) {
-  const {
-    label,
-    executionCount = 1,
-    hasConnection = false,
-    onHandleClick,
-    onNodeClick,
-    config,
-  } = data;
-
+function GPTNode(props: NodeProps<GPTNodeData>) {
   const color = '#10a37f'; // OpenAI green
 
-  const getIconForType = () => {
-    return <OpenAIIcon />;
+  // Transformar data para BaseNode
+  const baseNodeData = {
+    ...props.data,
+    icon: OpenAIIcon,
+    color,
   };
 
-  const handleNodeClick = () => {
-    if (onNodeClick) {
-      onNodeClick(id);
-    }
-  };
-
-  const handlePlusClick = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    if (onHandleClick) {
-      onHandleClick(id);
-    }
-  };
-
-  return (
-    <div className={styles.appNodeContainer}>
-      <div
-        className={`${styles.appNode} ${selected ? styles.selected : ''}`}
-        style={{ background: color }}
-        onClick={handleNodeClick}
-      >
-        {getIconForType()}
-
-        <div 
-          className={styles.executionBadge}
-          style={{ background: '#ef4444' }}
-        >
-          {executionCount}
-        </div>
-
-        <div 
-          className={styles.appBadge}
-          style={{ background: color }}
-        >
-          <OpenAIIconSmall />
-        </div>
-      </div>
-
-      <Handle
-        type="target"
-        position={Position.Left}
-        style={{ opacity: 0 }}
-      />
-
-      {!hasConnection && (
-        <div
-          className={styles.handlePlus}
-          style={{ background: color }}
-          onClick={handlePlusClick}
-          role="button"
-          tabIndex={0}
-          aria-label="Add next module"
-        >
-          <Plus size={20} color="white" strokeWidth={3} />
-        </div>
-      )}
-
-      <Handle
-        type="source"
-        position={Position.Right}
-        style={{ opacity: 0 }}
-      />
-
-      <div className={styles.nodeLabel}>{label}</div>
-    </div>
-  );
+  return <BaseNode {...props} data={baseNodeData} />;
 }
 
 export default memo(GPTNode);
