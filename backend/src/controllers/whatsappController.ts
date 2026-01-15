@@ -196,7 +196,8 @@ export const recibirMensaje = async (req: Request, res: Response, next: NextFunc
     let flowVisual = null;
     if (empresaDoc?.flujoActivo) {
       console.log(`🎯 Empresa tiene flujoActivo configurado: ${empresaDoc.flujoActivo}`);
-      flowVisual = await FlowModel.findById(empresaDoc.flujoActivo);
+      // IMPORTANTE: .lean() fuerza lectura directa de MongoDB sin cache de Mongoose
+      flowVisual = await FlowModel.findById(empresaDoc.flujoActivo).lean();
       if (flowVisual) {
         console.log(`✅ Flujo activo cargado: ${flowVisual.nombre}`);
       } else {
