@@ -1,0 +1,256 @@
+✅ Conectado a MongoDB
+
+═══════════════════════════════════════════════════════════
+EVALUACIÓN COMPLETA DEL FLUJO
+═══════════════════════════════════════════════════════════
+
+Flow: WooCommerce Flow
+ID: 695a156681f6d67f0ae9cf40
+Nodos: 9
+Edges: 8
+
+📚 HISTORIAL DE CONVERSACIÓN SIMULADO:
+───────────────────────────────────────────────────────────────
+1. user: Hola
+2. assistant: ¡Hola! ¿En qué puedo ayudarte?
+3. user: Estoy buscando harry potter 3
+4. assistant: ¿De qué editorial y edición?
+5. user: no sé la editorial ni la edición
+
+📋 VARIABLES GLOBALES INICIALES:
+───────────────────────────────────────────────────────────────
+   telefono_cliente = "5493794946066"
+   telefono_empresa = "5493794057297"
+   phoneNumberId = "906667632531979"
+   mensaje_usuario = "no sé la editorial ni la edición"
+   titulo = null
+   editorial = null
+   edicion = null
+
+═══════════════════════════════════════════════════════════
+NODO 1: TRIGGER (WhatsApp Watch Events)
+═══════════════════════════════════════════════════════════
+ID: webhook-whatsapp
+Tipo: webhook
+Label: WhatsApp Business Cloud
+
+📥 INPUT:
+   Mensaje de WhatsApp recibido
+
+📤 OUTPUT:
+{
+  "message": "no sé la editorial ni la edición",
+  "from": "5493794946066",
+  "to": "5493794057297",
+  "phoneNumberId": "906667632531979"
+}
+
+═══════════════════════════════════════════════════════════
+NODO 2: GPT CONVERSACIONAL
+═══════════════════════════════════════════════════════════
+ID: gpt-conversacional
+Tipo: gpt
+Label: OpenAI (ChatGPT, Sera...
+Config Tipo: conversacional
+Modelo: gpt-3.5-turbo
+
+📋 PERSONALIDAD:
+───────────────────────────────────────────────────────────────
+Eres amigable, profesional y persistente. Ayudas a los clientes de manera conversacional pero SIEMPRE recopilas los 3 datos: título, editorial, edición.
+
+📚 TÓPICOS:
+───────────────────────────────────────────────────────────────
+
+1. Especialidad en Libros de Inglés
+   Veo Veo Libros es una librería especializada en libros en inglés. Ofrecemos una amplia variedad de t...
+
+2. Formas de Pago
+   Aceptamos efectivo, transferencia bancaria, tarjeta de crédito y débito. Ofrecemos facilidades de pa...
+
+3. Envíos
+   Realizamos envíos a todo el país. El costo y tiempo de entrega dependen de la ubicación. Envíos grat...
+
+4. Búsqueda de Libros
+   Para buscar un libro necesitamos: Título (obligatorio), Editorial (obligatorio), Edición (obligatori...
+
+🔧 SYSTEM PROMPT CONSTRUIDO:
+───────────────────────────────────────────────────────────────
+# PERSONALIDAD
+Eres amigable, profesional y persistente. Ayudas a los clientes de manera conversacional pero SIEMPRE recopilas los 3 datos: título, editorial, edición.
+
+# INFORMACIÓN DISPONIBLE
+## 1. Especialidad en Libros de Inglés
+Veo Veo Libros es una librería especializada en libros en inglés. Ofrecemos una ...
+## 2. Formas de Pago
+Aceptamos efectivo, transferencia bancaria, tarjeta de crédito y débito. Ofrecem...
+## 3. Envíos
+Realizamos envíos a todo el país. El costo y tiempo de entrega dependen de la ub...
+## 4. Búsqueda de Libros
+Para buscar un libro necesitamos: Título (obligatorio), Editorial (obligatorio),...
+
+📨 USER MESSAGE:
+"no sé la editorial ni la edición"
+
+🤖 RESPUESTA ESPERADA:
+   (GPT responde basado en personalidad + tópicos + historial)
+   Debería reconocer que el usuario no sabe editorial/edición
+
+═══════════════════════════════════════════════════════════
+NODO 3: GPT FORMATEADOR (CRÍTICO)
+═══════════════════════════════════════════════════════════
+ID: gpt-formateador
+Tipo: gpt
+Label: OpenAI (ChatGPT, Sera...
+Config Tipo: formateador
+Modelo: gpt-3.5-turbo
+
+📋 EXTRACTION CONFIG - SYSTEM PROMPT:
+───────────────────────────────────────────────────────────────
+Extrae datos del historial completo.
+
+VARIABLES:
+- titulo: Título del libro
+- editorial: Editorial
+- edicion: Edición
+
+REGLAS:
+
+1. Usuario MENCIONA el dato → extraer valor exacto
+   "scholastic" → editorial: "scholastic"
+
+2. Usuario dice NO SÉ / NO TENGO / NO IMPORTA → extraer "cualquiera"
+   "no sé" → "cualquiera"
+   "no sé la editorial" → editorial: "cualquiera"
+   "no tengo idea" → "cualquiera"
+   "no me acuerdo" → "cualquiera"
+   "no importa" → "cualquiera"
+   "cualquiera" → "cualquiera"
+   "la que sea" → "cualquiera"
+   "dame opciones" → "cualquiera"
+
+3. Usuario NO menciona nada → extraer null
+
+EJEMPLOS:
+
+Historial:
+Usuario: "harry potter 3"
+Asistente: "¿Editorial y edición?"
+Usuario: "no sé la editorial ni la edición"
+→ {"titulo": "harry potter 3", "editorial": "cualquiera", "edicion": "cualquiera"}
+
+Historial:
+Usuario: "harry potter 3"
+Asistente: "¿Editorial?"
+Usuario: "cualquiera está bien"
+→ {"titulo": "harry potter 3", "editorial": "cualquiera", "edicion": "cualquiera"}
+
+Historial:
+Usuario: "harry potter 3"
+Asistente: "¿Editorial?"
+Usuario: "dame opciones"
+→ {"titulo": "harry potter 3", "editorial": "cualquiera", "edicion": "cualquiera"}
+
+Historial:
+Usuario: "harry potter 3"
+→ {"titulo": "harry potter 3", "editorial": null, "edicion": null}
+
+Historial:
+Usuario: "harry potter 3"
+Asistente: "¿Editorial?"
+Usuario: "scholastic"
+→ {"titulo": "harry potter 3", "editorial": "scholastic", "edicion": null}
+
+📝 VARIABLES A EXTRAER:
+───────────────────────────────────────────────────────────────
+   - titulo: Título OFICIAL del libro (normalizado)
+     Tipo: texto, Obligatoria: undefined
+   - editorial: Editorial (solo si la menciona)
+     Tipo: texto, Obligatoria: undefined
+   - edicion: Edición (solo si la menciona)
+     Tipo: texto, Obligatoria: undefined
+
+🔍 CONTEXTO PARA EXTRACCIÓN (historial_completo):
+───────────────────────────────────────────────────────────────
+Usuario: Hola
+Asistente: ¡Hola! ¿En qué puedo ayudarte?
+Usuario: Estoy buscando harry potter 3
+Asistente: ¿De qué editorial y edición?
+Usuario: no sé la editorial ni la edición
+
+❓ PREGUNTA CRÍTICA:
+───────────────────────────────────────────────────────────────
+¿Cómo interpreta el formateador "no sé la editorial ni la edición"?
+
+OPCIONES:
+A) { titulo: "harry potter 3", editorial: null, edicion: null }
+   ❌ INCORRECTO - Causa loop infinito
+
+B) { titulo: "harry potter 3", editorial: "cualquiera", edicion: "cualquiera" }
+   ✅ CORRECTO - Va a WooCommerce
+
+🔍 VERIFICAR EN EL PROMPT:
+───────────────────────────────────────────────────────────────
+   ✓ Menciona "cualquiera": ✅ SÍ
+   ✓ Menciona "no sé": ✅ SÍ
+   ✓ Menciona "dame opciones": ✅ SÍ
+
+✅ DATOS EXTRAÍDOS (SIMULADOS):
+{
+  "titulo": "harry potter 3",
+  "editorial": "cualquiera",
+  "edicion": "cualquiera"
+}
+
+📋 VARIABLES GLOBALES ACTUALIZADAS:
+───────────────────────────────────────────────────────────────
+   telefono_cliente = "5493794946066"
+   telefono_empresa = "5493794057297"
+   phoneNumberId = "906667632531979"
+   mensaje_usuario = "no sé la editorial ni la edición"
+   titulo = "harry potter 3"
+   editorial = "cualquiera"
+   edicion = "cualquiera"
+
+═══════════════════════════════════════════════════════════
+NODO 4: ROUTER
+═══════════════════════════════════════════════════════════
+ID: router
+Tipo: router
+Label: Router
+
+📋 RUTAS DISPONIBLES:
+───────────────────────────────────────────────────────────────
+
+1. Faltan datos
+   Target: gpt-pedir-datos
+   Condición: {{titulo}} not exists OR {{editorial}} not exists OR {{edicion}} not exists
+
+2. Datos completos
+   Target: woocommerce
+   Condición: {{titulo}} exists AND {{editorial}} exists AND {{edicion}} exists
+
+🔍 EVALUACIÓN DE CONDICIONES:
+───────────────────────────────────────────────────────────────
+
+Ruta 1: Faltan datos
+Condición: {{titulo}} not exists OR {{editorial}} not exists OR {{edicion}} not exists
+   Partes: 3
+   Resultados: false, false, false
+   OR resultado: false
+   ❌ FALSE
+
+Ruta 2: Datos completos
+Condición: {{titulo}} exists AND {{editorial}} exists AND {{edicion}} exists
+   Partes: 3
+   Resultados: true, true, true
+   AND resultado: true
+   ✅ TRUE - RUTA SELECCIONADA
+
+═══════════════════════════════════════════════════════════
+DIAGNÓSTICO FINAL
+═══════════════════════════════════════════════════════════
+
+✅ FLUJO CORRECTO:
+   El formateador extrajo editorial/edicion como "cualquiera"
+   El router va a "Datos completos"
+   → VA A WOOCOMMERCE ✅
