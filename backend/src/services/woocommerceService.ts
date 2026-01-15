@@ -105,7 +105,7 @@ export class WooCommerceService {
       
       const queryParams: any = {
         per_page: params.limit || 10,
-        orderby: params.orderBy || 'relevance'
+        orderby: params.orderBy || 'title'
       };
       
       if (params.search) {
