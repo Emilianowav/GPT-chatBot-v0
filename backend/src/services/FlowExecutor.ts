@@ -1092,21 +1092,60 @@ export class FlowExecutor {
           break;
         
         case 'search-product':
-          // Normalizar término de búsqueda: "Harry Potter 5" -> "Harry Potter"
-          if (params.search) {
-            const searchNormalized = String(params.search)
-              .replace(/\s*\d+\s*$/, '') // Eliminar números al final
-              .replace(/\s+/g, ' ')       // Normalizar espacios
-              .trim();
+          // Detectar búsqueda múltiple (separada por " | ")
+          if (params.search && params.search.includes(' | ')) {
+            console.log(`   🔍 BÚSQUEDA MÚLTIPLE detectada`);
+            const terminos = params.search.split(' | ').map((t: string) => t.trim());
+            console.log(`   📚 Buscando ${terminos.length} libro(s): ${terminos.join(', ')}`);
             
-            console.log(`   🔍 Búsqueda original: "${params.search}"`);
-            console.log(`   🔍 Búsqueda normalizada: "${searchNormalized}"`);
+            // Buscar cada término por separado
+            const resultadosPorTermino = await Promise.all(
+              terminos.map(async (termino: string) => {
+                // Normalizar cada término
+                const terminoNormalizado = termino
+                  .replace(/\s*\d+\s*$/, '') // Eliminar números al final
+                  .replace(/\s+/g, ' ')       // Normalizar espacios
+                  .trim();
+                
+                console.log(`   🔍 Buscando: "${termino}" → "${terminoNormalizado}"`);
+                
+                const productos = await wooService.searchProducts({
+                  ...params,
+                  search: terminoNormalizado
+                });
+                
+                console.log(`      ✅ ${productos.length} producto(s) encontrado(s)`);
+                return productos;
+              })
+            );
             
-            params.search = searchNormalized;
+            // Combinar todos los resultados (sin duplicados)
+            const productosUnicos = new Map();
+            resultadosPorTermino.flat().forEach((producto: any) => {
+              productosUnicos.set(producto.id, producto);
+            });
+            
+            result = Array.from(productosUnicos.values());
+            console.log(`   ✅ Total productos únicos: ${result.length}`);
+            
+          } else {
+            // Búsqueda simple (un solo término)
+            // Normalizar término de búsqueda: "Harry Potter 5" -> "Harry Potter"
+            if (params.search) {
+              const searchNormalized = String(params.search)
+                .replace(/\s*\d+\s*$/, '') // Eliminar números al final
+                .replace(/\s+/g, ' ')       // Normalizar espacios
+                .trim();
+              
+              console.log(`   🔍 Búsqueda original: "${params.search}"`);
+              console.log(`   🔍 Búsqueda normalizada: "${searchNormalized}"`);
+              
+              params.search = searchNormalized;
+            }
+            
+            result = await wooService.searchProducts(params);
+            console.log(`   ✅ Productos encontrados: ${result.length}`);
           }
-          
-          result = await wooService.searchProducts(params);
-          console.log(`   ✅ Productos encontrados: ${result.length}`);
           
           if (result.length === 0) {
             console.log(`   ⚠️  ADVERTENCIA: No se encontraron productos para "${params.search}"`);
