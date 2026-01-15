@@ -1,7 +1,6 @@
 import React, { memo } from 'react';
-import { NodeProps, Handle, Position } from 'reactflow';
-import { Plus } from 'lucide-react';
-import styles from './AppNode.module.css';
+import { NodeProps } from 'reactflow';
+import BaseNode from './BaseNode';
 
 const WhatsAppIcon = () => (
   <svg viewBox="0 0 24 24" fill="white" width="48" height="48">
@@ -37,91 +36,16 @@ interface WhatsAppNodeData {
   };
 }
 
-function WhatsAppNode({ id, data, selected }: NodeProps<WhatsAppNodeData>) {
-  const {
-    label,
-    subtitle,
-    executionCount = 1,
-    hasConnection = false,
-    onHandleClick,
-    onNodeClick,
-  } = data;
-
+function WhatsAppNode(props: NodeProps<WhatsAppNodeData>) {
   const color = '#25D366'; // WhatsApp green
 
-  const handleNodeClick = () => {
-    if (onNodeClick) {
-      onNodeClick(id);
-    }
+  const baseNodeData = {
+    ...props.data,
+    icon: WhatsAppIcon,
+    color,
   };
 
-  const handlePlusClick = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    if (onHandleClick) {
-      onHandleClick(id);
-    }
-  };
-
-  return (
-    <div className={styles.appNodeContainer}>
-      <div
-        className={`${styles.appNode} ${selected ? styles.selected : ''}`}
-        style={{ background: color }}
-        onClick={handleNodeClick}
-      >
-        <WhatsAppIcon />
-
-        <div 
-          className={styles.executionBadge}
-          style={{ background: '#ef4444' }}
-        >
-          {executionCount}
-        </div>
-
-        {/* Badge de WhatsApp (abajo izquierda) */}
-        <div 
-          className={styles.appBadge}
-          style={{ background: color }}
-        >
-          <WhatsAppIconSmall />
-        </div>
-      </div>
-
-      {/* Handle invisible de ReactFlow (posición estándar Left) */}
-      <Handle
-        type="target"
-        position={Position.Left}
-        style={{ opacity: 0 }}
-      />
-
-      {/* Handle + para agregar siguiente nodo */}
-      {!hasConnection && (
-        <div
-          className={styles.handlePlus}
-          style={{ background: color }}
-          onClick={handlePlusClick}
-          role="button"
-          tabIndex={0}
-          aria-label="Add next module"
-        >
-          <Plus size={20} color="white" strokeWidth={3} />
-        </div>
-      )}
-
-      {/* Handle invisible de ReactFlow (posición estándar Right) */}
-      <Handle
-        type="source"
-        position={Position.Right}
-        style={{ opacity: 0 }}
-      />
-
-      {/* Labels */}
-      <div className={styles.nodeLabel}>{label}</div>
-      {subtitle && (
-        <div className={styles.nodeSubtitle}>{subtitle}</div>
-      )}
-    </div>
-  );
+  return <BaseNode {...props} data={baseNodeData} />;
 }
 
 export default memo(WhatsAppNode);

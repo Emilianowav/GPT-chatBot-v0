@@ -1,7 +1,16 @@
 import React, { memo } from 'react';
-import { NodeProps, Handle, Position } from 'reactflow';
-import { Plus } from 'lucide-react';
-import styles from './AppNode.module.css';
+import { NodeProps } from 'reactflow';
+import BaseNode from './BaseNode';
+
+const WooCommerceIcon = () => (
+  <img 
+    src="/logos tecnologias/woocommerce.png" 
+    alt="WooCommerce" 
+    width="48" 
+    height="48"
+    style={{ borderRadius: '4px' }}
+  />
+);
 
 interface WooCommerceNodeData {
   label: string;
@@ -25,94 +34,16 @@ interface WooCommerceNodeData {
   };
 }
 
-function WooCommerceNode({ id, data, selected }: NodeProps<WooCommerceNodeData>) {
-  const {
-    label,
-    subtitle,
-    executionCount = 1,
-    hasConnection = false,
-    onHandleClick,
-    onNodeClick,
-  } = data;
-
+function WooCommerceNode(props: NodeProps<WooCommerceNodeData>) {
   const color = '#96588a'; // WooCommerce purple
 
-  const handleNodeClick = () => {
-    if (onNodeClick) {
-      onNodeClick(id);
-    }
+  const baseNodeData = {
+    ...props.data,
+    icon: WooCommerceIcon,
+    color,
   };
 
-  const handlePlusClick = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    if (onHandleClick) {
-      onHandleClick(id);
-    }
-  };
-
-  return (
-    <div className={styles.appNodeContainer}>
-      <div
-        className={`${styles.appNode} ${selected ? styles.selected : ''}`}
-        style={{ background: color }}
-        onClick={handleNodeClick}
-      >
-        <img 
-          src="/logos tecnologias/woocommerce.png" 
-          alt="WooCommerce" 
-          style={{ width: '48px', height: '48px', objectFit: 'contain' }}
-        />
-
-        <div 
-          className={styles.executionBadge}
-          style={{ background: '#ef4444' }}
-        >
-          {executionCount}
-        </div>
-
-        <div 
-          className={styles.appBadge}
-          style={{ background: color }}
-        >
-          <img 
-            src="/logos tecnologias/woocommerce.png" 
-            alt="WooCommerce" 
-            style={{ width: '16px', height: '16px' }}
-          />
-        </div>
-      </div>
-
-      <Handle
-        type="target"
-        position={Position.Left}
-        style={{ opacity: 0 }}
-      />
-
-      {!hasConnection && (
-        <div
-          className={styles.handlePlus}
-          style={{ background: color }}
-          onClick={handlePlusClick}
-          role="button"
-          tabIndex={0}
-          aria-label="Add next module"
-        >
-          <Plus size={20} color="white" strokeWidth={3} />
-        </div>
-      )}
-
-      <Handle
-        type="source"
-        position={Position.Right}
-        style={{ opacity: 0 }}
-      />
-
-      <div className={styles.nodeLabel}>{label}</div>
-      {subtitle && (
-        <div className={styles.nodeSubtitle}>{subtitle}</div>
-      )}
-    </div>
-  );
+  return <BaseNode {...props} data={baseNodeData} />;
 }
 
 export default memo(WooCommerceNode);
