@@ -547,6 +547,22 @@ export class FlowExecutor {
     console.log('\n📋 SYSTEM PROMPT CONSTRUIDO:');
     console.log(systemPrompt.substring(0, 300) + '...');
 
+    // Agregar tópicos locales del nodo (si existen)
+    if (config.topicos && config.topicos.length > 0) {
+      console.log(`\n📚 [TÓPICOS LOCALES] Agregando ${config.topicos.length} tópico(s) del nodo`);
+      
+      let topicosSection = '\n\n═══ INFORMACIÓN ADICIONAL (TÓPICOS DEL NODO) ═══\n';
+      config.topicos.forEach((topico: any, index: number) => {
+        console.log(`   ${index + 1}. ${topico.titulo}`);
+        topicosSection += `\n**${topico.titulo}:**\n${topico.contenido}\n`;
+        if (topico.keywords && topico.keywords.length > 0) {
+          topicosSection += `Keywords: ${topico.keywords.join(', ')}\n`;
+        }
+      });
+      
+      systemPrompt += topicosSection;
+    }
+
     // Construir mensajes para GPT
     const messages: ChatCompletionMessageParam[] = [
       {
