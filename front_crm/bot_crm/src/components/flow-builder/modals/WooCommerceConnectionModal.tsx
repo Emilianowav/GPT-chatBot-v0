@@ -1,22 +1,26 @@
 import React, { useState } from 'react';
 import styles from './WooCommerceConnectionModal.module.css';
 import type { WooCommerceConnection } from '../../../types/woocommerce.types';
+import { apiConfigService } from '../../../services/apiConfigService';
 
 interface WooCommerceConnectionModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSave: (connection: WooCommerceConnection) => void;
+  onSave: (connection: WooCommerceConnection, apiConfigId: string) => void;
   existingConnection?: WooCommerceConnection;
+  empresaId: string;
 }
 
 const WooCommerceConnectionModal: React.FC<WooCommerceConnectionModalProps> = ({
   isOpen,
   onClose,
   onSave,
-  existingConnection
+  existingConnection,
+  empresaId
 }) => {
   const [isCreating, setIsCreating] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const [formData, setFormData] = useState<Partial<WooCommerceConnection>>({
     id: existingConnection?.id || `woo-conn-${Date.now()}`,
     name: existingConnection?.name || 'My WooCommerce connection',
@@ -28,21 +32,44 @@ const WooCommerceConnectionModal: React.FC<WooCommerceConnectionModalProps> = ({
 
   if (!isOpen) return null;
 
-  const handleSave = () => {
+  const handleSave = async () => {
+    setError(null);
+    
     // Validar campos obligatorios
     if (!formData.name || !formData.eshopUrl || !formData.consumerKey || !formData.consumerSecret) {
-      alert('Por favor completa todos los campos obligatorios');
+      setError('Por favor completa todos los campos obligatorios');
       return;
     }
 
     // Validar que sea HTTPS
     if (!formData.eshopUrl.startsWith('https://')) {
-      alert('La URL debe usar HTTPS');
+      setError('La URL debe usar HTTPS');
       return;
     }
 
-    onSave(formData as WooCommerceConnection);
-    onClose();
+    setIsCreating(true);
+
+    try {
+      // Guardar en MongoDB usando apiConfigService
+      const apiConfig = await apiConfigService.createWooCommerceConnection(
+        empresaId,
+        formData.name!,
+        formData.eshopUrl!,
+        formData.consumerKey!,
+        formData.consumerSecret!
+      );
+
+      console.log('✅ Conexión WooCommerce creada:', apiConfig._id);
+
+      // Pasar la conexión Y el apiConfigId al callback
+      onSave(formData as WooCommerceConnection, apiConfig._id);
+      onClose();
+    } catch (error: any) {
+      console.error('❌ Error al crear conexión:', error);
+      setError(error.message || 'Error al guardar la conexión');
+    } finally {
+      setIsCreating(false);
+    }
   };
 
   return (
@@ -150,11 +177,16 @@ const WooCommerceConnectionModal: React.FC<WooCommerceConnectionModalProps> = ({
         </div>
 
         <div className={styles.modalFooter}>
-          <button onClick={onClose} className={styles.cancelButton}>
+          {error && (
+            <div className={styles.errorMessage}>
+              ❌ {error}
+            </div>
+          )}
+          <button onClick={onClose} className={styles.cancelButton} disabled={isCreating}>
             Close
           </button>
-          <button onClick={handleSave} className={styles.saveButton}>
-            Save
+          <button onClick={handleSave} className={styles.saveButton} disabled={isCreating}>
+            {isCreating ? 'Guardando...' : 'Save'}
           </button>
         </div>
       </div>

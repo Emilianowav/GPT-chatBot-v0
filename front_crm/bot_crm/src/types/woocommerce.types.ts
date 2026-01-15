@@ -41,6 +41,7 @@ export interface WooCommerceModuleInfo {
 export interface WooCommerceConfig {
   connection?: WooCommerceConnection;
   connectionId?: string; // ID de conexión existente
+  apiConfigId?: string; // ID de la API en MongoDB
   module: WooCommerceModule;
   params: Record<string, any>;
 }

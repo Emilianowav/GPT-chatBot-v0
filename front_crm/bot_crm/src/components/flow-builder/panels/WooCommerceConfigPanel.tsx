@@ -9,21 +9,24 @@ interface WooCommerceConfigPanelProps {
   onChange: (config: WooCommerceConfig) => void;
   nodes: any[];
   currentNodeId: string;
+  empresaId?: string;
 }
 
 const WooCommerceConfigPanel: React.FC<WooCommerceConfigPanelProps> = ({
   config,
   onChange,
   nodes,
-  currentNodeId
+  currentNodeId,
+  empresaId = 'Veo Veo' // Default para compatibilidad
 }) => {
   const [showConnectionModal, setShowConnectionModal] = useState(false);
 
-  const handleConnectionSave = (connection: WooCommerceConnection) => {
+  const handleConnectionSave = (connection: WooCommerceConnection, apiConfigId: string) => {
     onChange({
       ...config,
       connection,
-      connectionId: connection.id
+      connectionId: connection.id,
+      apiConfigId // Guardar el ID de la API en MongoDB
     });
   };
 
@@ -276,6 +279,7 @@ const WooCommerceConfigPanel: React.FC<WooCommerceConfigPanelProps> = ({
         onClose={() => setShowConnectionModal(false)}
         onSave={handleConnectionSave}
         existingConnection={config.connection}
+        empresaId={empresaId}
       />
     </div>
   );
