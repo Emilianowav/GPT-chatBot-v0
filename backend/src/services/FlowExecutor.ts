@@ -51,6 +51,7 @@ export class FlowExecutor {
   /**
    * Normaliza un producto de WooCommerce al formato estándar simplificado
    * Esto asegura que GPT siempre reciba la misma estructura, sin importar qué módulo se use
+   * OPTIMIZADO: Solo incluye campos esenciales para reducir tokens
    */
   private normalizeWooCommerceProduct(product: any): WooCommerceProductSimplified {
     return {
@@ -70,6 +71,46 @@ export class FlowExecutor {
       })),
       on_sale: product.on_sale || false
     };
+  }
+
+  /**
+   * Simplifica productos de WooCommerce para GPT
+   * Solo incluye: título, precio, URL del catálogo
+   * Configurable desde el frontend mediante fieldMappings
+   */
+  private simplifyProductsForGPT(products: any[], fieldMappings?: any[], baseUrl?: string): any[] {
+    // Si hay fieldMappings del frontend, usarlos
+    if (fieldMappings && fieldMappings.length > 0) {
+      return products.map(product => {
+        const simplified: any = {};
+        fieldMappings.forEach(mapping => {
+          const sourceValue = product[mapping.source];
+          if (sourceValue !== undefined) {
+            simplified[mapping.target] = sourceValue;
+          }
+        });
+        return simplified;
+      });
+    }
+    
+    // Por defecto: solo título, precio y URL
+    return products.map(product => {
+      // Construir URL completa
+      let url = product.permalink || '';
+      
+      // Si no hay permalink o es solo el slug, construir URL completa
+      if (!url || !url.startsWith('http')) {
+        const slug = product.slug || product.name?.toLowerCase().replace(/\s+/g, '-') || '';
+        url = baseUrl ? `${baseUrl}/producto/${slug}` : slug;
+      }
+      
+      return {
+        titulo: product.name || '',
+        precio: product.price || '0',
+        url: url,
+        stock: product.stock_status === 'instock' ? 'Disponible' : 'Sin stock'
+      };
+    });
   }
 
   /**
@@ -1006,12 +1047,38 @@ export class FlowExecutor {
           break;
         
         case 'search-product':
+          // Normalizar término de búsqueda: "Harry Potter 5" -> "Harry Potter"
+          if (params.search) {
+            const searchNormalized = String(params.search)
+              .replace(/\s*\d+\s*$/, '') // Eliminar números al final
+              .replace(/\s+/g, ' ')       // Normalizar espacios
+              .trim();
+            
+            console.log(`   🔍 Búsqueda original: "${params.search}"`);
+            console.log(`   🔍 Búsqueda normalizada: "${searchNormalized}"`);
+            
+            params.search = searchNormalized;
+          }
+          
           result = await wooService.searchProducts(params);
           console.log(`   ✅ Productos encontrados: ${result.length}`);
-          // Retornar en formato { productos: [...] } para que sea accesible como woocommerce-search.productos
+          
+          // Simplificar productos para GPT (solo título, precio, URL)
+          // Configurable desde el frontend mediante config.productFieldMappings
+          const productosSimplificados = this.simplifyProductsForGPT(
+            result,
+            config.productFieldMappings,
+            connection.eshopUrl // Pasar baseUrl para construir URLs completas
+          );
+          
+          console.log(`   📊 Productos simplificados para GPT: ${productosSimplificados.length}`);
+          console.log(`   📋 Campos por producto: ${Object.keys(productosSimplificados[0] || {}).join(', ')}`);
+          
+          // Retornar en formato { productos: [...] } para que sea accesible como woocommerce.productos
           return {
             output: {
-              productos: result,
+              productos: productosSimplificados,
+              productos_completos: result, // Guardar versión completa por si se necesita
               count: result.length
             }
           };
