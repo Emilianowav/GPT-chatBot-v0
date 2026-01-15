@@ -275,25 +275,55 @@ export class FlowExecutor {
           break;
         }
 
-        // Si hay múltiples edges (Router), elegir según _routerPath
+        // Si hay múltiples edges, evaluar condiciones o usar routerPath
         let nextEdge;
         if (possibleEdges.length > 1) {
-          const routerPath = this.context[currentNodeId]?.output?._routerPath;
-          console.log(`   🔀 Router detectado. Ruta elegida: ${routerPath || 'default'}`);
+          // Primero intentar evaluar condiciones
+          console.log(`   🔀 Múltiples edges detectados (${possibleEdges.length}), evaluando condiciones...`);
+          console.log(`   📋 Edges disponibles:`);
+          possibleEdges.forEach((e: any) => {
+            console.log(`      - ${e.id}: ${e.data?.condition || 'SIN CONDICIÓN'} → ${e.target}`);
+          });
           
-          // Buscar edge que coincida con la ruta (sourceHandle es donde está el routeId)
-          nextEdge = possibleEdges.find((e: any) => 
-            e.sourceHandle === routerPath ||
-            e.data?.routeId === routerPath || 
-            e.id.includes(routerPath)
-          );
+          for (const edge of possibleEdges) {
+            if (edge.data?.condition) {
+              console.log(`   🔍 Evaluando condición del edge ${edge.id}: ${edge.data.condition}`);
+              try {
+                const conditionResult = this.evaluateCondition(edge.data.condition);
+                console.log(`   → Resultado: ${conditionResult}`);
+                
+                if (conditionResult) {
+                  nextEdge = edge;
+                  console.log(`   ✅ Condición cumplida, usando edge: ${edge.id}`);
+                  break;
+                }
+              } catch (error) {
+                console.error(`   ❌ Error evaluando condición del edge ${edge.id}:`, error);
+              }
+            } else {
+              console.log(`   ⚠️  Edge ${edge.id} NO tiene condición`);
+            }
+          }
           
-          // Si no encuentra, usar el primero (fallback)
+          // Si no se encontró edge por condición, usar routerPath
           if (!nextEdge) {
-            console.log(`   ⚠️  No se encontró edge para ruta ${routerPath}, usando fallback`);
-            nextEdge = possibleEdges[0];
-          } else {
-            console.log(`   ✅ Edge encontrado para ruta ${routerPath}: ${nextEdge.id}`);
+            const routerPath = this.context[currentNodeId]?.output?._routerPath;
+            console.log(`   🔀 No hay condiciones cumplidas, usando routerPath: ${routerPath || 'default'}`);
+            
+            // Buscar edge que coincida con la ruta (sourceHandle es donde está el routeId)
+            nextEdge = possibleEdges.find((e: any) => 
+              e.sourceHandle === routerPath ||
+              e.data?.routeId === routerPath || 
+              e.id.includes(routerPath)
+            );
+            
+            // Si no encuentra, usar el primero (fallback)
+            if (!nextEdge) {
+              console.log(`   ⚠️  No se encontró edge para ruta ${routerPath}, usando fallback`);
+              nextEdge = possibleEdges[0];
+            } else {
+              console.log(`   ✅ Edge encontrado para ruta ${routerPath}: ${nextEdge.id}`);
+            }
           }
         } else {
           nextEdge = possibleEdges[0];
@@ -617,6 +647,15 @@ export class FlowExecutor {
       // MODO LEGACY: Extracción simple con variablesRecopilar
       console.log('   🔧 Usando extracción legacy (variablesRecopilar)');
       
+      // Primero verificar qué variables faltan ANTES de extraer
+      const todasLasGlobalesAntes = this.getAllGlobalVariables();
+      const validacionAntes = GPTPromptBuilder.validateVariables(
+        todasLasGlobalesAntes,
+        config.variablesRecopilar
+      );
+      
+      console.log(`   📊 Variables faltantes ANTES de extraer: ${JSON.stringify(validacionAntes.faltantes)}`);
+      
       // Extraer variables del HISTORIAL COMPLETO, no solo del mensaje actual
       let contextoCompleto = '';
       
@@ -630,10 +669,16 @@ export class FlowExecutor {
       // Agregar mensaje actual
       contextoCompleto += userMessage;
       
+      console.log(`   📨 Mensaje del usuario: "${userMessage}"`);
+      console.log(`   📤 Enviando a GPT-3.5 para extracción...`);
+      
+      // Extracción con GPT (el prompt en GPTPromptBuilder ya maneja "cualquiera")
       const variablesExtraidas = await GPTPromptBuilder.extractVariables(
         contextoCompleto,
         config.variablesRecopilar
       );
+      
+      console.log(`   ✅ Variables extraídas por GPT: ${JSON.stringify(variablesExtraidas)}`);
       
       // Guardar cada variable extraída en variables globales
       for (const [nombre, valor] of Object.entries(variablesExtraidas)) {
@@ -644,7 +689,11 @@ export class FlowExecutor {
         }
       }
       
-      console.log(`   📋 globalVariables después de guardar: ${JSON.stringify(Object.keys(this.globalVariables))}`);
+      if (Object.keys(variablesExtraidas).length > 0) {
+        console.log(`   📝 Variables guardadas: ${Object.keys(variablesExtraidas).join(', ')}`);
+      }
+      
+      console.log(`   📋 globalVariables DESPUÉS de guardar: ${JSON.stringify(Object.keys(this.globalVariables))}`);
       
       // Validar si todas las variables obligatorias están completas
       const todasLasGlobales = this.getAllGlobalVariables();
@@ -656,9 +705,7 @@ export class FlowExecutor {
       output.variables_completas = validacion.valido;
       output.variables_faltantes = validacion.faltantes;
       
-      if (Object.keys(variablesExtraidas).length > 0) {
-        console.log(`   📝 Variables: ${Object.keys(variablesExtraidas).join(', ')}`);
-      }
+      console.log(`   🎯 RESULTADO: variables_completas = ${validacion.valido}, faltantes = ${JSON.stringify(validacion.faltantes)}`);
     }
 
     // Detectar si el GPT marcó como completado

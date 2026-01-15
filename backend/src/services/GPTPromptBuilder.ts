@@ -298,18 +298,19 @@ TEXTO DEL USUARIO:
 ${respuestaGPT}
 
 INSTRUCCIONES:
-1. Extrae SOLO las variables que estén presentes en el texto
-2. Si una variable no está presente, NO la incluyas en el JSON
-3. Respeta el tipo de cada variable
-4. Si el usuario menciona algo relacionado pero no exacto, usa tu mejor interpretación
-5. Tolera errores de ortografía
+1. Si el usuario dice SOLO "cualquiera", "no importa", "la que sea", "me da igual" o similar (sin mencionar datos específicos), aplica "cualquiera" a TODAS las variables de la lista
+2. Si el usuario menciona datos específicos, extrae solo esos datos
+3. Si una variable no está presente, NO la incluyas en el JSON
+4. Respeta el tipo de cada variable
+5. NO interpretes "cualquiera" como "Desconocida" o "No especificada"
+6. Tolera errores de ortografía
 
-Responde ÚNICAMENTE con un objeto JSON válido. Ejemplo:
-{
-  "titulo": "Harry Potter",
-  "editorial": "Salamandra"
-}
+EJEMPLOS:
+- Usuario: "cualquiera" → {"editorial": "cualquiera", "edicion": "cualquiera"}
+- Usuario: "Salamandra" → {"editorial": "Salamandra"}
+- Usuario: "cualquiera bro" → {"editorial": "cualquiera", "edicion": "cualquiera"}
 
+Responde ÚNICAMENTE con un objeto JSON válido.
 Si NO encuentras ninguna variable, responde con: {}`;
 
       console.log('   📤 Enviando a GPT-3.5 Turbo para extracción...');
