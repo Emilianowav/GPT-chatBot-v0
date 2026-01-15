@@ -1302,9 +1302,52 @@ export class FlowExecutor {
       return result;
     }
 
+    // Patrón: "{{variable}} contains value"
+    const containsMatch = condition.match(/\{\{([^}]+)\}\}\s+contains\s+(.+)$/i);
+    if (containsMatch) {
+      const varName = containsMatch[1].trim();
+      const searchValue = containsMatch[2].trim();
+      console.log(`      → Detectado 'contains' para variable: "${varName}"`);
+      
+      const actualValue = this.getVariableValue(varName);
+      
+      const normalizedActual = String(actualValue).toLowerCase().trim();
+      const normalizedSearch = searchValue.toLowerCase().trim();
+      
+      const result = normalizedActual.includes(normalizedSearch);
+      
+      console.log(`      → Variable "${varName}" = ${JSON.stringify(actualValue)}`);
+      console.log(`      → Buscando: ${searchValue}`);
+      console.log(`      → Comparación: "${normalizedActual}".includes("${normalizedSearch}")`);
+      console.log(`      → Resultado: ${result}`);
+      return result;
+    }
+
+    // Patrón: "{{variable}} not contains value"
+    const notContainsMatch = condition.match(/\{\{([^}]+)\}\}\s+not\s+contains\s+(.+)$/i);
+    if (notContainsMatch) {
+      const varName = notContainsMatch[1].trim();
+      const searchValue = notContainsMatch[2].trim();
+      console.log(`      → Detectado 'not contains' para variable: "${varName}"`);
+      
+      const actualValue = this.getVariableValue(varName);
+      
+      const normalizedActual = String(actualValue).toLowerCase().trim();
+      const normalizedSearch = searchValue.toLowerCase().trim();
+      
+      const result = !normalizedActual.includes(normalizedSearch);
+      
+      console.log(`      → Variable "${varName}" = ${JSON.stringify(actualValue)}`);
+      console.log(`      → Buscando: ${searchValue}`);
+      console.log(`      → Comparación: !"${normalizedActual}".includes("${normalizedSearch}")`);
+      console.log(`      → Resultado: ${result}`);
+      return result;
+    }
+
     // Si no coincide con patrones especiales, resolver y evaluar normalmente
     const resolvedCondition = this.resolveVariableInString(condition);
     console.log(`      Condición resuelta: ${resolvedCondition}`);
+    console.log(`      ⚠️  ADVERTENCIA: Condición no reconocida, evaluando como booleano genérico`);
     
     // Evaluar como booleano
     return !!resolvedCondition && resolvedCondition !== 'false';
