@@ -643,6 +643,27 @@ export class FlowExecutor {
         console.log(`   ${key} = "${JSON.stringify(value)?.substring(0, 100)}"`);
       });
       
+      // Generar variables_completas y variables_faltantes
+      if (config.extractionConfig.variables && config.extractionConfig.variables.length > 0) {
+        const variablesFaltantes: string[] = [];
+        
+        for (const varConfig of config.extractionConfig.variables) {
+          const valor = output[varConfig.nombre] || this.getGlobalVariable(varConfig.nombre);
+          
+          // Una variable falta si es null, undefined o vacío
+          if (valor === null || valor === undefined || valor === '') {
+            variablesFaltantes.push(varConfig.nombre);
+          }
+        }
+        
+        output.variables_completas = variablesFaltantes.length === 0;
+        output.variables_faltantes = variablesFaltantes;
+        
+        console.log('\n📊 VALIDACIÓN DE VARIABLES:');
+        console.log(`   variables_completas: ${output.variables_completas}`);
+        console.log(`   variables_faltantes: ${JSON.stringify(output.variables_faltantes)}`);
+      }
+      
     } else if (config.variablesRecopilar && config.variablesRecopilar.length > 0) {
       // MODO LEGACY: Extracción simple con variablesRecopilar
       console.log('   🔧 Usando extracción legacy (variablesRecopilar)');
