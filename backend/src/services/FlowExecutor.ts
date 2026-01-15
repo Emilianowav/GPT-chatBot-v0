@@ -607,6 +607,12 @@ export class FlowExecutor {
     // Preparar output
     const output: any = {};
 
+    // DEBUG: Verificar tipo de nodo
+    console.log(`\n🔍 [DEBUG] Tipo de nodo: "${config.tipo}"`);
+    console.log(`   ¿Es formateador?: ${config.tipo === 'formateador'}`);
+    console.log(`   ¿Tiene extractionConfig?: ${!!config.extractionConfig}`);
+    console.log(`   ¿Tiene systemPrompt?: ${!!config.extractionConfig?.systemPrompt}`);
+
     // IMPORTANTE: Si es formateador, NO hacer llamada inicial a GPT
     // El formateador SOLO extrae datos, no genera respuestas
     if (config.tipo !== 'formateador') {
