@@ -657,6 +657,13 @@ export class FlowExecutor {
       console.log(`   ✅ Historial actualizado (${this.historialConversacion.length} mensajes totales)`);
     }
 
+    // DEBUG: Verificar condición de extracción
+    console.log(`\n🔍 [DEBUG] Verificando condición de extracción:`);
+    console.log(`   config.tipo === 'formateador': ${config.tipo === 'formateador'}`);
+    console.log(`   config.extractionConfig existe: ${!!config.extractionConfig}`);
+    console.log(`   config.extractionConfig?.systemPrompt existe: ${!!config.extractionConfig?.systemPrompt}`);
+    console.log(`   Condición completa: ${config.tipo === 'formateador' && config.extractionConfig?.systemPrompt}`);
+
     // Procesar extracción de datos SOLO si es formateador
     if (config.tipo === 'formateador' && config.extractionConfig?.systemPrompt) {
       console.log('   🔧 Usando extractionConfig del frontend');
@@ -769,6 +776,7 @@ export class FlowExecutor {
     } else if (config.variablesRecopilar && config.variablesRecopilar.length > 0) {
       // MODO LEGACY: Extracción simple con variablesRecopilar
       console.log('   🔧 Usando extracción legacy (variablesRecopilar)');
+      console.log(`   ⚠️  ADVERTENCIA: Este nodo tiene variablesRecopilar (legacy)`);
       
       // Primero verificar qué variables faltan ANTES de extraer
       const todasLasGlobalesAntes = this.getAllGlobalVariables();
