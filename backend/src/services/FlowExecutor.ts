@@ -677,9 +677,11 @@ export class FlowExecutor {
       console.log(`\n📝 CONTEXTO PARA EXTRACCIÓN (${fuenteDatos}):`);
       console.log(contexto);
       console.log('\n🔍 Extrayendo variables...');
-      console.log(`📋 Variables a extraer: ${config.extractionConfig.variables?.map((v: any) => `${v.nombre}${v.requerido ? '*' : ''}`).join(', ')}`);
+      const extractionConfigAny = config.extractionConfig as any;
+      const variablesToExtract = extractionConfigAny.variablesToExtract || config.extractionConfig.variables || [];
+      console.log(`📋 Variables a extraer: ${variablesToExtract.map((v: any) => `${v.nombre}${v.requerido ? '*' : ''}`).join(', ')}`);
       
-      // Usar extractionConfig.systemPrompt + extractionConfig.variables
+      // Usar extractionConfig.systemPrompt + extractionConfig.variablesToExtract
       let datosExtraidos;
       try {
         datosExtraidos = await GPTPromptBuilder.extractWithFrontendConfig(
@@ -725,11 +727,12 @@ export class FlowExecutor {
       });
       
       // Generar variables_completas y variables_faltantes
-      if (config.extractionConfig.variables && config.extractionConfig.variables.length > 0) {
+      const variablesConfig = extractionConfigAny.variablesToExtract || config.extractionConfig.variables || [];
+      if (variablesConfig.length > 0) {
         const variablesFaltantes: string[] = [];
         
         console.log('\n🔍 VALIDANDO VARIABLES (requerido vs opcional):');
-        for (const varConfig of config.extractionConfig.variables) {
+        for (const varConfig of variablesConfig) {
           const valor = output[varConfig.nombre] || this.getGlobalVariable(varConfig.nombre);
           
           // CRÍTICO: Solo marcar como faltante si es REQUERIDA y está vacía
