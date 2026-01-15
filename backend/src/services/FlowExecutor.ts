@@ -289,7 +289,7 @@ export class FlowExecutor {
             if (edge.data?.condition) {
               console.log(`   🔍 Evaluando condición del edge ${edge.id}: ${edge.data.condition}`);
               try {
-                const conditionResult = this.evaluateCondition(edge.data.condition);
+                const conditionResult = this.evaluateStringCondition(edge.data.condition);
                 console.log(`   → Resultado: ${conditionResult}`);
                 
                 if (conditionResult) {
