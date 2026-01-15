@@ -217,6 +217,7 @@ export const recibirMensaje = async (req: Request, res: Response, next: NextFunc
     if (flowVisual && flowVisual.nodes && flowVisual.edges) {
       console.log(`✅ Flujo visual encontrado: ${flowVisual.nombre} (${flowVisual._id})`);
       console.log(`   Nodos: ${flowVisual.nodes.length}, Edges: ${flowVisual.edges.length}`);
+      console.log(`   🔄 Flujo recargado desde MongoDB (no cache)`);
       
       try {
         // Ejecutar flujo visual con FlowExecutor
