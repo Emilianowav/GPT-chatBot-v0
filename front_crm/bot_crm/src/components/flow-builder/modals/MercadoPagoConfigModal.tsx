@@ -77,6 +77,9 @@ function MercadoPagoConfigModal({ isOpen, onClose, nodeData, onSave }: MercadoPa
       linkId: selectedLinkId,
       linkType,
       action: 'create_payment_link',
+      // Indicar que MP está conectado (el backend obtendrá el token desde la BD)
+      mercadoPagoConnected: true,
+      empresaId: localStorage.getItem('empresa_id') || 'default',
     };
     
     onSave(config);

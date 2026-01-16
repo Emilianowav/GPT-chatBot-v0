@@ -285,8 +285,53 @@ export async function executeMercadoPagoNode(
     console.log(`   📦 Items en carrito: ${carrito.items.length}`);
     console.log(`   💰 Total: $${carrito.total}`);
 
-    // Resolver configuración desde variables
-    const accessToken = context.resolveVariableInString(config.accessToken);
+    // Obtener accessToken desde la BD usando empresaId
+    let accessToken = '';
+    
+    if (config.accessToken) {
+      // Si hay token en config (legacy), usarlo
+      accessToken = context.resolveVariableInString(config.accessToken);
+      console.log('   🔑 Usando accessToken desde config');
+    } else if (config.mercadoPagoConnected && config.empresaId) {
+      // Obtener token desde BD usando empresaId
+      console.log(`   🔑 Obteniendo accessToken desde BD para empresa: ${config.empresaId}`);
+      
+      try {
+        // Importar servicio de sellers
+        const { default: sellersService } = await import('../modules/mercadopago/services/sellersService.js');
+        const seller = await sellersService.getSellerByInternalId(config.empresaId);
+        
+        if (!seller || !seller.accessToken) {
+          console.error('   ❌ No se encontró seller o accessToken para la empresa');
+          return {
+            output: {
+              success: false,
+              error: 'MercadoPago no está conectado. Ve a Integraciones → MercadoPago para conectar tu cuenta.'
+            }
+          };
+        }
+        
+        accessToken = seller.accessToken;
+        console.log('   ✅ AccessToken obtenido desde BD');
+      } catch (error: any) {
+        console.error('   ❌ Error obteniendo accessToken:', error.message);
+        return {
+          output: {
+            success: false,
+            error: 'Error obteniendo credenciales de MercadoPago'
+          }
+        };
+      }
+    } else {
+      console.error('   ❌ No hay configuración de MercadoPago');
+      return {
+        output: {
+          success: false,
+          error: 'MercadoPago no está configurado. Edita el nodo y conecta tu cuenta.'
+        }
+      };
+    }
+
     const titulo = context.resolveVariableInString(config.titulo || 'Compra');
     const notificationUrl = context.resolveVariableInString(config.notificationUrl || '');
 
