@@ -905,9 +905,19 @@ export class FlowExecutor {
     }
 
     // Usar phoneNumberId del flowConfig si no está especificado en el nodo
-    const phoneNumberId = config.phoneNumberId || 
-                         this.flowConfig.whatsapp?.phoneNumberId || 
-                         process.env.META_PHONE_NUMBER_ID || '';
+    // Primero intentar desde globalVariables (viene del webhook inicial)
+    let phoneNumberId = this.globalVariables.get('phoneNumberId') as string || '';
+    
+    // Si no hay en globalVariables, intentar desde config
+    if (!phoneNumberId && config.phoneNumberId) {
+      phoneNumberId = config.phoneNumberId;
+    }
+    
+    // Si no hay en config, usar flowConfig o env
+    if (!phoneNumberId) {
+      phoneNumberId = this.flowConfig.whatsapp?.phoneNumberId || 
+                     process.env.META_PHONE_NUMBER_ID || '';
+    }
 
     console.log(`   → ${telefono}`);
 
