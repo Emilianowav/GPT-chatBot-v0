@@ -225,17 +225,46 @@ export async function executeMercadoPagoNode(
     const contactoId = new mongoose.Types.ObjectId(context.contactoId);
     const empresaId = context.empresaId;
 
-    // Obtener carrito activo
-    const carrito = await CarritoService.obtenerCarritoActivo(contactoId, empresaId);
+    // Intentar obtener carrito activo de BD
+    let carrito = await CarritoService.obtenerCarritoActivo(contactoId, empresaId);
 
+    // Si el carrito está vacío en BD, intentar crearlo desde globalVariables
     if (carrito.items.length === 0) {
-      console.log('   ⚠️  Carrito vacío, no se puede generar link de pago');
-      return {
-        output: {
-          success: false,
-          error: 'El carrito está vacío'
+      console.log('   📦 Carrito vacío en BD, intentando crear desde globalVariables...');
+      
+      const productosCarrito = context.resolveVariableInString('{{productos_carrito}}');
+      const total = context.resolveVariableInString('{{total}}');
+      
+      console.log(`   productos_carrito: ${JSON.stringify(productosCarrito)?.substring(0, 200)}`);
+      console.log(`   total: ${total}`);
+      
+      if (productosCarrito && Array.isArray(productosCarrito) && productosCarrito.length > 0) {
+        console.log('   ✅ Productos encontrados en globalVariables, creando carrito en BD...');
+        
+        // Agregar cada producto al carrito
+        for (const producto of productosCarrito) {
+          carrito = await CarritoService.agregarProducto(
+            contactoId,
+            empresaId,
+            {
+              id: producto.id,
+              name: producto.nombre,
+              price: String(producto.precio),
+              cantidad: producto.cantidad || 1
+            }
+          );
         }
-      };
+        
+        console.log(`   ✅ Carrito creado en BD con ${carrito.items.length} items`);
+      } else {
+        console.log('   ❌ No hay productos en globalVariables');
+        return {
+          output: {
+            success: false,
+            error: 'El carrito está vacío'
+          }
+        };
+      }
     }
 
     console.log(`   📦 Items en carrito: ${carrito.items.length}`);
