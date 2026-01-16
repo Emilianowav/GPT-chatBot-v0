@@ -47,6 +47,9 @@ export class MercadoPagoService {
         description: `Producto ID: ${item.productoId}`
       }));
 
+      // URLs por defecto para back_urls
+      const defaultBackUrl = process.env.MP_BACK_URL || 'https://gpt-chatbot-v0.onrender.com/payment';
+      
       // Configurar preferencia
       const preferencia = {
         items,
@@ -58,9 +61,9 @@ export class MercadoPagoService {
           }
         },
         back_urls: {
-          success: config.backUrls?.success || '',
-          failure: config.backUrls?.failure || '',
-          pending: config.backUrls?.pending || ''
+          success: config.backUrls?.success || `${defaultBackUrl}/success`,
+          failure: config.backUrls?.failure || `${defaultBackUrl}/failure`,
+          pending: config.backUrls?.pending || `${defaultBackUrl}/pending`
         },
         auto_return: 'approved',
         notification_url: config.notificationUrl || '',
