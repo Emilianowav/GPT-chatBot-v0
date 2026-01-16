@@ -40,25 +40,42 @@ function MercadoPagoConfigModal({ isOpen, onClose, nodeData, onSave }: MercadoPa
   }, [isOpen, nodeData]);
 
   const checkConnection = async () => {
-    const mpUserId = localStorage.getItem('mp_user_id');
+    const empresaId = localStorage.getItem('empresa_id') || 'default';
     
-    if (!mpUserId) {
-      setIsConnected(false);
-      return;
-    }
-
     try {
-      const response = await fetch(`${MP_API_URL}/payment-links?sellerId=${mpUserId}`);
+      // Verificar si la empresa tiene MP conectado
+      const response = await fetch(`${MP_API_URL}/sellers/by-internal/${empresaId}`);
+      
       if (response.ok) {
         const data = await response.json();
-        setPaymentLinks(data.links || []);
-        setIsConnected(true);
-      } else {
-        setIsConnected(false);
+        
+        if (data.connected && data.seller && data.seller.active) {
+          // MP está conectado, obtener payment links
+          const mpUserId = data.seller.userId;
+          localStorage.setItem('mp_user_id', mpUserId);
+          
+          try {
+            const linksResponse = await fetch(`${MP_API_URL}/payment-links?sellerId=${mpUserId}`);
+            if (linksResponse.ok) {
+              const linksData = await linksResponse.json();
+              setPaymentLinks(linksData.links || []);
+            }
+          } catch (err) {
+            console.log('No se pudieron cargar payment links');
+          }
+          
+          setIsConnected(true);
+          return;
+        }
       }
+      
+      // No está conectado
+      setIsConnected(false);
+      localStorage.removeItem('mp_user_id');
     } catch (err) {
       console.error('Error verificando conexión:', err);
       setIsConnected(false);
+      localStorage.removeItem('mp_user_id');
     }
   };
 
