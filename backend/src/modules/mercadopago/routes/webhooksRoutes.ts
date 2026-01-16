@@ -382,7 +382,7 @@ async function processPaymentNotification(paymentId: string): Promise<void> {
       );
     }
     
-    // Si el pago fue aprobado sin PaymentLink, buscar en el carrito
+    // Si el pago fue aprobado sin PaymentLink, actualizar estado global y disparar flujo
     if (status === PaymentStatus.APPROVED && !paymentLinkId && !existingPayment) {
       // Buscar el carrito por external_reference (carrito_id)
       const carritoId = mpPayment.external_reference;
@@ -391,37 +391,81 @@ async function processPaymentNotification(paymentId: string): Promise<void> {
         const { CarritoModel } = await import('../../../models/Carrito.js');
         const carrito = await CarritoModel.findById(carritoId);
         
-        if (carrito && carrito.telefono) {
+        if (carrito && carrito.telefono && empresaId) {
           console.log(`[MP Webhook] ✅ Teléfono encontrado en carrito: ${carrito.telefono}`);
-          
-          await notifyPaymentApprovedAndCreateReservation(
-            sellerId,
-            mpPayment.transaction_amount || 0,
-            mpPayment.currency_id || 'ARS',
-            mpPayment.payer?.email,
-            carrito.telefono, // Usar teléfono del carrito
-            empresaId,
-            undefined
-          );
           
           // Actualizar estado del carrito a 'pagado'
           carrito.estado = 'pagado';
           await carrito.save();
           console.log(`[MP Webhook] ✅ Carrito ${carritoId} marcado como pagado`);
+          
+          // Buscar la empresa para obtener phoneNumberId
+          const empresaDoc = await EmpresaModel.findById(empresaId);
+          if (!empresaDoc || !empresaDoc.phoneNumberId) {
+            console.log(`[MP Webhook] ⚠️ No se encontró empresa o phoneNumberId`);
+            return;
+          }
+          
+          // Actualizar variables globales del contacto
+          const { ContactoEmpresaModel } = await import('../../../models/ContactoEmpresa.js');
+          
+          const contacto = await ContactoEmpresaModel.findOne({
+            telefono: carrito.telefono,
+            empresaId: empresaId
+          });
+          
+          if (contacto) {
+            console.log(`[MP Webhook] 📝 Actualizando variables globales del contacto...`);
+            
+            // Actualizar variables globales directamente
+            const globalVars = (contacto.workflowState as any)?.globalVariables || {};
+            globalVars.mercadopago_estado = 'approved';
+            globalVars.mercadopago_pago_id = paymentId;
+            globalVars.mercadopago_monto = mpPayment.transaction_amount || 0;
+            
+            if (!contacto.workflowState) {
+              contacto.workflowState = {} as any;
+            }
+            (contacto.workflowState as any).globalVariables = globalVars;
+            
+            await contacto.save();
+            console.log(`[MP Webhook] ✅ Variables globales actualizadas`);
+            
+            // Enviar mensaje de confirmación directamente por WhatsApp
+            console.log(`[MP Webhook] 📨 Generando mensaje de confirmación con GPT...`);
+            
+            // Obtener productos del carrito para el mensaje
+            const productosTexto = carrito.items.map((item: any) => 
+              `📚 ${item.nombre} - $${parseFloat(item.precio).toLocaleString()}`
+            ).join('\n');
+            
+            // Generar mensaje personalizado
+            const mensajeConfirmacion = `🎉 *¡Tu pago fue aprobado!*
+
+¡Qué emoción! Ya tenemos tu pedido confirmado:
+
+${productosTexto}
+
+💰 Total pagado: $${(mpPayment.transaction_amount || 0).toLocaleString()}
+
+✨ Tus libros están listos para que los disfrutes. ¿Preferís retiro en local o envío a domicilio?
+
+¡Gracias por elegirnos! 🌟`;
+            
+            // Enviar mensaje por WhatsApp
+            await enviarMensajeWhatsAppTexto(
+              carrito.telefono,
+              mensajeConfirmacion,
+              empresaDoc.phoneNumberId
+            );
+            
+            console.log(`[MP Webhook] ✅ Mensaje de confirmación enviado`);
+          } else {
+            console.log(`[MP Webhook] ⚠️ No se encontró contacto para teléfono: ${carrito.telefono}`);
+          }
         } else {
-          console.log(`[MP Webhook] ⚠️ No se encontró carrito o teléfono para ${carritoId}`);
+          console.log(`[MP Webhook] ⚠️ No se encontró carrito, teléfono o empresaId`);
         }
-      } else {
-        // Fallback: usar teléfono del payer
-        await notifyPaymentApprovedAndCreateReservation(
-          sellerId,
-          mpPayment.transaction_amount || 0,
-          mpPayment.currency_id || 'ARS',
-          mpPayment.payer?.email,
-          clientePhoneFromRef || mpPayment.payer?.phone?.number,
-          empresaId,
-          undefined
-        );
       }
     }
     
