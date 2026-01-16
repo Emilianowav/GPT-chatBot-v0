@@ -906,7 +906,7 @@ export class FlowExecutor {
 
     // Usar phoneNumberId del flowConfig si no está especificado en el nodo
     // Primero intentar desde globalVariables (viene del webhook inicial)
-    let phoneNumberId = this.globalVariables.get('phoneNumberId') as string || '';
+    let phoneNumberId = (this.globalVariables['phoneNumberId'] as string) || '';
     
     // Si no hay en globalVariables, intentar desde config
     if (!phoneNumberId && config.phoneNumberId) {
