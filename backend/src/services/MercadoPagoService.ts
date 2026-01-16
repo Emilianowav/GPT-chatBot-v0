@@ -127,6 +127,84 @@ export class MercadoPagoService {
   }
 
   /**
+   * Obtiene información de una preferencia
+   */
+  async obtenerPreferencia(preferenciaId: string): Promise<any> {
+    try {
+      const response = await axios.get(
+        `https://api.mercadopago.com/checkout/preferences/${preferenciaId}`,
+        {
+          headers: {
+            'Authorization': `Bearer ${this.accessToken}`
+          }
+        }
+      );
+
+      return response.data;
+    } catch (error: any) {
+      console.error('❌ Error obteniendo preferencia:', error.response?.data || error.message);
+      throw error;
+    }
+  }
+
+  /**
+   * Verifica el estado de un pago asociado a una preferencia
+   * Busca pagos relacionados con el external_reference (carrito_id)
+   */
+  async verificarEstadoPreferencia(preferenciaId: string, externalReference: string): Promise<{
+    estado: 'approved' | 'pending' | 'in_process' | 'rejected' | 'cancelled' | 'no_payment';
+    pago_id?: string;
+    detalles?: any;
+  }> {
+    try {
+      // Buscar pagos por external_reference
+      const response = await axios.get(
+        `https://api.mercadopago.com/v1/payments/search`,
+        {
+          headers: {
+            'Authorization': `Bearer ${this.accessToken}`
+          },
+          params: {
+            external_reference: externalReference,
+            sort: 'date_created',
+            criteria: 'desc',
+            range: 'date_created',
+            begin_date: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString(), // Últimos 7 días
+            end_date: new Date().toISOString()
+          }
+        }
+      );
+
+      const pagos = response.data.results || [];
+      
+      if (pagos.length === 0) {
+        return {
+          estado: 'no_payment'
+        };
+      }
+
+      // Tomar el pago más reciente
+      const pagoReciente = pagos[0];
+      
+      return {
+        estado: pagoReciente.status,
+        pago_id: pagoReciente.id,
+        detalles: {
+          id: pagoReciente.id,
+          status: pagoReciente.status,
+          status_detail: pagoReciente.status_detail,
+          transaction_amount: pagoReciente.transaction_amount,
+          date_approved: pagoReciente.date_approved,
+          payment_method_id: pagoReciente.payment_method_id
+        }
+      };
+    } catch (error: any) {
+      console.error('❌ Error verificando estado de preferencia:', error.response?.data || error.message);
+      throw error;
+    }
+  }
+
+  /**
    * Verifica el estado de un pago
    */
   async verificarEstadoPago(paymentId: string): Promise<{

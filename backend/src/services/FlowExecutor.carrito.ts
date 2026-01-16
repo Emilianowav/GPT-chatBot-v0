@@ -363,12 +363,18 @@ export async function executeMercadoPagoNode(
     // Guardar variables globales
     context.setGlobalVariable('mercadopago_preferencia_id', preferencia.id);
     context.setGlobalVariable('mercadopago_link', preferencia.init_point);
+    context.setGlobalVariable('mercadopago_estado', 'pendiente');
+    context.setGlobalVariable('mercadopago_total', carrito.total);
+    context.setGlobalVariable('mercadopago_items_count', carrito.items.length);
 
     return {
       output: {
         success: true,
         preferencia_id: preferencia.id,
         link_pago: preferencia.init_point,
+        estado_pago: 'pendiente',
+        total: carrito.total,
+        items_count: carrito.items.length,
         mensaje: `💳 *¡Listo para pagar!*\n\nTu pedido:\n🛒 ${carrito.items.length} productos\n💰 Total: $${carrito.total.toLocaleString('es-AR')}\n\n👇 Paga de forma segura con Mercado Pago:\n${preferencia.init_point}\n\n⏰ Este link expira en 24 horas`
       }
     };
@@ -378,6 +384,134 @@ export async function executeMercadoPagoNode(
       output: {
         success: false,
         error: error.message
+      }
+    };
+  }
+}
+
+/**
+ * Ejecuta un nodo de verificación de pago de MercadoPago
+ */
+export async function executeVerificarPagoNode(
+  node: any,
+  input: any,
+  context: any,
+  contactoId: string,
+  empresaId: string
+): Promise<any> {
+  console.log('\n═══════════════════════════════════════════════════════════');
+  console.log(`🔍 NODO VERIFICAR PAGO MERCADOPAGO: ${node.data.label || node.id}`);
+  console.log('═══════════════════════════════════════════════════════════');
+
+  try {
+    const config = node.data.config || {};
+
+    // Obtener preferencia_id y carrito_id desde variables globales
+    const preferenciaId = context.resolveVariableInString('{{mercadopago_preferencia_id}}');
+    const carritoId = context.resolveVariableInString('{{carrito_id}}');
+
+    if (!preferenciaId) {
+      console.log('   ⚠️  No hay preferencia_id en variables globales');
+      return {
+        output: {
+          success: false,
+          estado: 'no_payment',
+          mensaje: 'No hay un pago pendiente para verificar'
+        }
+      };
+    }
+
+    console.log(`   🔑 Preferencia ID: ${preferenciaId}`);
+    console.log(`   📦 Carrito ID: ${carritoId || 'N/A'}`);
+
+    // Obtener accessToken desde la BD
+    console.log(`   🔑 Obteniendo accessToken desde BD para empresa: ${empresaId}`);
+    
+    const { default: sellersService } = await import('../modules/mercadopago/services/sellersService.js');
+    const seller = await sellersService.getSellerByInternalId(empresaId);
+    
+    if (!seller || !seller.accessToken) {
+      console.error('   ❌ No se encontró seller o accessToken para la empresa');
+      return {
+        output: {
+          success: false,
+          error: 'MercadoPago no está conectado'
+        }
+      };
+    }
+
+    const accessToken = seller.accessToken;
+    console.log('   ✅ AccessToken obtenido desde BD');
+
+    // Crear servicio de Mercado Pago
+    const mpService = new MercadoPagoService({ accessToken });
+
+    // Verificar estado del pago
+    console.log('   🔍 Verificando estado del pago...');
+    const resultado = await mpService.verificarEstadoPreferencia(preferenciaId, carritoId || preferenciaId);
+
+    console.log(`   📊 Estado: ${resultado.estado}`);
+    if (resultado.pago_id) {
+      console.log(`   💳 Pago ID: ${resultado.pago_id}`);
+    }
+
+    // Actualizar variables globales
+    context.setGlobalVariable('mercadopago_estado', resultado.estado);
+    if (resultado.pago_id) {
+      context.setGlobalVariable('mercadopago_pago_id', resultado.pago_id);
+    }
+
+    // Generar mensaje según el estado
+    let mensaje = '';
+    let pagoAprobado = false;
+
+    switch (resultado.estado) {
+      case 'approved':
+        mensaje = '✅ *¡Pago aprobado!*\n\nTu compra fue procesada exitosamente.\n\n📦 Pronto recibirás información sobre el envío.';
+        pagoAprobado = true;
+        console.log('   ✅ Pago aprobado');
+        break;
+      
+      case 'pending':
+      case 'in_process':
+        mensaje = '⏳ *Pago pendiente*\n\nTu pago está siendo procesado.\n\nTe avisaremos cuando se confirme.';
+        console.log('   ⏳ Pago pendiente');
+        break;
+      
+      case 'rejected':
+        mensaje = '❌ *Pago rechazado*\n\nHubo un problema con tu pago.\n\n¿Querés intentar nuevamente?';
+        console.log('   ❌ Pago rechazado');
+        break;
+      
+      case 'cancelled':
+        mensaje = '🚫 *Pago cancelado*\n\nEl pago fue cancelado.\n\n¿Querés realizar una nueva compra?';
+        console.log('   🚫 Pago cancelado');
+        break;
+      
+      case 'no_payment':
+        mensaje = '⏳ *Esperando pago*\n\nAún no detectamos tu pago.\n\n¿Ya completaste el pago en MercadoPago?';
+        console.log('   ⏳ No hay pago registrado');
+        break;
+    }
+
+    return {
+      output: {
+        success: true,
+        estado: resultado.estado,
+        pago_aprobado: pagoAprobado,
+        pago_id: resultado.pago_id,
+        detalles: resultado.detalles,
+        mensaje
+      }
+    };
+
+  } catch (error: any) {
+    console.error('   ❌ Error verificando pago:', error.message);
+    return {
+      output: {
+        success: false,
+        error: error.message,
+        mensaje: '❌ Hubo un error al verificar el pago. Intenta nuevamente en unos minutos.'
       }
     };
   }

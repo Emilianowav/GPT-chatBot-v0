@@ -6,7 +6,7 @@ import { ContactoEmpresaModel } from '../models/ContactoEmpresa.js';
 import { GPTPromptBuilder } from './GPTPromptBuilder.js';
 import type { IGPTConversacionalConfig } from '../types/gpt-config.types.js';
 import { createWooCommerceService } from './woocommerceService.js';
-import { executeCarritoNode, executeMercadoPagoNode } from './FlowExecutor.carrito.js';
+import { executeCarritoNode, executeMercadoPagoNode, executeVerificarPagoNode } from './FlowExecutor.carrito.js';
 import { ApiConfigurationModel } from '../modules/integrations/models/ApiConfiguration.js';
 
 interface FlowContext {
@@ -465,6 +465,23 @@ export class FlowExecutor {
         });
       
       case 'mercadopago':
+        // Verificar si es un nodo de verificación de pago
+        if (node.data?.config?.action === 'verificar_pago') {
+          return await executeVerificarPagoNode(
+            node, 
+            input, 
+            {
+              contactoId: this.contactoId!,
+              empresaId: this.getGlobalVariable('telefono_empresa'),
+              resolveVariableInString: this.resolveVariableInString.bind(this),
+              setGlobalVariable: this.setGlobalVariable.bind(this)
+            },
+            this.contactoId!,
+            this.getGlobalVariable('telefono_empresa')
+          );
+        }
+        
+        // Nodo de crear preferencia
         return await executeMercadoPagoNode(node, input, {
           contactoId: this.contactoId!,
           empresaId: this.getGlobalVariable('telefono_empresa'),
