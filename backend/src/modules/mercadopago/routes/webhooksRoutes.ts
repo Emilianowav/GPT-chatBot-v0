@@ -356,7 +356,7 @@ async function processPaymentNotification(paymentId: string): Promise<void> {
       console.log(`[MP Webhook] Pago ${paymentId} creado: ${status}`);
     }
     
-    // Si el pago fue aprobado y tiene PaymentLink, actualizar estadísticas
+    // Si el pago fue aprobado y tiene PaymentLink, actualizar estadísticas y notificar
     if (status === PaymentStatus.APPROVED && paymentLinkId) {
       await PaymentLink.updateOne(
         { _id: paymentLinkId },
@@ -369,8 +369,7 @@ async function processPaymentNotification(paymentId: string): Promise<void> {
       );
       console.log(`[MP Webhook] PaymentLink ${paymentLinkId} actualizado con nuevo pago`);
       
-      // Notificar al cliente por WhatsApp y crear reserva si el pago fue aprobado
-      // Prioridad: teléfono del external_reference > teléfono de MP > buscar por email
+      // Notificar al cliente por WhatsApp y crear reserva (para Juventus)
       await notifyPaymentApprovedAndCreateReservation(
         sellerId,
         mpPayment.transaction_amount || 0,
@@ -381,9 +380,8 @@ async function processPaymentNotification(paymentId: string): Promise<void> {
         paymentLinkId
       );
     }
-    
-    // Si el pago fue aprobado sin PaymentLink, actualizar estado global y disparar flujo
-    if (status === PaymentStatus.APPROVED && !paymentLinkId && !existingPayment) {
+    // Si el pago fue aprobado sin PaymentLink, usar flujo de carrito (para Veo Veo)
+    else if (status === PaymentStatus.APPROVED && !paymentLinkId && !existingPayment) {
       // Buscar el carrito por external_reference (carrito_id)
       const carritoId = mpPayment.external_reference;
       if (carritoId) {
