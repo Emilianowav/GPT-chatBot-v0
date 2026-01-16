@@ -404,41 +404,16 @@ async function processPaymentNotification(paymentId: string): Promise<void> {
             return;
           }
           
-          // Actualizar variables globales del contacto
-          const { ContactoEmpresaModel } = await import('../../../models/ContactoEmpresa.js');
+          // Enviar mensaje de confirmación directamente por WhatsApp
+          console.log(`[MP Webhook] 📨 Generando mensaje de confirmación dinámico...`);
           
-          const contacto = await ContactoEmpresaModel.findOne({
-            telefono: carrito.telefono,
-            empresaId: empresaId
-          });
+          // Obtener productos del carrito para el mensaje
+          const productosTexto = carrito.items.map((item: any) => 
+            `📚 ${item.nombre} - $${parseFloat(item.precio).toLocaleString()}`
+          ).join('\n');
           
-          if (contacto) {
-            console.log(`[MP Webhook] 📝 Actualizando variables globales del contacto...`);
-            
-            // Actualizar variables globales directamente
-            const globalVars = (contacto.workflowState as any)?.globalVariables || {};
-            globalVars.mercadopago_estado = 'approved';
-            globalVars.mercadopago_pago_id = paymentId;
-            globalVars.mercadopago_monto = mpPayment.transaction_amount || 0;
-            
-            if (!contacto.workflowState) {
-              contacto.workflowState = {} as any;
-            }
-            (contacto.workflowState as any).globalVariables = globalVars;
-            
-            await contacto.save();
-            console.log(`[MP Webhook] ✅ Variables globales actualizadas`);
-            
-            // Enviar mensaje de confirmación directamente por WhatsApp
-            console.log(`[MP Webhook] 📨 Generando mensaje de confirmación con GPT...`);
-            
-            // Obtener productos del carrito para el mensaje
-            const productosTexto = carrito.items.map((item: any) => 
-              `📚 ${item.nombre} - $${parseFloat(item.precio).toLocaleString()}`
-            ).join('\n');
-            
-            // Generar mensaje personalizado
-            const mensajeConfirmacion = `🎉 *¡Tu pago fue aprobado!*
+          // Generar mensaje personalizado
+          const mensajeConfirmacion = `🎉 *¡Tu pago fue aprobado!*
 
 ¡Qué emoción! Ya tenemos tu pedido confirmado:
 
@@ -449,17 +424,38 @@ ${productosTexto}
 ✨ Tus libros están listos para que los disfrutes. ¿Preferís retiro en local o envío a domicilio?
 
 ¡Gracias por elegirnos! 🌟`;
+          
+          // Enviar mensaje por WhatsApp
+          await enviarMensajeWhatsAppTexto(
+            carrito.telefono,
+            mensajeConfirmacion,
+            empresaDoc.phoneNumberId
+          );
+          
+          console.log(`[MP Webhook] ✅ Mensaje de confirmación enviado`);
+          
+          // Intentar actualizar variables globales del contacto si existe
+          const { ContactoEmpresaModel } = await import('../../../models/ContactoEmpresa.js');
+          const contacto = await ContactoEmpresaModel.findOne({
+            telefono: carrito.telefono,
+            empresaId: empresaId
+          });
+          
+          if (contacto) {
+            console.log(`[MP Webhook] 📝 Actualizando variables globales del contacto...`);
+            const globalVars = (contacto.workflowState as any)?.globalVariables || {};
+            globalVars.mercadopago_estado = 'approved';
+            globalVars.mercadopago_pago_id = paymentId;
+            globalVars.mercadopago_monto = mpPayment.transaction_amount || 0;
             
-            // Enviar mensaje por WhatsApp
-            await enviarMensajeWhatsAppTexto(
-              carrito.telefono,
-              mensajeConfirmacion,
-              empresaDoc.phoneNumberId
-            );
-            
-            console.log(`[MP Webhook] ✅ Mensaje de confirmación enviado`);
+            if (!contacto.workflowState) {
+              contacto.workflowState = {} as any;
+            }
+            (contacto.workflowState as any).globalVariables = globalVars;
+            await contacto.save();
+            console.log(`[MP Webhook] ✅ Variables globales actualizadas`);
           } else {
-            console.log(`[MP Webhook] ⚠️ No se encontró contacto para teléfono: ${carrito.telefono}`);
+            console.log(`[MP Webhook] ℹ️ No se encontró contacto (normal en flujo de carrito)`);
           }
         } else {
           console.log(`[MP Webhook] ⚠️ No se encontró carrito, teléfono o empresaId`);
