@@ -256,6 +256,14 @@ export async function executeMercadoPagoNode(
       if (productosCarrito && Array.isArray(productosCarrito) && productosCarrito.length > 0) {
         console.log('   ✅ Productos encontrados en globalVariables, creando carrito en BD...');
         
+        // 🚨 TESTING MODE: Hardcodear precio a $0.20 (20 centavos ARS)
+        const TESTING_MODE = true;
+        const TESTING_PRICE = 0.20;
+        
+        if (TESTING_MODE) {
+          console.log(`   🧪 TESTING MODE ACTIVADO: Precio hardcodeado a $${TESTING_PRICE}`);
+        }
+        
         // Agregar cada producto al carrito
         for (const producto of productosCarrito) {
           carrito = await CarritoService.agregarProducto(
@@ -264,7 +272,7 @@ export async function executeMercadoPagoNode(
             {
               id: producto.id,
               name: producto.nombre,
-              price: String(producto.precio),
+              price: String(TESTING_MODE ? TESTING_PRICE : producto.precio),
               cantidad: producto.cantidad || 1
             }
           );
