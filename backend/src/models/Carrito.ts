@@ -13,6 +13,7 @@ export interface ICarritoItem {
 export interface ICarrito extends Document {
   contactoId: mongoose.Types.ObjectId;
   empresaId: string;
+  telefono?: string;
   items: ICarritoItem[];
   total: number;
   estado: 'activo' | 'pagado' | 'cancelado';
@@ -35,6 +36,7 @@ const CarritoItemSchema = new Schema<ICarritoItem>({
 const CarritoSchema = new Schema<ICarrito>({
   contactoId: { type: Schema.Types.ObjectId, required: true, ref: 'ContactoEmpresa' },
   empresaId: { type: String, required: true },
+  telefono: { type: String },
   items: [CarritoItemSchema],
   total: { type: Number, required: true, default: 0 },
   estado: { 

@@ -7,7 +7,8 @@ export class CarritoService {
    */
   static async obtenerCarritoActivo(
     contactoId: mongoose.Types.ObjectId,
-    empresaId: string
+    empresaId: string,
+    telefono?: string
   ): Promise<ICarrito> {
     let carrito = await CarritoModel.findOne({
       contactoId,
@@ -19,10 +20,15 @@ export class CarritoService {
       carrito = await CarritoModel.create({
         contactoId,
         empresaId,
+        telefono,
         items: [],
         total: 0,
         estado: 'activo'
       });
+    } else if (telefono && !carrito.telefono) {
+      // Actualizar teléfono si no existe
+      carrito.telefono = telefono;
+      await carrito.save();
     }
 
     return carrito;
@@ -41,9 +47,10 @@ export class CarritoService {
       cantidad?: number;
       image?: string;
       permalink?: string;
-    }
+    },
+    telefono?: string
   ): Promise<ICarrito> {
-    const carrito = await this.obtenerCarritoActivo(contactoId, empresaId);
+    const carrito = await this.obtenerCarritoActivo(contactoId, empresaId, telefono);
     
     const cantidad = producto.cantidad || 1;
     const precio = parseFloat(producto.price);

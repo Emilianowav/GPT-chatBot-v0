@@ -264,6 +264,10 @@ export async function executeMercadoPagoNode(
           console.log(`   🧪 TESTING MODE ACTIVADO: Precio hardcodeado a $${TESTING_PRICE}`);
         }
         
+        // Obtener teléfono del cliente desde variables globales
+        const telefonoCliente = context.resolveVariableInString('{{1.from}}');
+        console.log(`   📞 Teléfono del cliente: ${telefonoCliente}`);
+        
         // Agregar cada producto al carrito
         for (const producto of productosCarrito) {
           carrito = await CarritoService.agregarProducto(
@@ -274,7 +278,8 @@ export async function executeMercadoPagoNode(
               name: producto.nombre,
               price: String(TESTING_MODE ? TESTING_PRICE : producto.precio),
               cantidad: producto.cantidad || 1
-            }
+            },
+            telefonoCliente
           );
         }
         

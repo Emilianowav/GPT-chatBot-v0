@@ -382,17 +382,47 @@ async function processPaymentNotification(paymentId: string): Promise<void> {
       );
     }
     
-    // Si el pago fue aprobado sin PaymentLink, también notificar y crear reserva
+    // Si el pago fue aprobado sin PaymentLink, buscar en el carrito
     if (status === PaymentStatus.APPROVED && !paymentLinkId && !existingPayment) {
-      await notifyPaymentApprovedAndCreateReservation(
-        sellerId,
-        mpPayment.transaction_amount || 0,
-        mpPayment.currency_id || 'ARS',
-        mpPayment.payer?.email,
-        clientePhoneFromRef || mpPayment.payer?.phone?.number,
-        empresaId,
-        undefined
-      );
+      // Buscar el carrito por external_reference (carrito_id)
+      const carritoId = mpPayment.external_reference;
+      if (carritoId) {
+        console.log(`[MP Webhook] 🛒 Buscando carrito: ${carritoId}`);
+        const { CarritoModel } = await import('../../../models/Carrito.js');
+        const carrito = await CarritoModel.findById(carritoId);
+        
+        if (carrito && carrito.telefono) {
+          console.log(`[MP Webhook] ✅ Teléfono encontrado en carrito: ${carrito.telefono}`);
+          
+          await notifyPaymentApprovedAndCreateReservation(
+            sellerId,
+            mpPayment.transaction_amount || 0,
+            mpPayment.currency_id || 'ARS',
+            mpPayment.payer?.email,
+            carrito.telefono, // Usar teléfono del carrito
+            empresaId,
+            undefined
+          );
+          
+          // Actualizar estado del carrito a 'pagado'
+          carrito.estado = 'pagado';
+          await carrito.save();
+          console.log(`[MP Webhook] ✅ Carrito ${carritoId} marcado como pagado`);
+        } else {
+          console.log(`[MP Webhook] ⚠️ No se encontró carrito o teléfono para ${carritoId}`);
+        }
+      } else {
+        // Fallback: usar teléfono del payer
+        await notifyPaymentApprovedAndCreateReservation(
+          sellerId,
+          mpPayment.transaction_amount || 0,
+          mpPayment.currency_id || 'ARS',
+          mpPayment.payer?.email,
+          clientePhoneFromRef || mpPayment.payer?.phone?.number,
+          empresaId,
+          undefined
+        );
+      }
     }
     
   } catch (error: any) {
