@@ -17,6 +17,7 @@ import ReactFlow, {
   applyEdgeChanges,
 } from 'reactflow';
 import 'reactflow/dist/style.css';
+import { useRouter } from 'next/navigation';
 import DashboardLayout from '@/components/DashboardLayout/DashboardLayout';
 import AppNode from '@/components/flow-builder/nodes/AppNode';
 import PlusNode from '@/components/flow-builder/nodes/PlusNode';
@@ -34,6 +35,7 @@ import GPTConfigModal from '@/components/flow-builder/modals/GPTConfigModal';
 import EdgeConfigModal from '@/components/flow-builder/modals/EdgeConfigModal';
 import MercadoPagoConfigModal from '@/components/flow-builder/modals/MercadoPagoConfigModal';
 import NodeConfigPanel from '@/components/flow-builder/panels/NodeConfigPanel';
+import { ArrowLeft, Play, Pause } from 'lucide-react';
 import styles from './flow-builder.module.css';
 
 const nodeTypes = {
@@ -215,6 +217,7 @@ const WOOCOMMERCE_MODULES = [
 ];
 
 export default function FlowBuilderPage() {
+  const router = useRouter();
   const [nodes, setNodes, onNodesChangeOriginal] = useNodesState([]);
   const [edges, setEdges] = useEdgesState([]);
   const edgeUpdateSuccessful = useRef(true);
@@ -235,6 +238,9 @@ export default function FlowBuilderPage() {
   const [selectedNode, setSelectedNode] = useState<Node | null>(null);
   const [showConfigPanel, setShowConfigPanel] = useState(false);
   const [selectedEdgeId, setSelectedEdgeId] = useState<string | null>(null);
+  const [flowsList, setFlowsList] = useState<any[]>([]);
+  const [showVariablesPanel, setShowVariablesPanel] = useState(false);
+  const [currentFlowActive, setCurrentFlowActive] = useState<boolean>(true);
 
   const handlePlusNodeClick = useCallback((nodeId: string, handleId?: string) => {
     setSourceNodeForConnection(nodeId);
@@ -343,12 +349,45 @@ export default function FlowBuilderPage() {
     }
   }, [nodes.length, setNodes, handleInitialPlusClick]);
 
+  // Cargar lista de flujos al montar y cargar flujo desde URL
+  useEffect(() => {
+    const loadFlowsList = async () => {
+      try {
+        const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';
+        const response = await fetch(`${apiUrl}/api/flows`);
+        const data = await response.json();
+        const flows = Array.isArray(data) ? data : (data.flows || []);
+        setFlowsList(flows);
+        
+        // Cargar flujo desde URL si existe flowId
+        const urlParams = new URLSearchParams(window.location.search);
+        const flowIdFromUrl = urlParams.get('flowId');
+        
+        if (flowIdFromUrl) {
+          console.log('🔍 Cargando flujo desde URL:', flowIdFromUrl);
+          setCurrentFlowId(flowIdFromUrl);
+          handleLoadFlow(flowIdFromUrl);
+        } else if (flows.length > 0) {
+          // Si no hay flowId en URL, cargar el primer flujo
+          console.log('📋 Cargando primer flujo disponible');
+          const firstFlow = flows[0];
+          setCurrentFlowId(firstFlow._id);
+          handleLoadFlow(firstFlow._id);
+        }
+      } catch (error) {
+        console.error('Error loading flows list:', error);
+      }
+    };
+    
+    loadFlowsList();
+  }, []);
+
   useEffect(() => {
     let isMounted = true;
     
     const loadVeoVeoFlow = async () => {
       try {
-        const flowId = '695a156681f6d67f0ae9cf40';
+        const flowId = currentFlowId || '695a156681f6d67f0ae9cf40';
         const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';
         
         const timestamp = new Date().getTime();
@@ -734,10 +773,11 @@ export default function FlowBuilderPage() {
       
       const flowData = {
         nombre: flowName,
-        empresaId: '6940a9a181b92bfce970fdb5', // Veo Veo
-        activo: true,
+        empresaId: 'Veo Veo',
+        activo: currentFlowActive,
         nodes,
-        edges
+        edges,
+        config: {}
       };
 
       const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';
@@ -780,18 +820,94 @@ export default function FlowBuilderPage() {
 
   const handleLoadFlow = async (flowId: string) => {
     try {
-      const response = await fetch(`/api/flows/detail/${flowId}`);
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';
+      const timestamp = new Date().getTime();
+      const response = await fetch(`${apiUrl}/api/flows/by-id/${flowId}?t=${timestamp}`, {
+        cache: 'no-store'
+      });
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      
       const flow = await response.json();
       
-      setNodes(flow.nodes);
-      setEdges(flow.edges);
-      setFlowName(flow.nombre);
-      setCurrentFlowId(flow._id);
+      console.log('🔄 Flow cargado:', {
+        nombre: flow.nombre,
+        nodos: flow.nodes?.length,
+        edges: flow.edges?.length
+      });
       
-      alert('Flow cargado exitosamente');
+      if (flow && flow.nodes && flow.edges) {
+        // PRECALCULAR HANDLES DE ROUTERS
+        const routerHandles = new Map<string, string[]>();
+        flow.edges.forEach((edge: any) => {
+          if (edge.sourceHandle) {
+            const handles = routerHandles.get(edge.source) || [];
+            if (!handles.includes(edge.sourceHandle)) {
+              handles.push(edge.sourceHandle);
+            }
+            routerHandles.set(edge.source, handles);
+          }
+        });
+        
+        // Agregar handlers a cada nodo
+        const nodesWithHandlers = flow.nodes.map((node: any) => ({
+          ...node,
+          data: {
+            ...node.data,
+            onNodeClick: handleNodeClick,
+            onPlusClick: handlePlusNodeClick,
+            routeHandles: node.type === 'router' ? routerHandles.get(node.id) || [] : undefined,
+          },
+        }));
+        
+        const edgesWithHandlers = flow.edges.map((edge: any) => ({
+          ...edge,
+          data: {
+            ...edge.data,
+            onConfigClick: handleEdgeConfigClick,
+          }
+        }));
+        
+        setNodes(nodesWithHandlers);
+        setEdges(edgesWithHandlers);
+        setFlowName(flow.nombre || 'Flow sin nombre');
+        setCurrentFlowId(flowId);
+        setCurrentFlowActive(flow.activo || false);
+      }
     } catch (error) {
       console.error('Error cargando flow:', error);
       alert('Error al cargar el flow');
+    }
+  };
+
+  const toggleCurrentFlowStatus = async () => {
+    if (!currentFlowId) {
+      alert('No hay flujo seleccionado');
+      return;
+    }
+
+    try {
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';
+      const response = await fetch(`${apiUrl}/api/flows/${currentFlowId}/toggle`, {
+        method: 'PATCH'
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setCurrentFlowActive(data.activo);
+        console.log(`${data.activo ? '▶️' : '⏸️'} Flow ${data.activo ? 'activado' : 'pausado'}`);
+        
+        // Recargar lista de flujos
+        const empresaId = localStorage.getItem('empresaId') || 'Veo Veo';
+        const listResponse = await fetch(`${apiUrl}/api/flows?empresaId=${empresaId}`);
+        const listData = await listResponse.json();
+        const flows = Array.isArray(listData) ? listData : (listData.flows || []);
+        setFlowsList(flows);
+      }
+    } catch (error) {
+      console.error('Error toggling flow status:', error);
     }
   };
 
@@ -801,6 +917,31 @@ export default function FlowBuilderPage() {
         {/* Header Toolbar */}
         <div className={styles.header}>
           <div className={styles.headerLeft}>
+            <button
+              onClick={() => router.push('/dashboard/flows')}
+              className={styles.btnBack}
+              title="Volver a lista de flujos"
+            >
+              <ArrowLeft size={18} />
+            </button>
+            <select
+              value={currentFlowId || ''}
+              onChange={(e) => {
+                const flowId = e.target.value;
+                if (flowId) {
+                  setCurrentFlowId(flowId);
+                  handleLoadFlow(flowId);
+                }
+              }}
+              className={styles.flowSelector}
+            >
+              <option value="">Seleccionar flujo...</option>
+              {flowsList.map((flow) => (
+                <option key={flow._id} value={flow._id}>
+                  {flow.nombre} {flow.activo ? '🟢' : '⏸️'}
+                </option>
+              ))}
+            </select>
             <input
               type="text"
               value={flowName}
@@ -808,6 +949,27 @@ export default function FlowBuilderPage() {
               placeholder="Nombre del flow"
               className={styles.titleInput}
             />
+            <div className={styles.flowStatus}>
+              <span className={currentFlowActive ? styles.statusActive : styles.statusInactive}>
+                {currentFlowActive ? '🟢 Activo' : '⏸️ Pausado'}
+              </span>
+              <button
+                onClick={toggleCurrentFlowStatus}
+                className={currentFlowActive ? styles.btnPause : styles.btnPlay}
+                title={currentFlowActive ? 'Pausar flujo' : 'Activar flujo'}
+                disabled={!currentFlowId}
+              >
+                {currentFlowActive ? <Pause size={16} /> : <Play size={16} />}
+                {currentFlowActive ? 'Pausar' : 'Activar'}
+              </button>
+            </div>
+            <button
+              onClick={() => setShowVariablesPanel(!showVariablesPanel)}
+              className={styles.btnVariables}
+              title="Variables Globales"
+            >
+              🌐 Variables
+            </button>
           </div>
           <div className={styles.headerRight}>
             <button
@@ -816,15 +978,6 @@ export default function FlowBuilderPage() {
               className={styles.btnSuccess}
             >
               {isSaving ? 'Guardando...' : '💾 Guardar'}
-            </button>
-            <button
-              onClick={() => {
-                const flowId = prompt('ID del flow a cargar:');
-                if (flowId) handleLoadFlow(flowId);
-              }}
-              className={styles.btnPrimary}
-            >
-              📂 Cargar
             </button>
           </div>
         </div>

@@ -3,6 +3,7 @@ import { obtenerRespuestaChat } from './openaiService.js';
 import { enviarMensajeWhatsAppTexto } from './metaService.js';
 import type { ChatCompletionMessageParam } from './openaiService.js';
 import { ContactoEmpresaModel } from '../models/ContactoEmpresa.js';
+import { EmpresaModel } from '../models/Empresa.js';
 import { GPTPromptBuilder } from './GPTPromptBuilder.js';
 import type { IGPTConversacionalConfig } from '../types/gpt-config.types.js';
 import { createWooCommerceService } from './woocommerceService.js';
@@ -570,11 +571,34 @@ export class FlowExecutor {
     console.log('\n📋 SYSTEM PROMPT CONSTRUIDO:');
     console.log(systemPrompt.substring(0, 300) + '...');
 
-    // Agregar tópicos locales del nodo (si existen)
-    if (config.topicos && config.topicos.length > 0) {
-      console.log(`\n📚 [TÓPICOS LOCALES] Agregando ${config.topicos.length} tópico(s) del nodo`);
+    // Inyectar tópicos globales automáticamente si están habilitados
+    if (this.flow?.config?.topicos_habilitados && this.topicos && Object.keys(this.topicos).length > 0) {
+      console.log(`\n📚 [TÓPICOS GLOBALES] Inyectando automáticamente ${Object.keys(this.topicos).length} tópico(s)`);
       
-      let topicosSection = '\n\n═══ INFORMACIÓN ADICIONAL (TÓPICOS DEL NODO) ═══\n';
+      let topicosSection = '\n\n═══ INFORMACIÓN DE LA EMPRESA ═══\n';
+      
+      Object.entries(this.topicos).forEach(([key, value]: [string, any]) => {
+        console.log(`   - ${key}`);
+        
+        // Si el tópico tiene estructura de objeto, formatearlo
+        if (typeof value === 'object' && value !== null) {
+          topicosSection += `\n**${key.toUpperCase().replace(/-/g, ' ')}:**\n`;
+          Object.entries(value).forEach(([subKey, subValue]) => {
+            topicosSection += `  • ${subKey}: ${subValue}\n`;
+          });
+        } else {
+          topicosSection += `\n**${key.toUpperCase().replace(/-/g, ' ')}:** ${value}\n`;
+        }
+      });
+      
+      systemPrompt += topicosSection;
+    }
+
+    // Agregar tópicos locales del nodo (si existen) - estos tienen prioridad sobre los globales
+    if (config.topicos && config.topicos.length > 0) {
+      console.log(`\n📚 [TÓPICOS LOCALES] Agregando ${config.topicos.length} tópico(s) específicos del nodo`);
+      
+      let topicosSection = '\n\n═══ INFORMACIÓN ADICIONAL (ESPECÍFICA) ═══\n';
       config.topicos.forEach((topico: any, index: number) => {
         console.log(`   ${index + 1}. ${topico.titulo}`);
         topicosSection += `\n**${topico.titulo}:**\n${topico.contenido}\n`;

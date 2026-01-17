@@ -13,24 +13,10 @@ const router = express.Router();
 // ============================================================================
 
 /**
- * GET /api/flows/:empresaId
- * Obtener todos los flows de una empresa
- */
-router.get('/:empresaId', authenticate, async (req: Request, res: Response): Promise<void> => {
-  try {
-    const { empresaId } = req.params;
-    const flows = await FlowModel.find({ empresaId, activo: true, botType: 'visual' }).sort({ createdAt: -1 });
-    res.json(flows);
-  } catch (error: any) {
-    console.error('Error obteniendo flows:', error);
-    res.status(500).json({ error: error.message });
-  }
-});
-
-/**
  * GET /api/flows/by-id/:flowId
  * Obtener un flow específico por _id de MongoDB
  * CRÍTICO: Usa MongoDB driver directamente para evitar caché de Mongoose
+ * IMPORTANTE: Esta ruta debe estar ANTES de /:empresaId para evitar conflictos
  */
 router.get('/by-id/:flowId', async (req: Request, res: Response): Promise<void> => {
   try {
@@ -68,6 +54,68 @@ router.get('/by-id/:flowId', async (req: Request, res: Response): Promise<void> 
     res.json(responseData);
   } catch (error: any) {
     console.error('❌ Error obteniendo flow:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+/**
+ * PATCH /api/flows/:flowId/toggle
+ * Pausar o activar un flow (toggle activo)
+ * IMPORTANTE: Esta ruta debe estar ANTES de /:empresaId para evitar conflictos
+ */
+router.patch('/:flowId/toggle', async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { flowId } = req.params;
+    
+    console.log(`🔄 Toggle flow: ${flowId}`);
+    
+    // Obtener el flow actual solo para leer el estado
+    const flow = await FlowModel.findById(flowId).lean();
+    
+    if (!flow) {
+      console.log('❌ Flow no encontrado');
+      res.status(404).json({ error: 'Flow not found' });
+      return;
+    }
+    
+    // Toggle el estado activo usando updateOne para evitar validación
+    const newActivo = !flow.activo;
+    await FlowModel.updateOne(
+      { _id: flowId },
+      { 
+        $set: { 
+          activo: newActivo,
+          updatedAt: new Date()
+        }
+      }
+    );
+    
+    console.log(`${newActivo ? '▶️' : '⏸️'} Flow ${newActivo ? 'activado' : 'pausado'}: ${flow.nombre}`);
+    
+    res.json({
+      success: true,
+      activo: newActivo,
+      message: `Flow ${newActivo ? 'activado' : 'pausado'} exitosamente`
+    });
+  } catch (error: any) {
+    console.error('Error toggling flow:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+/**
+ * GET /api/flows
+ * Obtener todos los flows (sin filtrar por empresa)
+ * IMPORTANTE: Esta ruta debe estar ANTES de /:empresaId
+ */
+router.get('/', async (req: Request, res: Response): Promise<void> => {
+  try {
+    // Obtener todos los flows sin filtrar por botType (para compatibilidad con flujos antiguos)
+    const flows = await FlowModel.find({}).sort({ createdAt: -1 });
+    console.log(`📋 Obteniendo todos los flows: ${flows.length} encontrados`);
+    res.json(flows);
+  } catch (error: any) {
+    console.error('Error obteniendo flows:', error);
     res.status(500).json({ error: error.message });
   }
 });
@@ -136,6 +184,23 @@ router.delete('/:flowId', authenticate, async (req: Request, res: Response): Pro
     res.status(204).send();
   } catch (error: any) {
     console.error('Error eliminando flow:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+/**
+ * GET /api/flows/:empresaId
+ * Obtener todos los flows de una empresa específica
+ * IMPORTANTE: Esta ruta debe estar AL FINAL para no capturar rutas específicas
+ */
+router.get('/:empresaId', authenticate, async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { empresaId } = req.params;
+    const flows = await FlowModel.find({ empresaId, activo: true, botType: 'visual' }).sort({ createdAt: -1 });
+    console.log(`📋 Obteniendo flows de empresa ${empresaId}: ${flows.length} encontrados`);
+    res.json(flows);
+  } catch (error: any) {
+    console.error('Error obteniendo flows:', error);
     res.status(500).json({ error: error.message });
   }
 });

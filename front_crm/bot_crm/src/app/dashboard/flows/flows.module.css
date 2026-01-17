@@ -2,6 +2,32 @@
    DISEÑO MINIMAL Y LIMPIO - PÁGINA DE FLUJOS
    ======================================== */
 
+/* Contenedor Principal */
+.listContainer {
+  width: 100%;
+  min-height: 100vh;
+  background: #f9fafb;
+  padding: 24px;
+}
+
+.listHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 32px;
+  background: #ffffff;
+  padding: 24px;
+  border-radius: 12px;
+  border: 1px solid #e5e7eb;
+}
+
+.listHeader h1 {
+  font-size: 28px;
+  font-weight: 600;
+  color: #111827;
+  margin: 0;
+}
+
 /* Header Principal */
 .header {
   background: #ffffff;
@@ -588,6 +614,121 @@
 }
 
 .actionButtonDelete:hover::after {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* ========================================
+   BOTONES DE PAUSAR/ACTIVAR
+   ======================================== */
+.pauseButton,
+.playButton,
+.deleteButton {
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  position: relative;
+}
+
+.pauseButton {
+  color: #f59e0b;
+}
+
+.pauseButton:hover {
+  background: #fef3c7;
+  transform: scale(1.1);
+}
+
+.pauseButton::after {
+  content: 'Pausar flujo';
+  position: absolute;
+  bottom: -40px;
+  left: 50%;
+  transform: translateX(-50%) translateY(-5px);
+  background: #1f2937;
+  color: white;
+  padding: 6px 10px;
+  border-radius: 6px;
+  font-size: 11px;
+  white-space: nowrap;
+  opacity: 0;
+  transition: all 0.2s ease;
+  pointer-events: none;
+  z-index: 100;
+}
+
+.pauseButton:hover::after {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+
+.playButton {
+  color: #10b981;
+}
+
+.playButton:hover {
+  background: #d1fae5;
+  transform: scale(1.1);
+}
+
+.playButton::after {
+  content: 'Activar flujo';
+  position: absolute;
+  bottom: -40px;
+  left: 50%;
+  transform: translateX(-50%) translateY(-5px);
+  background: #1f2937;
+  color: white;
+  padding: 6px 10px;
+  border-radius: 6px;
+  font-size: 11px;
+  white-space: nowrap;
+  opacity: 0;
+  transition: all 0.2s ease;
+  pointer-events: none;
+  z-index: 100;
+}
+
+.playButton:hover::after {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+
+.deleteButton {
+  color: #ef4444;
+}
+
+.deleteButton:hover {
+  background: #fee2e2;
+  transform: scale(1.15);
+}
+
+.deleteButton::after {
+  content: 'Eliminar flujo';
+  position: absolute;
+  bottom: -40px;
+  right: 0;
+  transform: translateY(-5px);
+  background: #1f2937;
+  color: white;
+  padding: 6px 10px;
+  border-radius: 6px;
+  font-size: 11px;
+  white-space: nowrap;
+  opacity: 0;
+  transition: all 0.2s ease;
+  pointer-events: none;
+  z-index: 100;
+}
+
+.deleteButton:hover::after {
   opacity: 1;
   transform: translateY(0);
 }
