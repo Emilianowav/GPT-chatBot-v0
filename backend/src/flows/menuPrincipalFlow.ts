@@ -129,152 +129,144 @@ export const menuPrincipalFlow: Flow = {
       }
     }
     
-    // Estados de reserva
-    if (state === 'reserva_esperando_origen') {
-      const origen = mensaje.trim();
+    // Estados de reserva - Captura dinámica de campos
+    if (state === 'reserva_capturando_campos') {
+      const campos = data.campos || [];
+      const indiceCampo = data.indiceCampo || 0;
+      const datosCapturados = data.datosCapturados || {};
       
-      if (origen.length < 2) {
-        await enviarMensajeWhatsAppTexto(
-          telefono,
-          '❌ Por favor, ingresá un origen válido.',
-          context.phoneNumberId
-        );
-        return {
-          success: true,
-          nextState: 'reserva_esperando_origen',
-          data
-        };
+      if (indiceCampo >= campos.length) {
+        // Todos los campos capturados, crear turno
+        return await crearTurnoConDatos(context, datosCapturados);
       }
       
-      await enviarMensajeWhatsAppTexto(
-        telefono,
-        '📍 ¿A dónde vas? (Destino del viaje)',
-        context.phoneNumberId
-      );
+      const campoActual = campos[indiceCampo];
+      const valor = mensaje.trim();
       
-      return {
-        success: true,
-        nextState: 'reserva_esperando_destino',
-        data: { ...data, origen }
-      };
-    }
-    
-    if (state === 'reserva_esperando_destino') {
-      const destino = mensaje.trim();
-      
-      if (destino.length < 2) {
-        await enviarMensajeWhatsAppTexto(
-          telefono,
-          '❌ Por favor, ingresá un destino válido.',
-          context.phoneNumberId
-        );
-        return {
-          success: true,
-          nextState: 'reserva_esperando_destino',
-          data
-        };
+      // Validar según tipo de campo
+      if (campoActual.tipo === 'numero') {
+        const num = parseInt(valor);
+        if (isNaN(num) || (campoActual.validacion?.min && num < campoActual.validacion.min) || (campoActual.validacion?.max && num > campoActual.validacion.max)) {
+          await enviarMensajeWhatsAppTexto(
+            telefono,
+            `❌ Por favor, ingresá un número válido${campoActual.validacion ? ` (entre ${campoActual.validacion.min} y ${campoActual.validacion.max})` : ''}.`,
+            context.phoneNumberId
+          );
+          return {
+            success: true,
+            nextState: 'reserva_capturando_campos',
+            data
+          };
+        }
       }
       
-      await enviarMensajeWhatsAppTexto(
-        telefono,
-        '👥 ¿Cuántos pasajeros son? (Ingresá un número)',
-        context.phoneNumberId
-      );
-      
-      return {
-        success: true,
-        nextState: 'reserva_esperando_pasajeros',
-        data: { ...data, destino }
-      };
-    }
-    
-    if (state === 'reserva_esperando_pasajeros') {
-      const pasajeros = parseInt(mensaje.trim());
-      
-      if (isNaN(pasajeros) || pasajeros < 1 || pasajeros > 50) {
-        await enviarMensajeWhatsAppTexto(
-          telefono,
-          '❌ Por favor, ingresá un número válido de pasajeros (entre 1 y 50).',
-          context.phoneNumberId
-        );
-        return {
-          success: true,
-          nextState: 'reserva_esperando_pasajeros',
-          data
-        };
-      }
-      
-      await enviarMensajeWhatsAppTexto(
-        telefono,
-        '📅 ¿Para qué día querés reservar? (formato DD/MM/AAAA o "hoy", "mañana")',
-        context.phoneNumberId
-      );
-      
-      return {
-        success: true,
-        nextState: 'reserva_esperando_fecha',
-        data: { ...data, pasajeros }
-      };
-    }
-    
-    if (state === 'reserva_esperando_fecha') {
-      const fechaTexto = mensaje.trim().toLowerCase();
-      let fecha: Date;
-      
-      // Procesar fecha usando zona horaria de Argentina
-      if (fechaTexto === 'hoy') {
-        fecha = obtenerFechaArgentina();
-        fecha.setHours(0, 0, 0, 0);
-      } else if (fechaTexto === 'mañana' || fechaTexto === 'manana') {
-        fecha = obtenerFechaArgentina();
-        fecha.setHours(0, 0, 0, 0);
-        fecha.setDate(fecha.getDate() + 1);
-      } else {
-        // Intentar parsear DD/MM/AAAA
-        const match = fechaTexto.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+      if (campoActual.tipo === 'fecha') {
+        // Validar formato DD/MM/AAAA
+        const match = valor.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
         if (!match) {
           await enviarMensajeWhatsAppTexto(
             telefono,
-            '❌ Formato de fecha inválido. Por favor, usá DD/MM/AAAA o escribí "hoy" o "mañana".',
+            '❌ Formato de fecha inválido. Por favor, usá DD/MM/AAAA (ejemplo: 25/01/2026).',
             context.phoneNumberId
           );
           return {
             success: true,
-            nextState: 'reserva_esperando_fecha',
-            data
-          };
-        }
-        
-        const [, dia, mes, anio] = match;
-        fecha = new Date(parseInt(anio), parseInt(mes) - 1, parseInt(dia));
-        
-        if (isNaN(fecha.getTime())) {
-          await enviarMensajeWhatsAppTexto(
-            telefono,
-            '❌ Fecha inválida. Por favor, verificá el formato DD/MM/AAAA.',
-            context.phoneNumberId
-          );
-          return {
-            success: true,
-            nextState: 'reserva_esperando_fecha',
+            nextState: 'reserva_capturando_campos',
             data
           };
         }
       }
       
+      // Guardar valor
+      datosCapturados[campoActual.clave] = valor;
+      
+      // Pasar al siguiente campo
+      const siguienteIndice = indiceCampo + 1;
+      
+      if (siguienteIndice >= campos.length) {
+        // Mostrar resumen y confirmar
+        let resumen = '📋 *Resumen de tu reserva:*\n\n';
+        campos.forEach((campo: any) => {
+          const val = datosCapturados[campo.clave];
+          if (val) {
+            resumen += `• ${campo.etiqueta}: ${val}\n`;
+          }
+        });
+        resumen += '\n⚠️ El operador te contactará para confirmar origen, destino y horario.\n';
+        resumen += '\n¿Confirmas estos datos?\n';
+        resumen += '1️⃣ Sí, confirmar\n';
+        resumen += '2️⃣ No, cancelar';
+        
+        await enviarMensajeWhatsAppTexto(telefono, resumen, context.phoneNumberId);
+        
+        return {
+          success: true,
+          nextState: 'reserva_confirmando',
+          data: { ...data, datosCapturados, indiceCampo: siguienteIndice }
+        };
+      }
+      
+      // Solicitar siguiente campo
+      const siguienteCampo = campos[siguienteIndice];
+      let mensajeSiguiente = `📝 ${siguienteCampo.etiqueta}`;
+      if (siguienteCampo.requerido) mensajeSiguiente += ' *';
+      if (siguienteCampo.placeholder) mensajeSiguiente += `\n💡 ${siguienteCampo.placeholder}`;
+      
+      await enviarMensajeWhatsAppTexto(telefono, mensajeSiguiente, context.phoneNumberId);
+      
+      return {
+        success: true,
+        nextState: 'reserva_capturando_campos',
+        data: { ...data, datosCapturados, indiceCampo: siguienteIndice }
+      };
+    }
+    
+    if (state === 'reserva_confirmando') {
+      const opcion = mensaje.trim();
+      
+      if (opcion === '1') {
+        // Confirmar y crear turno
+        return await crearTurnoConDatos(context, data.datosCapturados);
+      } else if (opcion === '2') {
+        await enviarMensajeWhatsAppTexto(
+          telefono,
+          '❌ Reserva cancelada.\n\nEscribí "menu" para volver al menú principal.',
+          context.phoneNumberId
+        );
+        return {
+          success: true,
+          end: true
+        };
+      } else {
+        await enviarMensajeWhatsAppTexto(
+          telefono,
+          'Por favor, respondé 1 para confirmar o 2 para cancelar.',
+          context.phoneNumberId
+        );
+        return {
+          success: true,
+          nextState: 'reserva_confirmando',
+          data
+        };
+      }
+    }
+    
+    // DEPRECATED - Mantener por compatibilidad pero no usar
+    if (state === 'reserva_esperando_hora') {
+      // Este estado ya no se usa, redirigir al nuevo flujo
       await enviarMensajeWhatsAppTexto(
         telefono,
-        '¿A qué hora querés el turno? (formato HH:MM, ejemplo: 14:30)',
+        'Por favor, escribí "menu" para empezar de nuevo.',
         context.phoneNumberId
       );
       return {
         success: true,
-        nextState: 'reserva_esperando_hora',
-        data: { ...data, fecha, fechaTexto: mensaje }
+        end: true
       };
     }
     
-    if (state === 'reserva_esperando_hora') {
+    // DEPRECATED - Código antiguo comentado
+    if (false) {
       const horaTexto = mensaje.trim();
       
       // Intentar parsear hora en diferentes formatos
@@ -500,19 +492,160 @@ export const menuPrincipalFlow: Flow = {
 };
 
 /**
+ * Crear turno con datos capturados dinámicamente
+ */
+async function crearTurnoConDatos(context: FlowContext, datosCapturados: Record<string, any>): Promise<FlowResult> {
+  const { telefono, empresaId } = context;
+  
+  try {
+    // Buscar o crear contacto
+    const contacto = await buscarOCrearContacto({
+      telefono,
+      profileName: context.profileName || 'Cliente WhatsApp',
+      empresaId
+    });
+    
+    console.log('✅ [Reserva] Contacto encontrado/creado:', contacto._id);
+    
+    // Buscar agente activo (o usar el asignado al cliente)
+    let agenteId;
+    if (contacto.agentesAsignados && contacto.agentesAsignados.length > 0) {
+      agenteId = contacto.agentesAsignados[0];
+      console.log('✅ [Reserva] Usando agente asignado al cliente:', agenteId);
+    } else {
+      const agente = await AgenteModel.findOne({ empresaId, activo: true });
+      if (!agente) {
+        await enviarMensajeWhatsAppTexto(
+          telefono,
+          '❌ No hay agentes disponibles. Por favor, intentá más tarde.',
+          context.phoneNumberId
+        );
+        return { success: true, end: true };
+      }
+      agenteId = agente._id;
+      console.log('✅ [Reserva] Usando primer agente activo:', agenteId);
+    }
+    
+    // Parsear fecha si existe en los datos
+    let fechaInicio: Date;
+    if (datosCapturados.fecha) {
+      const match = datosCapturados.fecha.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+      if (match) {
+        const [, dia, mes, anio] = match;
+        fechaInicio = new Date(parseInt(anio), parseInt(mes) - 1, parseInt(dia), 10, 0, 0, 0);
+      } else {
+        fechaInicio = new Date();
+        fechaInicio.setDate(fechaInicio.getDate() + 1);
+        fechaInicio.setHours(10, 0, 0, 0);
+      }
+    } else {
+      fechaInicio = new Date();
+      fechaInicio.setDate(fechaInicio.getDate() + 1);
+      fechaInicio.setHours(10, 0, 0, 0);
+    }
+    
+    const fechaFin = new Date(fechaInicio);
+    fechaFin.setMinutes(fechaFin.getMinutes() + 30);
+    
+    // Crear turno
+    const nuevoTurno = await TurnoModel.create({
+      empresaId,
+      agenteId,
+      clienteId: contacto._id.toString(),
+      fechaInicio,
+      fechaFin,
+      duracion: 30,
+      estado: 'pendiente',
+      tipoReserva: 'viaje',
+      datos: datosCapturados,
+      notas: 'Reservado vía WhatsApp - Datos simplificados',
+      creadoPor: 'bot'
+    });
+    
+    console.log('✅ Turno creado:', nuevoTurno._id);
+    
+    // Cargar config para mensaje personalizado
+    const { ConfiguracionModuloModel } = await import('../modules/calendar/models/ConfiguracionModulo.js');
+    const config = await ConfiguracionModuloModel.findOne({ empresaId });
+    
+    let mensaje = '✅ *¡Reserva confirmada!*\n\n';
+    
+    // Mostrar datos capturados
+    if (config?.camposPersonalizados) {
+      config.camposPersonalizados.forEach((campo: any) => {
+        const valor = datosCapturados[campo.clave];
+        if (valor) {
+          mensaje += `• ${campo.etiqueta}: ${valor}\n`;
+        }
+      });
+    }
+    
+    mensaje += `\n${config?.mensajesFlujo?.datosIncompletos || '⚠️ El operador te contactará para confirmar origen, destino y horario.'}`;
+    mensaje += '\n\nEscribí "menu" para volver al menú principal.';
+    
+    await enviarMensajeWhatsAppTexto(telefono, mensaje, context.phoneNumberId);
+    
+    return {
+      success: true,
+      end: true
+    };
+  } catch (error) {
+    console.error('❌ Error creando turno:', error);
+    await enviarMensajeWhatsAppTexto(
+      telefono,
+      '❌ Hubo un error al crear la reserva. Por favor, intentá de nuevo más tarde.',
+      context.phoneNumberId
+    );
+    return {
+      success: true,
+      end: true
+    };
+  }
+}
+
+/**
  * Iniciar proceso de reserva
  */
 async function iniciarReserva(context: FlowContext): Promise<FlowResult> {
+  const { empresaId } = context;
+  
+  // Cargar configuración de campos personalizados
+  const { ConfiguracionModuloModel } = await import('../modules/calendar/models/ConfiguracionModulo.js');
+  const config = await ConfiguracionModuloModel.findOne({ empresaId });
+  const campos = config?.camposPersonalizados || [];
+  
+  if (campos.length === 0) {
+    await enviarMensajeWhatsAppTexto(
+      context.telefono,
+      '❌ No hay campos configurados para reservas. Contactá al administrador.',
+      context.phoneNumberId
+    );
+    return {
+      success: true,
+      end: true
+    };
+  }
+  
+  // Solicitar primer campo
+  const primerCampo = campos[0];
+  let mensaje = `📝 ${primerCampo.etiqueta}`;
+  if (primerCampo.requerido) mensaje += ' *';
+  if (primerCampo.placeholder) mensaje += `\n💡 ${primerCampo.placeholder}`;
+  
   await enviarMensajeWhatsAppTexto(
     context.telefono,
-    '📍 ¿Desde dónde salís? (Origen del viaje)',
+    mensaje,
     context.phoneNumberId
   );
   
   return {
     success: true,
-    nextState: 'reserva_esperando_origen',
-    data: {}
+    nextState: 'reserva_capturando_campos',
+    data: { 
+      campos,
+      indiceCampo: 0,
+      datosCapturados: {}
+    }
   };
 }
 
