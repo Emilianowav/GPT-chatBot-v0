@@ -74,13 +74,17 @@ export default function GestionTurnosPage() {
     }
     
     if (f.fechaDesde) {
-      filtrosApi.fechaDesde = new Date(f.fechaDesde).toISOString();
+      // Crear fecha en zona horaria local (00:00:00)
+      const [year, month, day] = f.fechaDesde.split('-').map(Number);
+      const fechaDesde = new Date(year, month - 1, day, 0, 0, 0, 0);
+      filtrosApi.fechaDesde = fechaDesde.toISOString();
     }
     
     if (f.fechaHasta) {
-      const fecha = new Date(f.fechaHasta);
-      fecha.setHours(23, 59, 59, 999);
-      filtrosApi.fechaHasta = fecha.toISOString();
+      // Crear fecha en zona horaria local (23:59:59)
+      const [year, month, day] = f.fechaHasta.split('-').map(Number);
+      const fechaHasta = new Date(year, month - 1, day, 23, 59, 59, 999);
+      filtrosApi.fechaHasta = fechaHasta.toISOString();
     }
     
     cargarTurnos(filtrosApi);
