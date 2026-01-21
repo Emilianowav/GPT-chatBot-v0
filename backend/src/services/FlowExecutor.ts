@@ -175,9 +175,23 @@ export class FlowExecutor {
    * Carga los tópicos de conocimiento del flujo
    */
   private loadTopicos(flow: any): void {
+    console.log('\n🔍 [TÓPICOS] Intentando cargar tópicos...');
+    console.log('   flow.config existe:', !!flow.config);
+    console.log('   flow.config?.topicos existe:', !!flow.config?.topicos);
+    console.log('   flow.config?.topicos_habilitados:', flow.config?.topicos_habilitados);
+    
+    if (flow.config?.topicos) {
+      console.log('   Estructura de topicos:', JSON.stringify(flow.config.topicos, null, 2).substring(0, 500));
+    }
+    
     if (flow.config?.topicos && flow.config?.topicos_habilitados) {
       this.topicos = flow.config.topicos;
       console.log('📚 [TÓPICOS] Cargados:', Object.keys(this.topicos).join(', '));
+      console.log('   Ejemplo - topicos.empresa:', JSON.stringify(this.topicos.empresa)?.substring(0, 200));
+    } else {
+      console.log('❌ [TÓPICOS] NO se cargaron. Razón:');
+      if (!flow.config?.topicos) console.log('   - flow.config.topicos no existe');
+      if (!flow.config?.topicos_habilitados) console.log('   - flow.config.topicos_habilitados es false o no existe');
     }
   }
 
