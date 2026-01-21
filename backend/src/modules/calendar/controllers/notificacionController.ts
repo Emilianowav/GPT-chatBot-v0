@@ -121,7 +121,7 @@ export async function obtenerClientesParaNotificaciones(req: Request, res: Respo
     const clientes = await ClienteModel.find({ 
       empresaId, 
       activo: true 
-    }).select('nombre apellido telefono email').limit(100);
+    }).select('nombre apellido telefono email').sort({ creadoEn: -1 }).limit(100);
 
     res.json({
       clientes: clientes.map(c => ({

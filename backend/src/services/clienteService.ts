@@ -108,7 +108,7 @@ export async function obtenerClientes(
   const query: any = { empresaId };
   if (soloActivos) query.activo = true;
 
-  return await ContactoEmpresaModel.find(query).sort({ apellido: 1, nombre: 1 });
+  return await ContactoEmpresaModel.find(query).sort({ creadoEn: -1 });
 }
 
 /**
@@ -206,7 +206,7 @@ export async function buscarClientes(
       { telefono: regex },
       { email: regex }
     ]
-  }).limit(20).sort({ apellido: 1, nombre: 1 });
+  }).limit(20).sort({ creadoEn: -1 });
 }
 
 /**
@@ -278,7 +278,7 @@ export async function obtenerClientesPorAgente(
     empresaId,
     agentesAsignados: agenteId,
     activo: true
-  }).sort({ apellido: 1, nombre: 1 });
+  }).sort({ creadoEn: -1 });
 }
 
 /**
@@ -294,5 +294,5 @@ export async function obtenerClientesSinAgente(
       { agentesAsignados: { $exists: false } }
     ],
     activo: true
-  }).sort({ apellido: 1, nombre: 1 });
+  }).sort({ creadoEn: -1 });
 }
