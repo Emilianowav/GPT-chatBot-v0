@@ -65,23 +65,31 @@ export async function executeCarritoNode(
         console.log(`   📊 Total items: ${carrito.items.length}`);
         console.log(`   💰 Total: $${carrito.total}`);
 
-        // Guardar variables globales
-        context.setGlobalVariable('carrito_id', carrito._id.toString());
-        context.setGlobalVariable('carrito_items_count', carrito.items.length);
-        context.setGlobalVariable('carrito_total', carrito.total);
-
-        return {
-          output: {
-            success: true,
-            action: 'agregar',
-            carrito: {
-              id: carrito._id.toString(),
-              items_count: carrito.items.length,
-              total: carrito.total
-            },
-            mensaje: `✅ Producto agregado al carrito\n\n🛒 Total items: ${carrito.items.length}\n💰 Total: $${carrito.total.toLocaleString('es-AR')}`
-          }
+        // Preparar output
+        const output = {
+          success: true,
+          action: 'agregar',
+          carrito_id: carrito._id.toString(),
+          carrito_items_count: carrito.items.length,
+          carrito_total: carrito.total,
+          carrito: {
+            id: carrito._id.toString(),
+            items_count: carrito.items.length,
+            total: carrito.total
+          },
+          mensaje: `✅ Producto agregado al carrito\n\n🛒 Total items: ${carrito.items.length}\n💰 Total: $${carrito.total.toLocaleString('es-AR')}`
         };
+
+        // Guardar todas las propiedades como variables globales
+        console.log('\n💾 Guardando variables globales del nodo Carrito:');
+        for (const [key, value] of Object.entries(output)) {
+          if (typeof value !== 'object') {
+            context.setGlobalVariable(key, value);
+            console.log(`   ✅ ${key} = ${typeof value === 'string' ? value.substring(0, 100) : JSON.stringify(value)}`);
+          }
+        }
+
+        return { output };
       }
 
       case 'ver': {
@@ -97,25 +105,35 @@ export async function executeCarritoNode(
           mensajeFormateado = CarritoService.formatearParaWhatsApp(carrito);
         }
 
-        // Guardar variables globales
-        context.setGlobalVariable('carrito_id', carrito._id.toString());
-        context.setGlobalVariable('carrito_items_count', carrito.items.length);
-        context.setGlobalVariable('carrito_total', carrito.total);
+        // Preparar output
+        const output = {
+          success: true,
+          action: 'ver',
+          carrito_id: carrito._id.toString(),
+          carrito_items_count: carrito.items.length,
+          carrito_total: carrito.total,
+          carrito_items: carrito.items,
+          carrito: {
+            id: carrito._id.toString(),
+            items: carrito.items,
+            items_count: carrito.items.length,
+            total: carrito.total
+          },
+          mensaje_formateado: mensajeFormateado
+        };
+
+        // Guardar todas las propiedades como variables globales (excepto objetos complejos)
+        console.log('\n💾 Guardando variables globales del nodo Carrito:');
+        for (const [key, value] of Object.entries(output)) {
+          if (key !== 'carrito' && key !== 'carrito_items') { // No guardar objetos anidados
+            context.setGlobalVariable(key, value);
+            console.log(`   ✅ ${key} = ${typeof value === 'string' ? value.substring(0, 100) : JSON.stringify(value)}`);
+          }
+        }
+        // Guardar items como variable global también (puede ser útil)
         context.setGlobalVariable('carrito_items', carrito.items);
 
-        return {
-          output: {
-            success: true,
-            action: 'ver',
-            carrito: {
-              id: carrito._id.toString(),
-              items: carrito.items,
-              items_count: carrito.items.length,
-              total: carrito.total
-            },
-            mensaje_formateado: mensajeFormateado
-          }
-        };
+        return { output };
       }
 
       case 'eliminar': {
@@ -125,21 +143,28 @@ export async function executeCarritoNode(
         console.log('   🗑️  Producto eliminado del carrito');
         console.log(`   📊 Total items: ${carrito.items.length}`);
 
-        context.setGlobalVariable('carrito_items_count', carrito.items.length);
-        context.setGlobalVariable('carrito_total', carrito.total);
-
-        return {
-          output: {
-            success: true,
-            action: 'eliminar',
-            carrito: {
-              id: carrito._id.toString(),
-              items_count: carrito.items.length,
-              total: carrito.total
-            },
-            mensaje: `🗑️ Producto eliminado\n\n🛒 Total items: ${carrito.items.length}\n💰 Total: $${carrito.total.toLocaleString('es-AR')}`
-          }
+        const output = {
+          success: true,
+          action: 'eliminar',
+          carrito_id: carrito._id.toString(),
+          carrito_items_count: carrito.items.length,
+          carrito_total: carrito.total,
+          carrito: {
+            id: carrito._id.toString(),
+            items_count: carrito.items.length,
+            total: carrito.total
+          },
+          mensaje: `🗑️ Producto eliminado\n\n🛒 Total items: ${carrito.items.length}\n💰 Total: $${carrito.total.toLocaleString('es-AR')}`
         };
+
+        // Guardar variables globales
+        for (const [key, value] of Object.entries(output)) {
+          if (typeof value !== 'object') {
+            context.setGlobalVariable(key, value);
+          }
+        }
+
+        return { output };
       }
 
       case 'vaciar': {
@@ -147,16 +172,22 @@ export async function executeCarritoNode(
 
         console.log('   🧹 Carrito vaciado');
 
-        context.setGlobalVariable('carrito_items_count', 0);
-        context.setGlobalVariable('carrito_total', 0);
-
-        return {
-          output: {
-            success: true,
-            action: 'vaciar',
-            mensaje: '🧹 Carrito vaciado'
-          }
+        const output = {
+          success: true,
+          action: 'vaciar',
+          carrito_items_count: 0,
+          carrito_total: 0,
+          mensaje: '🧹 Carrito vaciado'
         };
+
+        // Guardar variables globales
+        for (const [key, value] of Object.entries(output)) {
+          if (typeof value !== 'object') {
+            context.setGlobalVariable(key, value);
+          }
+        }
+
+        return { output };
       }
 
       case 'actualizar_cantidad': {
@@ -172,20 +203,27 @@ export async function executeCarritoNode(
 
         console.log('   🔄 Cantidad actualizada');
 
-        context.setGlobalVariable('carrito_items_count', carrito.items.length);
-        context.setGlobalVariable('carrito_total', carrito.total);
-
-        return {
-          output: {
-            success: true,
-            action: 'actualizar_cantidad',
-            carrito: {
-              id: carrito._id.toString(),
-              items_count: carrito.items.length,
-              total: carrito.total
-            }
+        const output = {
+          success: true,
+          action: 'actualizar_cantidad',
+          carrito_id: carrito._id.toString(),
+          carrito_items_count: carrito.items.length,
+          carrito_total: carrito.total,
+          carrito: {
+            id: carrito._id.toString(),
+            items_count: carrito.items.length,
+            total: carrito.total
           }
         };
+
+        // Guardar variables globales
+        for (const [key, value] of Object.entries(output)) {
+          if (typeof value !== 'object') {
+            context.setGlobalVariable(key, value);
+          }
+        }
+
+        return { output };
       }
 
       default:
@@ -373,24 +411,31 @@ export async function executeMercadoPagoNode(
       preferencia.init_point
     );
 
-    // Guardar variables globales
-    context.setGlobalVariable('mercadopago_preferencia_id', preferencia.id);
-    context.setGlobalVariable('mercadopago_link', preferencia.init_point);
-    context.setGlobalVariable('mercadopago_estado', 'pendiente');
-    context.setGlobalVariable('mercadopago_total', carrito.total);
-    context.setGlobalVariable('mercadopago_items_count', carrito.items.length);
+    // Construir mensaje formateado
+    const mensaje = `💳 *¡Listo para pagar!*\n\nTu pedido:\n🛒 ${carrito.items.length} productos\n💰 Total: $${carrito.total.toLocaleString('es-AR')}\n\n👇 Paga de forma segura con Mercado Pago:\n${preferencia.init_point}\n\n⏰ Este link expira en 24 horas`;
 
-    return {
-      output: {
-        success: true,
-        preferencia_id: preferencia.id,
-        link_pago: preferencia.init_point,
-        estado_pago: 'pendiente',
-        total: carrito.total,
-        items_count: carrito.items.length,
-        mensaje: `💳 *¡Listo para pagar!*\n\nTu pedido:\n🛒 ${carrito.items.length} productos\n💰 Total: $${carrito.total.toLocaleString('es-AR')}\n\n👇 Paga de forma segura con Mercado Pago:\n${preferencia.init_point}\n\n⏰ Este link expira en 24 horas`
-      }
+    // Preparar output
+    const output = {
+      success: true,
+      preferencia_id: preferencia.id,
+      link_pago: preferencia.init_point,
+      init_point: preferencia.init_point, // Alias para compatibilidad
+      estado_pago: 'pendiente',
+      total: carrito.total,
+      items_count: carrito.items.length,
+      mensaje: mensaje
     };
+
+    // IMPORTANTE: Guardar TODAS las propiedades del output como variables globales
+    // Esto permite acceder a ellas tanto como {{mercadopago-crear-preference.mensaje}}
+    // como {{mensaje}} desde cualquier nodo posterior
+    console.log('\n💾 Guardando variables globales del nodo MercadoPago:');
+    for (const [key, value] of Object.entries(output)) {
+      context.setGlobalVariable(key, value);
+      console.log(`   ✅ ${key} = ${typeof value === 'string' ? value.substring(0, 100) : JSON.stringify(value)}`);
+    }
+
+    return { output };
   } catch (error: any) {
     console.error('   ❌ Error en nodo Mercado Pago:', error.message);
     return {

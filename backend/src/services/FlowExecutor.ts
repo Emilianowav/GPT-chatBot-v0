@@ -1664,6 +1664,10 @@ export class FlowExecutor {
     
     if (!value) {
       console.log(`         ❌ Nodo "${nodeId}" no encontrado en contexto`);
+      console.log(`         🔍 DEBUGGING: Mostrando TODO el contexto disponible:`);
+      Object.entries(this.context).forEach(([key, val]) => {
+        console.log(`            - ${key}: ${JSON.stringify(val)?.substring(0, 150)}`);
+      });
       return undefined;
     }
     
@@ -1675,6 +1679,8 @@ export class FlowExecutor {
         console.log(`         → Accediendo a .${part}: ${JSON.stringify(value)?.substring(0, 100)}`);
       } else {
         console.log(`         ❌ No se puede acceder a .${part} (valor no es objeto)`);
+        console.log(`         🔍 DEBUGGING: Tipo de valor actual: ${typeof value}`);
+        console.log(`         🔍 DEBUGGING: Valor actual: ${JSON.stringify(value)}`);
         return undefined;
       }
     }
@@ -1695,15 +1701,20 @@ export class FlowExecutor {
   private resolveVariableInString(str: string): string {
     if (!str) return '';
 
+    console.log(`      🔧 [resolveVariableInString] Input: "${str.substring(0, 200)}${str.length > 200 ? '...' : ''}"`);
+
     // Buscar todas las variables en el formato {{...}}
     const regex = /\{\{([^}]+)\}\}/g;
     
-    return str.replace(regex, (match, expression) => {
+    const result = str.replace(regex, (match, expression) => {
       expression = expression.trim();
+      console.log(`      🔍 Encontrada variable: "${expression}"`);
       
       try {
         // Evaluar la expresión de forma segura
         const result = this.evaluateExpression(expression);
+        
+        console.log(`      ✅ Resultado de evaluación: ${JSON.stringify(result)?.substring(0, 100)}`);
         
         // IMPORTANTE: NO formatear productos automáticamente
         // Dejar que GPT interprete el JSON según su systemPrompt
@@ -1713,12 +1724,21 @@ export class FlowExecutor {
         }
         
         // Retornar el valor como string
-        return result !== undefined && result !== null ? String(result) : match;
+        if (result !== undefined && result !== null) {
+          console.log(`      ✅ Reemplazando "${match}" → "${String(result).substring(0, 100)}"`);
+          return String(result);
+        } else {
+          console.log(`      ⚠️  Resultado undefined/null, manteniendo placeholder: "${match}"`);
+          return match;
+        }
       } catch (error) {
         console.warn(`      ⚠️  Error evaluando expresión "${expression}":`, error);
         return match; // Mantener el placeholder si hay error
       }
     });
+    
+    console.log(`      🔧 [resolveVariableInString] Output: "${result.substring(0, 200)}${result.length > 200 ? '...' : ''}"`);
+    return result;
   }
 
   /**
