@@ -23,11 +23,14 @@ export default function ListaTurnos({ turnos, configuracion, onCancelar, onActua
   const [loading, setLoading] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
 
-  // Paginación
+  // Ordenar turnos por fecha descendente (más recientes primero) y paginar
   const totalPages = Math.ceil(turnos.length / itemsPerPage);
   const turnosPaginados = useMemo(() => {
+    const turnosOrdenados = [...turnos].sort((a, b) => {
+      return new Date(b.fechaInicio).getTime() - new Date(a.fechaInicio).getTime();
+    });
     const start = (currentPage - 1) * itemsPerPage;
-    return turnos.slice(start, start + itemsPerPage);
+    return turnosOrdenados.slice(start, start + itemsPerPage);
   }, [turnos, currentPage, itemsPerPage]);
 
   const getEstadoColor = (estado: string) => {
