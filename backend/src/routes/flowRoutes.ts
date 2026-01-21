@@ -46,10 +46,17 @@ router.get('/by-id/:flowId', async (req: Request, res: Response): Promise<void> 
     console.log(`   Nombre: ${flow.nombre}`);
     console.log(`   Nodos: ${flow.nodes?.length}`);
     console.log(`   IDs de nodos: ${flow.nodes?.map((n: any) => n.id).join(', ')}`);
+    console.log(`   config existe: ${!!flow.config}`);
+    console.log(`   config.variables_globales existe: ${!!flow.config?.variables_globales}`);
+    if (flow.config?.variables_globales) {
+      console.log(`   variables_globales keys: ${Object.keys(flow.config.variables_globales).join(', ')}`);
+    }
+    console.log(`   config.topicos existe: ${!!flow.config?.topicos}`);
     
     // Verificar qué se va a enviar
     const responseData = flow;
     console.log(`📤 Enviando al cliente: ${responseData.nodes?.length} nodos`);
+    console.log(`📤 config.variables_globales en response: ${!!responseData.config?.variables_globales}`);
     
     res.json(responseData);
   } catch (error: any) {

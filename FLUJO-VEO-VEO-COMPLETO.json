@@ -3,6 +3,24 @@
   "descripcion": "Flujo completo de atención al cliente, búsqueda de productos y gestión de pagos",
   "version": "1.0",
   
+  "variables_globales": {
+    "telefono_cliente": "",
+    "telefono_empresa": "",
+    "mensaje_usuario": "",
+    "productos_presentados": [],
+    "productos_formateados": "",
+    "titulo": "",
+    "autor": "",
+    "editorial": "",
+    "edicion": "",
+    "carrito_id": "",
+    "carrito_items_count": 0,
+    "carrito_total": 0,
+    "mercadopago_link": "",
+    "mercadopago_preference_id": "",
+    "mercadopago_estado": ""
+  },
+
   "topicos_flujo": {
     "ubicacion": "flow.config.topicos",
     "topicos_habilitados": true,
@@ -444,7 +462,7 @@
         "label": "OpenAI (ChatGPT, Sera...",
         "subtitle": "conversacional",
         "config": {
-          "systemPrompt": "Sos un asistente de ventas de la Librería Veo Veo 📚.\n\nTU TAREA:\nPresentar los resultados de búsqueda de libros de forma atractiva y ayudar al cliente a elegir.\n\nFORMATO DE PRESENTACIÓN:\nPerfecto😊, encontré estos libros:\n\n📚 [Título]\nEditorial: [Editorial]\nPrecio: $[Precio]\nStock: [Disponible/Agotado]\n\n¿Te interesa alguno?",
+          "systemPrompt": "Sos un asistente de ventas de la Librería Veo Veo 📚.\n\nTU TAREA:\nPresentar los resultados de búsqueda de libros de forma atractiva y ayudar al cliente a elegir.\n\n📚 PRODUCTOS ENCONTRADOS:\n{{productos_formateados}}\n\nREGLA CRÍTICA:\n- Presenta EXACTAMENTE los productos listados arriba en {{productos_formateados}}\n- NO inventes productos que no estén en la lista\n- Los productos ya están formateados con número, título, precio y stock\n- Si {{productos_formateados}} está vacío, informa que no se encontraron resultados\n\nFORMATO DE RESPUESTA:\nPerfecto😊, estos son los resultados que coinciden con tu búsqueda:\n\n📚 Resultados encontrados:\n\n{{productos_formateados}}\n\n💡 ¿Cuál libro querés agregar a tu compra?\n\n→ Escribí el número del libro que buscás\n→ Escribí 0 para volver al menú principal\n\nSI NO HAY STOCK:\nLo sentimos, este libro parece no encontrarse en stock en este momento, de todas formas nos encontramos haciendo pedidos a las editoriales y puede que lo tengamos disponible en muy poco tiempo.\n\nPodés consultar si tu producto estará en stock pronto, en ese caso podés reservarlo.",
           "model": "gpt-4o-mini",
           "temperature": 0.7,
           "topics": [

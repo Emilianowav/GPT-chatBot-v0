@@ -325,38 +325,9 @@ export default function AdministradorFlujosPage() {
         tipo = 'cliente';
         console.log('   ✅ Tipo: Confirmación de turno');
       } else {
-        // Fallback para otros flujos (usar endpoint antiguo)
-        console.log('   ⚠️ Flujo no reconocido, usando endpoint antiguo');
-        const response = await fetch(`${apiUrl}/api/modules/calendar/configuracion/notificaciones/enviar-prueba`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}`
-        },
-          body: JSON.stringify({
-            empresaId,
-            notificacion: {
-              tipo: flujoId === 'confirmacion_turnos' ? 'confirmacion' : 'estado',
-              telefono
-            }
-          })
-        });
-
-        if (!response.ok) {
-          const errorData = await response.json();
-          throw new Error(errorData.message || 'Error al enviar mensaje de prueba');
-        }
-
-        const data = await response.json();
-        
-        setMensaje({
-          tipo: 'success',
-          texto: `✅ ${data.message || 'Mensaje de prueba enviado'}`
-        });
-        setModalPrueba(null);
-        setEnviandoPrueba(null);
-        setTimeout(() => setMensaje(null), 8000);
-        return;
+        // Para otros flujos, intentar determinar el tipo
+        console.log('   ⚠️ Flujo no reconocido, usando tipo por defecto');
+        tipo = 'cliente'; // Por defecto usar cliente
       }
       
       // ✅ USAR NUEVO ENDPOINT UNIFICADO para agentes y clientes

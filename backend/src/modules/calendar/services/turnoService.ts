@@ -22,8 +22,24 @@ export interface CrearTurnoData {
  * Crea un nuevo turno
  */
 export async function crearTurno(data: CrearTurnoData): Promise<ITurno> {
-  // 1. Obtener agente para verificar modo de atención
-  const agente = await AgenteModel.findById(data.agenteId);
+  // 1. Si no se especificó agente, buscar agente asignado al cliente
+  let agenteId = data.agenteId;
+  
+  if (!agenteId) {
+    console.log('🔍 No se especificó agente, buscando agente asignado al cliente...');
+    const cliente = await ContactoEmpresaModel.findById(data.clienteId);
+    
+    if (cliente && cliente.agentesAsignados && cliente.agentesAsignados.length > 0) {
+      // Usar el primer agente asignado
+      agenteId = cliente.agentesAsignados[0].toString();
+      console.log(`✅ Cliente tiene agente asignado: ${agenteId}`);
+    } else {
+      console.log('⚠️ Cliente no tiene agentes asignados');
+    }
+  }
+  
+  // 2. Obtener agente para verificar modo de atención
+  const agente = await AgenteModel.findById(agenteId);
   if (!agente) {
     throw new Error('Agente no encontrado');
   }
@@ -112,7 +128,7 @@ export async function crearTurno(data: CrearTurnoData): Promise<ITurno> {
     // En modo mixto, intentar validar disponibilidad pero no fallar si no hay slots
     const validacion = await verificarDisponibilidad(
       data.empresaId,
-      data.agenteId,
+      agenteId,
       data.fechaInicio,
       data.duracion
     );
@@ -123,7 +139,7 @@ export async function crearTurno(data: CrearTurnoData): Promise<ITurno> {
     }
   }
 
-  // 6. Crear turno
+  // 6. Crear turno (usar agenteId resuelto)
   const fechaFin = new Date(data.fechaInicio.getTime() + data.duracion * 60000);
 
   // 7. Programar notificaciones basadas en la configuración del módulo
@@ -217,7 +233,7 @@ export async function crearTurno(data: CrearTurnoData): Promise<ITurno> {
 
   const turno = new TurnoModel({
     empresaId: data.empresaId,
-    agenteId: data.agenteId,
+    agenteId: agenteId,  // Usar agenteId resuelto (puede venir de data o del cliente)
     clienteId: data.clienteId,
     fechaInicio: data.fechaInicio,
     fechaFin,

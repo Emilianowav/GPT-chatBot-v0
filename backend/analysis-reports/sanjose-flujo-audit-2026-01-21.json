@@ -1,0 +1,61 @@
+{
+  "fecha": "2026-01-21T15:40:37.812Z",
+  "configuracion": {
+    "_id": "68ff85d78e9f378673d09ffc",
+    "empresaId": "San Jose",
+    "activo": true,
+    "mensajeBienvenida": "👋 ¡Hola! Soy el asistente de *San Jose*\n\n¿Qué necesitás?\n\n1️⃣ Reservar viaje\n2️⃣ Ver mis reservas\n3️⃣ Cancelar reserva\n\nEscribí el número de tu opción.\n\n",
+    "mensajeDespedida": "¡Hasta pronto! 👋 Que tengas un excelente viaje. Si necesitas algo más, escríbeme.",
+    "mensajeError": "❌ No entendí tu respuesta. Por favor, elige una opción válida del menú.",
+    "timeoutMinutos": 15,
+    "flujos": {
+      "crearTurno": {
+        "nombre": "Reservar Viaje",
+        "descripcion": "Flujo para reservar un nuevo viaje",
+        "pasoInicial": "seleccionar_fecha",
+        "pasos": []
+      },
+      "consultarTurnos": {
+        "nombre": "Consultar Viajes",
+        "descripcion": "Flujo para ver viajes reservados",
+        "pasoInicial": "mostrar_viajes",
+        "pasos": []
+      },
+      "cancelarTurno": {
+        "nombre": "Cancelar Viaje",
+        "descripcion": "Flujo para cancelar un viaje",
+        "pasoInicial": "listar_viajes",
+        "pasos": []
+      },
+      "_id": "68ff85d78e9f378673d09ffd"
+    },
+    "horariosAtencion": {
+      "activo": false,
+      "inicio": "00:00",
+      "fin": "23:59",
+      "diasSemana": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6
+      ],
+      "mensajeFueraHorario": "",
+      "_id": "69068b88005b79aa12868f5a"
+    },
+    "requiereConfirmacion": true,
+    "permiteCancelacion": true,
+    "notificarAdmin": true,
+    "createdAt": "2025-10-27T14:46:47.198Z",
+    "updatedAt": "2026-01-15T15:00:32.352Z",
+    "__v": 0
+  },
+  "problemas": [
+    "Flujo \"crearTurno\" está vacío (0 pasos)",
+    "Flujo \"consultarTurnos\" está vacío (0 pasos)",
+    "Flujo \"cancelarTurno\" está vacío (0 pasos)"
+  ],
+  "advertencias": []
+}

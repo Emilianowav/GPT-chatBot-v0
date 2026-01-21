@@ -1,0 +1,1734 @@
+{
+  "fecha": "2026-01-21T15:35:48.661Z",
+  "empresa": {
+    "_id": "68ff85d68e9f378673d09fe9",
+    "nombre": "San Jose",
+    "categoria": "viajes",
+    "telefono": "+5493794044092",
+    "email": "contacto@sanjoseviajes.com",
+    "derivarA": [],
+    "prompt": "Sos el asistente virtual de San Jose, una empresa de viajes y turismo.\n\nTu función principal es ayudar a los clientes a:\n- Agendar viajes y reservas\n- Consultar sus viajes programados\n- Modificar o cancelar reservas\n- Brindar información sobre destinos y servicios\n\nCaracterísticas:\n- Sé amable, profesional y eficiente\n- Usa emojis para hacer la conversación más amigable\n- Confirma siempre los datos importantes (origen, destino, fecha, hora)\n- Si no entiendes algo, pide aclaración\n- Para consultas complejas, ofrece derivar a un agente humano\n\nInformación de la empresa:\n- Empresa: San Jose Viajes\n- Especialidad: Viajes y turismo\n- Teléfono: +5493794044092",
+    "saludos": [
+      "¡Hola! 👋 Bienvenido a San Jose Viajes. ¿En qué puedo ayudarte hoy?",
+      "¡Hola! 🚌 Soy el asistente de San Jose. ¿Querés agendar un viaje o consultar una reserva?",
+      "¡Bienvenido a San Jose Viajes! 🌎 ¿Cómo puedo ayudarte?"
+    ],
+    "catalogoPath": "data/catalogos/san_jose_viajes.txt",
+    "linkCatalogo": "https://sanjoseviajes.com/destinos",
+    "modelo": "gpt-3.5-turbo",
+    "phoneNumberId": "888481464341184",
+    "plan": "standard",
+    "modulos": [
+      {
+        "id": "calendar_booking",
+        "nombre": "Calendario de Viajes",
+        "descripcion": "Sistema de gestión de viajes y reservas con bot de WhatsApp",
+        "version": "1.0.0",
+        "categoria": "booking",
+        "icono": "🚌",
+        "activo": true,
+        "fechaActivacion": "2025-10-27T14:46:46.193Z",
+        "precio": 39,
+        "planMinimo": "standard",
+        "dependencias": [],
+        "permisos": [
+          "calendar:turnos:read",
+          "calendar:turnos:write",
+          "calendar:turnos:delete",
+          "calendar:agentes:read",
+          "calendar:agentes:write",
+          "calendar:config:admin"
+        ],
+        "configuracion": {
+          "duracionTurnoPorDefecto": 60,
+          "bufferEntreturnos": 0,
+          "anticipacionMinima": 1,
+          "anticipacionMaxima": 60,
+          "horaAperturaGlobal": "00:00",
+          "horaCierreGlobal": "23:59",
+          "requiereConfirmacionAgente": false,
+          "tiempoLimiteConfirmacion": 24,
+          "recordatorio24h": true,
+          "recordatorio1h": false,
+          "permiteCancelacion": true,
+          "tiempoLimiteCancelacion": 12,
+          "notificarAgenteNuevoTurno": true,
+          "notificarAgenteCancelacion": true
+        },
+        "autor": "Neural Team",
+        "documentacion": "https://docs.neural-crm.com/modules/calendar",
+        "soporte": "soporte@neural-crm.com"
+      }
+    ],
+    "limites": {
+      "mensajesMensuales": 5000,
+      "usuariosActivos": 500,
+      "almacenamiento": 1000,
+      "integraciones": 3,
+      "exportacionesMensuales": 10,
+      "agentesSimultaneos": 3,
+      "maxUsuarios": 10,
+      "maxAdmins": 2
+    },
+    "uso": {
+      "mensajesEsteMes": 1,
+      "usuariosActivos": 0,
+      "almacenamientoUsado": 0,
+      "exportacionesEsteMes": 0,
+      "ultimaActualizacion": "2026-01-05T13:31:16.297Z"
+    },
+    "facturacion": {
+      "ultimoPago": "2025-10-27T14:46:46.193Z",
+      "proximoPago": "2025-11-26T14:46:46.193Z",
+      "estado": "activo"
+    },
+    "ubicaciones": [],
+    "createdAt": "2025-10-27T14:46:46.218Z",
+    "updatedAt": "2026-01-05T13:31:16.297Z",
+    "__v": 1,
+    "gptConfig": {
+      "antiLoopRules": true,
+      "contextRules": [],
+      "enableFunctionCalling": true,
+      "maxContextMessages": 10,
+      "productExamples": [],
+      "temperature": 0.7
+    }
+  },
+  "chatbot": null,
+  "apiConfigurations": [],
+  "flujos": [],
+  "configuracionModulo": {
+    "_id": "68ff85d78e9f378673d09ff7",
+    "empresaId": "San Jose",
+    "tipoNegocio": "viajes",
+    "activo": true,
+    "nomenclatura": {
+      "turno": "Viaje",
+      "turnos": "Viajes",
+      "agente": "Chofer",
+      "agentes": "Choferes",
+      "cliente": "Pasajero",
+      "clientes": "Pasajeros",
+      "recurso": "Vehículo",
+      "recursos": "Vehículos"
+    },
+    "camposPersonalizados": [
+      {
+        "clave": "origen",
+        "etiqueta": "Origen",
+        "tipo": "texto",
+        "requerido": true,
+        "opciones": [],
+        "placeholder": "Ej: Av. Corrientes 1234",
+        "orden": 1,
+        "mostrarEnLista": true,
+        "mostrarEnCalendario": true,
+        "usarEnNotificacion": true
+      },
+      {
+        "clave": "destino",
+        "etiqueta": "Destino",
+        "tipo": "texto",
+        "requerido": true,
+        "opciones": [],
+        "placeholder": "Ej: Aeropuerto Ezeiza",
+        "orden": 2,
+        "mostrarEnLista": true,
+        "mostrarEnCalendario": true,
+        "usarEnNotificacion": true
+      },
+      {
+        "clave": "pasajeros",
+        "etiqueta": "Cantidad de pasajeros",
+        "tipo": "numero",
+        "requerido": false,
+        "opciones": [],
+        "valorPorDefecto": 1,
+        "orden": 3,
+        "mostrarEnLista": true,
+        "mostrarEnCalendario": false,
+        "usarEnNotificacion": true,
+        "validacion": {
+          "min": 1,
+          "max": 8,
+          "mensaje": "Debe ser entre 1 y 8 pasajeros"
+        }
+      },
+      {
+        "clave": "equipaje",
+        "etiqueta": "Equipaje",
+        "tipo": "select",
+        "requerido": false,
+        "opciones": [
+          "Sin equipaje",
+          "Equipaje de mano",
+          "Valija mediana",
+          "Valija grande",
+          "Múltiples valijas"
+        ],
+        "orden": 4,
+        "mostrarEnLista": false,
+        "mostrarEnCalendario": false,
+        "usarEnNotificacion": false
+      }
+    ],
+    "turnos": {
+      "usaAgentes": true,
+      "agenteRequerido": true,
+      "usaRecursos": false,
+      "recursoRequerido": false,
+      "duracionPorDefecto": 30,
+      "permiteDuracionVariable": true
+    },
+    "plantillasMeta": {
+      "notificacionDiariaAgentes": {
+        "activa": true,
+        "tipo": "plantilla_meta",
+        "nombre": "chofer_sanjose",
+        "idioma": "es",
+        "parametros": [
+          {
+            "orden": 1,
+            "variable": "nombre",
+            "valor": "{{nombre}}"
+          },
+          {
+            "orden": 2,
+            "variable": "lista_turnos",
+            "valor": "{{lista_turnos}}"
+          }
+        ],
+        "programacion": {
+          "metodoVerificacion": "hora_fija",
+          "horaEnvio": "07:00",
+          "frecuencia": "diaria",
+          "rangoHorario": "hoy",
+          "filtroEstado": [
+            "pendiente",
+            "confirmado"
+          ],
+          "incluirDetalles": {
+            "origen": true,
+            "destino": true,
+            "nombreCliente": true,
+            "telefonoCliente": false,
+            "horaReserva": true,
+            "notasInternas": false
+          }
+        },
+        "ultimoEnvio": "2026-01-21T09:58:30.871Z"
+      },
+      "confirmacionTurnos": {
+        "activa": true,
+        "tipo": "plantilla_meta",
+        "nombre": "clientes_sanjose",
+        "idioma": "es",
+        "parametros": [
+          {
+            "orden": 1,
+            "variable": "nombre",
+            "valor": "{{nombre}}"
+          },
+          {
+            "orden": 2,
+            "variable": "turnos",
+            "valor": "{{turnos}}"
+          }
+        ],
+        "programacion": {
+          "metodoVerificacion": "hora_fija",
+          "horaEnvio": "20:03",
+          "diasAntes": 1,
+          "filtroEstado": [
+            "no_confirmado",
+            "pendiente"
+          ]
+        }
+      }
+    },
+    "creadoEn": "2025-10-27T14:46:47.076Z",
+    "actualizadoEn": "2026-01-21T09:58:31.607Z",
+    "__v": 1,
+    "agenteRequerido": true,
+    "chatbotActivo": true,
+    "chatbotPuedeCancelar": true,
+    "chatbotPuedeCrear": true,
+    "chatbotPuedeModificar": true,
+    "duracionPorDefecto": 30,
+    "estadosPersonalizados": [],
+    "notificaciones": [],
+    "permiteDuracionVariable": true,
+    "recursoRequerido": false,
+    "requiereConfirmacion": false,
+    "usaAgentes": true,
+    "usaHorariosDisponibilidad": true,
+    "usaRecursos": false,
+    "mensajesFlujo": {
+      "confirmacion_turnos": {
+        "esperando_confirmacion": {
+          "mensaje": "¿Qué deseas hacer con tu {turno}?",
+          "botones": [
+            {
+              "id": "confirmar",
+              "texto": "Confirmar"
+            },
+            {
+              "id": "modificar",
+              "texto": "Modificar"
+            },
+            {
+              "id": "cancelar",
+              "texto": "Cancelar"
+            }
+          ]
+        },
+        "confirmado": {
+          "mensaje": "✅ Perfecto! Tu {turno} ha sido confirmado para el {fecha} a las {hora}. Te esperamos!",
+          "botones": []
+        },
+        "cancelado": {
+          "mensaje": "Tu {turno} del {fecha} a las {hora} ha sido cancelado. Si necesitas reprogramar, escríbenos.",
+          "botones": []
+        },
+        "modificado": {
+          "mensaje": "Para modificar tu {turno}, por favor indícame:\n1. Nueva fecha\n2. Nueva hora\n3. Otro detalle a cambiar",
+          "botones": []
+        },
+        "error": {
+          "mensaje": "Hubo un problema procesando tu solicitud. Por favor, intenta nuevamente o contacta con nosotros.",
+          "botones": []
+        }
+      },
+      "menu_principal": {
+        "bienvenida": {
+          "mensaje": "¡Hola! Soy el asistente de {nombre_empresa}. ¿En qué puedo ayudarte?",
+          "botones": [],
+          "opciones": [
+            {
+              "id": "reservar",
+              "texto": "Reservar {turno}",
+              "descripcion": "Agenda un nuevo {turno}"
+            },
+            {
+              "id": "consultar",
+              "texto": "Consultar {turno}",
+              "descripcion": "Ver tus {turnos} programados"
+            },
+            {
+              "id": "cancelar",
+              "texto": "Cancelar {turno}",
+              "descripcion": "Cancelar un {turno} existente"
+            },
+            {
+              "id": "otro",
+              "texto": "Otra consulta",
+              "descripcion": "Hablar con un asesor"
+            }
+          ]
+        },
+        "opcion_invalida": {
+          "mensaje": "No entendí tu opción. Por favor, selecciona una de las opciones del menú.",
+          "botones": []
+        }
+      },
+      "notificacion_viajes": {
+        "esperando_opcion_inicial": {
+          "mensaje": "Recibimos tu mensaje. ¿Qué deseas hacer?",
+          "botones": [
+            {
+              "id": "confirmar",
+              "texto": "Confirmar"
+            },
+            {
+              "id": "modificar",
+              "texto": "Modificar"
+            },
+            {
+              "id": "cancelar",
+              "texto": "Cancelar"
+            }
+          ]
+        },
+        "confirmado": {
+          "mensaje": "✅ {turnos} confirmado(s). ¡Gracias!",
+          "botones": []
+        },
+        "cancelado": {
+          "mensaje": "Tu {turno} ha sido cancelado.",
+          "botones": []
+        }
+      }
+    },
+    "variablesDinamicas": {
+      "nombre_empresa": "San Jose",
+      "nomenclatura_turno": "Viaje",
+      "nomenclatura_turnos": "Viajes",
+      "nomenclatura_agente": "Chofer",
+      "nomenclatura_agentes": "Choferes",
+      "zona_horaria": "America/Argentina/Buenos_Aires",
+      "moneda": "ARS",
+      "idioma": "es"
+    }
+  },
+  "agentes": [
+    {
+      "_id": "691c69b32b6201a7ed28bc0b",
+      "empresaId": "San Jose",
+      "nombre": "ALEXIS  ",
+      "apellido": "MOVIL C -IDA-",
+      "email": "transportesanjosesrl@gmail.com",
+      "telefono": "3795383374",
+      "especialidad": "",
+      "descripcion": "",
+      "titulo": "",
+      "sector": "",
+      "modoAtencion": "turnos_libres",
+      "disponibilidad": [
+        {
+          "diaSemana": 1,
+          "horaInicio": "07:00",
+          "horaFin": "20:00",
+          "activo": true
+        },
+        {
+          "diaSemana": 2,
+          "horaInicio": "07:00",
+          "horaFin": "20:00",
+          "activo": true
+        },
+        {
+          "diaSemana": 3,
+          "horaInicio": "07:00",
+          "horaFin": "20:00",
+          "activo": true
+        },
+        {
+          "diaSemana": 4,
+          "horaInicio": "07:00",
+          "horaFin": "20:00",
+          "activo": true
+        },
+        {
+          "diaSemana": 5,
+          "horaInicio": "07:00",
+          "horaFin": "20:00",
+          "activo": true
+        }
+      ],
+      "duracionTurnoPorDefecto": 5,
+      "bufferEntreturnos": 5,
+      "capacidadSimultanea": 10,
+      "maximoTurnosPorDia": 30,
+      "activo": true,
+      "creadoEn": "2025-11-18T12:42:27.420Z",
+      "actualizadoEn": "2026-01-21T12:19:56.320Z",
+      "__v": 2
+    },
+    {
+      "_id": "6942c7af75f55c5742b01833",
+      "empresaId": "San Jose",
+      "nombre": "MOVIL ",
+      "apellido": "E",
+      "email": "TRANSPORTESANJOSESRL@GMAIL.COM",
+      "telefono": "3794295373",
+      "especialidad": "",
+      "descripcion": "",
+      "titulo": "",
+      "sector": "",
+      "modoAtencion": "turnos_libres",
+      "disponibilidad": [
+        {
+          "diaSemana": 1,
+          "horaInicio": "09:00",
+          "horaFin": "18:00",
+          "activo": true
+        },
+        {
+          "diaSemana": 2,
+          "horaInicio": "09:00",
+          "horaFin": "18:00",
+          "activo": true
+        },
+        {
+          "diaSemana": 3,
+          "horaInicio": "09:00",
+          "horaFin": "18:00",
+          "activo": true
+        },
+        {
+          "diaSemana": 4,
+          "horaInicio": "09:00",
+          "horaFin": "18:00",
+          "activo": true
+        },
+        {
+          "diaSemana": 5,
+          "horaInicio": "09:00",
+          "horaFin": "18:00",
+          "activo": true
+        }
+      ],
+      "duracionTurnoPorDefecto": 30,
+      "bufferEntreturnos": 5,
+      "capacidadSimultanea": 19,
+      "maximoTurnosPorDia": 0,
+      "activo": true,
+      "creadoEn": "2025-12-17T15:09:35.180Z",
+      "actualizadoEn": "2025-12-26T12:18:27.555Z",
+      "__v": 0
+    },
+    {
+      "_id": "694e74d51b620050923f2ba6",
+      "empresaId": "San Jose",
+      "nombre": "MOVIL ",
+      "apellido": "A",
+      "email": "TRANSPORTESANJOSESRL@hotmail.COM",
+      "telefono": "3794235287",
+      "especialidad": "",
+      "descripcion": "",
+      "titulo": "",
+      "sector": "",
+      "modoAtencion": "turnos_programados",
+      "disponibilidad": [
+        {
+          "diaSemana": 1,
+          "horaInicio": "08:00",
+          "horaFin": "20:00",
+          "activo": true
+        },
+        {
+          "diaSemana": 2,
+          "horaInicio": "08:00",
+          "horaFin": "20:00",
+          "activo": true
+        },
+        {
+          "diaSemana": 3,
+          "horaInicio": "08:00",
+          "horaFin": "20:00",
+          "activo": true
+        },
+        {
+          "diaSemana": 4,
+          "horaInicio": "08:00",
+          "horaFin": "20:00",
+          "activo": true
+        },
+        {
+          "diaSemana": 5,
+          "horaInicio": "08:00",
+          "horaFin": "20:00",
+          "activo": true
+        }
+      ],
+      "duracionTurnoPorDefecto": 10,
+      "bufferEntreturnos": 5,
+      "capacidadSimultanea": 1,
+      "maximoTurnosPorDia": 0,
+      "activo": true,
+      "creadoEn": "2025-12-26T11:43:17.030Z",
+      "actualizadoEn": "2025-12-26T12:19:04.524Z",
+      "__v": 0
+    },
+    {
+      "_id": "694e75261b620050923f2bae",
+      "empresaId": "San Jose",
+      "nombre": "MOVIL ",
+      "apellido": "D",
+      "email": "LUIS@MICHELINI.COM",
+      "telefono": "3795581280",
+      "especialidad": "",
+      "descripcion": "",
+      "titulo": "",
+      "sector": "",
+      "modoAtencion": "turnos_programados",
+      "disponibilidad": [
+        {
+          "diaSemana": 1,
+          "horaInicio": "08:00",
+          "horaFin": "20:00",
+          "activo": true
+        },
+        {
+          "diaSemana": 2,
+          "horaInicio": "08:00",
+          "horaFin": "20:00",
+          "activo": true
+        },
+        {
+          "diaSemana": 3,
+          "horaInicio": "08:00",
+          "horaFin": "20:00",
+          "activo": true
+        },
+        {
+          "diaSemana": 4,
+          "horaInicio": "08:00",
+          "horaFin": "20:00",
+          "activo": true
+        },
+        {
+          "diaSemana": 5,
+          "horaInicio": "08:00",
+          "horaFin": "20:00",
+          "activo": true
+        }
+      ],
+      "duracionTurnoPorDefecto": 10,
+      "bufferEntreturnos": 5,
+      "capacidadSimultanea": 1,
+      "maximoTurnosPorDia": 0,
+      "activo": true,
+      "creadoEn": "2025-12-26T11:44:38.486Z",
+      "actualizadoEn": "2025-12-26T12:18:49.497Z",
+      "__v": 0
+    },
+    {
+      "_id": "694e7db31b620050923f2cc1",
+      "empresaId": "San Jose",
+      "nombre": "MOVIL ",
+      "apellido": "B",
+      "email": "PORAHORA@HUGO.COM",
+      "telefono": "3794046815",
+      "especialidad": "",
+      "descripcion": "",
+      "titulo": "",
+      "sector": "",
+      "modoAtencion": "turnos_programados",
+      "disponibilidad": [
+        {
+          "diaSemana": 1,
+          "horaInicio": "08:00",
+          "horaFin": "20:00",
+          "activo": true
+        },
+        {
+          "diaSemana": 2,
+          "horaInicio": "08:00",
+          "horaFin": "20:00",
+          "activo": true
+        },
+        {
+          "diaSemana": 3,
+          "horaInicio": "08:00",
+          "horaFin": "20:00",
+          "activo": true
+        },
+        {
+          "diaSemana": 4,
+          "horaInicio": "08:00",
+          "horaFin": "20:00",
+          "activo": true
+        },
+        {
+          "diaSemana": 5,
+          "horaInicio": "08:00",
+          "horaFin": "20:00",
+          "activo": true
+        }
+      ],
+      "duracionTurnoPorDefecto": 10,
+      "bufferEntreturnos": 5,
+      "capacidadSimultanea": 1,
+      "maximoTurnosPorDia": 0,
+      "activo": true,
+      "creadoEn": "2025-12-26T12:21:07.351Z",
+      "actualizadoEn": "2025-12-26T12:21:07.351Z",
+      "__v": 0
+    },
+    {
+      "_id": "694e7e0c1b620050923f2cc9",
+      "empresaId": "San Jose",
+      "nombre": "MOVIL",
+      "apellido": "F",
+      "email": "MARTIN@12.COM",
+      "telefono": "3794895703",
+      "especialidad": "",
+      "descripcion": "",
+      "titulo": "",
+      "sector": "",
+      "modoAtencion": "turnos_programados",
+      "disponibilidad": [
+        {
+          "diaSemana": 1,
+          "horaInicio": "08:00",
+          "horaFin": "20:00",
+          "activo": true
+        },
+        {
+          "diaSemana": 2,
+          "horaInicio": "08:00",
+          "horaFin": "20:00",
+          "activo": true
+        },
+        {
+          "diaSemana": 3,
+          "horaInicio": "08:00",
+          "horaFin": "20:00",
+          "activo": true
+        },
+        {
+          "diaSemana": 4,
+          "horaInicio": "08:00",
+          "horaFin": "20:00",
+          "activo": true
+        },
+        {
+          "diaSemana": 5,
+          "horaInicio": "08:00",
+          "horaFin": "20:00",
+          "activo": true
+        }
+      ],
+      "duracionTurnoPorDefecto": 10,
+      "bufferEntreturnos": 5,
+      "capacidadSimultanea": 1,
+      "maximoTurnosPorDia": 0,
+      "activo": true,
+      "creadoEn": "2025-12-26T12:22:36.770Z",
+      "actualizadoEn": "2025-12-26T12:22:36.770Z",
+      "__v": 0
+    },
+    {
+      "_id": "695bd00d8ef13c4d11fae12b",
+      "empresaId": "San Jose",
+      "nombre": "ALEXIS",
+      "apellido": "MOVIL  C-VUELTA-",
+      "email": "JJJEEE@HOTMAIL.CPM",
+      "telefono": "3794774104",
+      "especialidad": "",
+      "descripcion": "",
+      "titulo": "",
+      "sector": "",
+      "modoAtencion": "turnos_libres",
+      "disponibilidad": [
+        {
+          "diaSemana": 1,
+          "horaInicio": "07:00",
+          "horaFin": "18:00",
+          "activo": true
+        },
+        {
+          "diaSemana": 2,
+          "horaInicio": "07:00",
+          "horaFin": "18:00",
+          "activo": true
+        },
+        {
+          "diaSemana": 3,
+          "horaInicio": "07:00",
+          "horaFin": "18:00",
+          "activo": true
+        },
+        {
+          "diaSemana": 4,
+          "horaInicio": "07:00",
+          "horaFin": "18:00",
+          "activo": true
+        },
+        {
+          "diaSemana": 5,
+          "horaInicio": "07:00",
+          "horaFin": "18:00",
+          "activo": true
+        }
+      ],
+      "duracionTurnoPorDefecto": 30,
+      "bufferEntreturnos": 5,
+      "capacidadSimultanea": 10,
+      "maximoTurnosPorDia": 0,
+      "activo": true,
+      "creadoEn": "2026-01-05T14:51:57.814Z",
+      "actualizadoEn": "2026-01-15T14:15:28.303Z",
+      "__v": 1
+    },
+    {
+      "_id": "6968f94af1f2457eae49a2b7",
+      "empresaId": "San Jose",
+      "nombre": "GONZALO",
+      "apellido": "AGRASAR",
+      "email": "GONZALO@GMAIL.COM",
+      "telefono": "3795383374",
+      "especialidad": "",
+      "descripcion": "",
+      "titulo": "",
+      "sector": "",
+      "modoAtencion": "turnos_programados",
+      "disponibilidad": [
+        {
+          "diaSemana": 1,
+          "horaInicio": "09:00",
+          "horaFin": "18:00",
+          "activo": true
+        },
+        {
+          "diaSemana": 2,
+          "horaInicio": "09:00",
+          "horaFin": "18:00",
+          "activo": true
+        },
+        {
+          "diaSemana": 3,
+          "horaInicio": "09:00",
+          "horaFin": "18:00",
+          "activo": true
+        },
+        {
+          "diaSemana": 4,
+          "horaInicio": "09:00",
+          "horaFin": "18:00",
+          "activo": true
+        },
+        {
+          "diaSemana": 5,
+          "horaInicio": "09:00",
+          "horaFin": "18:00",
+          "activo": true
+        }
+      ],
+      "duracionTurnoPorDefecto": 3,
+      "bufferEntreturnos": 5,
+      "capacidadSimultanea": 1,
+      "maximoTurnosPorDia": 0,
+      "activo": true,
+      "creadoEn": "2026-01-15T14:27:22.703Z",
+      "actualizadoEn": "2026-01-15T14:47:32.169Z",
+      "__v": 0
+    }
+  ],
+  "turnos": [
+    {
+      "_id": "6941751c81b92bfce9710e59",
+      "empresaId": "San Jose",
+      "agenteId": "6941735281b92bfce9710d89",
+      "clienteId": "694174e581b92bfce9710db5",
+      "fechaInicio": "2025-12-16T21:00:00.000Z",
+      "fechaFin": "2025-12-16T21:30:00.000Z",
+      "duracion": 30,
+      "estado": "completado",
+      "tipoReserva": "viaje",
+      "datos": {
+        "origen": "Salta 671",
+        "destino": "Av juan torres de Vera 433",
+        "pasajeros": 1
+      },
+      "notas": "Reservado vía WhatsApp",
+      "creadoPor": "bot",
+      "confirmado": true,
+      "notificaciones": [],
+      "creadoEn": "2025-12-16T15:05:00.231Z",
+      "actualizadoEn": "2025-12-16T15:17:50.664Z",
+      "__v": 0,
+      "confirmadoEn": "2025-12-16T15:08:59.965Z"
+    },
+    {
+      "_id": "6942ccbc75f55c5742b01997",
+      "empresaId": "San Jose",
+      "agenteId": "691c69b32b6201a7ed28bc0b",
+      "clienteId": "691c74c62b6201a7ed28be74",
+      "fechaInicio": "2025-12-17T12:35:00.000Z",
+      "fechaFin": "2025-12-17T13:05:00.000Z",
+      "duracion": 30,
+      "estado": "completado",
+      "tipoReserva": "viaje",
+      "datos": {
+        "origen": "Uruguay 456",
+        "destino": "Perito moreno 4600",
+        "pasajeros": 4
+      },
+      "notas": "Reservado vía WhatsApp",
+      "creadoPor": "bot",
+      "confirmado": true,
+      "notificaciones": [],
+      "creadoEn": "2025-12-17T15:31:08.720Z",
+      "actualizadoEn": "2025-12-19T15:34:45.684Z",
+      "__v": 0,
+      "confirmadoEn": "2025-12-17T15:34:28.486Z"
+    },
+    {
+      "_id": "691c75582b6201a7ed28bf0b",
+      "empresaId": "San Jose",
+      "agenteId": "691c69b32b6201a7ed28bc0b",
+      "clienteId": "691c74c62b6201a7ed28be74",
+      "fechaInicio": "2025-11-18T12:00:00.000Z",
+      "fechaFin": "2025-11-18T12:30:00.000Z",
+      "duracion": 30,
+      "estado": "confirmado",
+      "tipoReserva": "viaje",
+      "datos": {
+        "origen": "Salta 671",
+        "destino": "Alas",
+        "pasajeros": 2
+      },
+      "notas": "Reservado vía WhatsApp",
+      "creadoPor": "bot",
+      "confirmado": true,
+      "notificaciones": [],
+      "creadoEn": "2025-11-18T13:32:08.663Z",
+      "actualizadoEn": "2025-11-18T13:32:59.534Z",
+      "__v": 0,
+      "confirmadoEn": "2025-11-18T13:32:59.533Z"
+    },
+    {
+      "_id": "69416f0c81b92bfce9710cfa",
+      "empresaId": "San Jose",
+      "agenteId": "691c69b32b6201a7ed28bc0b",
+      "clienteId": "691c74c62b6201a7ed28be74",
+      "fechaInicio": "2025-12-16T11:40:00.000Z",
+      "fechaFin": "2025-12-16T12:10:00.000Z",
+      "duracion": 30,
+      "estado": "completado",
+      "tipoReserva": "viaje",
+      "datos": {
+        "origen": "Salta 729",
+        "destino": "Brasil 1430",
+        "pasajeros": 2
+      },
+      "notas": "Reservado vía WhatsApp",
+      "creadoPor": "bot",
+      "confirmado": true,
+      "notificaciones": [],
+      "creadoEn": "2025-12-16T14:39:08.083Z",
+      "actualizadoEn": "2025-12-16T14:53:22.514Z",
+      "__v": 0,
+      "confirmadoEn": "2025-12-16T14:53:10.178Z"
+    },
+    {
+      "_id": "694166bc81b92bfce9710b89",
+      "empresaId": "San Jose",
+      "agenteId": "691c69b32b6201a7ed28bc0b",
+      "clienteId": "69414a4381b92bfce971094c",
+      "fechaInicio": "2025-12-17T11:30:00.000Z",
+      "fechaFin": "2025-12-17T11:40:00.000Z",
+      "duracion": 10,
+      "estado": "completado",
+      "datos": {
+        "origen": "San justo 123",
+        "destino": "Av principal 123",
+        "pasajeros": 1
+      },
+      "notas": "",
+      "notificaciones": [],
+      "creadoPor": "admin",
+      "confirmado": true,
+      "creadoEn": "2025-12-16T14:03:40.696Z",
+      "actualizadoEn": "2025-12-16T14:51:58.388Z",
+      "__v": 0,
+      "confirmadoEn": "2025-12-16T14:51:51.938Z"
+    },
+    {
+      "_id": "691c6b062b6201a7ed28bd3f",
+      "empresaId": "San Jose",
+      "agenteId": "691c69b32b6201a7ed28bc0b",
+      "clienteId": "691c6a672b6201a7ed28bcbd",
+      "fechaInicio": "2025-11-18T14:30:00.000Z",
+      "fechaFin": "2025-11-18T15:00:00.000Z",
+      "duracion": 30,
+      "estado": "completado",
+      "tipoReserva": "viaje",
+      "datos": {
+        "origen": "Patagonia 1672",
+        "destino": "Yrigoyen 928",
+        "pasajeros": 2
+      },
+      "notas": "Reservado vía WhatsApp",
+      "creadoPor": "bot",
+      "confirmado": true,
+      "notificaciones": [],
+      "creadoEn": "2025-11-18T12:48:06.096Z",
+      "actualizadoEn": "2025-11-18T13:02:42.578Z",
+      "__v": 0,
+      "confirmadoEn": "2025-11-18T12:57:19.694Z"
+    },
+    {
+      "_id": "691278c2101a6314153bf838",
+      "empresaId": "San Jose",
+      "agenteId": "69042dd977db2628a18a0b83",
+      "clienteId": "691277ec101a6314153bf76d",
+      "fechaInicio": "2025-11-10T13:00:00.000Z",
+      "fechaFin": "2025-11-10T13:30:00.000Z",
+      "duracion": 30,
+      "estado": "completado",
+      "datos": {
+        "origen": "123prueba",
+        "destino": "prueba123",
+        "pasajeros": 1
+      },
+      "notas": "",
+      "notificaciones": [],
+      "creadoPor": "admin",
+      "confirmado": true,
+      "creadoEn": "2025-11-10T23:44:02.030Z",
+      "actualizadoEn": "2025-11-12T00:29:35.547Z",
+      "__v": 0,
+      "confirmadoEn": "2025-11-10T23:44:44.579Z"
+    },
+    {
+      "_id": "69127861101a6314153bf7e6",
+      "empresaId": "San Jose",
+      "agenteId": "69042dd977db2628a18a0b83",
+      "clienteId": "691277ec101a6314153bf76d",
+      "fechaInicio": "2025-11-11T13:30:00.000Z",
+      "fechaFin": "2025-11-11T14:00:00.000Z",
+      "duracion": 30,
+      "estado": "completado",
+      "tipoReserva": "viaje",
+      "datos": {
+        "origen": "San Justo 2345",
+        "destino": "Plaza Italia",
+        "pasajeros": 1
+      },
+      "notas": "Reservado vía WhatsApp",
+      "creadoPor": "bot",
+      "confirmado": false,
+      "notificaciones": [
+        {
+          "tipo": "confirmacion",
+          "programadaPara": "2025-11-10T23:43:59.654Z",
+          "enviada": true,
+          "enviadaEn": "2025-11-10T23:43:59.654Z",
+          "plantilla": "clientes_sanjose",
+          "_id": "691278bfec1378a4170c1195"
+        }
+      ],
+      "creadoEn": "2025-11-10T23:42:25.503Z",
+      "actualizadoEn": "2025-11-12T00:29:41.395Z",
+      "__v": 1
+    },
+    {
+      "_id": "691c6a132b6201a7ed28bc8a",
+      "empresaId": "San Jose",
+      "agenteId": "691c69b32b6201a7ed28bc0b",
+      "clienteId": "691c69222b6201a7ed28bb85",
+      "fechaInicio": "2025-11-18T11:00:00.000Z",
+      "fechaFin": "2025-11-18T11:30:00.000Z",
+      "duracion": 30,
+      "estado": "completado",
+      "tipoReserva": "viaje",
+      "datos": {
+        "origen": "Salta 671",
+        "destino": "Irigoyen 928 creando lazos",
+        "pasajeros": 1
+      },
+      "notas": "Reservado vía WhatsApp",
+      "creadoPor": "bot",
+      "confirmado": true,
+      "notificaciones": [],
+      "creadoEn": "2025-11-18T12:44:03.960Z",
+      "actualizadoEn": "2025-11-18T12:44:28.845Z",
+      "__v": 0,
+      "confirmadoEn": "2025-11-18T12:44:20.660Z"
+    },
+    {
+      "_id": "69416b354c29e465da8f9072",
+      "empresaId": "San Jose",
+      "agenteId": "691c69b32b6201a7ed28bc0b",
+      "clienteId": "69416ae14c29e465da8f9052",
+      "fechaInicio": "2025-12-17T15:00:00.000Z",
+      "fechaFin": "2025-12-17T15:10:00.000Z",
+      "duracion": 10,
+      "estado": "completado",
+      "datos": {
+        "origen": "avenida 123",
+        "destino": "colon 123",
+        "pasajeros": 1
+      },
+      "notas": "",
+      "notificaciones": [
+        {
+          "tipo": "confirmacion",
+          "programadaPara": "2025-12-16T23:42:19.178Z",
+          "enviada": true,
+          "enviadaEn": "2025-12-16T23:42:19.178Z",
+          "plantilla": "clientes_sanjose",
+          "_id": "6941ee5b75f55c5742b007d5"
+        }
+      ],
+      "creadoPor": "admin",
+      "confirmado": true,
+      "creadoEn": "2025-12-16T14:22:45.594Z",
+      "actualizadoEn": "2025-12-17T15:20:26.065Z",
+      "__v": 1,
+      "confirmadoEn": "2025-12-17T15:20:18.966Z"
+    }
+  ],
+  "contactos": [
+    {
+      "_id": "6942ad2275f55c5742b015d0",
+      "empresaId": "San Jose",
+      "telefono": "5493794937248",
+      "nombre": "PEREZ",
+      "apellido": "KARINA",
+      "direccion": "SAENZ 1448",
+      "ciudad": "CORRINETES",
+      "provincia": "CAPITAL",
+      "codigoPostal": "3400",
+      "fechaNacimiento": "1986-05-30T00:00:00.000Z",
+      "dni": "32.306.158",
+      "notas": "PAMI",
+      "origen": "manual",
+      "preferencias": {
+        "aceptaWhatsApp": true,
+        "aceptaSMS": false,
+        "aceptaEmail": true,
+        "recordatorioTurnos": true,
+        "diasAnticipacionRecordatorio": 1,
+        "horaRecordatorio": "10:00",
+        "notificacionesPromocion": false,
+        "notificacionesDisponibilidad": false,
+        "_id": "6942ad2275f55c5742b015d1"
+      },
+      "conversaciones": {
+        "historial": [
+          "Menu",
+          "👋 ¡Hola! Soy el asistente de *San Jose*\n\n¿Qué necesitás?\n\n1️⃣ Reservar viaje\n2️⃣ Ver mis reservas\n3️⃣ Cancelar reserva\n\nEscribí el número de tu opción.\n\n"
+        ],
+        "ultimaConversacion": "2026-01-21T14:28:44.368Z",
+        "saludado": false,
+        "despedido": false,
+        "mensaje_ids": [],
+        "ultimo_status": "",
+        "contactoInformado": false,
+        "_id": "6942ad2275f55c5742b015d2"
+      },
+      "metricas": {
+        "interacciones": 1,
+        "mensajesEnviados": 1,
+        "mensajesRecibidos": 1,
+        "mediaRecibidos": 0,
+        "tokensConsumidos": 0,
+        "turnosRealizados": 0,
+        "turnosCancelados": 0,
+        "ultimaInteraccion": "2026-01-21T14:28:44.548Z",
+        "_id": "6942ad2275f55c5742b015d3"
+      },
+      "activo": true,
+      "creadoEn": "2025-12-17T13:16:18.809Z",
+      "actualizadoEn": "2026-01-21T14:28:44.548Z",
+      "__v": 1,
+      "agenteAsignado": "694e75261b620050923f2bae",
+      "chatbotPausado": false,
+      "agentesAsignados": [],
+      "profileName": "Elizabet",
+      "ultimoPhoneNumberId": "888481464341184"
+    },
+    {
+      "_id": "695fc5b41badb8cca1573323",
+      "empresaId": "San Jose",
+      "telefono": "5493794270218",
+      "nombre": "JULIETA",
+      "apellido": "SANCHEZ",
+      "profileName": "Julieta",
+      "agentesAsignados": [
+        "6968f94af1f2457eae49a2b7"
+      ],
+      "notas": "Contacto creado automáticamente desde WhatsApp el 8/1/2026, 02:56:52",
+      "origen": "chatbot",
+      "preferencias": {
+        "aceptaWhatsApp": true,
+        "aceptaSMS": false,
+        "aceptaEmail": true,
+        "recordatorioTurnos": true,
+        "diasAnticipacionRecordatorio": 1,
+        "horaRecordatorio": "10:00",
+        "notificacionesPromocion": false,
+        "notificacionesDisponibilidad": false,
+        "_id": "695fc5b41badb8cca1573324"
+      },
+      "conversaciones": {
+        "historial": [
+          "Menú",
+          "👋 ¡Hola! Soy el asistente de *San Jose*\n\n¿Qué necesitás?\n\n1️⃣ Reservar viaje\n2️⃣ Ver mis reservas\n3️⃣ Cancelar reserva\n\nEscribí el número de tu opción.",
+          "1",
+          "📍 ¿Desde dónde salís? (Origen del viaje)",
+          "Casa",
+          "📍 ¿A dónde vas? (Destino del viaje)",
+          "Yo puedo 3 de abril",
+          "👥 ¿Cuántos pasajeros son? (Ingresá un número)",
+          "2",
+          "📅 ¿Para qué día querés reservar? (formato DD/MM/AAAA o \"hoy\", \"mañana\")",
+          "Menú",
+          "👋 ¡Hola! Soy el asistente de *San Jose*\n\n¿Qué necesitás?\n\n1️⃣ Reservar viaje\n2️⃣ Ver mis reservas\n3️⃣ Cancelar reserva\n\nEscribí el número de tu opción.",
+          "1",
+          "📍 ¿Desde dónde salís? (Origen del viaje)",
+          "Casa",
+          "📍 ¿A dónde vas? (Destino del viaje)",
+          "Institución",
+          "👥 ¿Cuántos pasajeros son? (Ingresá un número)",
+          "Menú",
+          "❌ Por favor, ingresá un número válido de pasajeros (entre 1 y 50).",
+          "Menú",
+          "❌ Por favor, ingresá un número válido de pasajeros (entre 1 y 50).",
+          "1",
+          "📅 ¿Para qué día querés reservar? (formato DD/MM/AAAA o \"hoy\", \"mañana\")",
+          "Mañana",
+          "¿A qué hora querés el turno? (formato HH:MM, ejemplo: 14:30)",
+          "8:00",
+          "✅ Viaje reservado exitosamente\n\n📍 Origen: Casa\n📍 Destino: Institución\n👥 Pasajeros: 1\n📅 Fecha: 14/1/2026\n🕐 Hora: 08:00\n\nEscribí \"menu\" para volver al menú principal.",
+          "Menú",
+          "👋 ¡Hola! Soy el asistente de *San Jose*\n\n¿Qué necesitás?\n\n1️⃣ Reservar viaje\n2️⃣ Ver mis reservas\n3️⃣ Cancelar reserva\n\nEscribí el número de tu opción.",
+          "1",
+          "📍 ¿Desde dónde salís? (Origen del viaje)",
+          "Casa",
+          "📍 ¿A dónde vas? (Destino del viaje)",
+          "Escuela",
+          "👥 ¿Cuántos pasajeros son? (Ingresá un número)",
+          "2",
+          "📅 ¿Para qué día querés reservar? (formato DD/MM/AAAA o \"hoy\", \"mañana\")",
+          "Mañana",
+          "¿A qué hora querés el turno? (formato HH:MM, ejemplo: 14:30)",
+          "8:00",
+          "✅ Viaje reservado exitosamente\n\n📍 Origen: Casa\n📍 Destino: Escuela\n👥 Pasajeros: 2\n📅 Fecha: 14/1/2026\n🕐 Hora: 08:00\n\nEscribí \"menu\" para volver al menú principal.",
+          "Confirmar",
+          "Menú",
+          "👋 ¡Hola! Soy el asistente de *San Jose*\n\n¿Qué necesitás?\n\n1️⃣ Reservar viaje\n2️⃣ Ver mis reservas\n3️⃣ Cancelar reserva\n\nEscribí el número de tu opción.",
+          "1",
+          "📍 ¿Desde dónde salís? (Origen del viaje)",
+          "Casa",
+          "📍 ¿A dónde vas? (Destino del viaje)",
+          "escuela",
+          "👥 ¿Cuántos pasajeros son? (Ingresá un número)",
+          "1",
+          "📅 ¿Para qué día querés reservar? (formato DD/MM/AAAA o \"hoy\", \"mañana\")",
+          "Hoy",
+          "¿A qué hora querés el turno? (formato HH:MM, ejemplo: 14:30)",
+          "14:00",
+          "✅ Viaje reservado exitosamente\n\n📍 Origen: Casa\n📍 Destino: escuela\n👥 Pasajeros: 1\n📅 Fecha: 15/1/2026\n🕐 Hora: 14:00\n\nEscribí \"menu\" para volver al menú principal.",
+          "Menú",
+          "👋 ¡Hola! Soy el asistente de *San Jose*\n\n¿Qué necesitás?\n\n1️⃣ Reservar viaje\n2️⃣ Ver mis reservas\n3️⃣ Cancelar reserva\n\nEscribí el número de tu opción.",
+          "1",
+          "📍 ¿Desde dónde salís? (Origen del viaje)",
+          "Casa",
+          "📍 ¿A dónde vas? (Destino del viaje)",
+          "Escuela",
+          "👥 ¿Cuántos pasajeros son? (Ingresá un número)",
+          "1",
+          "📅 ¿Para qué día querés reservar? (formato DD/MM/AAAA o \"hoy\", \"mañana\")",
+          "Hoy",
+          "¿A qué hora querés el turno? (formato HH:MM, ejemplo: 14:30)",
+          "11:40",
+          "✅ Viaje reservado exitosamente\n\n📍 Origen: Casa\n📍 Destino: Escuela\n👥 Pasajeros: 1\n📅 Fecha: 15/1/2026\n🕐 Hora: 11:40\n\nEscribí \"menu\" para volver al menú principal.",
+          "Menú",
+          "👋 ¡Hola! Soy el asistente de *San Jose*\n\n¿Qué necesitás?\n\n1️⃣ Reservar viaje\n2️⃣ Ver mis reservas\n3️⃣ Cancelar reserva\n\nEscribí el número de tu opción.",
+          "1",
+          "📍 ¿Desde dónde salís? (Origen del viaje)",
+          "Casa",
+          "📍 ¿A dónde vas? (Destino del viaje)",
+          "Escuela",
+          "👥 ¿Cuántos pasajeros son? (Ingresá un número)",
+          "1",
+          "📅 ¿Para qué día querés reservar? (formato DD/MM/AAAA o \"hoy\", \"mañana\")",
+          "Hoy",
+          "¿A qué hora querés el turno? (formato HH:MM, ejemplo: 14:30)",
+          "14:00",
+          "✅ Viaje reservado exitosamente\n\n📍 Origen: Casa\n📍 Destino: Escuela\n👥 Pasajeros: 1\n📅 Fecha: 15/1/2026\n🕐 Hora: 14:00\n\nEscribí \"menu\" para volver al menú principal.",
+          "Menú",
+          "👋 ¡Hola! Soy el asistente de *San Jose*\n\n¿Qué necesitás?\n\n1️⃣ Reservar viaje\n2️⃣ Ver mis reservas\n3️⃣ Cancelar reserva\n\nEscribí el número de tu opción.\n\n",
+          "1",
+          "📍 ¿Desde dónde salís? (Origen del viaje)",
+          "Menú",
+          "👋 ¡Hola! Soy el asistente de *San Jose*\n\n¿Qué necesitás?\n\n1️⃣ Reservar viaje\n2️⃣ Ver mis reservas\n3️⃣ Cancelar reserva\n\nEscribí el número de tu opción.\n\n",
+          "1",
+          "📍 ¿Desde dónde salís? (Origen del viaje)",
+          "Casa",
+          "📍 ¿A dónde vas? (Destino del viaje)",
+          "Escuela",
+          "👥 ¿Cuántos pasajeros son? (Ingresá un número)",
+          "1",
+          "📅 ¿Para qué día querés reservar? (formato DD/MM/AAAA o \"hoy\", \"mañana\")",
+          "Mañana",
+          "¿A qué hora querés el turno? (formato HH:MM, ejemplo: 14:30)",
+          "10:00",
+          "✅ Viaje reservado exitosamente\n\n📍 Origen: Casa\n📍 Destino: Escuela\n👥 Pasajeros: 1\n📅 Fecha: 22/1/2026\n🕐 Hora: 10:00\n\nEscribí \"menu\" para volver al menú principal.",
+          "Menú",
+          "👋 ¡Hola! Soy el asistente de *San Jose*\n\n¿Qué necesitás?\n\n1️⃣ Reservar viaje\n2️⃣ Ver mis reservas\n3️⃣ Cancelar reserva\n\nEscribí el número de tu opción.\n\n",
+          "1",
+          "📍 ¿Desde dónde salís? (Origen del viaje)",
+          "Casa",
+          "📍 ¿A dónde vas? (Destino del viaje)",
+          "Escuela",
+          "👥 ¿Cuántos pasajeros son? (Ingresá un número)",
+          "1",
+          "📅 ¿Para qué día querés reservar? (formato DD/MM/AAAA o \"hoy\", \"mañana\")",
+          "Hoy",
+          "¿A qué hora querés el turno? (formato HH:MM, ejemplo: 14:30)",
+          "11:00",
+          "✅ Viaje reservado exitosamente\n\n📍 Origen: Casa\n📍 Destino: Escuela\n👥 Pasajeros: 1\n📅 Fecha: 21/1/2026\n🕐 Hora: 11:00\n\nEscribí \"menu\" para volver al menú principal."
+        ],
+        "ultimaConversacion": "2026-01-21T12:03:34.054Z",
+        "saludado": false,
+        "despedido": false,
+        "mensaje_ids": [],
+        "ultimo_status": "",
+        "contactoInformado": false,
+        "_id": "695fc5b41badb8cca1573325"
+      },
+      "metricas": {
+        "interacciones": 59,
+        "mensajesEnviados": 59,
+        "mensajesRecibidos": 59,
+        "mediaRecibidos": 0,
+        "tokensConsumidos": 0,
+        "turnosRealizados": 0,
+        "turnosCancelados": 0,
+        "ultimaInteraccion": "2026-01-21T12:03:34.238Z",
+        "_id": "695fc5b41badb8cca1573326"
+      },
+      "chatbotPausado": false,
+      "activo": true,
+      "creadoEn": "2026-01-08T14:56:52.199Z",
+      "actualizadoEn": "2026-01-21T12:03:34.238Z",
+      "__v": 5,
+      "ultimoPhoneNumberId": "888481464341184"
+    },
+    {
+      "_id": "69702b3a95cb8c6946bc61ad",
+      "empresaId": "San Jose",
+      "telefono": "5493794778233",
+      "nombre": "Marce",
+      "apellido": "Sin Apellido",
+      "profileName": "Marce",
+      "agentesAsignados": [],
+      "notas": "Contacto creado automáticamente desde WhatsApp el 21/1/2026, 01:26:18",
+      "origen": "chatbot",
+      "preferencias": {
+        "aceptaWhatsApp": true,
+        "aceptaSMS": false,
+        "aceptaEmail": true,
+        "recordatorioTurnos": true,
+        "diasAnticipacionRecordatorio": 1,
+        "horaRecordatorio": "10:00",
+        "notificacionesPromocion": false,
+        "notificacionesDisponibilidad": false,
+        "_id": "69702b3a95cb8c6946bc61ae"
+      },
+      "conversaciones": {
+        "historial": [
+          "Menu",
+          "👋 ¡Hola! Soy el asistente de *San Jose*\n\n¿Qué necesitás?\n\n1️⃣ Reservar viaje\n2️⃣ Ver mis reservas\n3️⃣ Cancelar reserva\n\nEscribí el número de tu opción.\n\n",
+          "3",
+          "No tenés turnos para cancelar.\n\nEscribí \"menu\" para volver al menú principal.",
+          "Menu",
+          "👋 ¡Hola! Soy el asistente de *San Jose*\n\n¿Qué necesitás?\n\n1️⃣ Reservar viaje\n2️⃣ Ver mis reservas\n3️⃣ Cancelar reserva\n\nEscribí el número de tu opción.\n\n"
+        ],
+        "ultimaConversacion": "2026-01-21T01:26:51.820Z",
+        "saludado": false,
+        "despedido": false,
+        "mensaje_ids": [],
+        "ultimo_status": "",
+        "contactoInformado": false,
+        "_id": "69702b3a95cb8c6946bc61af"
+      },
+      "metricas": {
+        "interacciones": 3,
+        "mensajesEnviados": 3,
+        "mensajesRecibidos": 3,
+        "mediaRecibidos": 0,
+        "tokensConsumidos": 0,
+        "turnosRealizados": 0,
+        "turnosCancelados": 0,
+        "ultimaInteraccion": "2026-01-21T01:26:52.002Z",
+        "_id": "69702b3a95cb8c6946bc61b0"
+      },
+      "chatbotPausado": false,
+      "activo": true,
+      "creadoEn": "2026-01-21T01:26:18.421Z",
+      "actualizadoEn": "2026-01-21T01:26:52.003Z",
+      "__v": 0,
+      "ultimoPhoneNumberId": "888481464341184"
+    },
+    {
+      "_id": "695ba1098ef13c4d11fad9af",
+      "empresaId": "San Jose",
+      "telefono": "5493795383374",
+      "nombre": "GONZO",
+      "apellido": "OFI",
+      "profileName": "GONZO",
+      "agentesAsignados": [],
+      "notas": "Contacto creado automáticamente desde WhatsApp el 5/1/2026, 11:31:21",
+      "origen": "chatbot",
+      "preferencias": {
+        "aceptaWhatsApp": true,
+        "aceptaSMS": false,
+        "aceptaEmail": true,
+        "recordatorioTurnos": true,
+        "diasAnticipacionRecordatorio": 1,
+        "horaRecordatorio": "10:00",
+        "notificacionesPromocion": false,
+        "notificacionesDisponibilidad": false,
+        "_id": "695ba1098ef13c4d11fad9b0"
+      },
+      "conversaciones": {
+        "historial": [
+          "Hola",
+          "👋 ¡Hola! Soy el asistente de *San Jose*\n\n¿Qué necesitás?\n\n1️⃣ Reservar viaje\n2️⃣ Ver mis reservas\n3️⃣ Cancelar reserva\n\nEscribí el número de tu opción.",
+          "1",
+          "📍 ¿Desde dónde salís? (Origen del viaje)",
+          "Casa",
+          "📍 ¿A dónde vas? (Destino del viaje)",
+          "Alas",
+          "👥 ¿Cuántos pasajeros son? (Ingresá un número)",
+          "2",
+          "📅 ¿Para qué día querés reservar? (formato DD/MM/AAAA o \"hoy\", \"mañana\")",
+          "Hoy",
+          "¿A qué hora querés el turno? (formato HH:MM, ejemplo: 14:30)",
+          "10:00",
+          "✅ Viaje reservado exitosamente\n\n📍 Origen: Casa\n📍 Destino: Alas\n👥 Pasajeros: 2\n📅 Fecha: 5/1/2026\n🕐 Hora: 10:00\n\nEscribí \"menu\" para volver al menú principal.",
+          "Hola",
+          "👋 ¡Hola! Soy el asistente de *San Jose*\n\n¿Qué necesitás?\n\n1️⃣ Reservar viaje\n2️⃣ Ver mis reservas\n3️⃣ Cancelar reserva\n\nEscribí el número de tu opción.",
+          "3",
+          "No tenés turnos para cancelar.\n\nEscribí \"menu\" para volver al menú principal.",
+          "Hola",
+          "👋 ¡Hola! Soy el asistente de *San Jose*\n\n¿Qué necesitás?\n\n1️⃣ Reservar viaje\n2️⃣ Ver mis reservas\n3️⃣ Cancelar reserva\n\nEscribí el número de tu opción.",
+          "1",
+          "📍 ¿Desde dónde salís? (Origen del viaje)",
+          "Casa",
+          "📍 ¿A dónde vas? (Destino del viaje)",
+          "Alas",
+          "👥 ¿Cuántos pasajeros son? (Ingresá un número)",
+          "1",
+          "📅 ¿Para qué día querés reservar? (formato DD/MM/AAAA o \"hoy\", \"mañana\")",
+          "Mañana",
+          "¿A qué hora querés el turno? (formato HH:MM, ejemplo: 14:30)",
+          "8:00",
+          "✅ Viaje reservado exitosamente\n\n📍 Origen: Casa\n📍 Destino: Alas\n👥 Pasajeros: 1\n📅 Fecha: 6/1/2026\n🕐 Hora: 08:00\n\nEscribí \"menu\" para volver al menú principal.",
+          "Hola",
+          "👋 ¡Hola de nuevo! ¿En qué puedo ayudarte hoy?\n\n1️⃣ Reservar un viaje\n2️⃣ Ver mis reservas\n3️⃣ Cancelar una reserva\n\nPor favor, seleccioná el número correspondiente a lo que necesitás.",
+          "Operador (sanjose_admin): GONZALO",
+          "Operador (sanjose_admin): JJJJJJJJJ",
+          "Cliente: Hola",
+          "Operador (sanjose_admin): HOLA",
+          "Cliente: Hola",
+          "Menu",
+          "👋 ¡Hola! Soy el asistente de *San Jose*\n\n¿Qué necesitás?\n\n1️⃣ Reservar viaje\n2️⃣ Ver mis reservas\n3️⃣ Cancelar reserva\n\nEscribí el número de tu opción.",
+          "1",
+          "📍 ¿Desde dónde salís? (Origen del viaje)",
+          "Casa",
+          "📍 ¿A dónde vas? (Destino del viaje)",
+          "Ofi",
+          "👥 ¿Cuántos pasajeros son? (Ingresá un número)",
+          "1",
+          "📅 ¿Para qué día querés reservar? (formato DD/MM/AAAA o \"hoy\", \"mañana\")",
+          "09/01/2026",
+          "¿A qué hora querés el turno? (formato HH:MM, ejemplo: 14:30)",
+          "08:00",
+          "✅ Viaje reservado exitosamente\n\n📍 Origen: Casa\n📍 Destino: Ofi\n👥 Pasajeros: 1\n📅 Fecha: 9/1/2026\n🕐 Hora: 08:00\n\nEscribí \"menu\" para volver al menú principal.",
+          "Menu",
+          "👋 ¡Hola! Soy el asistente de *San Jose*\n\n¿Qué necesitás?\n\n1️⃣ Reservar viaje\n2️⃣ Ver mis reservas\n3️⃣ Cancelar reserva\n\nEscribí el número de tu opción.",
+          "1",
+          "📍 ¿Desde dónde salís? (Origen del viaje)",
+          "Casa",
+          "📍 ¿A dónde vas? (Destino del viaje)",
+          "Ofi",
+          "👥 ¿Cuántos pasajeros son? (Ingresá un número)",
+          "1",
+          "📅 ¿Para qué día querés reservar? (formato DD/MM/AAAA o \"hoy\", \"mañana\")",
+          "Hoy",
+          "¿A qué hora querés el turno? (formato HH:MM, ejemplo: 14:30)",
+          "11:00",
+          "✅ Viaje reservado exitosamente\n\n📍 Origen: Casa\n📍 Destino: Ofi\n👥 Pasajeros: 1\n📅 Fecha: 7/1/2026\n🕐 Hora: 11:00\n\nEscribí \"menu\" para volver al menú principal.",
+          "Menu",
+          "👋 ¡Hola! Soy el asistente de *San Jose*\n\n¿Qué necesitás?\n\n1️⃣ Reservar viaje\n2️⃣ Ver mis reservas\n3️⃣ Cancelar reserva\n\nEscribí el número de tu opción.",
+          "1",
+          "📍 ¿Desde dónde salís? (Origen del viaje)",
+          "Casa",
+          "📍 ¿A dónde vas? (Destino del viaje)",
+          "Instituto",
+          "👥 ¿Cuántos pasajeros son? (Ingresá un número)",
+          "1",
+          "📅 ¿Para qué día querés reservar? (formato DD/MM/AAAA o \"hoy\", \"mañana\")",
+          "Mañana",
+          "¿A qué hora querés el turno? (formato HH:MM, ejemplo: 14:30)",
+          "7:20",
+          "✅ Viaje reservado exitosamente\n\n📍 Origen: Casa\n📍 Destino: Instituto\n👥 Pasajeros: 1\n📅 Fecha: 9/1/2026\n🕐 Hora: 07:20\n\nEscribí \"menu\" para volver al menú principal.",
+          "Menú",
+          "👋 ¡Hola! Soy el asistente de *San Jose*\n\n¿Qué necesitás?\n\n1️⃣ Reservar viaje\n2️⃣ Ver mis reservas\n3️⃣ Cancelar reserva\n\nEscribí el número de tu opción.",
+          "3",
+          "❌ ¿Qué turno querés cancelar?\n\n1. 9/1/2026 a las 07:20\n\nRespondé con el número del turno que querés cancelar.",
+          "1",
+          "✅ Turno cancelado exitosamente.\n\nEscribí \"menu\" para volver al menú principal.",
+          "Menu",
+          "👋 ¡Hola! Soy el asistente de *San Jose*\n\n¿Qué necesitás?\n\n1️⃣ Reservar viaje\n2️⃣ Ver mis reservas\n3️⃣ Cancelar reserva\n\nEscribí el número de tu opción.",
+          "1",
+          "📍 ¿Desde dónde salís? (Origen del viaje)",
+          "Casa",
+          "📍 ¿A dónde vas? (Destino del viaje)",
+          "Escuela",
+          "👥 ¿Cuántos pasajeros son? (Ingresá un número)",
+          "2",
+          "📅 ¿Para qué día querés reservar? (formato DD/MM/AAAA o \"hoy\", \"mañana\")",
+          "Mañana",
+          "¿A qué hora querés el turno? (formato HH:MM, ejemplo: 14:30)",
+          "08:00",
+          "✅ Viaje reservado exitosamente\n\n📍 Origen: Casa\n📍 Destino: Escuela\n👥 Pasajeros: 2\n📅 Fecha: 9/1/2026\n🕐 Hora: 08:00\n\nEscribí \"menu\" para volver al menú principal.",
+          "Menu",
+          "👋 ¡Hola! Soy el asistente de *San Jose*\n\n¿Qué necesitás?\n\n1️⃣ Reservar viaje\n2️⃣ Ver mis reservas\n3️⃣ Cancelar reserva\n\nEscribí el número de tu opción.",
+          "3",
+          "❌ ¿Qué turno querés cancelar?\n\n1. 9/1/2026 a las 08:00\n\nRespondé con el número del turno que querés cancelar.",
+          "1",
+          "✅ Turno cancelado exitosamente.\n\nEscribí \"menu\" para volver al menú principal.",
+          "Menu",
+          "👋 ¡Hola! Soy el asistente de *San Jose*\n\n¿Qué necesitás?\n\n1️⃣ Reservar viaje\n2️⃣ Ver mis reservas\n3️⃣ Cancelar reserva\n\nEscribí el número de tu opción.",
+          "1",
+          "📍 ¿Desde dónde salís? (Origen del viaje)",
+          "Casa",
+          "📍 ¿A dónde vas? (Destino del viaje)",
+          "Alas",
+          "👥 ¿Cuántos pasajeros son? (Ingresá un número)",
+          "2",
+          "📅 ¿Para qué día querés reservar? (formato DD/MM/AAAA o \"hoy\", \"mañana\")",
+          "Mañana",
+          "¿A qué hora querés el turno? (formato HH:MM, ejemplo: 14:30)",
+          "16:00",
+          "✅ Viaje reservado exitosamente\n\n📍 Origen: Casa\n📍 Destino: Alas\n👥 Pasajeros: 2\n📅 Fecha: 9/1/2026\n🕐 Hora: 16:00\n\nEscribí \"menu\" para volver al menú principal.",
+          "Menu",
+          "👋 ¡Hola! Soy el asistente de *San Jose*\n\n¿Qué necesitás?\n\n1️⃣ Reservar viaje\n2️⃣ Ver mis reservas\n3️⃣ Cancelar reserva\n\nEscribí el número de tu opción.",
+          "3",
+          "❌ ¿Qué turno querés cancelar?\n\n1. 9/1/2026 a las 16:00\n\nRespondé con el número del turno que querés cancelar.",
+          "1",
+          "✅ Turno cancelado exitosamente.\n\nEscribí \"menu\" para volver al menú principal.",
+          "Menu",
+          "👋 ¡Hola! Soy el asistente de *San Jose*\n\n¿Qué necesitás?\n\n1️⃣ Reservar viaje\n2️⃣ Ver mis reservas\n3️⃣ Cancelar reserva\n\nEscribí el número de tu opción.",
+          "1",
+          "📍 ¿Desde dónde salís? (Origen del viaje)",
+          "Casa",
+          "📍 ¿A dónde vas? (Destino del viaje)",
+          "Yo puedo 3 de Abril",
+          "👥 ¿Cuántos pasajeros son? (Ingresá un número)",
+          "1",
+          "📅 ¿Para qué día querés reservar? (formato DD/MM/AAAA o \"hoy\", \"mañana\")",
+          "Mañana",
+          "¿A qué hora querés el turno? (formato HH:MM, ejemplo: 14:30)",
+          "9:00",
+          "✅ Viaje reservado exitosamente\n\n📍 Origen: Casa\n📍 Destino: Yo puedo 3 de Abril\n👥 Pasajeros: 1\n📅 Fecha: 9/1/2026\n🕐 Hora: 09:00\n\nEscribí \"menu\" para volver al menú principal.",
+          "Menu",
+          "👋 ¡Hola! Soy el asistente de *San Jose*\n\n¿Qué necesitás?\n\n1️⃣ Reservar viaje\n2️⃣ Ver mis reservas\n3️⃣ Cancelar reserva\n\nEscribí el número de tu opción.",
+          "3",
+          "❌ ¿Qué turno querés cancelar?\n\n1. 9/1/2026 a las 09:00\n\nRespondé con el número del turno que querés cancelar.",
+          "1",
+          "✅ Turno cancelado exitosamente.\n\nEscribí \"menu\" para volver al menú principal.",
+          "Menu",
+          "👋 ¡Hola! Soy el asistente de *San Jose*\n\n¿Qué necesitás?\n\n1️⃣ Reservar viaje\n2️⃣ Ver mis reservas\n3️⃣ Cancelar reserva\n\nEscribí el número de tu opción.",
+          "1",
+          "📍 ¿Desde dónde salís? (Origen del viaje)",
+          "Casa",
+          "📍 ¿A dónde vas? (Destino del viaje)",
+          "Seadi",
+          "👥 ¿Cuántos pasajeros son? (Ingresá un número)",
+          "2",
+          "📅 ¿Para qué día querés reservar? (formato DD/MM/AAAA o \"hoy\", \"mañana\")",
+          "Mañana",
+          "¿A qué hora querés el turno? (formato HH:MM, ejemplo: 14:30)",
+          "8:00",
+          "✅ Viaje reservado exitosamente\n\n📍 Origen: Casa\n📍 Destino: Seadi\n👥 Pasajeros: 2\n📅 Fecha: 10/1/2026\n🕐 Hora: 08:00\n\nEscribí \"menu\" para volver al menú principal.",
+          "Menu",
+          "👋 ¡Hola! Soy el asistente de *San Jose*\n\n¿Qué necesitás?\n\n1️⃣ Reservar viaje\n2️⃣ Ver mis reservas\n3️⃣ Cancelar reserva\n\nEscribí el número de tu opción.",
+          "3",
+          "❌ ¿Qué turno querés cancelar?\n\n1. 10/1/2026 a las 08:00\n\nRespondé con el número del turno que querés cancelar.",
+          "1",
+          "✅ Turno cancelado exitosamente.\n\nEscribí \"menu\" para volver al menú principal.",
+          "Menu",
+          "👋 ¡Hola! Soy el asistente de *San Jose*\n\n¿Qué necesitás?\n\n1️⃣ Reservar viaje\n2️⃣ Ver mis reservas\n3️⃣ Cancelar reserva\n\nEscribí el número de tu opción.",
+          "1",
+          "📍 ¿Desde dónde salís? (Origen del viaje)",
+          "Casa",
+          "📍 ¿A dónde vas? (Destino del viaje)",
+          "Iad",
+          "👥 ¿Cuántos pasajeros son? (Ingresá un número)",
+          "1",
+          "📅 ¿Para qué día querés reservar? (formato DD/MM/AAAA o \"hoy\", \"mañana\")",
+          "Mañana",
+          "¿A qué hora querés el turno? (formato HH:MM, ejemplo: 14:30)",
+          "8",
+          "❌ Formato de hora inválido. Por favor, usá HH:MM (ejemplo: 14:30 o 1430).",
+          "8:00",
+          "✅ Viaje reservado exitosamente\n\n📍 Origen: Casa\n📍 Destino: Iad\n👥 Pasajeros: 1\n📅 Fecha: 14/1/2026\n🕐 Hora: 08:00\n\nEscribí \"menu\" para volver al menú principal.",
+          "Menú",
+          "👋 ¡Hola! Soy el asistente de *San Jose*\n\n¿Qué necesitás?\n\n1️⃣ Reservar viaje\n2️⃣ Ver mis reservas\n3️⃣ Cancelar reserva\n\nEscribí el número de tu opción.",
+          "1",
+          "📍 ¿Desde dónde salís? (Origen del viaje)",
+          "Casa",
+          "📍 ¿A dónde vas? (Destino del viaje)",
+          "Escuela",
+          "👥 ¿Cuántos pasajeros son? (Ingresá un número)",
+          "1",
+          "📅 ¿Para qué día querés reservar? (formato DD/MM/AAAA o \"hoy\", \"mañana\")",
+          "Mañana",
+          "¿A qué hora querés el turno? (formato HH:MM, ejemplo: 14:30)",
+          "7:15",
+          "✅ Viaje reservado exitosamente\n\n📍 Origen: Casa\n📍 Destino: Escuela\n👥 Pasajeros: 1\n📅 Fecha: 14/1/2026\n🕐 Hora: 07:15\n\nEscribí \"menu\" para volver al menú principal.",
+          "Menu",
+          "👋 ¡Hola! Soy el asistente de *San Jose*\n\n¿Qué necesitás?\n\n1️⃣ Reservar viaje\n2️⃣ Ver mis reservas\n3️⃣ Cancelar reserva\n\nEscribí el número de tu opción.",
+          "1",
+          "📍 ¿Desde dónde salís? (Origen del viaje)",
+          "Casa",
+          "📍 ¿A dónde vas? (Destino del viaje)",
+          "Apoyo escolar",
+          "👥 ¿Cuántos pasajeros son? (Ingresá un número)",
+          "1",
+          "📅 ¿Para qué día querés reservar? (formato DD/MM/AAAA o \"hoy\", \"mañana\")",
+          "Mañana",
+          "¿A qué hora querés el turno? (formato HH:MM, ejemplo: 14:30)",
+          "16:00",
+          "✅ Viaje reservado exitosamente\n\n📍 Origen: Casa\n📍 Destino: Apoyo escolar\n👥 Pasajeros: 1\n📅 Fecha: 14/1/2026\n🕐 Hora: 16:00\n\nEscribí \"menu\" para volver al menú principal.",
+          "Menu",
+          "👋 ¡Hola! Soy el asistente de *San Jose*\n\n¿Qué necesitás?\n\n1️⃣ Reservar viaje\n2️⃣ Ver mis reservas\n3️⃣ Cancelar reserva\n\nEscribí el número de tu opción.",
+          "1",
+          "📍 ¿Desde dónde salís? (Origen del viaje)",
+          "Casa",
+          "📍 ¿A dónde vas? (Destino del viaje)",
+          "Escuela",
+          "👥 ¿Cuántos pasajeros son? (Ingresá un número)",
+          "1",
+          "📅 ¿Para qué día querés reservar? (formato DD/MM/AAAA o \"hoy\", \"mañana\")",
+          "Mañana",
+          "¿A qué hora querés el turno? (formato HH:MM, ejemplo: 14:30)",
+          "13:00",
+          "✅ Viaje reservado exitosamente\n\n📍 Origen: Casa\n📍 Destino: Escuela\n👥 Pasajeros: 1\n📅 Fecha: 14/1/2026\n🕐 Hora: 13:00\n\nEscribí \"menu\" para volver al menú principal.",
+          "Confirmar",
+          "Menu",
+          "👋 ¡Hola! Soy el asistente de *San Jose*\n\n¿Qué necesitás?\n\n1️⃣ Reservar viaje\n2️⃣ Ver mis reservas\n3️⃣ Cancelar reserva\n\nEscribí el número de tu opción.",
+          "1",
+          "📍 ¿Desde dónde salís? (Origen del viaje)",
+          "Casa",
+          "📍 ¿A dónde vas? (Destino del viaje)",
+          "Valijas",
+          "👥 ¿Cuántos pasajeros son? (Ingresá un número)",
+          "2",
+          "📅 ¿Para qué día querés reservar? (formato DD/MM/AAAA o \"hoy\", \"mañana\")",
+          "Mañana",
+          "¿A qué hora querés el turno? (formato HH:MM, ejemplo: 14:30)",
+          "8:30",
+          "✅ Viaje reservado exitosamente\n\n📍 Origen: Casa\n📍 Destino: Valijas\n👥 Pasajeros: 2\n📅 Fecha: 15/1/2026\n🕐 Hora: 08:30\n\nEscribí \"menu\" para volver al menú principal.",
+          "Confirmar",
+          "Menú",
+          "👋 ¡Hola! Soy el asistente de *San Jose*\n\n¿Qué necesitás?\n\n1️⃣ Reservar viaje\n2️⃣ Ver mis reservas\n3️⃣ Cancelar reserva\n\nEscribí el número de tu opción.",
+          "1",
+          "📍 ¿Desde dónde salís? (Origen del viaje)",
+          "Ofi",
+          "📍 ¿A dónde vas? (Destino del viaje)",
+          "Cada",
+          "👥 ¿Cuántos pasajeros son? (Ingresá un número)",
+          "1",
+          "📅 ¿Para qué día querés reservar? (formato DD/MM/AAAA o \"hoy\", \"mañana\")",
+          "Hoy",
+          "¿A qué hora querés el turno? (formato HH:MM, ejemplo: 14:30)",
+          "13:00",
+          "✅ Viaje reservado exitosamente\n\n📍 Origen: Ofi\n📍 Destino: Cada\n👥 Pasajeros: 1\n📅 Fecha: 15/1/2026\n🕐 Hora: 13:00\n\nEscribí \"menu\" para volver al menú principal.",
+          "Menu",
+          "👋 ¡Hola! Soy el asistente de *San Jose*\n\n¿Qué necesitás?\n\n1️⃣ Reservar viaje\n2️⃣ Ver mis reservas\n3️⃣ Cancelar reserva\n\nEscribí el número de tu opción.",
+          "1",
+          "📍 ¿Desde dónde salís? (Origen del viaje)",
+          "Ofi",
+          "📍 ¿A dónde vas? (Destino del viaje)",
+          "Cochera",
+          "👥 ¿Cuántos pasajeros son? (Ingresá un número)",
+          "1",
+          "📅 ¿Para qué día querés reservar? (formato DD/MM/AAAA o \"hoy\", \"mañana\")",
+          "Hoy",
+          "¿A qué hora querés el turno? (formato HH:MM, ejemplo: 14:30)",
+          "11:20",
+          "✅ Viaje reservado exitosamente\n\n📍 Origen: Ofi\n📍 Destino: Cochera\n👥 Pasajeros: 1\n📅 Fecha: 15/1/2026\n🕐 Hora: 11:20\n\nEscribí \"menu\" para volver al menú principal."
+        ],
+        "ultimaConversacion": "2026-01-15T14:17:54.113Z",
+        "saludado": false,
+        "despedido": false,
+        "mensaje_ids": [],
+        "ultimo_status": "",
+        "contactoInformado": false,
+        "_id": "695ba1098ef13c4d11fad9b1"
+      },
+      "metricas": {
+        "interacciones": 135,
+        "mensajesEnviados": 136,
+        "mensajesRecibidos": 135,
+        "mediaRecibidos": 0,
+        "tokensConsumidos": 1078,
+        "turnosRealizados": 0,
+        "turnosCancelados": 0,
+        "ultimaInteraccion": "2026-01-16T12:22:09.465Z",
+        "_id": "695ba1098ef13c4d11fad9b2"
+      },
+      "chatbotPausado": false,
+      "activo": true,
+      "creadoEn": "2026-01-05T11:31:21.942Z",
+      "actualizadoEn": "2026-01-16T12:22:09.467Z",
+      "__v": 3,
+      "ultimoPhoneNumberId": "888481464341184"
+    },
+    {
+      "_id": "6968fa33f1f2457eae49a49d",
+      "empresaId": "San Jose",
+      "telefono": "5493794873647",
+      "nombre": "SOFIA",
+      "apellido": "SANCHEZ",
+      "email": "sofia@gmail",
+      "direccion": "SIN DOMICILIO",
+      "ciudad": "CORRINETES",
+      "provincia": "CAPITAL",
+      "codigoPostal": "3400",
+      "fechaNacimiento": "1978-12-11T00:00:00.000Z",
+      "dni": "26018884",
+      "agentesAsignados": [
+        "6968f94af1f2457eae49a2b7"
+      ],
+      "origen": "manual",
+      "preferencias": {
+        "aceptaWhatsApp": true,
+        "aceptaSMS": false,
+        "aceptaEmail": true,
+        "recordatorioTurnos": true,
+        "diasAnticipacionRecordatorio": 1,
+        "horaRecordatorio": "10:00",
+        "notificacionesPromocion": false,
+        "notificacionesDisponibilidad": false,
+        "_id": "6968fa33f1f2457eae49a49e"
+      },
+      "conversaciones": {
+        "historial": [
+          "Hola",
+          "👋 ¡Hola! Soy el asistente de *San Jose*\n\n¿Qué necesitás?\n\n1️⃣ Reservar viaje\n2️⃣ Ver mis reservas\n3️⃣ Cancelar reserva\n\nEscribí el número de tu opción.",
+          "1",
+          "📍 ¿Desde dónde salís? (Origen del viaje)",
+          "Salta 671",
+          "📍 ¿A dónde vas? (Destino del viaje)",
+          "España 531",
+          "👥 ¿Cuántos pasajeros son? (Ingresá un número)",
+          "1",
+          "📅 ¿Para qué día querés reservar? (formato DD/MM/AAAA o \"hoy\", \"mañana\")",
+          "Hoy",
+          "¿A qué hora querés el turno? (formato HH:MM, ejemplo: 14:30)",
+          "11:40",
+          "✅ Viaje reservado exitosamente\n\n📍 Origen: Salta 671\n📍 Destino: España 531\n👥 Pasajeros: 1\n📅 Fecha: 15/1/2026\n🕐 Hora: 11:40\n\nEscribí \"menu\" para volver al menú principal."
+        ],
+        "ultimaConversacion": "2026-01-15T14:35:21.590Z",
+        "saludado": false,
+        "despedido": false,
+        "mensaje_ids": [],
+        "ultimo_status": "",
+        "contactoInformado": false,
+        "_id": "6968fa33f1f2457eae49a49f"
+      },
+      "metricas": {
+        "interacciones": 7,
+        "mensajesEnviados": 7,
+        "mensajesRecibidos": 7,
+        "mediaRecibidos": 0,
+        "tokensConsumidos": 0,
+        "turnosRealizados": 0,
+        "turnosCancelados": 0,
+        "ultimaInteraccion": "2026-01-15T14:35:21.770Z",
+        "_id": "6968fa33f1f2457eae49a4a0"
+      },
+      "chatbotPausado": false,
+      "activo": true,
+      "creadoEn": "2026-01-15T14:31:15.288Z",
+      "actualizadoEn": "2026-01-21T11:56:26.722Z",
+      "__v": 3,
+      "profileName": "Sofía A.",
+      "ultimoPhoneNumberId": "888481464341184"
+    }
+  ],
+  "usuarios": []
+}

@@ -1,8 +1,20 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { X, User, Mail, Phone, Briefcase, Clock, Users, Calendar, AlertCircle, Check } from 'lucide-react';
+import { useState, useEffect, useRef } from 'react';
+import { X, User, Mail, Phone, Briefcase, Clock, Users, Calendar, AlertCircle, Check, ChevronDown } from 'lucide-react';
 import styles from './ModalAgente.module.css';
+
+const COUNTRY_METADATA = [
+  { code: 'AR', countryCode: '54', mobilePrefix: '9', country: 'Argentina', flag: '🇦🇷' },
+  { code: 'BR', countryCode: '55', mobilePrefix: '', country: 'Brasil', flag: '🇧🇷' },
+  { code: 'CL', countryCode: '56', mobilePrefix: '', country: 'Chile', flag: '🇨🇱' },
+  { code: 'CO', countryCode: '57', mobilePrefix: '', country: 'Colombia', flag: '🇨🇴' },
+  { code: 'MX', countryCode: '52', mobilePrefix: '', country: 'México', flag: '🇲🇽' },
+  { code: 'PE', countryCode: '51', mobilePrefix: '', country: 'Perú', flag: '🇵🇪' },
+  { code: 'UY', countryCode: '598', mobilePrefix: '', country: 'Uruguay', flag: '🇺🇾' },
+  { code: 'US', countryCode: '1', mobilePrefix: '', country: 'Estados Unidos', flag: '🇺🇸' },
+  { code: 'ES', countryCode: '34', mobilePrefix: '', country: 'España', flag: '🇪🇸' },
+];
 
 interface Disponibilidad {
   diaSemana: number;
@@ -58,6 +70,9 @@ export default function ModalAgente({ isOpen, onClose, onSubmit, agenteInicial }
   const [paso, setPaso] = useState(1);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [selectedCountry, setSelectedCountry] = useState('AR');
+  const [showCountryDropdown, setShowCountryDropdown] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
   
   const [formData, setFormData] = useState<AgenteData>({
     nombre: '',
@@ -77,6 +92,17 @@ export default function ModalAgente({ isOpen, onClose, onSubmit, agenteInicial }
     activo: true
   });
 
+  // Cerrar dropdown al hacer click afuera
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
+        setShowCountryDropdown(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
   // Inicializar con datos del agente si existe
   useEffect(() => {
     if (agenteInicial) {
@@ -92,8 +118,27 @@ export default function ModalAgente({ isOpen, onClose, onSubmit, agenteInicial }
       
       console.log('📅 Disponibilidad cargada:', disponibilidadLimpia);
       
+      // Extraer código de país del teléfono si existe
+      const tel = agenteInicial.telefono || '';
+      let phoneNumber = tel;
+      let countryCode = 'AR';
+      
+      if (tel.startsWith('+')) {
+        const telSinMas = tel.substring(1);
+        const matchedCountry = COUNTRY_METADATA.find(c => telSinMas.startsWith(c.countryCode));
+        if (matchedCountry) {
+          countryCode = matchedCountry.code;
+          phoneNumber = telSinMas.substring(matchedCountry.countryCode.length);
+          if (matchedCountry.mobilePrefix && phoneNumber.startsWith(matchedCountry.mobilePrefix)) {
+            phoneNumber = phoneNumber.substring(matchedCountry.mobilePrefix.length);
+          }
+        }
+      }
+      
+      setSelectedCountry(countryCode);
       setFormData({
         ...agenteInicial,
+        telefono: phoneNumber,
         disponibilidad: disponibilidadLimpia
       });
     } else {
@@ -285,8 +330,17 @@ export default function ModalAgente({ isOpen, onClose, onSubmit, agenteInicial }
       
       console.log('💾 Guardando disponibilidad:', disponibilidadLimpia);
       
+      // Formatear teléfono con código de país
+      const country = COUNTRY_METADATA.find(c => c.code === selectedCountry);
+      const telefonoFormateado = formData.telefono 
+        ? `+${country?.countryCode}${country?.mobilePrefix}${formData.telefono.replace(/\D/g, '')}`
+        : '';
+      
+      console.log('📱 Teléfono formateado:', telefonoFormateado);
+      
       await onSubmit({
         ...formData,
+        telefono: telefonoFormateado,
         disponibilidad: disponibilidadLimpia
       });
       onClose();
@@ -407,14 +461,94 @@ export default function ModalAgente({ isOpen, onClose, onSubmit, agenteInicial }
                 <div className={styles.field}>
                   <label>
                     <Phone size={16} />
-                    Teléfono
+                    Teléfono WhatsApp
                   </label>
-                  <input
-                    type="tel"
-                    value={formData.telefono}
-                    onChange={(e) => handleChange('telefono', e.target.value)}
-                    placeholder="+54 11 1234-5678"
-                  />
+                  <div style={{ display: 'flex', gap: '8px' }}>
+                    <div style={{ position: 'relative', width: '140px' }} ref={dropdownRef}>
+                      <button
+                        type="button"
+                        onClick={() => setShowCountryDropdown(!showCountryDropdown)}
+                        style={{
+                          width: '100%',
+                          padding: '10px 12px',
+                          border: '1px solid #e2e8f0',
+                          borderRadius: '8px',
+                          background: 'white',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'space-between',
+                          cursor: 'pointer',
+                          fontSize: '14px'
+                        }}
+                      >
+                        <span>
+                          {COUNTRY_METADATA.find(c => c.code === selectedCountry)?.flag}{' '}
+                          +{COUNTRY_METADATA.find(c => c.code === selectedCountry)?.countryCode}
+                        </span>
+                        <ChevronDown size={16} />
+                      </button>
+                      
+                      {showCountryDropdown && (
+                        <div style={{
+                          position: 'absolute',
+                          top: '100%',
+                          left: 0,
+                          right: 0,
+                          marginTop: '4px',
+                          background: 'white',
+                          border: '1px solid #e2e8f0',
+                          borderRadius: '8px',
+                          boxShadow: '0 4px 6px rgba(0,0,0,0.1)',
+                          maxHeight: '200px',
+                          overflowY: 'auto',
+                          zIndex: 1000
+                        }}>
+                          {COUNTRY_METADATA.map(country => (
+                            <button
+                              key={country.code}
+                              type="button"
+                              onClick={() => {
+                                setSelectedCountry(country.code);
+                                setShowCountryDropdown(false);
+                              }}
+                              style={{
+                                width: '100%',
+                                padding: '8px 12px',
+                                border: 'none',
+                                background: selectedCountry === country.code ? '#f0f9ff' : 'white',
+                                textAlign: 'left',
+                                cursor: 'pointer',
+                                fontSize: '14px',
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '8px'
+                              }}
+                            >
+                              <span>{country.flag}</span>
+                              <span>+{country.countryCode}</span>
+                              <span style={{ fontSize: '12px', color: '#64748b' }}>{country.country}</span>
+                            </button>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                    
+                    <input
+                      type="tel"
+                      value={formData.telefono}
+                      onChange={(e) => {
+                        const valor = e.target.value.replace(/\D/g, '');
+                        handleChange('telefono', valor);
+                      }}
+                      placeholder="3794123456"
+                      style={{ flex: 1 }}
+                    />
+                  </div>
+                  <small className={styles.hint}>
+                    Formato: +{COUNTRY_METADATA.find(c => c.code === selectedCountry)?.countryCode}
+                    {COUNTRY_METADATA.find(c => c.code === selectedCountry)?.mobilePrefix}
+                    {formData.telefono || 'XXXXXXXXXX'}
+                  </small>
                 </div>
               </div>
 
