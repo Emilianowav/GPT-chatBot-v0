@@ -124,7 +124,9 @@ async function procesarRespuesta(
     switch (mensajeLimpio) {
       case '1':
         conversacion.flujoActivo = 'crear_turno';
-        conversacion.pasoActual = 'seleccionar_fecha';
+        conversacion.pasoActual = 'campos_personalizados';
+        conversacion.datosCapturados.set('indiceCampo', 0);
+        conversacion.markModified('datosCapturados');
         return await iniciarCreacionTurno(empresaId);
         
       case '2':
@@ -173,10 +175,9 @@ async function iniciarCreacionTurno(empresaId: string): Promise<string> {
   const config = await ConfiguracionModuloModel.findOne({ empresaId });
   
   let mensaje = `📅 Perfecto! Vamos a agendar tu ${config?.nomenclatura.turno || 'turno'}.\n\n`;
-  mensaje += '📆 Por favor, envíame la fecha deseada en formato DD/MM/AAAA\n';
-  mensaje += 'Ejemplo: 25/10/2025';
   
-  return mensaje;
+  // Ir directo al primer campo personalizado
+  return await solicitarCamposPersonalizados(empresaId, config, 0);
 }
 
 /**
@@ -191,62 +192,6 @@ async function procesarCreacionTurno(
   const config = await ConfiguracionModuloModel.findOne({ empresaId });
   
   switch (conversacion.pasoActual) {
-    case 'seleccionar_fecha':
-      // Validar y guardar fecha
-      const fecha = parsearFecha(mensaje);
-      if (!fecha) {
-        return '❌ Fecha inválida. Por favor usa el formato DD/MM/AAAA\nEjemplo: 25/10/2025';
-      }
-      
-      if (fecha < new Date()) {
-        return '❌ La fecha no puede ser en el pasado. Por favor elige una fecha futura.';
-      }
-      
-      conversacion.datosCapturados.set('fecha', fecha.toISOString());
-      conversacion.markModified('datosCapturados');
-      conversacion.pasoActual = 'seleccionar_hora';
-      
-      return '🕐 Excelente! Ahora dime la hora deseada en formato HH:MM\nEjemplo: 14:30';
-      
-    case 'seleccionar_hora':
-      // Validar y guardar hora
-      const hora = parsearHora(mensaje);
-      if (!hora) {
-        return '❌ Hora inválida. Por favor usa el formato HH:MM\nEjemplo: 14:30';
-      }
-      
-      conversacion.datosCapturados.set('hora', hora);
-      conversacion.markModified('datosCapturados');
-      
-      // Si hay agentes, preguntar por agente
-      if (config?.usaAgentes) {
-        conversacion.pasoActual = 'seleccionar_agente';
-        return await listarAgentes(empresaId, config);
-      } else {
-        // Si no usa agentes, pasar a campos personalizados
-        conversacion.pasoActual = 'campos_personalizados';
-        return await solicitarCamposPersonalizados(empresaId, config, 0);
-      }
-      
-    case 'seleccionar_agente':
-      // Validar y guardar agente
-      const agentes = await AgenteModel.find({ empresaId, activo: true });
-      const numeroAgente = parseInt(mensaje);
-      
-      if (isNaN(numeroAgente) || numeroAgente < 1 || numeroAgente > agentes.length) {
-        return '❌ Opción inválida. Por favor elige un número de la lista.';
-      }
-      
-      const agenteSeleccionado = agentes[numeroAgente - 1];
-      conversacion.datosCapturados.set('agenteId', agenteSeleccionado._id.toString());
-      conversacion.markModified('datosCapturados');
-      
-      // Pasar a campos personalizados
-      conversacion.pasoActual = 'campos_personalizados';
-      conversacion.datosCapturados.set('indiceCampo', 0);
-      conversacion.markModified('datosCapturados');
-      return await solicitarCamposPersonalizados(empresaId, config, 0);
-      
     case 'campos_personalizados':
       // Capturar campos personalizados uno por uno
       return await capturarCampoPersonalizado(mensaje, conversacion, empresaId, config);
@@ -378,23 +323,9 @@ async function mostrarResumen(conversacion: any, config: any): Promise<string> {
   
   let mensaje = '📋 *Resumen de tu turno:*\n\n';
   
-  // Fecha y hora
-  const fecha = new Date(datos.get('fecha'));
-  mensaje += `📅 Fecha: ${fecha.toLocaleDateString('es-AR')}\n`;
-  mensaje += `🕐 Hora: ${datos.get('hora')}\n`;
-  
-  // Agente (si aplica)
-  if (datos.get('agenteId')) {
-    const agente = await AgenteModel.findById(datos.get('agenteId'));
-    if (agente) {
-      mensaje += `👤 ${config.nomenclatura.agente}: ${agente.nombre} ${agente.apellido}\n`;
-    }
-  }
-  
   // Campos personalizados
   const campos = config?.camposPersonalizados || [];
   if (campos.length > 0) {
-    mensaje += '\n📝 *Detalles:*\n';
     campos.forEach((campo: any) => {
       const valor = datos.get(`campo_${campo.clave}`);
       if (valor) {
@@ -403,6 +334,15 @@ async function mostrarResumen(conversacion: any, config: any): Promise<string> {
     });
   }
   
+  // Agente (si aplica)
+  if (datos.get('agenteId')) {
+    const agente = await AgenteModel.findById(datos.get('agenteId'));
+    if (agente) {
+      mensaje += `\n👤 ${config.nomenclatura.agente}: ${agente.nombre} ${agente.apellido}\n`;
+    }
+  }
+  
+  mensaje += '\n⚠️ El operador completará origen, destino y horario.\n';
   mensaje += '\n¿Confirmas estos datos?\n';
   mensaje += '1️⃣ Sí, confirmar\n';
   mensaje += '2️⃣ No, cancelar';
@@ -438,10 +378,21 @@ async function crearTurnoFinal(
     
     console.log('✅ Contacto obtenido:', contacto._id);
     
-    // Construir fecha completa
-    const fecha = new Date(datos.get('fecha'));
-    const [horas, minutos] = datos.get('hora').split(':');
-    fecha.setHours(parseInt(horas), parseInt(minutos), 0, 0);
+    // Construir fecha (usar fecha del campo personalizado o fecha actual + 1 día)
+    let fecha: Date;
+    const fechaCampo = datos.get('campo_fecha');
+    
+    if (fechaCampo) {
+      // Parsear fecha del campo personalizado (formato DD/MM/AAAA)
+      fecha = parsearFecha(fechaCampo) || new Date();
+    } else {
+      // Fecha por defecto: mañana a las 10:00
+      fecha = new Date();
+      fecha.setDate(fecha.getDate() + 1);
+    }
+    
+    // Hora por defecto: 10:00 (se completará desde CRM)
+    fecha.setHours(10, 0, 0, 0);
     
     // Construir datos dinámicos
     const datosDinamicos: any = {};
@@ -471,8 +422,17 @@ async function crearTurnoFinal(
     conversacion.finalizadaEn = new Date();
     
     let mensaje = `✅ *¡Listo!* Tu ${config.nomenclatura.turno} ha sido agendado.\n\n`;
-    mensaje += `📅 ${fecha.toLocaleDateString('es-AR')} a las ${datos.get('hora')}\n`;
-    mensaje += `\n📱 Recibirás una confirmación antes de tu ${config.nomenclatura.turno}.`;
+    mensaje += `📅 ${fecha.toLocaleDateString('es-AR')}\n`;
+    
+    // Mostrar campos capturados
+    campos.forEach((campo: any) => {
+      const valor = datos.get(`campo_${campo.clave}`);
+      if (valor) {
+        mensaje += `• ${campo.etiqueta}: ${valor}\n`;
+      }
+    });
+    
+    mensaje += `\n⚠️ ${config.mensajesFlujo?.datosIncompletos || 'El operador te contactará para confirmar los detalles.'}`;
     mensaje += `\n\n¡Hasta pronto! 👋`;
     
     return mensaje;
