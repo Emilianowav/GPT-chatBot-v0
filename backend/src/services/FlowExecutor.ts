@@ -1274,6 +1274,16 @@ export class FlowExecutor {
           if (productosSimplificados.length > 0) {
             this.setGlobalVariable('productos_presentados', productosSimplificados);
             console.log(`   ✅ Guardado productos_presentados en global variables (${productosSimplificados.length} productos)`);
+            
+            // CRÍTICO: Formatear productos en texto legible para GPT
+            // GPT no interpreta bien JSON crudo, necesita texto formateado
+            const productosFormateados = productosSimplificados.map((p: any, i: number) => 
+              `${i + 1}. ${p.titulo}\n   💰 Precio: $${p.precio}\n   📦 Stock: ${p.stock}`
+            ).join('\n\n');
+            
+            this.setGlobalVariable('productos_formateados', productosFormateados);
+            console.log(`   ✅ Guardado productos_formateados (texto legible para GPT)`);
+            console.log(`   📝 Preview:\n${productosFormateados.substring(0, 200)}...`);
           }
           
           // Retornar en formato { productos: [...] } para que sea accesible como woocommerce.productos
