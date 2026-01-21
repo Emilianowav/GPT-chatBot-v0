@@ -1,14 +1,12 @@
 import React, { memo } from 'react';
 import { NodeProps } from 'reactflow';
-import BaseNode from './BaseNode';
+import { SimpleNode } from './SimpleNode';
 
-const WooCommerceIcon = () => (
+const WooCommerceIcon = ({ size = 40 }: { size?: number; color?: string }) => (
   <img 
-    src="/logos tecnologias/woocommerce.png" 
+    src="https://woocommerce.com/wp-content/themes/woo/images/logo-woocommerce@2x.png" 
     alt="WooCommerce" 
-    width="48" 
-    height="48"
-    style={{ borderRadius: '4px' }}
+    style={{ width: `${size}px`, height: `${size}px`, objectFit: 'contain' }}
   />
 );
 
@@ -37,13 +35,16 @@ interface WooCommerceNodeData {
 function WooCommerceNode(props: NodeProps<WooCommerceNodeData>) {
   const color = '#96588a'; // WooCommerce purple
 
-  const baseNodeData = {
+  const simpleNodeData = {
     ...props.data,
+    label: props.data.label || 'WooCommerce',
+    subtitle: 'E-commerce',
     icon: WooCommerceIcon,
     color,
+    executionCount: props.data.executionCount || 1,
   };
 
-  return <BaseNode {...props} data={baseNodeData} />;
+  return <SimpleNode {...props} data={simpleNodeData} />;
 }
 
 export default memo(WooCommerceNode);

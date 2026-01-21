@@ -1,0 +1,176 @@
+.noteNode {
+  width: 100%;
+  height: 100%;
+  min-width: 150px;
+  min-height: 100px;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  border: 2px solid #fbbf24;
+  display: flex;
+  flex-direction: column;
+  transition: all 0.2s;
+  cursor: default;
+}
+
+.noteNode.minimized {
+  height: auto !important;
+  min-height: auto !important;
+  max-height: 50px;
+  overflow: hidden;
+}
+
+.noteNode.fullyCollapsed {
+  width: 40px !important;
+  height: 40px !important;
+  min-width: 40px !important;
+  min-height: 40px !important;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.collapsedIcon {
+  color: #92400e;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: transform 0.2s;
+}
+
+.collapsedIcon:hover {
+  transform: scale(1.1);
+}
+
+.noteNode.selected {
+  box-shadow: 0 4px 16px rgba(251, 191, 36, 0.3);
+  border-color: #f59e0b;
+}
+
+.noteHeader {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+  background: rgba(255, 255, 255, 0.3);
+}
+
+.noteIcon {
+  color: #92400e;
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.noteTitle {
+  flex: 1;
+  font-size: 13px;
+  font-weight: 600;
+  color: #92400e;
+  cursor: pointer;
+  border-radius: 4px;
+  transition: background 0.2s;
+}
+
+.noteTitle:hover {
+  background: rgba(146, 64, 14, 0.1);
+}
+
+.titleInput {
+  flex: 1;
+  border: none;
+  background: rgba(255, 255, 255, 0.5);
+  font-size: 13px;
+  font-weight: 600;
+  color: #92400e;
+  padding: 2px 4px;
+  border-radius: 4px;
+  outline: none;
+  font-family: inherit;
+}
+
+.titleInput::placeholder {
+  color: rgba(146, 64, 14, 0.5);
+}
+
+.headerButtons {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.minimizeButton {
+  background: none;
+  border: none;
+  color: #92400e;
+  cursor: pointer;
+  padding: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+  transition: all 0.2s;
+  opacity: 0.6;
+}
+
+.minimizeButton:hover {
+  background: rgba(146, 64, 14, 0.1);
+  opacity: 1;
+}
+
+.deleteButton {
+  background: none;
+  border: none;
+  color: #dc2626;
+  cursor: pointer;
+  padding: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+  transition: all 0.2s;
+  opacity: 0.6;
+}
+
+.deleteButton:hover {
+  background: rgba(220, 38, 38, 0.1);
+  opacity: 1;
+}
+
+.noteContent {
+  flex: 1;
+  padding: 12px;
+  overflow: hidden;
+}
+
+.noteTextarea {
+  width: 100%;
+  height: 100%;
+  border: none;
+  background: transparent;
+  resize: none;
+  font-family: inherit;
+  font-size: 13px;
+  color: #92400e;
+  outline: none;
+}
+
+.noteTextarea::placeholder {
+  color: rgba(146, 64, 14, 0.5);
+}
+
+.noteText {
+  font-size: 13px;
+  color: #92400e;
+  white-space: pre-wrap;
+  word-break: break-word;
+  line-height: 1.5;
+}
+
+.noteText:empty::before {
+  content: 'Doble click para editar...';
+  color: rgba(146, 64, 14, 0.5);
+  font-style: italic;
+}

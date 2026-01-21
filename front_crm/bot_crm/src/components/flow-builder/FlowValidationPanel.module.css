@@ -1,0 +1,144 @@
+.validationPanel {
+  position: fixed;
+  width: 400px;
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  z-index: 10000;
+  overflow: hidden;
+  user-select: none;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 16px;
+  background: #f8f9fa;
+  border-bottom: 1px solid #e9ecef;
+  cursor: pointer;
+  user-select: none;
+}
+
+.header:hover {
+  background: #e9ecef;
+}
+
+.title {
+  flex: 1;
+  font-weight: 600;
+  font-size: 14px;
+  color: #212529;
+}
+
+.toggle {
+  color: #6c757d;
+  font-size: 12px;
+}
+
+.successIcon {
+  color: #28a745;
+}
+
+.warningIcon {
+  color: #ffc107;
+}
+
+.errorIcon {
+  color: #dc3545;
+}
+
+.infoIcon {
+  color: #17a2b8;
+}
+
+.content {
+  max-height: 400px;
+  overflow-y: auto;
+  padding: 12px;
+}
+
+.successMessage {
+  padding: 12px;
+  background: #d4edda;
+  border: 1px solid #c3e6cb;
+  border-radius: 4px;
+  color: #155724;
+  font-size: 13px;
+}
+
+.section {
+  margin-bottom: 16px;
+}
+
+.section:last-child {
+  margin-bottom: 0;
+}
+
+.sectionHeader {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+  font-weight: 600;
+  font-size: 13px;
+  color: #495057;
+}
+
+.issue {
+  padding: 10px 12px;
+  margin-bottom: 6px;
+  border-radius: 4px;
+  font-size: 13px;
+  line-height: 1.5;
+  border-left: 3px solid;
+}
+
+.issue:last-child {
+  margin-bottom: 0;
+}
+
+.issue.error {
+  background: #f8d7da;
+  border-color: #dc3545;
+  color: #721c24;
+}
+
+.issue.warning {
+  background: #fff3cd;
+  border-color: #ffc107;
+  color: #856404;
+}
+
+.issue.info {
+  background: #d1ecf1;
+  border-color: #17a2b8;
+  color: #0c5460;
+}
+
+.issue.clickable {
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.issue.clickable:hover {
+  transform: translateX(4px);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.content::-webkit-scrollbar {
+  width: 6px;
+}
+
+.content::-webkit-scrollbar-track {
+  background: #f1f1f1;
+}
+
+.content::-webkit-scrollbar-thumb {
+  background: #888;
+  border-radius: 3px;
+}
+
+.content::-webkit-scrollbar-thumb:hover {
+  background: #555;
+}

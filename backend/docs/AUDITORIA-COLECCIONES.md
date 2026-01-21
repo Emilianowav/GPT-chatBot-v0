@@ -1,8 +1,8 @@
 # 📊 Auditoría de Colecciones MongoDB
 
-**Fecha:** 3/1/2026, 03:00:18
+**Fecha:** 17/1/2026, 03:19:26
 **Base de datos:** neural_chatbot
-**Total de colecciones:** 33
+**Total de colecciones:** 40
 
 ---
 
@@ -13,10 +13,13 @@
 | admin_users | 10 | 4 |
 | afipinvoices | 5 | 8 |
 | afipsellers | 2 | 4 |
-| agentes | 11 | 4 |
+| agentes | 13 | 4 |
 | api_configurations | 6 | 6 |
-| api_request_logs | 228 | 10 |
+| api_request_logs | 280 | 10 |
+| apiconfigurations | 1 | 1 |
+| apis | 1 | 1 |
 | bloqueos_horario | 0 | 0 |
+| carritos | 17 | 2 |
 | chatbots | 8 | 5 |
 | clientes | 0 | 0 |
 | configuracion_bots | 0 | 0 |
@@ -24,21 +27,25 @@
 | configuracion_modulos | 0 | 0 |
 | configuracionbots | 9 | 2 |
 | configuraciones_modulo | 11 | 2 |
-| contactos_empresa | 153 | 9 |
+| contactos_empresa | 187 | 10 |
 | conversation_states | 0 | 0 |
 | empresas | 12 | 3 |
-| flow_logs | 77 | 8 |
+| flow_logs | 313 | 8 |
+| flow_nodes | 24 | 5 |
+| flowbuilders | 0 | 0 |
+| flownodes | 6 | 6 |
+| flows | 2 | 6 |
 | flujos | 15 | 4 |
 | integration_configurations | 0 | 0 |
 | marketplace_integrations | 0 | 0 |
 | mppaymentlinks | 13 | 6 |
-| mppayments | 9 | 12 |
+| mppayments | 25 | 12 |
 | mpsellers | 1 | 4 |
 | mpsubscriptionplans | 0 | 0 |
 | ocrconfigs | 0 | 0 |
 | ocrdocuments | 0 | 0 |
 | super_admins | 1 | 2 |
-| turnos | 15 | 11 |
+| turnos | 50 | 11 |
 | usuarios | 1 | 4 |
 | usuarios_empresa | 15 | 7 |
 | usuarios_empresas | 1 | 1 |
@@ -179,7 +186,7 @@ _id, empresaId, cuit, razonSocial, puntoVenta, certificado, clavePrivada, enviro
 
 ### agentes
 
-**Documentos:** 11
+**Documentos:** 13
 
 **Índices:**
 - `_id` 
@@ -269,7 +276,7 @@ _id, empresaId, nombre, descripcion, tipo, estado, baseUrl, version, autenticaci
 
 ### api_request_logs
 
-**Documentos:** 228
+**Documentos:** 280
 
 **Índices:**
 - `_id` 
@@ -299,6 +306,100 @@ _id, empresaId, apiConfigId, endpointId, request, error, estado, createdAt, __v,
   "error": "Object",
   "estado": "string",
   "createdAt": "Object",
+  "__v": "number"
+}
+```
+
+---
+
+### apiconfigurations
+
+**Documentos:** 1
+
+**Índices:**
+- `_id` 
+
+**Campos:**
+```
+_id, nombre, descripcion, baseUrl, activa, empresaId, autenticacion, createdAt, updatedAt
+```
+
+**Schema:**
+```json
+{
+  "_id": "Object",
+  "nombre": "string",
+  "descripcion": "string",
+  "baseUrl": "string",
+  "activa": "boolean",
+  "empresaId": "Object",
+  "autenticacion": "Object",
+  "createdAt": "Object",
+  "updatedAt": "Object"
+}
+```
+
+---
+
+### apis
+
+**Documentos:** 1
+
+**Índices:**
+- `_id` 
+
+**Campos:**
+```
+_id, nombre, descripcion, empresaId, baseUrl, activo, autenticacion, headers, endpoints, creadoEn, actualizadoEn
+```
+
+**Schema:**
+```json
+{
+  "_id": "Object",
+  "nombre": "string",
+  "descripcion": "string",
+  "empresaId": "Object",
+  "baseUrl": "string",
+  "activo": "boolean",
+  "autenticacion": "Object",
+  "headers": "Object",
+  "endpoints": [
+    "Object"
+  ],
+  "creadoEn": "Object",
+  "actualizadoEn": "Object"
+}
+```
+
+---
+
+### carritos
+
+**Documentos:** 17
+
+**Índices:**
+- `_id` 
+- `contactoId, empresaId, estado` 
+
+**Campos:**
+```
+_id, contactoId, empresaId, items, total, estado, fechaCreacion, fechaActualizacion, __v
+```
+
+**Schema:**
+```json
+{
+  "_id": "Object",
+  "contactoId": "Object",
+  "empresaId": "string",
+  "items": [
+    "Array vacío"
+  ],
+  "total": "number",
+  "estado": "string",
+  "fechaCreacion": "Object",
+  "fechaActualizacion": "Object",
   "__v": "number"
 }
 ```
@@ -432,7 +533,7 @@ _id, empresaId, tipoNegocio, activo, nomenclatura, camposPersonalizados, turnos,
 
 ### contactos_empresa
 
-**Documentos:** 153
+**Documentos:** 187
 
 **Índices:**
 - `_id` 
@@ -444,6 +545,7 @@ _id, empresaId, tipoNegocio, activo, nomenclatura, camposPersonalizados, turnos,
 - `metricas.ultimaInteraccion` 
 - `empresaId, agenteAsignado` 
 - `empresaId, telefono` 
+- `empresaId, agentesAsignados` 
 
 **Campos:**
 ```
@@ -525,7 +627,7 @@ _id, nombre, __v, catalogoPath, categoria, createdAt, derivarA, email, linkCatal
 
 ### flow_logs
 
-**Documentos:** 77
+**Documentos:** 313
 
 **Índices:**
 - `_id` 
@@ -539,7 +641,7 @@ _id, nombre, __v, catalogoPath, categoria, createdAt, derivarA, email, linkCatal
 
 **Campos:**
 ```
-_id, telefono, empresaId, flujo, estado, accion, mensaje, timestamp, __v
+_id, telefono, empresaId, flujo, estado, accion, mensaje, timestamp, __v, data
 ```
 
 **Schema:**
@@ -554,6 +656,124 @@ _id, telefono, empresaId, flujo, estado, accion, mensaje, timestamp, __v
   "mensaje": "string",
   "timestamp": "Object",
   "__v": "number"
+}
+```
+
+---
+
+### flow_nodes
+
+**Documentos:** 24
+
+**Índices:**
+- `_id` 
+- `empresaId` 
+- `flowId` 
+- `empresaId, flowId, id` (UNIQUE)
+- `empresaId, activo` 
+
+**Campos:**
+```
+_id, empresaId, flowId, id, type, name, message, options, metadata, activo, conditions, createdAt, updatedAt, __v, validation, next, action
+```
+
+**Schema:**
+```json
+{
+  "_id": "Object",
+  "empresaId": "string",
+  "flowId": "string",
+  "id": "string",
+  "type": "string",
+  "name": "string",
+  "message": "string",
+  "options": [
+    "Object"
+  ],
+  "metadata": "Object",
+  "activo": "boolean",
+  "conditions": [
+    "Array vacío"
+  ],
+  "createdAt": "Object",
+  "updatedAt": "Object",
+  "__v": "number"
+}
+```
+
+---
+
+### flownodes
+
+**Documentos:** 6
+
+**Índices:**
+- `_id` 
+- `empresaId` 
+- `flowId` 
+- `empresaId, flowId, id` (UNIQUE)
+- `empresaId, activo` 
+- `empresaId, flowId, metadata.orden` 
+
+**Campos:**
+```
+_id, empresaId, flowId, id, type, name, message, next, nombreVariable, validation, metadata, activo, action
+```
+
+**Schema:**
+```json
+{
+  "_id": "Object",
+  "empresaId": "string",
+  "flowId": "string",
+  "id": "string",
+  "type": "string",
+  "name": "string",
+  "message": "string",
+  "next": "string",
+  "nombreVariable": "string",
+  "validation": "Object",
+  "metadata": "Object",
+  "activo": "boolean"
+}
+```
+
+---
+
+### flows
+
+**Documentos:** 2
+
+**Índices:**
+- `_id` 
+- `empresaId` 
+- `empresaId, activo, triggers.priority` 
+- `empresaId, botType, activo` 
+- `apiConfig.apiConfigurationId` 
+- `empresaId, id` (UNIQUE)
+
+**Campos:**
+```
+_id, nombre, empresaId, activo, nodes, edges, createdAt, updatedAt, actualizadoEn, config, descripcion
+```
+
+**Schema:**
+```json
+{
+  "_id": "Object",
+  "nombre": "string",
+  "empresaId": "string",
+  "activo": "boolean",
+  "nodes": [
+    "Object"
+  ],
+  "edges": [
+    "Object"
+  ],
+  "createdAt": "Object",
+  "updatedAt": "Object",
+  "actualizadoEn": "Object",
+  "config": "Object"
 }
 ```
 
@@ -642,7 +862,7 @@ _id, sellerId, empresaId, slug, title, description, category, priceType, unitPri
 
 ### mppayments
 
-**Documentos:** 9
+**Documentos:** 25
 
 **Índices:**
 - `_id` 
@@ -660,7 +880,7 @@ _id, sellerId, empresaId, slug, title, description, category, priceType, unitPri
 
 **Campos:**
 ```
-_id, mpPaymentId, sellerId, empresaId, externalReference, status, statusDetail, amount, currency, paymentMethodId, paymentTypeId, installments, payerEmail, payerPhone, payerDocType, payerDocNumber, dateCreated, dateApproved, dateLastUpdated, createdAt, updatedAt, __v
+_id, mpPaymentId, sellerId, empresaId, externalReference, status, statusDetail, amount, currency, paymentMethodId, paymentTypeId, installments, payerEmail, payerPhone, payerDocType, payerDocNumber, dateCreated, dateApproved, dateLastUpdated, createdAt, updatedAt, __v, metadata
 ```
 
 **Schema:**
@@ -687,7 +907,8 @@ _id, mpPaymentId, sellerId, empresaId, externalReference, status, statusDetail, 
   "dateLastUpdated": "Object",
   "createdAt": "Object",
   "updatedAt": "Object",
-  "__v": "number"
+  "__v": "number",
+  "metadata": "Object"
 }
 ```
 
@@ -761,7 +982,7 @@ _id, username, password, email, nombre, activo, createdAt, updatedAt, __v, ultim
 
 ### turnos
 
-**Documentos:** 15
+**Documentos:** 50
 
 **Índices:**
 - `_id` 

@@ -96,7 +96,7 @@ const ApiConfigSchema = new Schema({
 const FlowSchema = new Schema<IFlow>(
   {
     empresaId: { type: String, required: true, index: true },
-    id: { type: String, required: true },
+    id: { type: String, required: false }, // Opcional para flujos visuales
     nombre: { type: String, required: true },
     descripcion: String,
     categoria: {

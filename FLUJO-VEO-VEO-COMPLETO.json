@@ -1,0 +1,892 @@
+{
+  "nombre_flujo": "Veo Veo - Librería",
+  "descripcion": "Flujo completo de atención al cliente, búsqueda de productos y gestión de pagos",
+  "version": "1.0",
+  
+  "topicos_flujo": {
+    "ubicacion": "flow.config.topicos",
+    "topicos_habilitados": true,
+    "topicos": {
+      "empresa": {
+        "nombre": "Librería Veo Veo",
+        "ubicacion": "San Juan 1037, Corrientes Capital",
+        "whatsapp": "5493794732177",
+        "whatsapp_link": "https://wa.me/5493794732177"
+      },
+      "horarios": {
+        "lunes_viernes": "8:30-12:00 y 17:00-21:00",
+        "sabados": "9:00-13:00 y 17:00-21:00",
+        "domingos": "Cerrado",
+        "descripcion": "Atendemos de Lunes a Viernes de 8:30 a 12:00 y de 17:00 a 21:00. Sábados de 9:00 a 13:00 y de 17:00 a 21:00. Domingos cerrado."
+      },
+      "tono-comunicacion": {
+        "estilo": "Amigable, profesional, cercano",
+        "uso_emojis": true,
+        "tratamiento": "vos (argentino)"
+      },
+      "atencion-personalizada": {
+        "descripcion": "Siempre preguntar qué busca el cliente, ofrecer alternativas, ser proactivo"
+      },
+      "libros-ingles": {
+        "descripcion": "Tenemos amplia variedad de libros en inglés para todos los niveles"
+      },
+      "politica-retiro": {
+        "descripcion": "Retiro en local sin cargo. Horarios: Lunes a Viernes 8:30-12 y 17-21, Sábados 9-13 y 17-21"
+      },
+      "politica-envios": {
+        "descripcion": "Envíos a todo el país. Costo según destino."
+      },
+      "medios_pago": {
+        "descripcion": "Aceptamos efectivo, transferencia, MercadoPago"
+      },
+      "productos": {
+        "libros_ingles": {
+          "descripcion": "Libros en inglés para todos los niveles"
+        }
+      }
+    }
+  },
+
+  "nodos": [
+    {
+      "id": "webhook-whatsapp",
+      "type": "webhook",
+      "position": {"x": 100, "y": 100},
+      "data": {
+        "label": "WhatsApp Business Cloud API",
+        "config": {
+          "tipo": "listener",
+          "webhookUrl": "/api/webhook/whatsapp"
+        },
+        "hasConnection": true
+      },
+      "validaciones": {
+        "config.tipo": {
+          "tipo": "string",
+          "valores_permitidos": ["listener"],
+          "requerido": true
+        },
+        "config.webhookUrl": {
+          "tipo": "string",
+          "formato": "url_path",
+          "requerido": true
+        }
+      },
+      "conexiones_salida": [
+        {
+          "target": "gpt-clasificador-inteligente",
+          "edge_id": "edge-webhook-clasificador-final",
+          "tipo": "default"
+        }
+      ]
+    },
+    {
+      "id": "gpt-clasificador-inteligente",
+      "type": "gpt",
+      "position": {"x": 300, "y": 100},
+      "data": {
+        "label": "GPT Clasificador",
+        "config": {
+          "systemPrompt": "Sos un asistente de la Librería Veo Veo 📚.\n\nTU TAREA:\nAnalizar el mensaje del usuario y clasificar su intención.\n\nTIPOS DE ACCIÓN:\n- \"comprar\" → Usuario quiere buscar/comprar libros\n- \"consultar\" → Usuario hace preguntas generales\n- \"despedida\" → Usuario se despide\n\nOUTPUT (solo la palabra):\ncomprar | consultar | despedida",
+          "model": "gpt-3.5-turbo",
+          "temperature": 0.3,
+          "response_format": "text",
+          "variables_a_extraer": [
+            {
+              "nombre": "tipo_accion",
+              "tipo": "string",
+              "descripcion": "Tipo de acción: comprar, consultar, despedida",
+              "obligatoria": true
+            }
+          ],
+          "topics": ["tono-comunicacion"]
+        },
+        "hasConnection": true
+      },
+      "validaciones": {
+        "config.systemPrompt": {
+          "tipo": "string",
+          "min_length": 10,
+          "requerido": true
+        },
+        "config.model": {
+          "tipo": "string",
+          "valores_permitidos": ["gpt-3.5-turbo", "gpt-4", "gpt-4-turbo", "gpt-4o-mini"],
+          "requerido": false,
+          "default": "gpt-3.5-turbo"
+        },
+        "config.temperature": {
+          "tipo": "number",
+          "min": 0,
+          "max": 1,
+          "requerido": false,
+          "default": 0.7
+        },
+        "config.variables_a_extraer": {
+          "tipo": "array",
+          "items": {
+            "nombre": "string",
+            "tipo": "string",
+            "descripcion": "string",
+            "obligatoria": "boolean"
+          }
+        },
+        "config.topics": {
+          "tipo": "array",
+          "items": "string",
+          "referencia": "flow.config.topicos"
+        }
+      },
+      "conexiones_salida": [
+        {
+          "target": "router-principal",
+          "edge_id": "edge-clasificador-router",
+          "tipo": "default"
+        }
+      ]
+    },
+    {
+      "id": "router-principal",
+      "type": "router",
+      "position": {"x": 500, "y": 100},
+      "data": {
+        "label": "Router Principal",
+        "config": {
+          "variable": "tipo_accion",
+          "routes": [
+            {
+              "condition": "equals",
+              "value": "buscar_producto",
+              "label": "🔍 Buscar Producto"
+            },
+            {
+              "condition": "equals",
+              "value": "comprar",
+              "label": "🛒 Comprar"
+            },
+            {
+              "condition": "equals",
+              "value": "consultar",
+              "label": "💬 Consultar"
+            },
+            {
+              "condition": "equals",
+              "value": "despedida",
+              "label": "👋 Despedida"
+            }
+          ]
+        },
+        "routeHandles": [],
+        "hasConnection": true
+      },
+      "validaciones": {
+        "config.variable": {
+          "tipo": "string",
+          "formato": "variable_name",
+          "requerido": true
+        },
+        "config.routes": {
+          "tipo": "array",
+          "min_items": 1,
+          "items": {
+            "condition": {
+              "tipo": "string",
+              "valores_permitidos": ["equals", "not_equals", "contains", "not_contains", "greater_than", "less_than", "exists", "not_exists", "default"]
+            },
+            "value": "string",
+            "label": "string"
+          }
+        },
+        "routeHandles": {
+          "tipo": "array",
+          "items": "string",
+          "nota": "Debe estar vacío o contener IDs de handles generados"
+        }
+      },
+      "conexiones_salida": [
+        {
+          "target": "gpt-formateador",
+          "edge_id": "edge-router-formateador",
+          "tipo": "default",
+          "sourceHandle": null,
+          "condicion": "tipo_accion equals buscar_producto"
+        },
+        {
+          "target": "gpt-armar-carrito",
+          "edge_id": "edge-router-armar-carrito",
+          "tipo": "default",
+          "sourceHandle": null,
+          "condicion": "tipo_accion equals comprar"
+        }
+      ]
+    },
+    {
+      "id": "gpt-formateador",
+      "type": "gpt",
+      "position": {"x": 700, "y": 50},
+      "data": {
+        "label": "OpenAI (ChatGPT, Sera...",
+        "subtitle": "formateador",
+        "config": {
+          "systemPrompt": "Eres un extractor de variables para búsqueda de libros en WooCommerce.\n\nVARIABLES A EXTRAER:\n- titulo: Título del libro (string) - **OBLIGATORIO**\n- editorial: Editorial del libro (string) - OPCIONAL\n- edicion: Edición del libro (string) - OPCIONAL\n\nSi el usuario no menciona editorial o edición, devolver null.\n\nOUTPUT (JSON):\n{\n  \"titulo\": \"Harry Potter 3\",\n  \"editorial\": null,\n  \"edicion\": null,\n  \"variables_completas\": true,\n  \"variables_faltantes\": []\n}",
+          "model": "gpt-4o-mini",
+          "temperature": 0.1,
+          "response_format": "json_object"
+        },
+        "hasConnection": true,
+        "executionCount": 3
+      },
+      "validaciones": {
+        "config.response_format": {
+          "tipo": "string",
+          "valores_permitidos": ["text", "json_object"],
+          "requerido": false,
+          "default": "text"
+        }
+      },
+      "conexiones_salida": [
+        {
+          "target": "router",
+          "edge_id": "edge-3",
+          "tipo": "default"
+        }
+      ]
+    },
+    {
+      "id": "router",
+      "type": "router",
+      "position": {"x": 900, "y": 50},
+      "data": {
+        "label": "Router",
+        "subtitle": "Búsqueda Inicial",
+        "config": {
+          "routes": [
+            {
+              "id": "route-1",
+              "label": "Pedir Datos",
+              "condition": "{{gpt-formateador.variables_faltantes}} not_empty"
+            },
+            {
+              "id": "route-2",
+              "label": "Buscar en WooCommerce",
+              "condition": "{{gpt-formateador.variables_completas}} equals true"
+            }
+          ]
+        },
+        "routeHandles": ["route-1", "route-2"],
+        "hasConnection": true,
+        "executionCount": 4
+      },
+      "validaciones": {
+        "config.routes[].id": {
+          "tipo": "string",
+          "formato": "handle_id",
+          "requerido": true,
+          "nota": "Debe coincidir con routeHandles"
+        },
+        "config.routes[].condition": {
+          "tipo": "string",
+          "formato": "template_condition",
+          "permite_variables": true
+        },
+        "routeHandles": {
+          "tipo": "array",
+          "items": "string",
+          "debe_coincidir_con": "config.routes[].id"
+        }
+      },
+      "conexiones_salida": [
+        {
+          "target": "gpt-pedir-datos",
+          "edge_id": "edge-4",
+          "tipo": "default",
+          "sourceHandle": "route-1"
+        },
+        {
+          "target": "whatsapp-solicitar-datos",
+          "edge_id": "edge-router-solicitar",
+          "tipo": "default",
+          "sourceHandle": "route-2"
+        }
+      ]
+    },
+    {
+      "id": "gpt-pedir-datos",
+      "type": "gpt",
+      "position": {"x": 1100, "y": 0},
+      "data": {
+        "label": "OpenAI (ChatGPT, Sera...",
+        "subtitle": "conversacional",
+        "config": {
+          "systemPrompt": "Eres un asistente amigable de Librería Veo Veo.\n\nINFORMACIÓN DISPONIBLE (NO INVENTES, USA ESTO):\n{{topicos.horarios.descripcion}}\n{{topicos.medios_pago.descripcion}}\n{{topicos.productos.libros_ingles.descripcion}}\n\nTU TAREA:\nPedir los datos faltantes de forma amigable.\n\nVariables faltantes: {{gpt-formateador.variables_faltantes}}\n\nEjemplo:\n\"¿Me podés decir la editorial del libro que buscás? 📚\"",
+          "model": "gpt-3.5-turbo",
+          "temperature": 0.7
+        },
+        "hasConnection": true,
+        "executionCount": 5
+      },
+      "validaciones": {
+        "config.systemPrompt": {
+          "permite_variables": true,
+          "formato_variables": "{{nodo.variable}} o {{topicos.categoria.campo}}"
+        }
+      },
+      "conexiones_salida": [
+        {
+          "target": "whatsapp-preguntar",
+          "edge_id": "edge-pedir-whatsapp",
+          "tipo": "default",
+          "sourceHandle": "incomplete"
+        }
+      ]
+    },
+    {
+      "id": "whatsapp-preguntar",
+      "type": "whatsapp",
+      "position": {"x": 1300, "y": 0},
+      "data": {
+        "label": "WhatsApp Business Clo...",
+        "config": {
+          "action": "send_message",
+          "message": "{{gpt-pedir-datos.response}}",
+          "to": "{{1.from}}"
+        },
+        "hasConnection": false
+      },
+      "validaciones": {
+        "config.action": {
+          "tipo": "string",
+          "valores_permitidos": ["send_message", "send_media", "send_template"],
+          "requerido": true
+        },
+        "config.message": {
+          "tipo": "string",
+          "permite_variables": true,
+          "requerido_si": "action equals send_message"
+        },
+        "config.to": {
+          "tipo": "string",
+          "formato": "phone_number o variable",
+          "requerido": true
+        }
+      },
+      "conexiones_salida": [],
+      "nota": "Nodo final. Espera respuesta del usuario que vuelve al webhook."
+    },
+    {
+      "id": "whatsapp-solicitar-datos",
+      "type": "whatsapp",
+      "position": {"x": 1100, "y": 100},
+      "data": {
+        "label": "WhatsApp Buscar Productos",
+        "config": {
+          "action": "send_message",
+          "message": "🔍 Perfecto, déjame buscar eso para vos...",
+          "to": "{{1.from}}"
+        },
+        "hasConnection": true
+      },
+      "validaciones": {},
+      "conexiones_salida": [
+        {
+          "target": "woocommerce",
+          "edge_id": "edge-solicitar-woocommerce",
+          "tipo": "smoothstep"
+        }
+      ]
+    },
+    {
+      "id": "woocommerce",
+      "type": "woocommerce",
+      "position": {"x": 1300, "y": 100},
+      "data": {
+        "label": "WooCommerce",
+        "config": {
+          "tipo": "buscar_productos",
+          "empresaId": "Veo Veo",
+          "searchParams": {
+            "titulo": "{{gpt-formateador.titulo}}",
+            "editorial": "{{gpt-formateador.editorial}}",
+            "edicion": "{{gpt-formateador.edicion}}"
+          }
+        },
+        "hasConnection": true,
+        "executionCount": 5
+      },
+      "validaciones": {
+        "config.tipo": {
+          "tipo": "string",
+          "valores_permitidos": ["buscar_productos", "obtener_producto", "crear_orden"],
+          "requerido": true
+        },
+        "config.empresaId": {
+          "tipo": "string",
+          "requerido": true
+        },
+        "config.searchParams": {
+          "tipo": "object",
+          "permite_variables": true
+        }
+      },
+      "conexiones_salida": [
+        {
+          "target": "gpt-asistente-ventas",
+          "edge_id": "edge-8",
+          "tipo": "default"
+        }
+      ]
+    },
+    {
+      "id": "gpt-asistente-ventas",
+      "type": "gpt",
+      "position": {"x": 1500, "y": 100},
+      "data": {
+        "label": "OpenAI (ChatGPT, Sera...",
+        "subtitle": "conversacional",
+        "config": {
+          "systemPrompt": "Sos un asistente de ventas de la Librería Veo Veo 📚.\n\nTU TAREA:\nPresentar los resultados de búsqueda de libros de forma atractiva y ayudar al cliente a elegir.\n\nFORMATO DE PRESENTACIÓN:\nPerfecto😊, encontré estos libros:\n\n📚 [Título]\nEditorial: [Editorial]\nPrecio: $[Precio]\nStock: [Disponible/Agotado]\n\n¿Te interesa alguno?",
+          "model": "gpt-4o-mini",
+          "temperature": 0.7,
+          "topics": [
+            "tono-comunicacion",
+            "atencion-personalizada",
+            "libros-ingles"
+          ]
+        },
+        "hasConnection": true,
+        "executionCount": 6
+      },
+      "validaciones": {},
+      "conexiones_salida": [
+        {
+          "target": "whatsapp-asistente",
+          "edge_id": "edge-9",
+          "tipo": "default"
+        }
+      ]
+    },
+    {
+      "id": "whatsapp-asistente",
+      "type": "whatsapp",
+      "position": {"x": 1700, "y": 100},
+      "data": {
+        "label": "WhatsApp Business Clo...",
+        "config": {
+          "action": "send_message",
+          "message": "{{gpt-asistente-ventas.response}}",
+          "to": "{{1.from}}"
+        },
+        "hasConnection": false
+      },
+      "validaciones": {},
+      "conexiones_salida": [],
+      "nota": "Nodo final"
+    },
+    {
+      "id": "gpt-armar-carrito",
+      "type": "gpt",
+      "position": {"x": 700, "y": 200},
+      "data": {
+        "label": "GPT Armar Carrito",
+        "config": {
+          "systemPrompt": "Sos un asistente de ventas de la Librería Veo Veo 📚.\n\nTU TAREA:\nAnalizar el historial completo y el mensaje actual para extraer información del carrito O generar mensaje de confirmación de pago.\n\nREGLAS:\n1. PAGO CONFIRMADO AUTOMÁTICO (webhook):\n   - Si mercadopago_estado = \"approved\" Y mensaje contiene \"✅ pago confirmado\"\n   - tipo_mensaje = \"pago_confirmado_automatico\"\n   - Generar mensaje_confirmacion personalizado\n\n2. VERIFICAR PAGO:\n   - Si usuario dice \"ya pagué\", \"pagué\", \"hice el pago\"\n   - tipo_mensaje = \"verificar_pago\"\n\n3. PRODUCTOS DEL CARRITO:\n   - Extraer del historial los productos que el usuario confirmó\n   - Si el usuario dijo \"lo quiero\", \"agregar al carrito\", \"sí\", \"confirmo\" → agregar ese producto\n\n4. CONFIRMACIÓN DE COMPRA:\n   - true SOLO si el usuario confirmó explícitamente: \"sí\", \"lo quiero\", \"confirmo\", \"comprar\"\n   - false si es una pregunta o consulta\n\n5. DATOS DEL CLIENTE:\n   - Extraer del historial si el usuario ya los proporcionó\n   - Si no están → null\n\nFORMATO DE SALIDA (JSON estricto):\n{\n  \"tipo_mensaje\": \"pago_confirmado_automatico\" | \"verificar_pago\" | \"confirmar_compra\" | \"consulta\",\n  \"mensaje_confirmacion\": \"MENSAJE PERSONALIZADO AQUÍ (solo si tipo_mensaje = pago_confirmado_automatico)\",\n  \"productos_carrito\": [{\"id\": 126, \"nombre\": \"...\", \"cantidad\": 1, \"precio\": 49000}],\n  \"total\": 49000,\n  \"confirmacion_compra\": true,\n  \"nombre_cliente\": null,\n  \"email_cliente\": null,\n  \"telefono_cliente\": \"{{1.from}}\"\n}",
+          "model": "gpt-3.5-turbo",
+          "temperature": 0.7,
+          "response_format": "json_object",
+          "contextSource": "historial_completo",
+          "variables_a_extraer": [
+            {
+              "nombre": "tipo_mensaje",
+              "tipo": "string",
+              "descripcion": "Tipo de mensaje: verificar_pago, confirmar_compra, consulta",
+              "obligatoria": true
+            },
+            {
+              "nombre": "mensaje_confirmacion",
+              "tipo": "string",
+              "descripcion": "Mensaje personalizado de confirmación de pago (solo si pago aprobado)",
+              "obligatoria": false
+            }
+          ],
+          "topics": [
+            "tono-comunicacion",
+            "politica-retiro",
+            "politica-envios"
+          ]
+        },
+        "hasConnection": true
+      },
+      "validaciones": {
+        "config.contextSource": {
+          "tipo": "string",
+          "valores_permitidos": ["historial_completo", "ultimo_mensaje", "ultimos_n_mensajes"],
+          "requerido": false,
+          "default": "historial_completo"
+        }
+      },
+      "conexiones_salida": [
+        {
+          "target": "router-carrito",
+          "edge_id": "edge-armar-router-carrito",
+          "tipo": "default"
+        }
+      ]
+    },
+    {
+      "id": "router-carrito",
+      "type": "router",
+      "position": {"x": 900, "y": 200},
+      "data": {
+        "label": "Router Carrito",
+        "config": {
+          "variable": "confirmacion_compra",
+          "routes": [
+            {
+              "condition": "equals",
+              "value": "true",
+              "label": "✅ Datos Completos",
+              "additionalConditions": [
+                {
+                  "variable": "nombre_cliente",
+                  "condition": "exists"
+                },
+                {
+                  "variable": "email_cliente",
+                  "condition": "exists"
+                }
+              ]
+            },
+            {
+              "condition": "equals",
+              "value": "false",
+              "label": "❌ Sin Confirmación"
+            },
+            {
+              "condition": "default",
+              "label": "⚠️ Faltan Datos"
+            }
+          ]
+        },
+        "routeHandles": [
+          "edge-router-mercadopago",
+          "edge-router-verificar",
+          "edge-router-confirmacion"
+        ],
+        "hasConnection": true
+      },
+      "validaciones": {
+        "config.routes[].additionalConditions": {
+          "tipo": "array",
+          "items": {
+            "variable": "string",
+            "condition": "string"
+          },
+          "opcional": true
+        }
+      },
+      "conexiones_salida": [
+        {
+          "target": "mercadopago-crear-preference",
+          "edge_id": "edge-router-mercadopago",
+          "tipo": "default",
+          "sourceHandle": "edge-router-mercadopago",
+          "condicion": "confirmacion_compra equals true AND nombre_cliente exists AND email_cliente exists"
+        },
+        {
+          "target": "mercadopago-verificar-pago",
+          "edge_id": "edge-router-verificar",
+          "tipo": "default",
+          "sourceHandle": "edge-router-verificar",
+          "condicion": "tipo_mensaje equals verificar_pago"
+        },
+        {
+          "target": "whatsapp-confirmacion-pago",
+          "edge_id": "edge-router-confirmacion",
+          "tipo": "default",
+          "sourceHandle": "edge-router-confirmacion",
+          "condicion": "tipo_mensaje equals pago_confirmado_automatico"
+        }
+      ]
+    },
+    {
+      "id": "mercadopago-crear-preference",
+      "type": "mercadopago",
+      "position": {"x": 1100, "y": 150},
+      "data": {
+        "config": {
+          "linkId": "",
+          "linkType": "dynamic",
+          "action": "create_payment_link",
+          "mercadoPagoConnected": true,
+          "empresaId": "Veo Veo"
+        },
+        "hasConnection": true
+      },
+      "validaciones": {
+        "config.action": {
+          "tipo": "string",
+          "valores_permitidos": ["create_payment_link", "verificar_pago"],
+          "requerido": true
+        },
+        "config.linkType": {
+          "tipo": "string",
+          "valores_permitidos": ["static", "dynamic"],
+          "requerido": true
+        },
+        "config.empresaId": {
+          "tipo": "string",
+          "requerido": true
+        }
+      },
+      "conexiones_salida": [
+        {
+          "target": "whatsapp-link-pago",
+          "edge_id": "edge-mercadopago-link",
+          "tipo": "default"
+        }
+      ]
+    },
+    {
+      "id": "whatsapp-link-pago",
+      "type": "whatsapp",
+      "position": {"x": 1300, "y": 150},
+      "data": {
+        "label": "WhatsApp Link Pago",
+        "config": {
+          "module": "send-message",
+          "message": "{{mercadopago-crear-preference.mensaje}}",
+          "to": "{{1.from}}"
+        },
+        "hasConnection": false
+      },
+      "validaciones": {},
+      "conexiones_salida": [],
+      "nota": "Nodo final"
+    },
+    {
+      "id": "mercadopago-verificar-pago",
+      "type": "mercadopago",
+      "position": {"x": 1100, "y": 250},
+      "data": {
+        "label": "Verificar Pago MP",
+        "config": {
+          "action": "verificar_pago"
+        },
+        "hasConnection": true
+      },
+      "validaciones": {},
+      "conexiones_salida": [
+        {
+          "target": "gpt-armar-carrito",
+          "edge_id": "edge-verificar-carrito",
+          "tipo": "default",
+          "nota": "Loop: vuelve a gpt-armar-carrito para procesar resultado"
+        }
+      ]
+    },
+    {
+      "id": "whatsapp-confirmacion-pago",
+      "type": "whatsapp",
+      "position": {"x": 1100, "y": 300},
+      "data": {
+        "label": "WhatsApp Confirmación",
+        "config": {
+          "module": "send-message",
+          "message": "{{gpt-armar-carrito.mensaje_confirmacion}}",
+          "to": "{{1.from}}"
+        },
+        "hasConnection": false
+      },
+      "validaciones": {},
+      "conexiones_salida": [],
+      "nota": "Nodo final"
+    }
+  ],
+
+  "edges": [
+    {
+      "id": "edge-webhook-clasificador-final",
+      "source": "webhook-whatsapp",
+      "target": "gpt-clasificador-inteligente",
+      "sourceHandle": null,
+      "targetHandle": null,
+      "type": "default",
+      "animated": false
+    },
+    {
+      "id": "edge-clasificador-router",
+      "source": "gpt-clasificador-inteligente",
+      "target": "router-principal",
+      "sourceHandle": null,
+      "targetHandle": null,
+      "type": "default",
+      "animated": false
+    },
+    {
+      "id": "edge-router-formateador",
+      "source": "router-principal",
+      "target": "gpt-formateador",
+      "sourceHandle": null,
+      "targetHandle": null,
+      "type": "default",
+      "animated": false
+    },
+    {
+      "id": "edge-router-armar-carrito",
+      "source": "router-principal",
+      "target": "gpt-armar-carrito",
+      "sourceHandle": null,
+      "targetHandle": null,
+      "type": "default",
+      "animated": false
+    },
+    {
+      "id": "edge-3",
+      "source": "gpt-formateador",
+      "target": "router",
+      "sourceHandle": null,
+      "targetHandle": null,
+      "type": "default",
+      "animated": false
+    },
+    {
+      "id": "edge-4",
+      "source": "router",
+      "target": "gpt-pedir-datos",
+      "sourceHandle": "route-1",
+      "targetHandle": null,
+      "type": "default",
+      "animated": false
+    },
+    {
+      "id": "edge-router-solicitar",
+      "source": "router",
+      "target": "whatsapp-solicitar-datos",
+      "sourceHandle": "route-2",
+      "targetHandle": null,
+      "type": "default",
+      "animated": false
+    },
+    {
+      "id": "edge-pedir-whatsapp",
+      "source": "gpt-pedir-datos",
+      "target": "whatsapp-preguntar",
+      "sourceHandle": "incomplete",
+      "targetHandle": null,
+      "type": "default",
+      "animated": false
+    },
+    {
+      "id": "edge-solicitar-woocommerce",
+      "source": "whatsapp-solicitar-datos",
+      "target": "woocommerce",
+      "sourceHandle": null,
+      "targetHandle": null,
+      "type": "smoothstep",
+      "animated": false
+    },
+    {
+      "id": "edge-8",
+      "source": "woocommerce",
+      "target": "gpt-asistente-ventas",
+      "sourceHandle": null,
+      "targetHandle": null,
+      "type": "default",
+      "animated": false
+    },
+    {
+      "id": "edge-9",
+      "source": "gpt-asistente-ventas",
+      "target": "whatsapp-asistente",
+      "sourceHandle": null,
+      "targetHandle": null,
+      "type": "default",
+      "animated": false
+    },
+    {
+      "id": "edge-armar-router-carrito",
+      "source": "gpt-armar-carrito",
+      "target": "router-carrito",
+      "sourceHandle": null,
+      "targetHandle": null,
+      "type": "default",
+      "animated": false
+    },
+    {
+      "id": "edge-router-mercadopago",
+      "source": "router-carrito",
+      "target": "mercadopago-crear-preference",
+      "sourceHandle": "edge-router-mercadopago",
+      "targetHandle": null,
+      "type": "default",
+      "animated": false
+    },
+    {
+      "id": "edge-mercadopago-link",
+      "source": "mercadopago-crear-preference",
+      "target": "whatsapp-link-pago",
+      "sourceHandle": null,
+      "targetHandle": null,
+      "type": "default",
+      "animated": false
+    },
+    {
+      "id": "edge-router-verificar",
+      "source": "router-carrito",
+      "target": "mercadopago-verificar-pago",
+      "sourceHandle": "edge-router-verificar",
+      "targetHandle": null,
+      "type": "default",
+      "animated": false
+    },
+    {
+      "id": "edge-verificar-carrito",
+      "source": "mercadopago-verificar-pago",
+      "target": "gpt-armar-carrito",
+      "sourceHandle": null,
+      "targetHandle": null,
+      "type": "default",
+      "animated": false
+    },
+    {
+      "id": "edge-router-confirmacion",
+      "source": "router-carrito",
+      "target": "whatsapp-confirmacion-pago",
+      "sourceHandle": "edge-router-confirmacion",
+      "targetHandle": null,
+      "type": "default",
+      "animated": false
+    }
+  ],
+
+  "reglas_validacion_globales": {
+    "variables": {
+      "formato": "{{nodo_id.variable_name}}",
+      "ejemplos": [
+        "{{gpt-formateador.titulo}}",
+        "{{1.from}}",
+        "{{topicos.empresa.nombre}}"
+      ]
+    },
+    "handles_router": {
+      "regla": "routeHandles debe contener los IDs de config.routes[].id",
+      "excepcion": "router-principal puede tener routeHandles: [] vacío si no usa IDs en routes"
+    },
+    "sourceHandle": {
+      "regla": "Debe coincidir con un handle en routeHandles del nodo source",
+      "puede_ser_null": true
+    },
+    "tipos_edge": {
+      "valores_permitidos": ["default", "smoothstep", "step", "straight"],
+      "default": "default"
+    }
+  },
+
+  "notas_implementacion": {
+    "router_principal": "routeHandles vacío porque no usa IDs en routes. Las conexiones se hacen sin sourceHandle.",
+    "router": "Usa IDs en routes (route-1, route-2) que coinciden con routeHandles.",
+    "router_carrito": "Usa IDs personalizados (edge-router-*) en routeHandles que coinciden con los edge IDs.",
+    "loops": "mercadopago-verificar-pago → gpt-armar-carrito es un loop intencional para procesar resultado de verificación.",
+    "nodos_finales": "whatsapp-preguntar, whatsapp-asistente, whatsapp-link-pago, whatsapp-confirmacion-pago no tienen conexiones de salida."
+  }
+}

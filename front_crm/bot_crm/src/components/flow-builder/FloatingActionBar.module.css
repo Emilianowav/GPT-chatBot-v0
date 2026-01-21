@@ -1,0 +1,121 @@
+.container {
+  position: fixed;
+  bottom: 32px;
+  right: 32px;
+  z-index: 1000;
+}
+
+.actionBar {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  align-items: flex-end;
+}
+
+.actionButton {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px;
+  border: none;
+  border-radius: 50px;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  color: white;
+  font-weight: 500;
+  font-size: 14px;
+  white-space: nowrap;
+  overflow: hidden;
+  max-width: 48px;
+  backdrop-filter: blur(10px);
+}
+
+.actionButton:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.25);
+}
+
+.actionButton:active {
+  transform: translateY(0);
+}
+
+.iconWrapper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 24px;
+  min-height: 24px;
+}
+
+.label {
+  opacity: 0;
+  max-width: 0;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  overflow: hidden;
+}
+
+.actionBar.expanded .actionButton {
+  max-width: 250px;
+  padding: 12px 20px 12px 16px;
+}
+
+.actionBar.expanded .label {
+  opacity: 1;
+  max-width: 200px;
+  margin-left: 4px;
+}
+
+/* Animación de entrada */
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateX(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.actionButton {
+  animation: slideIn 0.3s ease-out;
+}
+
+/* Efecto de pulso para el botón principal */
+@keyframes pulse {
+  0%, 100% {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  }
+  50% {
+    box-shadow: 0 4px 20px rgba(139, 92, 246, 0.4);
+  }
+}
+
+.actionButton:first-child {
+  animation: pulse 2s infinite;
+}
+
+.actionBar.expanded .actionButton:first-child {
+  animation: none;
+}
+
+/* Animación sutil para el botón de guardar cuando hay cambios */
+.hasChanges {
+  animation: saveGlow 2.5s ease-in-out infinite !important;
+}
+
+@keyframes saveGlow {
+  0%, 100% {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  }
+  50% {
+    box-shadow: 0 4px 16px rgba(245, 158, 11, 0.4), 0 0 0 3px rgba(245, 158, 11, 0.08);
+  }
+}
+
+.hasChanges:hover {
+  animation: none !important;
+  transform: translateY(-2px) !important;
+  box-shadow: 0 6px 20px rgba(245, 158, 11, 0.35) !important;
+}

@@ -105,14 +105,24 @@ router.patch('/:flowId/toggle', async (req: Request, res: Response): Promise<voi
 
 /**
  * GET /api/flows
- * Obtener todos los flows (sin filtrar por empresa)
+ * Obtener todos los flows (con filtro opcional por empresa)
  * IMPORTANTE: Esta ruta debe estar ANTES de /:empresaId
  */
 router.get('/', async (req: Request, res: Response): Promise<void> => {
   try {
-    // Obtener todos los flows sin filtrar por botType (para compatibilidad con flujos antiguos)
-    const flows = await FlowModel.find({}).sort({ createdAt: -1 });
-    console.log(`📋 Obteniendo todos los flows: ${flows.length} encontrados`);
+    const { empresaId } = req.query;
+    const query = empresaId ? { empresaId } : {};
+    
+    console.log('🔍 [FILTRO BACKEND] empresaId recibido:', empresaId);
+    console.log('🔍 [FILTRO BACKEND] Query MongoDB:', JSON.stringify(query));
+    
+    const flows = await FlowModel.find(query).sort({ createdAt: -1 });
+    
+    console.log('🔍 [FILTRO BACKEND] Flujos encontrados:', flows.length);
+    flows.forEach((flow: any) => {
+      console.log(`   - ${flow.nombre}: empresaId="${flow.empresaId}"`);
+    });
+    
     res.json(flows);
   } catch (error: any) {
     console.error('Error obteniendo flows:', error);
@@ -127,6 +137,12 @@ router.get('/', async (req: Request, res: Response): Promise<void> => {
 router.post('/', authenticate, async (req: Request, res: Response): Promise<void> => {
   try {
     const flowData = req.body;
+    
+    // Si no tiene id, generar uno único para flujos visuales
+    if (!flowData.id) {
+      flowData.id = `visual-${Date.now()}-${Math.random().toString(36).substring(7)}`;
+    }
+    
     const newFlow = new FlowModel({ ...flowData, botType: 'visual' });
     await newFlow.save();
     res.status(201).json(newFlow);
@@ -145,21 +161,56 @@ router.put('/:flowId', async (req: Request, res: Response): Promise<void> => {
   try {
     const { flowId } = req.params;
     const flowData = req.body;
-    const updatedFlow = await FlowModel.findByIdAndUpdate(
-      flowId,
-      { ...flowData, updatedAt: new Date() },
-      { new: true }
-    );
     
-    if (!updatedFlow) {
+    console.log(`\n📝 PUT /api/flows/${flowId}`);
+    console.log(`📊 Datos recibidos:`, {
+      nombre: flowData.nombre,
+      empresaId: flowData.empresaId,
+      nodos: flowData.nodes?.length,
+      edges: flowData.edges?.length,
+      config: flowData.config ? 'presente' : 'ausente'
+    });
+    
+    // IMPORTANTE: No sobrescribir el campo 'id' para evitar conflicto con índice único
+    const { id, _id, ...updateData } = flowData;
+    
+    // Obtener el flujo actual para verificar si tiene id
+    const currentFlow = await FlowModel.findById(flowId);
+    if (!currentFlow) {
+      console.log('❌ Flow no encontrado');
       res.status(404).json({ error: 'Flow not found' });
       return;
     }
     
+    // Si el flujo no tiene id, asignarle uno basado en su _id
+    let finalId = currentFlow.id;
+    if (!finalId || finalId === null) {
+      finalId = `visual-${flowId}`;
+      console.log(`🔧 Asignando id automático: ${finalId}`);
+    }
+    
+    const updatedFlow = await FlowModel.findByIdAndUpdate(
+      flowId,
+      { 
+        ...updateData,
+        id: finalId,
+        updatedAt: new Date()
+      },
+      { new: true, runValidators: false }
+    );
+    
+    if (!updatedFlow) {
+      console.log('❌ Flow no encontrado');
+      res.status(404).json({ error: 'Flow not found' });
+      return;
+    }
+    
+    console.log('✅ Flow actualizado exitosamente');
     res.json(updatedFlow);
   } catch (error: any) {
-    console.error('Error actualizando flow:', error);
-    res.status(500).json({ error: error.message });
+    console.error('❌ Error actualizando flow:', error);
+    console.error('Stack:', error.stack);
+    res.status(500).json({ error: error.message, details: error.stack });
   }
 });
 

@@ -14,8 +14,7 @@
 
 import React, { memo, useState } from 'react';
 import { NodeProps, Handle, Position, useReactFlow } from 'reactflow';
-import { Plus, X } from 'lucide-react';
-import { useOrbitHandles } from '../hooks/useOrbitHandles';
+import { Plus } from 'lucide-react';
 import styles from './BaseNode.module.css';
 
 interface BaseNodeData {
@@ -44,10 +43,7 @@ function BaseNode({ id, data, selected, nodeRadius = 40 }: BaseNodeProps) {
   } = data;
 
   const [isHovered, setIsHovered] = useState(false);
-  const { deleteElements } = useReactFlow();
-  
-  // Obtener handles en órbita
-  const handles = useOrbitHandles(id, nodeRadius);
+  const { getEdges } = useReactFlow();
 
   const handleNodeClick = () => {
     if (onNodeClick) {
@@ -62,11 +58,10 @@ function BaseNode({ id, data, selected, nodeRadius = 40 }: BaseNodeProps) {
     }
   };
 
-  const handleDisconnect = (handleId: string, connectedNodeId: string) => (e: React.MouseEvent) => {
-    e.stopPropagation();
-    // Encontrar y eliminar el edge conectado
-    deleteElements({ edges: [{ source: id, target: connectedNodeId }] });
-  };
+  // Verificar si hay conexiones
+  const edges = getEdges();
+  const hasSourceConnection = edges.some(edge => edge.source === id);
+  const hasTargetConnection = edges.some(edge => edge.target === id);
 
   return (
     <div 
@@ -102,63 +97,49 @@ function BaseNode({ id, data, selected, nodeRadius = 40 }: BaseNodeProps) {
         </div>
       </div>
 
-      {/* Handles en órbita */}
-      {handles.map((handle) => (
-        <Handle
-          key={handle.id}
-          type={handle.type}
-          position={Position.Top}
-          id={handle.id}
-          className={`${styles.orbitHandle} ${handle.isConnected ? styles.connected : ''}`}
-          style={{
-            background: handle.isConnected ? color : '#d1d5db',
-            left: `calc(50% + ${handle.x}px)`,
-            top: `calc(50% + ${handle.y}px)`,
-            transform: 'translate(-50%, -50%)',
-            width: '16px',
-            height: '16px',
-            border: '3px solid white',
-            boxShadow: '0 2px 8px rgba(0, 0, 0, 0.15)',
-            cursor: handle.isConnected ? 'pointer' : 'default',
-            transition: 'all 0.2s ease',
-          }}
-          onClick={handle.isConnected && handle.connectedNodeId 
-            ? handleDisconnect(handle.id, handle.connectedNodeId) 
-            : undefined
-          }
-        >
-          {/* Botón X para desconectar (solo visible en hover del handle) */}
-          {handle.isConnected && (
-            <div
-              className={styles.disconnectButton}
-              style={{
-                position: 'absolute',
-                top: '-8px',
-                right: '-8px',
-                width: '16px',
-                height: '16px',
-                background: '#ef4444',
-                borderRadius: '50%',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                opacity: 0,
-                transition: 'opacity 0.2s',
-              }}
-            >
-              <X size={10} color="white" strokeWidth={3} />
-            </div>
-          )}
-        </Handle>
-      ))}
+      {/* Handle de entrada (izquierda) - Según documentación oficial de React Flow */}
+      <Handle
+        type="target"
+        position={Position.Left}
+        id="a"
+        className={styles.handle}
+        style={{
+          background: hasTargetConnection ? color : '#9ca3af',
+          width: '16px',
+          height: '16px',
+          border: '3px solid white',
+          borderRadius: '50%',
+          boxShadow: hasTargetConnection 
+            ? `0 0 0 2px ${color}, 0 2px 8px rgba(0, 0, 0, 0.2)` 
+            : '0 0 0 2px #6b7280, 0 2px 8px rgba(0, 0, 0, 0.15)',
+        }}
+      />
+
+      {/* Handle de salida (derecha) - Según documentación oficial de React Flow */}
+      <Handle
+        type="source"
+        position={Position.Right}
+        id="b"
+        className={styles.handle}
+        style={{
+          background: hasSourceConnection ? color : '#9ca3af',
+          width: '16px',
+          height: '16px',
+          border: '3px solid white',
+          borderRadius: '50%',
+          boxShadow: hasSourceConnection 
+            ? `0 0 0 2px ${color}, 0 2px 8px rgba(0, 0, 0, 0.2)` 
+            : '0 0 0 2px #6b7280, 0 2px 8px rgba(0, 0, 0, 0.15)',
+        }}
+      />
 
       {/* Handle Plus - Solo visible en hover y si no hay conexión de salida */}
-      {isHovered && !handles.some(h => h.type === 'source' && h.isConnected) && (
+      {isHovered && !hasSourceConnection && (
         <div
           className={styles.handlePlus}
           style={{
             position: 'absolute',
-            right: '-40px',
+            right: '-10px',
             top: '50%',
             transform: 'translateY(-50%)',
             width: '30px',
@@ -169,10 +150,13 @@ function BaseNode({ id, data, selected, nodeRadius = 40 }: BaseNodeProps) {
             alignItems: 'center',
             justifyContent: 'center',
             cursor: 'pointer',
-            zIndex: 10,
+            zIndex: 120,
             boxShadow: '0 2px 8px rgba(0, 0, 0, 0.15)',
+            pointerEvents: 'auto',
           }}
           onClick={handlePlusClick}
+          onMouseDown={(e) => e.stopPropagation()}
+          onMouseUp={(e) => e.stopPropagation()}
           role="button"
           tabIndex={0}
           aria-label="Add next module"

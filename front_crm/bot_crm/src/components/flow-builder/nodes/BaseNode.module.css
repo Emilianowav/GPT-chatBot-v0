@@ -64,15 +64,47 @@
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
 }
 
-/* Handles en órbita */
+/* Handles en órbita - Mejorados para mejor visibilidad */
 .orbitHandle {
   position: absolute;
   border-radius: 50%;
-  z-index: 5;
+  z-index: 100 !important;
+  pointer-events: all !important;
+  cursor: crosshair !important;
+  animation: handlePulse 2s ease-in-out infinite;
 }
 
-.orbitHandle.connected:hover .disconnectButton {
-  opacity: 1;
+.orbitHandle:hover {
+  transform: translate(-50%, -50%) scale(1.2) !important;
+  animation: none;
+}
+
+.orbitHandle.connected {
+  animation: none;
+  cursor: pointer !important;
+}
+
+.orbitHandle.connected:hover {
+  transform: translate(-50%, -50%) scale(1.3) !important;
+  filter: brightness(1.1);
+}
+
+/* Animación sutil de pulso para handles no conectados */
+@keyframes handlePulse {
+  0%, 100% {
+    transform: translate(-50%, -50%) scale(1);
+  }
+  50% {
+    transform: translate(-50%, -50%) scale(1.1);
+  }
+}
+
+/* Ajustar posición del botón + para que esté más cerca */
+.handlePlus {
+  right: -10px !important;
+  z-index: 120 !important;
+  pointer-events: auto !important;
+  position: relative !important;
 }
 
 /* Botón + para agregar siguiente nodo */
@@ -91,7 +123,7 @@
   }
 }
 
-/* Labels */
+/* Labels - NO permiten selección del nodo */
 .nodeLabel {
   margin-top: 8px;
   font-size: 13px;
@@ -102,6 +134,8 @@
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  pointer-events: none;
+  user-select: none;
 }
 
 .nodeSubtitle {
@@ -113,4 +147,6 @@
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  pointer-events: none;
+  user-select: none;
 }

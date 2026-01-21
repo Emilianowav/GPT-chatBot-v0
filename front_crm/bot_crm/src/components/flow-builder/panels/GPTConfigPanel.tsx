@@ -24,6 +24,14 @@ interface VariableRecopilar {
   ejemplos?: string[];
 }
 
+interface VariableConContexto {
+  nombre: string;
+  seleccionada: boolean;
+  contextoGenerado?: string;
+  contextoEditado?: string;
+  generandoContexto?: boolean;
+}
+
 interface AccionCompletado {
   tipo: 'mensaje' | 'guardar_variables_globales' | 'marcar_completado' | 'ejecutar_api';
   contenido?: string;
@@ -87,13 +95,204 @@ export interface GPTConversacionalConfig {
 interface GPTConfigPanelProps {
   config: GPTConversacionalConfig;
   onChange: (config: GPTConversacionalConfig) => void;
+  globalVariables?: Record<string, any>;
 }
 
-const GPTConfigPanel: React.FC<GPTConfigPanelProps> = ({ config, onChange }) => {
+const GPTConfigPanel: React.FC<GPTConfigPanelProps> = ({ config, onChange, globalVariables = {} }) => {
   const [activeTab, setActiveTab] = useState<'basico' | 'personalidad' | 'topicos' | 'variables' | 'acciones' | 'extraccion'>('basico');
+  const [variablesConContexto, setVariablesConContexto] = useState<Record<string, VariableConContexto>>({});
+  const [editandoVariable, setEditandoVariable] = useState<string | null>(null);
   
   const esFormateador = config.tipo === 'formateador' || config.tipo === 'transform';
   const esConversacional = config.tipo === 'conversacional';
+  const esProcesador = config.tipo === 'procesador';
+  
+  // Los tabs de personalidad, tópicos, variables y acciones están disponibles para:
+  // - conversacional: bot que conversa con usuarios
+  // - procesador: bot que procesa información y toma decisiones
+  const tieneTabsCompletos = esConversacional || esProcesador;
+
+  // Inicializar variables con contexto desde config
+  useEffect(() => {
+    const inicializarVariables = () => {
+      const variablesIniciales: Record<string, VariableConContexto> = {};
+      const personalidadActual = config.personalidad || '';
+      
+      for (const varName of Object.keys(globalVariables)) {
+        const yaSeleccionada = config.variablesEntrada?.includes(varName);
+        
+        // Extraer contexto existente de la personalidad si ya está guardado
+        let contextoExistente: string | undefined = undefined;
+        const marcador = `\n\n### Variable: ${varName}\n`;
+        const inicio = personalidadActual.indexOf(marcador);
+        
+        if (inicio !== -1) {
+          const inicioContexto = inicio + marcador.length;
+          const fin = personalidadActual.indexOf('\n\n### Variable:', inicioContexto);
+          
+          if (fin !== -1) {
+            contextoExistente = personalidadActual.substring(inicioContexto, fin).trim();
+          } else {
+            contextoExistente = personalidadActual.substring(inicioContexto).trim();
+          }
+        }
+        
+        variablesIniciales[varName] = {
+          nombre: varName,
+          seleccionada: yaSeleccionada || false,
+          contextoGenerado: contextoExistente,
+          contextoEditado: undefined,
+          generandoContexto: false
+        };
+      }
+      
+      setVariablesConContexto(variablesIniciales);
+    };
+
+    inicializarVariables();
+  }, [globalVariables, config.personalidad]);
+
+  // Función para generar contexto automático usando IA
+  const generarContextoIA = async (nombreVariable: string): Promise<string> => {
+    try {
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';
+      const response = await fetch(`${apiUrl}/api/openai/generar-contexto-variable`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          nombreVariable,
+          tipoNodo: config.tipo,
+          personalidadActual: config.personalidad || ''
+        })
+      });
+
+      if (!response.ok) throw new Error('Error al generar contexto');
+      
+      const data = await response.json();
+      return data.contexto;
+    } catch (error) {
+      console.error('Error generando contexto:', error);
+      // Fallback: generar contexto básico localmente
+      return generarContextoLocal(nombreVariable);
+    }
+  };
+
+  // Fallback: generar contexto básico sin IA
+  const generarContextoLocal = (nombreVariable: string): string => {
+    const nombre = nombreVariable.toLowerCase();
+    
+    if (nombre.includes('saldo') || nombre.includes('balance')) {
+      return `Tienes acceso al ${nombreVariable} del cliente ({{${nombreVariable}}}). Úsalo para informar sobre su balance disponible.`;
+    }
+    if (nombre.includes('nombre') || nombre.includes('cliente')) {
+      return `Conoces el ${nombreVariable} del cliente ({{${nombreVariable}}}). Úsalo para personalizar la conversación.`;
+    }
+    if (nombre.includes('telefono') || nombre.includes('phone')) {
+      return `Tienes el ${nombreVariable} del cliente ({{${nombreVariable}}}). Puedes usarlo para verificación o contacto.`;
+    }
+    if (nombre.includes('email') || nombre.includes('correo')) {
+      return `Conoces el ${nombreVariable} del cliente ({{${nombreVariable}}}). Úsalo para comunicaciones o verificación.`;
+    }
+    if (nombre.includes('estado') || nombre.includes('status')) {
+      return `Tienes información sobre ${nombreVariable} ({{${nombreVariable}}}). Úsalo para informar al cliente sobre su situación actual.`;
+    }
+    if (nombre.includes('cuenta') || nombre.includes('account')) {
+      return `Tienes acceso a ${nombreVariable} ({{${nombreVariable}}}). Úsalo para proporcionar información específica de la cuenta.`;
+    }
+    
+    return `Tienes acceso a la variable ${nombreVariable} ({{${nombreVariable}}}). Úsala para proporcionar información relevante al cliente.`;
+  };
+
+  // Toggle variable con generación automática de contexto
+  const toggleVariableConContexto = async (nombreVariable: string) => {
+    const variable = variablesConContexto[nombreVariable];
+    const nuevaSeleccion = !variable.seleccionada;
+
+    // Verificar si ya tiene contexto (generado o editado)
+    const tieneContexto = !!(variable.contextoGenerado || variable.contextoEditado);
+
+    // Actualizar estado local
+    setVariablesConContexto(prev => ({
+      ...prev,
+      [nombreVariable]: {
+        ...prev[nombreVariable],
+        seleccionada: nuevaSeleccion,
+        generandoContexto: nuevaSeleccion && !tieneContexto
+      }
+    }));
+
+    // Si se selecciona y NO tiene contexto, generarlo (solo una vez)
+    if (nuevaSeleccion && !tieneContexto) {
+      const contexto = await generarContextoIA(nombreVariable);
+      
+      setVariablesConContexto(prev => ({
+        ...prev,
+        [nombreVariable]: {
+          ...prev[nombreVariable],
+          contextoGenerado: contexto,
+          generandoContexto: false
+        }
+      }));
+
+      // Actualizar personalidad con el contexto generado
+      actualizarPersonalidadConVariable(nombreVariable, contexto, true);
+    } else if (nuevaSeleccion && tieneContexto) {
+      // Ya tiene contexto, solo agregarlo a personalidad (no regenerar)
+      const contexto = variable.contextoEditado || variable.contextoGenerado || '';
+      actualizarPersonalidadConVariable(nombreVariable, contexto, true);
+    } else {
+      // Deseleccionar: remover de personalidad (pero mantener el contexto guardado)
+      actualizarPersonalidadConVariable(nombreVariable, '', false);
+    }
+
+    // Actualizar variablesEntrada en config
+    const current = config.variablesEntrada || [];
+    const newVariables = nuevaSeleccion
+      ? [...current, nombreVariable]
+      : current.filter(v => v !== nombreVariable);
+    onChange({ ...config, variablesEntrada: newVariables });
+  };
+
+  // Actualizar personalidad agregando o removiendo contexto de variable
+  const actualizarPersonalidadConVariable = (nombreVariable: string, contexto: string, agregar: boolean) => {
+    let personalidadActual = config.personalidad || '';
+    const marcador = `\n\n### Variable: ${nombreVariable}\n`;
+    
+    if (agregar && contexto) {
+      // Agregar contexto si no existe
+      if (!personalidadActual.includes(marcador)) {
+        personalidadActual += `${marcador}${contexto}`;
+      }
+    } else {
+      // Remover contexto
+      const inicio = personalidadActual.indexOf(marcador);
+      if (inicio !== -1) {
+        const fin = personalidadActual.indexOf('\n\n### Variable:', inicio + 1);
+        if (fin !== -1) {
+          personalidadActual = personalidadActual.substring(0, inicio) + personalidadActual.substring(fin);
+        } else {
+          personalidadActual = personalidadActual.substring(0, inicio);
+        }
+      }
+    }
+    
+    onChange({ ...config, personalidad: personalidadActual.trim() });
+  };
+
+  // Guardar contexto editado manualmente
+  const guardarContextoEditado = (nombreVariable: string, nuevoContexto: string) => {
+    setVariablesConContexto(prev => ({
+      ...prev,
+      [nombreVariable]: {
+        ...prev[nombreVariable],
+        contextoEditado: nuevoContexto
+      }
+    }));
+
+    // Actualizar personalidad con el nuevo contexto
+    actualizarPersonalidadConVariable(nombreVariable, nuevoContexto, true);
+    setEditandoVariable(null);
+  };
 
   // BLOQUE 2: TÓPICOS
   const agregarTopico = () => {
@@ -266,8 +465,8 @@ const GPTConfigPanel: React.FC<GPTConfigPanelProps> = ({ config, onChange }) => 
           Básico
         </button>
         
-        {/* Tabs para GPT Conversacional */}
-        {esConversacional && (
+        {/* Tabs para GPT Conversacional y Procesador */}
+        {tieneTabsCompletos && (
           <>
             <button
               className={activeTab === 'personalidad' ? styles.tabActive : styles.tab}
@@ -285,7 +484,7 @@ const GPTConfigPanel: React.FC<GPTConfigPanelProps> = ({ config, onChange }) => 
               className={activeTab === 'variables' ? styles.tabActive : styles.tab}
               onClick={() => setActiveTab('variables')}
             >
-              Variables ({config.variablesRecopilar?.length || 0})
+              Variables ({config.variablesEntrada?.length || 0})
             </button>
             <button
               className={activeTab === 'acciones' ? styles.tabActive : styles.tab}
@@ -370,6 +569,11 @@ const GPTConfigPanel: React.FC<GPTConfigPanelProps> = ({ config, onChange }) => 
                 <option value="text">Texto</option>
                 <option value="json">JSON</option>
               </select>
+            </div>
+
+            <div className={styles.infoBox} style={{ marginTop: '16px' }}>
+              <Info size={16} />
+              <span>La API Key de OpenAI se configura automáticamente desde el sistema</span>
             </div>
           </div>
         )}
@@ -469,11 +673,191 @@ const GPTConfigPanel: React.FC<GPTConfigPanelProps> = ({ config, onChange }) => 
           </div>
         )}
 
-        {/* TAB: VARIABLES */}
+        {/* TAB: VARIABLES - UNIFICADO */}
         {activeTab === 'variables' && (
           <div className={styles.section}>
             <div className={styles.sectionHeader}>
-              <h3>Variables a Recopilar</h3>
+              <h3>🌐 Variables del Flujo</h3>
+              <div className={styles.infoBox}>
+                <Info size={16} />
+                <span>Selecciona variables y el contexto se genera automáticamente con IA</span>
+              </div>
+            </div>
+
+            {Object.keys(globalVariables).length > 0 ? (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                {Object.keys(globalVariables).map((varName) => {
+                  const variable = variablesConContexto[varName];
+                  if (!variable) return null;
+
+                  const contextoActual = variable.contextoEditado || variable.contextoGenerado || '';
+                  const estaEditando = editandoVariable === varName;
+
+                  return (
+                    <div
+                      key={varName}
+                      style={{
+                        padding: '16px',
+                        background: variable.seleccionada ? '#f0fdf4' : 'white',
+                        border: `2px solid ${variable.seleccionada ? '#10b981' : '#e5e7eb'}`,
+                        borderRadius: '8px',
+                        transition: 'all 0.2s'
+                      }}
+                    >
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: contextoActual && variable.seleccionada ? '12px' : '0' }}>
+                        {/* Checkbox */}
+                        <input
+                          type="checkbox"
+                          checked={variable.seleccionada}
+                          onChange={() => toggleVariableConContexto(varName)}
+                          style={{
+                            width: '20px',
+                            height: '20px',
+                            cursor: 'pointer',
+                            accentColor: '#10b981'
+                          }}
+                        />
+
+                        {/* Nombre de variable */}
+                        <code style={{
+                          flex: 1,
+                          background: variable.seleccionada ? '#d1fae5' : '#f3f4f6',
+                          padding: '6px 12px',
+                          borderRadius: '6px',
+                          fontSize: '14px',
+                          fontWeight: '600',
+                          color: variable.seleccionada ? '#065f46' : '#6b7280'
+                        }}>
+                          {varName}
+                        </code>
+
+                        {/* Estado de generación */}
+                        {variable.generandoContexto && (
+                          <span style={{ fontSize: '12px', color: '#6b7280', fontStyle: 'italic' }}>
+                            🤖 Generando contexto...
+                          </span>
+                        )}
+
+                        {/* Botón de editar (solo si está seleccionada y tiene contexto) */}
+                        {variable.seleccionada && contextoActual && !variable.generandoContexto && (
+                          <button
+                            onClick={() => setEditandoVariable(estaEditando ? null : varName)}
+                            style={{
+                              padding: '6px 12px',
+                              background: estaEditando ? '#3b82f6' : 'white',
+                              color: estaEditando ? 'white' : '#6b7280',
+                              border: '2px solid #d1d5db',
+                              borderRadius: '6px',
+                              cursor: 'pointer',
+                              fontSize: '13px',
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: '4px',
+                              transition: 'all 0.2s'
+                            }}
+                            title="Editar contexto"
+                          >
+                            ⚙️ {estaEditando ? 'Cancelar' : 'Editar'}
+                          </button>
+                        )}
+                      </div>
+
+                      {/* Mostrar/Editar contexto generado */}
+                      {variable.seleccionada && contextoActual && !variable.generandoContexto && (
+                        <div style={{
+                          marginTop: '12px',
+                          padding: '12px',
+                          background: 'white',
+                          borderRadius: '6px',
+                          border: '1px solid #d1d5db'
+                        }}>
+                          {estaEditando ? (
+                            <>
+                              <textarea
+                                value={contextoActual}
+                                onChange={(e) => {
+                                  setVariablesConContexto(prev => ({
+                                    ...prev,
+                                    [varName]: {
+                                      ...prev[varName],
+                                      contextoEditado: e.target.value
+                                    }
+                                  }));
+                                }}
+                                style={{
+                                  width: '100%',
+                                  minHeight: '80px',
+                                  padding: '8px',
+                                  border: '1px solid #d1d5db',
+                                  borderRadius: '4px',
+                                  fontSize: '13px',
+                                  fontFamily: 'inherit',
+                                  resize: 'vertical'
+                                }}
+                                placeholder="Describe cómo usar esta variable en el contexto del GPT..."
+                              />
+                              <div style={{ display: 'flex', gap: '8px', marginTop: '8px', justifyContent: 'flex-end' }}>
+                                <button
+                                  onClick={() => setEditandoVariable(null)}
+                                  style={{
+                                    padding: '6px 12px',
+                                    background: 'white',
+                                    border: '1px solid #d1d5db',
+                                    borderRadius: '4px',
+                                    cursor: 'pointer',
+                                    fontSize: '12px'
+                                  }}
+                                >
+                                  Cancelar
+                                </button>
+                                <button
+                                  onClick={() => guardarContextoEditado(varName, contextoActual)}
+                                  style={{
+                                    padding: '6px 12px',
+                                    background: '#10b981',
+                                    color: 'white',
+                                    border: 'none',
+                                    borderRadius: '4px',
+                                    cursor: 'pointer',
+                                    fontSize: '12px',
+                                    fontWeight: '600'
+                                  }}
+                                >
+                                  Guardar
+                                </button>
+                              </div>
+                            </>
+                          ) : (
+                            <p style={{
+                              margin: 0,
+                              fontSize: '13px',
+                              color: '#374151',
+                              lineHeight: '1.5'
+                            }}>
+                              {contextoActual}
+                            </p>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            ) : (
+              <div style={{
+                padding: '16px',
+                background: '#fef3c7',
+                border: '2px solid #fbbf24',
+                borderRadius: '8px',
+                fontSize: '13px',
+                color: '#92400e'
+              }}>
+                ⚠️ No hay variables globales disponibles. Agrega variables desde el botón de Variables en la barra superior.
+              </div>
+            )}
+            
+            <div className={styles.sectionHeader} style={{ marginTop: '32px' }}>
+              <h3>Variables a Recopilar del Usuario</h3>
               <div className={styles.infoBox}>
                 <Info size={16} />
                 <span>Define qué datos debe recopilar el bot del usuario</span>

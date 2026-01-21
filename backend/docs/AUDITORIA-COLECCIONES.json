@@ -244,7 +244,7 @@
   },
   {
     "nombre": "agentes",
-    "count": 11,
+    "count": 13,
     "schema": {
       "_id": "Object",
       "empresaId": "string",
@@ -412,7 +412,7 @@
   },
   {
     "nombre": "api_request_logs",
-    "count": 228,
+    "count": 280,
     "schema": {
       "_id": "Object",
       "empresaId": "Object",
@@ -505,10 +505,128 @@
     ]
   },
   {
+    "nombre": "apiconfigurations",
+    "count": 1,
+    "schema": {
+      "_id": "Object",
+      "nombre": "string",
+      "descripcion": "string",
+      "baseUrl": "string",
+      "activa": "boolean",
+      "empresaId": "Object",
+      "autenticacion": "Object",
+      "createdAt": "Object",
+      "updatedAt": "Object"
+    },
+    "campos": [
+      "_id",
+      "nombre",
+      "descripcion",
+      "baseUrl",
+      "activa",
+      "empresaId",
+      "autenticacion",
+      "createdAt",
+      "updatedAt"
+    ],
+    "indices": [
+      {
+        "key": {
+          "_id": 1
+        },
+        "unique": false
+      }
+    ]
+  },
+  {
+    "nombre": "apis",
+    "count": 1,
+    "schema": {
+      "_id": "Object",
+      "nombre": "string",
+      "descripcion": "string",
+      "empresaId": "Object",
+      "baseUrl": "string",
+      "activo": "boolean",
+      "autenticacion": "Object",
+      "headers": "Object",
+      "endpoints": [
+        "Object"
+      ],
+      "creadoEn": "Object",
+      "actualizadoEn": "Object"
+    },
+    "campos": [
+      "_id",
+      "nombre",
+      "descripcion",
+      "empresaId",
+      "baseUrl",
+      "activo",
+      "autenticacion",
+      "headers",
+      "endpoints",
+      "creadoEn",
+      "actualizadoEn"
+    ],
+    "indices": [
+      {
+        "key": {
+          "_id": 1
+        },
+        "unique": false
+      }
+    ]
+  },
+  {
     "nombre": "bloqueos_horario",
     "count": 0,
     "schema": null,
     "indices": []
+  },
+  {
+    "nombre": "carritos",
+    "count": 17,
+    "schema": {
+      "_id": "Object",
+      "contactoId": "Object",
+      "empresaId": "string",
+      "items": [
+        "Array vacío"
+      ],
+      "total": "number",
+      "estado": "string",
+      "fechaCreacion": "Object",
+      "fechaActualizacion": "Object",
+      "__v": "number"
+    },
+    "campos": [
+      "_id",
+      "contactoId",
+      "empresaId",
+      "items",
+      "total",
+      "estado",
+      "fechaCreacion",
+      "fechaActualizacion",
+      "__v"
+    ],
+    "indices": [
+      {
+        "key": {
+          "_id": 1
+        },
+        "unique": false
+      },
+      {
+        "key": {
+          "contactoId": 1,
+          "empresaId": 1,
+          "estado": 1
+        },
+        "unique": false
+      }
+    ]
   },
   {
     "nombre": "chatbots",
@@ -734,7 +852,7 @@
   },
   {
     "nombre": "contactos_empresa",
-    "count": 153,
+    "count": 187,
     "schema": {
       "_id": "Object",
       "empresaId": "string",
@@ -826,6 +944,13 @@
           "telefono": 1
         },
         "unique": false
+      },
+      {
+        "key": {
+          "empresaId": 1,
+          "agentesAsignados": 1
+        },
+        "unique": false
       }
     ]
   },
@@ -915,7 +1040,7 @@
   },
   {
     "nombre": "flow_logs",
-    "count": 77,
+    "count": 313,
     "schema": {
       "_id": "Object",
       "telefono": "string",
@@ -936,7 +1061,8 @@
       "accion",
       "mensaje",
       "timestamp",
-      "__v"
+      "__v",
+      "data"
     ],
     "indices": [
       {
@@ -989,6 +1115,242 @@
           "timestamp": -1
         },
         "unique": false
+      }
+    ]
+  },
+  {
+    "nombre": "flow_nodes",
+    "count": 24,
+    "schema": {
+      "_id": "Object",
+      "empresaId": "string",
+      "flowId": "string",
+      "id": "string",
+      "type": "string",
+      "name": "string",
+      "message": "string",
+      "options": [
+        "Object"
+      ],
+      "metadata": "Object",
+      "activo": "boolean",
+      "conditions": [
+        "Array vacío"
+      ],
+      "createdAt": "Object",
+      "updatedAt": "Object",
+      "__v": "number"
+    },
+    "campos": [
+      "_id",
+      "empresaId",
+      "flowId",
+      "id",
+      "type",
+      "name",
+      "message",
+      "options",
+      "metadata",
+      "activo",
+      "conditions",
+      "createdAt",
+      "updatedAt",
+      "__v",
+      "validation",
+      "next",
+      "action"
+    ],
+    "indices": [
+      {
+        "key": {
+          "_id": 1
+        },
+        "unique": false
+      },
+      {
+        "key": {
+          "empresaId": 1
+        },
+        "unique": false
+      },
+      {
+        "key": {
+          "flowId": 1
+        },
+        "unique": false
+      },
+      {
+        "key": {
+          "empresaId": 1,
+          "flowId": 1,
+          "id": 1
+        },
+        "unique": true
+      },
+      {
+        "key": {
+          "empresaId": 1,
+          "activo": 1
+        },
+        "unique": false
+      }
+    ]
+  },
+  {
+    "nombre": "flowbuilders",
+    "count": 0,
+    "schema": null,
+    "indices": []
+  },
+  {
+    "nombre": "flownodes",
+    "count": 6,
+    "schema": {
+      "_id": "Object",
+      "empresaId": "string",
+      "flowId": "string",
+      "id": "string",
+      "type": "string",
+      "name": "string",
+      "message": "string",
+      "next": "string",
+      "nombreVariable": "string",
+      "validation": "Object",
+      "metadata": "Object",
+      "activo": "boolean"
+    },
+    "campos": [
+      "_id",
+      "empresaId",
+      "flowId",
+      "id",
+      "type",
+      "name",
+      "message",
+      "next",
+      "nombreVariable",
+      "validation",
+      "metadata",
+      "activo",
+      "action"
+    ],
+    "indices": [
+      {
+        "key": {
+          "_id": 1
+        },
+        "unique": false
+      },
+      {
+        "key": {
+          "empresaId": 1
+        },
+        "unique": false
+      },
+      {
+        "key": {
+          "flowId": 1
+        },
+        "unique": false
+      },
+      {
+        "key": {
+          "empresaId": 1,
+          "flowId": 1,
+          "id": 1
+        },
+        "unique": true
+      },
+      {
+        "key": {
+          "empresaId": 1,
+          "activo": 1
+        },
+        "unique": false
+      },
+      {
+        "key": {
+          "empresaId": 1,
+          "flowId": 1,
+          "metadata.orden": 1
+        },
+        "unique": false
+      }
+    ]
+  },
+  {
+    "nombre": "flows",
+    "count": 2,
+    "schema": {
+      "_id": "Object",
+      "nombre": "string",
+      "empresaId": "string",
+      "activo": "boolean",
+      "nodes": [
+        "Object"
+      ],
+      "edges": [
+        "Object"
+      ],
+      "createdAt": "Object",
+      "updatedAt": "Object",
+      "actualizadoEn": "Object",
+      "config": "Object"
+    },
+    "campos": [
+      "_id",
+      "nombre",
+      "empresaId",
+      "activo",
+      "nodes",
+      "edges",
+      "createdAt",
+      "updatedAt",
+      "actualizadoEn",
+      "config",
+      "descripcion"
+    ],
+    "indices": [
+      {
+        "key": {
+          "_id": 1
+        },
+        "unique": false
+      },
+      {
+        "key": {
+          "empresaId": 1
+        },
+        "unique": false
+      },
+      {
+        "key": {
+          "empresaId": 1,
+          "activo": 1,
+          "triggers.priority": -1
+        },
+        "unique": false
+      },
+      {
+        "key": {
+          "empresaId": 1,
+          "botType": 1,
+          "activo": 1
+        },
+        "unique": false
+      },
+      {
+        "key": {
+          "apiConfig.apiConfigurationId": 1
+        },
+        "unique": false
+      },
+      {
+        "key": {
+          "empresaId": 1,
+          "id": 1
+        },
+        "unique": true
       }
     ]
   },
@@ -1155,7 +1517,7 @@
   },
   {
     "nombre": "mppayments",
-    "count": 9,
+    "count": 25,
     "schema": {
       "_id": "Object",
       "mpPaymentId": "string",
@@ -1178,7 +1540,8 @@
       "dateLastUpdated": "Object",
       "createdAt": "Object",
       "updatedAt": "Object",
-      "__v": "number"
+      "__v": "number",
+      "metadata": "Object"
     },
     "campos": [
       "_id",
@@ -1202,7 +1565,8 @@
       "dateLastUpdated",
       "createdAt",
       "updatedAt",
-      "__v"
+      "__v",
+      "metadata"
     ],
     "indices": [
       {
@@ -1406,7 +1770,7 @@
   },
   {
     "nombre": "turnos",
-    "count": 15,
+    "count": 50,
     "schema": {
       "_id": "Object",
       "empresaId": "string",

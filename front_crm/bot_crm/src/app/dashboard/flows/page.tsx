@@ -25,11 +25,12 @@ export default function FlowsPage() {
   const loadFlowsList = async () => {
     try {
       setLoading(true);
-      const response = await fetch('http://localhost:3000/api/flows');
+      const empresaId = localStorage.getItem('empresaId') || '';
+      const response = await fetch(`http://localhost:3000/api/flows?empresaId=${empresaId}`);
       if (response.ok) {
         const data = await response.json();
         const flows = Array.isArray(data) ? data : (data.flows || []);
-        console.log(`📋 Flujos cargados: ${flows.length}`);
+        console.log(`📋 Flujos cargados para empresa ${empresaId}: ${flows.length}`);
         setFlowsList(flows);
       }
     } catch (error) {

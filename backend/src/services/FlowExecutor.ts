@@ -1270,6 +1270,12 @@ export class FlowExecutor {
             console.log(`   💰 Ejemplo precio: $${primerProducto.precio}`);
           }
           
+          // IMPORTANTE: Guardar productos como variable global para que el clasificador los detecte
+          if (productosSimplificados.length > 0) {
+            this.setGlobalVariable('productos_presentados', productosSimplificados);
+            console.log(`   ✅ Guardado productos_presentados en global variables (${productosSimplificados.length} productos)`);
+          }
+          
           // Retornar en formato { productos: [...] } para que sea accesible como woocommerce.productos
           return {
             output: {

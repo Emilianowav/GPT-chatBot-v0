@@ -7,11 +7,14 @@ interface NodeConfigPanelProps {
   node: any;
   onClose: () => void;
   onSave: (nodeId: string, config: any) => void;
+  globalVariables?: Record<string, any>;
 }
 
-const NodeConfigPanel: React.FC<NodeConfigPanelProps> = ({ node, onClose, onSave }) => {
+const NodeConfigPanel: React.FC<NodeConfigPanelProps> = ({ node, onClose, onSave, globalVariables = {} }) => {
   const [config, setConfig] = useState(node?.data?.config || {});
   const [label, setLabel] = useState(node?.data?.label || '');
+  const [isTesting, setIsTesting] = useState(false);
+  const [testResult, setTestResult] = useState<{ success: boolean; message: string } | null>(null);
 
   useEffect(() => {
     setConfig(node?.data?.config || {});
@@ -26,7 +29,6 @@ const NodeConfigPanel: React.FC<NodeConfigPanelProps> = ({ node, onClose, onSave
   };
 
   const renderGPTConfig = () => {
-    // Inicializar config con valores por defecto si no existen
     const gptConfig = {
       tipo: config.tipo || 'conversacional',
       module: config.module || 'conversacional',
@@ -52,49 +54,127 @@ const NodeConfigPanel: React.FC<NodeConfigPanelProps> = ({ node, onClose, onSave
         <GPTConfigPanel 
           config={gptConfig}
           onChange={(newConfig) => setConfig(newConfig)}
+          globalVariables={globalVariables}
         />
       </div>
     );
   };
 
+  const handleTestWebhook = async () => {
+    setIsTesting(true);
+    setTestResult(null);
+    
+    try {
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';
+      const response = await fetch(`${apiUrl}/api/whatsapp/test-webhook`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          phoneNumberId: config.phoneNumberId,
+          accessToken: config.accessToken,
+        }),
+      });
+      
+      const data = await response.json();
+      
+      if (response.ok) {
+        setTestResult({ success: true, message: '✅ Webhook funcionando correctamente' });
+      } else {
+        setTestResult({ success: false, message: `❌ Error: ${data.error || 'No se pudo conectar'}` });
+      }
+    } catch (error: any) {
+      setTestResult({ success: false, message: `❌ Error: ${error.message}` });
+    } finally {
+      setIsTesting(false);
+    }
+  };
+
   const renderWhatsAppConfig = () => {
-    // Si es Watch Events, mostrar configuración simplificada
     if (config.module === 'watch-events') {
       return (
         <>
           <div className={styles.section}>
-            <h3>WhatsApp Watch Events (Listener)</h3>
-            <p style={{ fontSize: '14px', color: '#666', marginBottom: '16px' }}>
-              Este nodo escucha automáticamente los mensajes entrantes de WhatsApp.
+            <h3 style={{ fontSize: '16px', marginBottom: '8px' }}>WhatsApp Watch Events</h3>
+            <p style={{ fontSize: '12px', color: '#666', marginBottom: '12px' }}>
+              Escucha mensajes entrantes de WhatsApp
             </p>
             
             <div className={styles.formGroup}>
-              <label>Phone Number ID</label>
+              <label style={{ fontSize: '12px' }}>📱 Teléfono de WhatsApp</label>
               <input 
                 type="text"
-                value={config.phoneNumberId || ''}
-                onChange={(e) => setConfig({ ...config, phoneNumberId: e.target.value })}
-                placeholder="906667632531979"
+                value={config.telefono || ''}
+                onChange={(e) => setConfig({ ...config, telefono: e.target.value })}
+                placeholder="+5493794044057"
+                style={{ fontSize: '13px', padding: '8px' }}
               />
-              <small>ID del número de WhatsApp Business</small>
+              <small style={{ fontSize: '11px' }}>Número de WhatsApp Business</small>
             </div>
 
-            <div className={styles.formGroup}>
-              <label>Empresa ID</label>
-              <input 
-                type="text"
-                value={config.empresaId || ''}
-                onChange={(e) => setConfig({ ...config, empresaId: e.target.value })}
-                placeholder="6940a9a181b92bfce970fdb5"
-              />
-              <small>ID de la empresa en la base de datos</small>
+            <div style={{ display: 'flex', gap: '8px', marginTop: '12px' }}>
+              <button
+                type="button"
+                onClick={() => {
+                  const event = new CustomEvent('openWebhookConfig', { 
+                    detail: { nodeId: node.id, config } 
+                  });
+                  window.dispatchEvent(event);
+                }}
+                style={{
+                  flex: 1,
+                  padding: '8px 12px',
+                  background: '#8b5cf6',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '6px',
+                  fontSize: '12px',
+                  fontWeight: '500',
+                  cursor: 'pointer',
+                }}
+              >
+                ⚙️ Configuración
+              </button>
+              
+              <button
+                type="button"
+                onClick={handleTestWebhook}
+                disabled={!config.phoneNumberId || !config.accessToken || isTesting}
+                style={{
+                  flex: 1,
+                  padding: '8px 12px',
+                  background: isTesting ? '#9ca3af' : 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '6px',
+                  fontSize: '12px',
+                  fontWeight: '500',
+                  cursor: (!config.phoneNumberId || !config.accessToken || isTesting) ? 'not-allowed' : 'pointer',
+                  opacity: (!config.phoneNumberId || !config.accessToken || isTesting) ? 0.6 : 1,
+                }}
+              >
+                {isTesting ? '⏳ Probando...' : '🧪 Probar'}
+              </button>
             </div>
+
+            {testResult && (
+              <div style={{
+                marginTop: '10px',
+                padding: '8px 10px',
+                borderRadius: '6px',
+                fontSize: '11px',
+                fontWeight: '500',
+                background: testResult.success ? '#d1fae5' : '#fee2e2',
+                color: testResult.success ? '#065f46' : '#991b1b',
+                border: `1px solid ${testResult.success ? '#6ee7b7' : '#fca5a5'}`,
+              }}>
+                {testResult.message}
+              </div>
+            )}
           </div>
         </>
       );
     }
 
-    // Configuración normal de WhatsApp (Send Message, etc.)
     return (
       <>
         <div className={styles.formGroup}>
@@ -162,245 +242,175 @@ const NodeConfigPanel: React.FC<NodeConfigPanelProps> = ({ node, onClose, onSave
     );
   };
 
-  const renderWooCommerceConfig = () => (
-    <>
-      <div className={styles.formGroup}>
-        <label>Tipo</label>
-        <select 
-          value={config.tipo || 'buscar_productos'}
-          onChange={(e) => setConfig({ ...config, tipo: e.target.value })}
-        >
-          <option value="buscar_productos">Buscar Productos</option>
-          <option value="obtener_producto">Obtener Producto</option>
-          <option value="crear_orden">Crear Orden</option>
-        </select>
-      </div>
-
-      <div className={styles.formGroup}>
-        <label>Endpoint ID</label>
-        <input 
-          type="text"
-          value={config.endpointId || config.endpoint || ''}
-          onChange={(e) => setConfig({ ...config, endpointId: e.target.value, endpoint: e.target.value })}
-          placeholder="buscar-productos"
-        />
-      </div>
-
-      <div className={styles.formGroup}>
-        <label>Variable de Salida</label>
-        <input 
-          type="text"
-          value={config.nombreVariable || ''}
-          onChange={(e) => setConfig({ ...config, nombreVariable: e.target.value })}
-          placeholder="productos_encontrados"
-        />
-      </div>
-    </>
-  );
-
-  const renderMercadoPagoConfig = () => (
-    <>
-      <div className={styles.formGroup}>
-        <label>Tipo</label>
-        <select 
-          value={config.tipo || 'crear_preferencia'}
-          onChange={(e) => setConfig({ ...config, tipo: e.target.value })}
-        >
-          <option value="crear_preferencia">Crear Preferencia (Link de Pago)</option>
-          <option value="verificar_pago">Verificar Pago</option>
-        </select>
-      </div>
-
-      <div className={styles.formGroup}>
-        <label>Endpoint</label>
-        <input 
-          type="text"
-          value={config.endpoint || '/checkout/preferences'}
-          onChange={(e) => setConfig({ ...config, endpoint: e.target.value })}
-        />
-      </div>
-
-      <div className={styles.formGroup}>
-        <label>Variable de Salida</label>
-        <input 
-          type="text"
-          value={config.nombreVariable || 'link_pago'}
-          onChange={(e) => setConfig({ ...config, nombreVariable: e.target.value })}
-          placeholder="link_pago, preference_id"
-        />
-      </div>
-    </>
-  );
-
-  const renderWebhookConfig = () => (
-    <>
-      <div className={styles.formGroup}>
-        <label>Tipo</label>
-        <select 
-          value={config.tipo || 'listener'}
-          onChange={(e) => setConfig({ ...config, tipo: e.target.value })}
-        >
-          <option value="listener">Listener (Escuchar)</option>
-          <option value="trigger">Trigger (Activar)</option>
-        </select>
-      </div>
-
-      <div className={styles.formGroup}>
-        <label>Endpoint</label>
-        <input 
-          type="text"
-          value={config.endpoint || ''}
-          onChange={(e) => setConfig({ ...config, endpoint: e.target.value })}
-          placeholder="/webhooks/mercadopago"
-        />
-      </div>
-
-      <div className={styles.formGroup}>
-        <label>Método</label>
-        <select 
-          value={config.metodo || 'POST'}
-          onChange={(e) => setConfig({ ...config, metodo: e.target.value })}
-        >
-          <option value="GET">GET</option>
-          <option value="POST">POST</option>
-          <option value="PUT">PUT</option>
-          <option value="DELETE">DELETE</option>
-        </select>
-      </div>
-
-      <div className={styles.formGroup}>
-        <label>Timeout (segundos)</label>
-        <input 
-          type="number"
-          value={config.timeout || 900}
-          onChange={(e) => setConfig({ ...config, timeout: parseInt(e.target.value) })}
-        />
-      </div>
-    </>
-  );
-
-  const renderRouterConfig = () => {
-    const routes = config.routes || [];
-    
+  const renderWebhookConfig = () => {
     return (
       <>
         <div className={styles.formGroup}>
-          <label>Rutas del Router</label>
-          <small>Cada ruta representa un camino posible basado en condiciones</small>
+          <label>Tipo</label>
+          <select 
+            value={config.tipo || 'listener'}
+            onChange={(e) => setConfig({ ...config, tipo: e.target.value })}
+          >
+            <option value="listener">Listener (Escuchar)</option>
+            <option value="trigger">Trigger (Disparar)</option>
+          </select>
         </div>
 
-        {routes.map((route: any, index: number) => (
-          <div key={index} className={styles.routeConfig}>
-            <h4>Ruta {index + 1}: {route.label}</h4>
-            
+        {config.tipo === 'trigger' && (
+          <>
             <div className={styles.formGroup}>
-              <label>ID de Ruta</label>
+              <label>Endpoint</label>
               <input 
                 type="text"
-                value={route.id || ''}
-                onChange={(e) => {
-                  const newRoutes = [...routes];
-                  newRoutes[index] = { ...route, id: e.target.value };
-                  setConfig({ ...config, routes: newRoutes });
-                }}
-                placeholder="info-completa"
+                value={config.endpoint || ''}
+                onChange={(e) => setConfig({ ...config, endpoint: e.target.value })}
+                placeholder="https://api.ejemplo.com/webhook"
               />
             </div>
 
             <div className={styles.formGroup}>
-              <label>Label</label>
-              <input 
-                type="text"
-                value={route.label || ''}
-                onChange={(e) => {
-                  const newRoutes = [...routes];
-                  newRoutes[index] = { ...route, label: e.target.value };
-                  setConfig({ ...config, routes: newRoutes });
-                }}
-                placeholder="Información Completa"
-              />
-            </div>
-
-            <div className={styles.formGroup}>
-              <label>Campo a Evaluar</label>
-              <input 
-                type="text"
-                value={route.condition?.field || ''}
-                onChange={(e) => {
-                  const newRoutes = [...routes];
-                  newRoutes[index] = { 
-                    ...route, 
-                    condition: { ...route.condition, field: e.target.value }
-                  };
-                  setConfig({ ...config, routes: newRoutes });
-                }}
-                placeholder="gpt-conversacional.respuesta_gpt"
-              />
-            </div>
-
-            <div className={styles.formGroup}>
-              <label>Operador</label>
+              <label>Método</label>
               <select 
-                value={route.condition?.operator || 'contains'}
-                onChange={(e) => {
-                  const newRoutes = [...routes];
-                  newRoutes[index] = { 
-                    ...route, 
-                    condition: { ...route.condition, operator: e.target.value }
-                  };
-                  setConfig({ ...config, routes: newRoutes });
-                }}
+                value={config.metodo || 'POST'}
+                onChange={(e) => setConfig({ ...config, metodo: e.target.value })}
               >
-                <option value="contains">Contains</option>
-                <option value="not_contains">Not Contains</option>
-                <option value="equal">Equal</option>
-                <option value="not_equal">Not Equal</option>
-                <option value="greater_than">Greater Than</option>
-                <option value="less_than">Less Than</option>
-                <option value="is_empty">Is Empty</option>
-                <option value="not_empty">Not Empty</option>
-                <option value="regex">Regex</option>
+                <option value="GET">GET</option>
+                <option value="POST">POST</option>
+                <option value="PUT">PUT</option>
+                <option value="DELETE">DELETE</option>
               </select>
             </div>
-
-            <div className={styles.formGroup}>
-              <label>Valor</label>
-              <input 
-                type="text"
-                value={route.condition?.value || ''}
-                onChange={(e) => {
-                  const newRoutes = [...routes];
-                  newRoutes[index] = { 
-                    ...route, 
-                    condition: { ...route.condition, value: e.target.value }
-                  };
-                  setConfig({ ...config, routes: newRoutes });
-                }}
-                placeholder="[INFO_COMPLETA]"
-              />
-            </div>
-          </div>
-        ))}
+          </>
+        )}
       </>
     );
   };
 
-  const renderConfigByType = () => {
-    switch (node.type) {
+  const renderRouterConfig = () => {
+    return (
+      <>
+        <div className={styles.formGroup}>
+          <label>Número de Rutas</label>
+          <input 
+            type="number"
+            min="2"
+            max="10"
+            value={config.numRoutes || 2}
+            onChange={(e) => setConfig({ ...config, numRoutes: parseInt(e.target.value) })}
+          />
+          <small>Define cuántas rutas saldrán de este router</small>
+        </div>
+
+        <div className={styles.formGroup}>
+          <label>Modo de Evaluación</label>
+          <select 
+            value={config.evaluationMode || 'sequential'}
+            onChange={(e) => setConfig({ ...config, evaluationMode: e.target.value })}
+          >
+            <option value="sequential">Secuencial (primera que cumpla)</option>
+            <option value="all">Todas las rutas</option>
+          </select>
+        </div>
+      </>
+    );
+  };
+
+  const renderMercadoPagoConfig = () => {
+    return (
+      <>
+        <div className={styles.formGroup}>
+          <label>Acción</label>
+          <select 
+            value={config.action || 'create-preference'}
+            onChange={(e) => setConfig({ ...config, action: e.target.value })}
+          >
+            <option value="create-preference">Crear Preferencia de Pago</option>
+            <option value="check-payment">Verificar Pago</option>
+          </select>
+        </div>
+
+        {config.action === 'create-preference' && (
+          <>
+            <div className={styles.formGroup}>
+              <label>Título</label>
+              <input 
+                type="text"
+                value={config.title || ''}
+                onChange={(e) => setConfig({ ...config, title: e.target.value })}
+                placeholder="Producto o Servicio"
+              />
+            </div>
+
+            <div className={styles.formGroup}>
+              <label>Monto</label>
+              <input 
+                type="number"
+                value={config.amount || ''}
+                onChange={(e) => setConfig({ ...config, amount: parseFloat(e.target.value) })}
+                placeholder="100.00"
+              />
+            </div>
+          </>
+        )}
+      </>
+    );
+  };
+
+  const renderWooCommerceConfig = () => {
+    return (
+      <>
+        <div className={styles.formGroup}>
+          <label>Acción</label>
+          <select 
+            value={config.action || 'get-products'}
+            onChange={(e) => setConfig({ ...config, action: e.target.value })}
+          >
+            <option value="get-products">Obtener Productos</option>
+            <option value="create-order">Crear Orden</option>
+            <option value="get-order">Obtener Orden</option>
+          </select>
+        </div>
+
+        {config.action === 'create-order' && (
+          <>
+            <div className={styles.formGroup}>
+              <label>Email del Cliente</label>
+              <input 
+                type="email"
+                value={config.customerEmail || ''}
+                onChange={(e) => setConfig({ ...config, customerEmail: e.target.value })}
+                placeholder="cliente@ejemplo.com"
+              />
+            </div>
+          </>
+        )}
+      </>
+    );
+  };
+
+  const renderConfigContent = () => {
+    const nodeType = node.type;
+
+    switch (nodeType) {
       case 'gpt':
         return renderGPTConfig();
       case 'whatsapp':
         return renderWhatsAppConfig();
-      case 'woocommerce':
-        return renderWooCommerceConfig();
-      case 'mercadopago':
-        return renderMercadoPagoConfig();
       case 'webhook':
         return renderWebhookConfig();
       case 'router':
         return renderRouterConfig();
+      case 'mercadopago':
+        return renderMercadoPagoConfig();
+      case 'woocommerce':
+        return renderWooCommerceConfig();
       default:
-        return <p>Tipo de nodo no soportado para edición</p>;
+        return (
+          <div className={styles.formGroup}>
+            <label>Configuración no disponible</label>
+            <p>Este tipo de nodo aún no tiene configuración específica.</p>
+          </div>
+        );
     }
   };
 
@@ -421,7 +431,7 @@ const NodeConfigPanel: React.FC<NodeConfigPanelProps> = ({ node, onClose, onSave
               type="text"
               value={label}
               onChange={(e) => setLabel(e.target.value)}
-              placeholder="Nombre descriptivo..."
+              placeholder="Nombre descriptivo"
             />
           </div>
 
@@ -431,21 +441,19 @@ const NodeConfigPanel: React.FC<NodeConfigPanelProps> = ({ node, onClose, onSave
               type="text"
               value={node.type}
               disabled
-              className={styles.disabled}
+              style={{ background: '#f3f4f6', cursor: 'not-allowed' }}
             />
           </div>
 
-          <hr className={styles.divider} />
-
-          {renderConfigByType()}
+          {renderConfigContent()}
         </div>
 
         <div className={styles.footer}>
-          <button className={styles.cancelButton} onClick={onClose}>
+          <button className={styles.btnCancel} onClick={onClose}>
             Cancelar
           </button>
-          <button className={styles.saveButton} onClick={handleSave}>
-            Guardar Cambios
+          <button className={styles.btnSave} onClick={handleSave}>
+            Aceptar
           </button>
         </div>
       </div>

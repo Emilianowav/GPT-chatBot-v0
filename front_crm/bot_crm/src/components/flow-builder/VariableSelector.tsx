@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Search, X, ChevronRight, Database, Workflow, MessageSquare } from 'lucide-react';
+import styles from './VariableSelector.module.css';
 
 interface Variable {
   name: string;
@@ -28,7 +29,7 @@ export const VariableSelector: React.FC<VariableSelectorProps> = ({
   globalVariables = []
 }) => {
   const [searchTerm, setSearchTerm] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState<'all' | 'global' | 'nodes' | 'system'>('all');
+  const [selectedCategory, setSelectedCategory] = useState<'all' | 'global' | 'nodes' | 'system'>('global');
   const selectorRef = useRef<HTMLDivElement>(null);
 
   // Variables del sistema
@@ -142,18 +143,18 @@ export const VariableSelector: React.FC<VariableSelectorProps> = ({
   const getCategoryIcon = (type: Variable['type']) => {
     switch (type) {
       case 'global':
-        return <Database className="w-4 h-4 text-blue-500" />;
+        return <Database size={10} color="#3b82f6" />;
       case 'node':
-        return <Workflow className="w-4 h-4 text-purple-500" />;
+        return <Workflow size={10} color="#8b5cf6" />;
       case 'system':
-        return <MessageSquare className="w-4 h-4 text-green-500" />;
+        return <MessageSquare size={10} color="#10b981" />;
     }
   };
 
   return (
     <div
       ref={selectorRef}
-      className="fixed bg-white rounded-lg shadow-2xl border border-gray-200 z-[9999] w-96 max-h-[500px] flex flex-col"
+      className={styles.variableSelector}
       style={{
         left: `${position.x}px`,
         top: `${position.y}px`,
@@ -161,114 +162,88 @@ export const VariableSelector: React.FC<VariableSelectorProps> = ({
       }}
     >
       {/* Header */}
-      <div className="p-4 border-b border-gray-200">
-        <div className="flex items-center justify-between mb-3">
-          <h3 className="text-sm font-semibold text-gray-900">Seleccionar Variable</h3>
+      <div className={styles.header}>
+        <div className={styles.headerTop}>
+          <h3 className={styles.title}>Variables</h3>
           <button
             onClick={onClose}
-            className="text-gray-400 hover:text-gray-600 transition-colors"
+            className={styles.closeButton}
           >
-            <X className="w-4 h-4" />
+            <X size={10} />
           </button>
         </div>
 
         {/* Search */}
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+        <div className={styles.searchContainer}>
+          <div className={styles.searchIcon}>
+            <Search size={10} />
+          </div>
           <input
             type="text"
-            placeholder="Buscar variables..."
+            placeholder="Buscar..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full pl-10 pr-4 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+            className={styles.searchInput}
             autoFocus
           />
         </div>
 
         {/* Categories */}
-        <div className="flex gap-2 mt-3">
+        <div className={styles.categories}>
           <button
             onClick={() => setSelectedCategory('all')}
-            className={`px-3 py-1 text-xs rounded-full transition-colors ${
-              selectedCategory === 'all'
-                ? 'bg-purple-100 text-purple-700'
-                : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-            }`}
+            className={`${styles.categoryButton} ${selectedCategory === 'all' ? styles.active : ''}`}
           >
-            Todas
+            All
           </button>
           <button
             onClick={() => setSelectedCategory('system')}
-            className={`px-3 py-1 text-xs rounded-full transition-colors ${
-              selectedCategory === 'system'
-                ? 'bg-green-100 text-green-700'
-                : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-            }`}
+            className={`${styles.categoryButton} ${selectedCategory === 'system' ? styles.activeGreen : ''}`}
           >
-            Sistema
+            Sys
           </button>
           <button
             onClick={() => setSelectedCategory('global')}
-            className={`px-3 py-1 text-xs rounded-full transition-colors ${
-              selectedCategory === 'global'
-                ? 'bg-blue-100 text-blue-700'
-                : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-            }`}
+            className={`${styles.categoryButton} ${selectedCategory === 'global' ? styles.activeBlue : ''}`}
           >
-            Globales
+            Global
           </button>
           <button
             onClick={() => setSelectedCategory('nodes')}
-            className={`px-3 py-1 text-xs rounded-full transition-colors ${
-              selectedCategory === 'nodes'
-                ? 'bg-purple-100 text-purple-700'
-                : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-            }`}
+            className={`${styles.categoryButton} ${selectedCategory === 'nodes' ? styles.active : ''}`}
           >
-            Nodos
+            Nodes
           </button>
         </div>
       </div>
 
       {/* Variables List */}
-      <div className="flex-1 overflow-y-auto p-2">
+      <div className={styles.variablesList}>
         {filteredVariables.length === 0 ? (
-          <div className="text-center py-8 text-gray-500 text-sm">
-            No se encontraron variables
+          <div className={styles.emptyState}>
+            No hay variables
           </div>
         ) : (
-          <div className="space-y-1">
+          <div>
             {filteredVariables.map((variable, index) => (
               <button
                 key={`${variable.value}-${index}`}
                 onClick={() => handleSelect(variable)}
-                className="w-full text-left px-3 py-2 rounded-md hover:bg-gray-50 transition-colors group"
+                className={styles.variableItem}
               >
-                <div className="flex items-start gap-2">
-                  <div className="mt-0.5">
-                    {getCategoryIcon(variable.type)}
+                <div className={styles.variableIcon}>
+                  {getCategoryIcon(variable.type)}
+                </div>
+                <div className={styles.variableContent}>
+                  <div className={styles.variableName}>
+                    {variable.name}
                   </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2">
-                      <span className="text-sm font-medium text-gray-900 truncate">
-                        {variable.name}
-                      </span>
-                      {variable.nodeLabel && (
-                        <span className="text-xs text-gray-500 truncate">
-                          ({variable.nodeLabel})
-                        </span>
-                      )}
-                    </div>
-                    <code className="text-xs text-purple-600 font-mono">
-                      {variable.value}
-                    </code>
-                    {variable.description && (
-                      <p className="text-xs text-gray-500 mt-0.5 truncate">
-                        {variable.description}
-                      </p>
-                    )}
-                  </div>
-                  <ChevronRight className="w-4 h-4 text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity" />
+                  <code className={styles.variableValue}>
+                    {variable.value}
+                  </code>
+                </div>
+                <div className={styles.chevronIcon}>
+                  <ChevronRight size={10} />
                 </div>
               </button>
             ))}
@@ -277,9 +252,9 @@ export const VariableSelector: React.FC<VariableSelectorProps> = ({
       </div>
 
       {/* Footer */}
-      <div className="p-3 border-t border-gray-200 bg-gray-50">
-        <p className="text-xs text-gray-500 text-center">
-          {filteredVariables.length} variable{filteredVariables.length !== 1 ? 's' : ''} disponible{filteredVariables.length !== 1 ? 's' : ''}
+      <div className={styles.footer}>
+        <p className={styles.footerText}>
+          {filteredVariables.length} var{filteredVariables.length !== 1 ? 's' : ''}
         </p>
       </div>
     </div>

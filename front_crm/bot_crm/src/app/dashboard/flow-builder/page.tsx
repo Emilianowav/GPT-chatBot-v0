@@ -5,16 +5,17 @@ import ReactFlow, {
   Node,
   Edge,
   Controls,
+  ControlButton,
   Background,
   BackgroundVariant,
   useNodesState,
   useEdgesState,
   addEdge,
   Connection,
-  ConnectionMode,
-  OnEdgeUpdateFunc,
-  EdgeChange,
   applyEdgeChanges,
+  EdgeChange,
+  OnEdgeUpdateFunc,
+  ConnectionMode,
 } from 'reactflow';
 import 'reactflow/dist/style.css';
 import { useRouter } from 'next/navigation';
@@ -27,6 +28,8 @@ import WooCommerceNode from '@/components/flow-builder/nodes/WooCommerceNode';
 import GPTNode from '@/components/flow-builder/nodes/GPTNode';
 import MercadoPagoNode from '@/components/flow-builder/nodes/MercadoPagoNode';
 import WebhookNode from '@/components/flow-builder/nodes/WebhookNode';
+import HTTPNode from '@/components/flow-builder/nodes/HTTPNode';
+import NoteNode from '@/components/flow-builder/nodes/NoteNode';
 import AnimatedLineEdge from '@/components/flow-builder/edges/AnimatedLineEdge';
 import AppsModal from '@/components/flow-builder/modals/AppsModal';
 import ModuleSelectionModal from '@/components/flow-builder/modals/ModuleSelectionModal';
@@ -34,8 +37,14 @@ import WebhookConfigModal from '@/components/flow-builder/modals/WebhookConfigMo
 import GPTConfigModal from '@/components/flow-builder/modals/GPTConfigModal';
 import EdgeConfigModal from '@/components/flow-builder/modals/EdgeConfigModal';
 import MercadoPagoConfigModal from '@/components/flow-builder/modals/MercadoPagoConfigModal';
+import HTTPConfigModal from '@/components/flow-builder/modals/HTTPConfigModal';
 import NodeConfigPanel from '@/components/flow-builder/panels/NodeConfigPanel';
-import { ArrowLeft, Play, Pause } from 'lucide-react';
+import FloatingActionBar from '@/components/flow-builder/FloatingActionBar';
+import VariablesModal from '@/components/flow-builder/modals/VariablesModal';
+import TopicsModal from '@/components/flow-builder/modals/TopicsModal';
+import { FlowValidationPanel } from '@/components/flow-builder/FlowValidationPanel';
+import { ToastProvider, useToast } from '@/components/common/ToastContainer';
+import { ArrowLeft, Play, Pause, Undo, Redo } from 'lucide-react';
 import styles from './flow-builder.module.css';
 
 const nodeTypes = {
@@ -47,6 +56,8 @@ const nodeTypes = {
   gpt: GPTNode,
   mercadopago: MercadoPagoNode,
   webhook: WebhookNode,
+  http: HTTPNode,
+  note: NoteNode,
 };
 
 const edgeTypes = {
@@ -129,6 +140,28 @@ const FLOW_CONTROL_MODULES = [
     name: 'Router',
     description: 'Splits the scenario flow into multiple routes.',
     category: 'CONDITIONALS',
+  },
+];
+
+const HTTP_MODULES = [
+  {
+    id: 'http-request',
+    name: 'Make a Request',
+    description: 'Performs an HTTP request to any URL and returns the response.',
+    category: 'ACTIONS',
+    badges: ['GET', 'POST', 'PUT', 'DELETE'],
+  },
+  {
+    id: 'http-get',
+    name: 'GET Request',
+    description: 'Retrieves data from a specified URL.',
+    category: 'ACTIONS',
+  },
+  {
+    id: 'http-post',
+    name: 'POST Request',
+    description: 'Sends data to a specified URL.',
+    category: 'ACTIONS',
   },
 ];
 
@@ -216,8 +249,9 @@ const WOOCOMMERCE_MODULES = [
   },
 ];
 
-export default function FlowBuilderPage() {
+function FlowBuilderContent() {
   const router = useRouter();
+  const toast = useToast();
   const [nodes, setNodes, onNodesChangeOriginal] = useNodesState([]);
   const [edges, setEdges] = useEdgesState([]);
   const edgeUpdateSuccessful = useRef(true);
@@ -225,6 +259,7 @@ export default function FlowBuilderPage() {
   const [showModuleModal, setShowModuleModal] = useState(false);
   const [showWebhookConfigModal, setShowWebhookConfigModal] = useState(false);
   const [showGPTConfigModal, setShowGPTConfigModal] = useState(false);
+  const [showHTTPConfigModal, setShowHTTPConfigModal] = useState(false);
   const [showMercadoPagoConfigModal, setShowMercadoPagoConfigModal] = useState(false);
   const [showEdgeConfigModal, setShowEdgeConfigModal] = useState(false);
   const [appsModalPosition, setAppsModalPosition] = useState<{ x: number; y: number } | undefined>();
@@ -240,7 +275,58 @@ export default function FlowBuilderPage() {
   const [selectedEdgeId, setSelectedEdgeId] = useState<string | null>(null);
   const [flowsList, setFlowsList] = useState<any[]>([]);
   const [showVariablesPanel, setShowVariablesPanel] = useState(false);
-  const [currentFlowActive, setCurrentFlowActive] = useState<boolean>(true);
+  const [showVariablesModal, setShowVariablesModal] = useState(false);
+  const [showTopicsModal, setShowTopicsModal] = useState(false);
+  const [globalVariables, setGlobalVariables] = useState<Record<string, any>>({});
+  const [globalTopics, setGlobalTopics] = useState<Record<string, any>>({});
+  const [currentFlowActive, setCurrentFlowActive] = useState(false);
+  
+  // Sistema de historial para undo/redo (máximo 5 estados)
+  const [history, setHistory] = useState<Array<{ nodes: Node[], edges: Edge[] }>>([]);
+  const [historyIndex, setHistoryIndex] = useState(-1);
+
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+  const [lastSavedState, setLastSavedState] = useState<string>('');
+
+  // Trackear cambios significativos en nodes y edges (solo estructura, no DOM)
+  useEffect(() => {
+    // Extraer solo datos significativos de los nodos (sin handlers ni funciones)
+    const significantNodes = nodes.map(node => ({
+      id: node.id,
+      type: node.type,
+      position: node.position,
+      data: {
+        label: node.data.label,
+        config: node.data.config,
+      }
+    }));
+
+    // Extraer solo datos significativos de los edges
+    const significantEdges = edges.map(edge => ({
+      id: edge.id,
+      source: edge.source,
+      target: edge.target,
+      sourceHandle: edge.sourceHandle,
+      targetHandle: edge.targetHandle,
+      data: {
+        label: edge.data?.label,
+        condition: edge.data?.condition,
+      }
+    }));
+
+    const currentState = JSON.stringify({ 
+      nodes: significantNodes, 
+      edges: significantEdges, 
+      globalVariables, 
+      globalTopics 
+    });
+
+    if (lastSavedState && currentState !== lastSavedState) {
+      setHasUnsavedChanges(true);
+    } else if (lastSavedState && currentState === lastSavedState) {
+      setHasUnsavedChanges(false);
+    }
+  }, [nodes, edges, globalVariables, globalTopics, lastSavedState]);
 
   const handlePlusNodeClick = useCallback((nodeId: string, handleId?: string) => {
     setSourceNodeForConnection(nodeId);
@@ -254,8 +340,18 @@ export default function FlowBuilderPage() {
     setNodes(currentNodes => {
       const node = currentNodes.find(n => n.id === nodeId);
       if (node) {
+        // Si es un nodo HTTP, abrir modal específico
+        if (node.type === 'http') {
+          setSelectedNode(node);
+          setShowHTTPConfigModal(true);
+        }
+        // Si es un nodo WhatsApp/Webhook, abrir modal específico
+        else if (node.type === 'whatsapp' || node.type === 'webhook') {
+          setSelectedNode(node);
+          setShowWebhookConfigModal(true);
+        }
         // Si es un nodo de MercadoPago, abrir modal específico
-        if (node.type === 'mercadopago') {
+        else if (node.type === 'mercadopago') {
           setSelectedNode(node);
           setShowMercadoPagoConfigModal(true);
         } else {
@@ -267,20 +363,84 @@ export default function FlowBuilderPage() {
     });
   }, []);
 
+  // Función para abrir modal de configuración desde el panel de validación
+  const handleOpenNodeConfigFromValidation = useCallback((nodeId: string, nodeType: string) => {
+    setNodes(currentNodes => {
+      const node = currentNodes.find(n => n.id === nodeId);
+      if (node) {
+        setSelectedNode(node);
+        
+        // Abrir el modal correspondiente según el tipo de nodo
+        if (nodeType === 'http') {
+          setShowHTTPConfigModal(true);
+        } else if (nodeType === 'whatsapp' || nodeType === 'webhook') {
+          setShowWebhookConfigModal(true);
+        } else if (nodeType === 'mercadopago') {
+          setShowMercadoPagoConfigModal(true);
+        } else if (nodeType === 'gpt') {
+          setShowConfigPanel(true);
+        } else {
+          setShowConfigPanel(true);
+        }
+      }
+      return currentNodes;
+    });
+  }, []);
+
   const handleSaveNodeConfig = useCallback((nodeId: string, config: any) => {
-    setNodes(prev => prev.map(node => 
-      node.id === nodeId 
-        ? { 
-            ...node, 
-            data: { 
-              ...node.data, 
-              label: config.label,
-              config: config 
-            } 
-          }
-        : node
-    ));
+    console.log('💾 Guardando configuración de nodo:', { nodeId, config });
+    setNodes(prev => {
+      const updatedNodes = prev.map(node => 
+        node.id === nodeId 
+          ? { 
+              ...node, 
+              data: { 
+                ...node.data, 
+                label: config.label || config.webhookName || (config.module === 'watch-events' ? 'Watch Events' : config.module === 'send-message' ? 'Send Message' : node.data.label),
+                config: config 
+              } 
+            }
+          : node
+      );
+      console.log('✅ Nodos después de guardar config:', {
+        antes: prev.length,
+        despues: updatedNodes.length,
+        nodeId,
+        encontrado: updatedNodes.some(n => n.id === nodeId)
+      });
+      return updatedNodes;
+    });
+    
+    // Cerrar todos los modales después de guardar
+    setShowWebhookConfigModal(false);
+    setShowHTTPConfigModal(false);
+    setShowGPTConfigModal(false);
+    setShowMercadoPagoConfigModal(false);
+    setShowConfigPanel(false);
+    setSelectedNode(null);
   }, [setNodes]);
+
+  // Wrapper para guardar configuración de webhook cuando se edita un nodo existente
+  const handleSaveWebhookNodeConfig = useCallback((config: any) => {
+    if (selectedNode) {
+      // Si está configurado para capturar teléfono, guardar en variables globales
+      if (config.capturePhoneNumber && config.phoneNumberVariableName) {
+        setGlobalVariables(prev => ({
+          ...prev,
+          [config.phoneNumberVariableName]: prev[config.phoneNumberVariableName] || '' // Mantener valor existente o vacío
+        }));
+        console.log('📱 Variable de teléfono actualizada:', config.phoneNumberVariableName);
+      }
+      handleSaveNodeConfig(selectedNode.id, config);
+    }
+  }, [selectedNode, handleSaveNodeConfig]);
+
+  // Wrapper para guardar configuración de HTTP cuando se edita un nodo existente
+  const handleSaveHTTPNodeConfig = useCallback((config: any) => {
+    if (selectedNode) {
+      handleSaveNodeConfig(selectedNode.id, config);
+    }
+  }, [selectedNode, handleSaveNodeConfig]);
 
   const handleEdgeConfigClick = useCallback((edgeId: string) => {
     setSelectedEdgeId(edgeId);
@@ -306,8 +466,212 @@ export default function FlowBuilderPage() {
     setSelectedEdgeId(null);
   }, [selectedEdgeId, setEdges]);
 
-  // Custom onNodesChange para manejar eliminación de nodos
+  // Guardar estado actual en historial
+  const saveToHistory = useCallback(() => {
+    const newState = { 
+      nodes: JSON.parse(JSON.stringify(nodes)), 
+      edges: JSON.parse(JSON.stringify(edges)) 
+    };
+    
+    setHistory(prev => {
+      // Eliminar estados futuros si estamos en medio del historial
+      const newHistory = prev.slice(0, historyIndex + 1);
+      newHistory.push(newState);
+      
+      // Mantener solo los últimos 5 estados
+      if (newHistory.length > 5) {
+        newHistory.shift();
+        return newHistory;
+      }
+      return newHistory;
+    });
+    
+    setHistoryIndex(prev => {
+      const newIndex = Math.min(prev + 1, 4);
+      return newIndex;
+    });
+  }, [nodes, edges, historyIndex]);
+
+  // Undo: volver al estado anterior
+  const handleUndo = useCallback(() => {
+    if (historyIndex > 0 && history.length > 0) {
+      const newIndex = historyIndex - 1;
+      const prevState = history[newIndex];
+      if (prevState && prevState.nodes && prevState.edges) {
+        setNodes(prevState.nodes);
+        setEdges(prevState.edges);
+        setHistoryIndex(newIndex);
+      }
+    }
+  }, [history, historyIndex, setNodes, setEdges]);
+
+  // Redo: avanzar al siguiente estado
+  const handleRedo = useCallback(() => {
+    if (historyIndex < history.length - 1) {
+      const newIndex = historyIndex + 1;
+      const nextState = history[newIndex];
+      if (nextState && nextState.nodes && nextState.edges) {
+        setNodes(nextState.nodes);
+        setEdges(nextState.edges);
+        setHistoryIndex(newIndex);
+      }
+    }
+  }, [history, historyIndex, setNodes, setEdges]);
+
+  // Recalcular números de ejecución basados en posición en el flujo
+  const recalculateExecutionOrder = useCallback((currentNodes: Node[], currentEdges: Edge[]) => {
+    const nodeOrder = new Map<string, number>();
+    const nodeLetter = new Map<string, string>();
+    const visited = new Set<string>();
+    
+    // Encontrar nodo inicial (primer nodo sin conexiones entrantes)
+    const nodesWithIncoming = new Set(currentEdges.map(e => e.target));
+    const startNode = currentNodes.find(n => !nodesWithIncoming.has(n.id));
+    
+    if (!startNode) {
+      // Si no hay nodo inicial, ninguno tiene número
+      return currentNodes.map(node => ({
+        ...node,
+        data: { ...node.data, executionCount: undefined }
+      }));
+    }
+    
+    // BFS para calcular orden
+    const queue = [{ id: startNode.id, order: 1 }];
+    visited.add(startNode.id);
+    nodeOrder.set(startNode.id, 1);
+    
+    while (queue.length > 0) {
+      const current = queue.shift()!;
+      const outgoingEdges = currentEdges.filter(e => e.source === current.id);
+      
+      outgoingEdges.forEach(edge => {
+        if (!visited.has(edge.target)) {
+          visited.add(edge.target);
+          const order = current.order + 1;
+          nodeOrder.set(edge.target, order);
+          queue.push({ id: edge.target, order });
+        }
+      });
+    }
+    
+    // Agrupar nodos por número de orden para asignar letras
+    const orderGroups = new Map<number, string[]>();
+    nodeOrder.forEach((order, nodeId) => {
+      if (!orderGroups.has(order)) {
+        orderGroups.set(order, []);
+      }
+      orderGroups.get(order)!.push(nodeId);
+    });
+    
+    // Asignar letras a nodos con el mismo número
+    orderGroups.forEach((nodeIds, order) => {
+      if (nodeIds.length > 1) {
+        // Múltiples nodos en el mismo nivel - asignar letras
+        nodeIds.sort(); // Ordenar para consistencia
+        nodeIds.forEach((nodeId, index) => {
+          const letter = String.fromCharCode(97 + index); // a, b, c, ...
+          nodeLetter.set(nodeId, letter);
+        });
+      }
+      // Si solo hay un nodo, no necesita letra
+    });
+    
+    // Actualizar nodos con el orden y letra calculados
+    return currentNodes.map(node => {
+      const order = nodeOrder.get(node.id);
+      const letter = nodeLetter.get(node.id);
+      
+      return {
+        ...node,
+        data: {
+          ...node.data,
+          executionCount: order ? (letter ? `${order}${letter}` : order) : undefined
+        }
+      };
+    });
+  }, []);
+
+  // Recalcular orden cuando cambian edges o nodes
+  useEffect(() => {
+    if (nodes.length > 0) {
+      const timer = setTimeout(() => {
+        const updatedNodes = recalculateExecutionOrder(nodes, edges);
+        // Solo actualizar si hay cambios en los números
+        const hasChanges = updatedNodes.some((node, idx) => 
+          node.data.executionCount !== nodes[idx].data.executionCount
+        );
+        if (hasChanges) {
+          setNodes(updatedNodes);
+        }
+      }, 100);
+      
+      return () => clearTimeout(timer);
+    }
+  }, [edges.length, nodes.length, recalculateExecutionOrder]);
+
+  // Guardar estado cuando cambian nodes o edges (con debounce)
+  useEffect(() => {
+    if (nodes.length === 0 && edges.length === 0) return;
+    
+    const timer = setTimeout(() => {
+      // Solo guardar si es diferente al último estado
+      if (history.length === 0) {
+        // Primer estado
+        setHistory([{ nodes: JSON.parse(JSON.stringify(nodes)), edges: JSON.parse(JSON.stringify(edges)) }]);
+        setHistoryIndex(0);
+      }
+    }, 300);
+    
+    return () => clearTimeout(timer);
+  }, []);
+
+  // Listener de teclado para Delete y Ctrl+Z/Ctrl+Y
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      // Delete: eliminar nodos y edges seleccionados
+      if (event.key === 'Delete' || event.key === 'Backspace') {
+        event.preventDefault();
+        
+        // Guardar estado antes de eliminar
+        saveToHistory();
+        
+        // Eliminar nodos seleccionados (React Flow maneja la selección)
+        setNodes(prev => prev.filter(node => !node.selected));
+        setEdges(prev => prev.filter(edge => !edge.selected));
+      }
+      
+      // Ctrl+Z: Undo
+      if (event.ctrlKey && event.key === 'z' && !event.shiftKey) {
+        event.preventDefault();
+        handleUndo();
+      }
+      
+      // Ctrl+Y o Ctrl+Shift+Z: Redo
+      if ((event.ctrlKey && event.key === 'y') || (event.ctrlKey && event.shiftKey && event.key === 'z')) {
+        event.preventDefault();
+        handleRedo();
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [saveToHistory, handleUndo, handleRedo, setNodes, setEdges]);
+
+  // Custom onNodesChange para manejar eliminación de nodos y guardar historial
   const onNodesChange = useCallback((changes: any[]) => {
+    // Guardar estado antes de aplicar cambios significativos (NO en selección)
+    const hasSignificantChange = changes.some(c => 
+      c.type === 'remove' || 
+      c.type === 'add' || 
+      (c.type === 'position' && c.dragging === false) // Solo cuando termina de arrastrar
+    );
+    
+    if (hasSignificantChange) {
+      // Usar setTimeout para no bloquear el evento de click
+      setTimeout(() => saveToHistory(), 0);
+    }
+    
     onNodesChangeOriginal(changes);
     
     // Detectar si se eliminó un nodo
@@ -325,7 +689,7 @@ export default function FlowBuilderPage() {
         });
       }, 0);
     }
-  }, [onNodesChangeOriginal, setNodes]);
+  }, [onNodesChangeOriginal, setNodes, saveToHistory]);
 
   // Handler para el nodo + inicial
   const handleInitialPlusClick = useCallback(() => {
@@ -354,8 +718,12 @@ export default function FlowBuilderPage() {
     const loadFlowsList = async () => {
       try {
         const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';
-        const response = await fetch(`${apiUrl}/api/flows`);
+        const empresaId = localStorage.getItem('empresaId') || '';
+        console.log('🔍 [FILTRO] empresaId desde localStorage:', empresaId);
+        console.log('🔍 [FILTRO] URL completa:', `${apiUrl}/api/flows?empresaId=${empresaId}`);
+        const response = await fetch(`${apiUrl}/api/flows?empresaId=${empresaId}`);
         const data = await response.json();
+        console.log('🔍 [FILTRO] Flujos recibidos:', data);
         const flows = Array.isArray(data) ? data : (data.flows || []);
         setFlowsList(flows);
         
@@ -387,7 +755,13 @@ export default function FlowBuilderPage() {
     
     const loadVeoVeoFlow = async () => {
       try {
-        const flowId = currentFlowId || '695a156681f6d67f0ae9cf40';
+        // Solo cargar si hay un flowId válido (no cargar flujos hardcodeados)
+        if (!currentFlowId) {
+          console.log('⚠️ No hay flowId para cargar');
+          return;
+        }
+        
+        const flowId = currentFlowId;
         const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';
         
         const timestamp = new Date().getTime();
@@ -422,12 +796,26 @@ export default function FlowBuilderPage() {
           });
           console.log('📋 Handles por router:', Object.fromEntries(routerHandles));
           
+          // Función helper para obtener color según tipo de nodo
+          const getColorForNodeType = (nodeType: string): string => {
+            switch (nodeType) {
+              case 'whatsapp': return '#25D366';
+              case 'gpt': return '#10a37f';
+              case 'woocommerce': return '#96588a';
+              case 'mercadopago': return '#009ee3';
+              case 'router': return '#f59e0b';
+              case 'webhook': return '#ff6b6b';
+              default: return '#6b7280';
+            }
+          };
+
           // Agregar handlers a cada nodo
           const nodesWithHandlers = flow.nodes.map((node: Node) => {
             const processedNode = {
               ...node,
               data: {
                 ...node.data,
+                color: node.data.color || getColorForNodeType(node.type),
                 onNodeClick: handleNodeClick,
                 onHandleClick: handlePlusNodeClick,
                 hasConnection: flow.edges.some((e: Edge) => e.source === node.id),
@@ -448,17 +836,25 @@ export default function FlowBuilderPage() {
             return processedNode;
           });
           
-          console.log('🎯 TIPOS FINALES DE NODOS:');
-          nodesWithHandlers.forEach(node => {
-            console.log(`  ${node.id}: type="${node.type}"`);
+          console.log(`\n📊 NODOS PROCESADOS PARA RENDERIZAR: ${nodesWithHandlers.length}`);
+          nodesWithHandlers.forEach((node: any, index: number) => {
+            console.log(`   ${index + 1}. ${node.type} - ${node.data?.label || 'Sin label'} (${node.id})`);
+            console.log(`      Posición: x=${node.position?.x}, y=${node.position?.y}`);
           });
           
-          // Agregar handler onConfigClick a todos los edges
+          // Normalizar handles a IDs simples según documentación de React Flow
           const edgesWithHandlers = flow.edges.map((edge: Edge) => ({
             ...edge,
+            sourceHandle: 'b', // Todos los source handles usan 'b'
+            targetHandle: 'a', // Todos los target handles usan 'a'
+            zIndex: 200,
             data: {
               ...edge.data,
-              onConfigClick: handleEdgeConfigClick,
+              onConfigClick: () => {
+                console.log('🔧 Configurando edge:', edge.id);
+                setSelectedEdgeId(edge.id);
+                setShowEdgeConfigModal(true);
+              }
             }
           }));
           
@@ -466,6 +862,38 @@ export default function FlowBuilderPage() {
           setEdges(edgesWithHandlers);
           setFlowName(flow.nombre);
           setCurrentFlowId(flow._id);
+          
+          // Inicializar estado guardado para detección de cambios (solo datos significativos)
+          const significantNodes = nodesWithHandlers.map((node: Node) => ({
+            id: node.id,
+            type: node.type,
+            position: node.position,
+            data: {
+              label: node.data.label,
+              config: node.data.config,
+            }
+          }));
+
+          const significantEdges = edgesWithHandlers.map((edge: Edge) => ({
+            id: edge.id,
+            source: edge.source,
+            target: edge.target,
+            sourceHandle: edge.sourceHandle,
+            targetHandle: edge.targetHandle,
+            data: {
+              label: edge.data?.label,
+              condition: edge.data?.condition,
+            }
+          }));
+
+          const initialState = JSON.stringify({ 
+            nodes: significantNodes, 
+            edges: significantEdges, 
+            globalVariables, 
+            globalTopics 
+          });
+          setLastSavedState(initialState);
+          setHasUnsavedChanges(false);
           
           console.log('✅ Flow cargado con handlers');
           console.log('📊 Nodos:', flow.nodes.length);
@@ -526,7 +954,7 @@ export default function FlowBuilderPage() {
       );
       
       if (watchEventsExists) {
-        alert('Ya existe un nodo Watch Events. Solo puede haber uno por flujo.');
+        toast.warning('Ya existe un nodo Watch Events. Solo puede haber uno por flujo.');
         setShowModuleModal(false);
         setSelectedModule(null);
         return;
@@ -544,6 +972,13 @@ export default function FlowBuilderPage() {
       return;
     }
     
+    // Si es HTTP, mostrar modal de configuración
+    if (selectedApp.id === 'http') {
+      setShowModuleModal(false);
+      setShowHTTPConfigModal(true);
+      return;
+    }
+    
     // Para otros módulos, crear nodo directamente
     setShowModuleModal(false);
     createNodeFromModule(module, {});
@@ -551,12 +986,118 @@ export default function FlowBuilderPage() {
 
   const handleWebhookConfigSave = (webhookConfig: any) => {
     setShowWebhookConfigModal(false);
+    
+    // Si está configurado para capturar teléfono, guardar en variables globales
+    if (webhookConfig.capturePhoneNumber && webhookConfig.phoneNumberVariableName) {
+      setGlobalVariables(prev => ({
+        ...prev,
+        [webhookConfig.phoneNumberVariableName]: '' // Se llenará cuando llegue un mensaje
+      }));
+      console.log('📱 Variable de teléfono configurada:', webhookConfig.phoneNumberVariableName);
+    }
+    
     createNodeFromModule(selectedModule, webhookConfig);
   };
 
   const handleGPTConfigSave = (gptConfig: any) => {
     setShowGPTConfigModal(false);
     createNodeFromModule(selectedModule, gptConfig);
+  };
+
+  const handleHTTPConfigSave = (httpConfig: any) => {
+    setShowHTTPConfigModal(false);
+    
+    // Guardar API Key como variable global si está configurado
+    if (httpConfig.saveApiKeyAsVariable && httpConfig.apiKeyVariableName && httpConfig.auth?.apiKey) {
+      const newVariable = {
+        name: httpConfig.apiKeyVariableName,
+        value: httpConfig.auth.apiKey,
+      };
+      const currentVars = Object.values(globalVariables);
+      setGlobalVariables({ ...globalVariables, [httpConfig.apiKeyVariableName]: httpConfig.auth.apiKey });
+    }
+    
+    createNodeFromModule(selectedModule, httpConfig);
+  };
+
+  const handleTestHTTPRequest = async (config: any): Promise<any> => {
+    try {
+      // Usar testVariables si están disponibles, sino usar globalVariables
+      const variablesToUse = config.testVariables || globalVariables;
+      
+      console.log('🧪 Testing HTTP Request con variables:', variablesToUse);
+      
+      // Reemplazar variables en la URL
+      let finalUrl = config.url;
+      Object.entries(variablesToUse).forEach(([name, value]: [string, any]) => {
+        const regex = new RegExp(`{{\\s*${name}\\s*}}`, 'g');
+        finalUrl = finalUrl.replace(regex, String(value));
+      });
+
+      // Construir query params con variables reemplazadas
+      const finalQueryParams: Record<string, string> = {};
+      if (config.queryParams) {
+        Object.entries(config.queryParams).forEach(([key, value]: [string, any]) => {
+          let finalValue = String(value);
+          Object.entries(variablesToUse).forEach(([name, varValue]: [string, any]) => {
+            const regex = new RegExp(`{{\\s*${name}\\s*}}`, 'g');
+            finalValue = finalValue.replace(regex, String(varValue));
+          });
+          finalQueryParams[key] = finalValue;
+        });
+      }
+
+      console.log('🌐 URL del test:', finalUrl);
+      console.log('📊 Query params:', finalQueryParams);
+
+      // Preparar headers
+      const headers: Record<string, string> = {
+        ...config.headers,
+      };
+
+      // Preparar body si existe
+      let body: string | undefined = undefined;
+      if (config.body && config.method !== 'GET') {
+        body = config.body;
+        // Reemplazar variables en el body
+        Object.entries(variablesToUse).forEach(([name, value]: [string, any]) => {
+          const regex = new RegExp(`{{\\s*${name}\\s*}}`, 'g');
+          body = body!.replace(regex, String(value));
+        });
+      }
+
+      // Usar el proxy del backend para evitar CORS
+      const proxyUrl = `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000'}/api/http-proxy/test-http-request`;
+      
+      console.log('🔄 Usando proxy:', proxyUrl);
+
+      const response = await fetch(proxyUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          url: finalUrl,
+          method: config.method,
+          headers,
+          queryParams: finalQueryParams,
+          body,
+          timeout: config.timeout || 30000,
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({ error: response.statusText }));
+        throw new Error(errorData.error || `HTTP ${response.status}: ${response.statusText}`);
+      }
+
+      const data = await response.json();
+      console.log('✅ Respuesta del test:', data);
+      return data;
+    } catch (error: any) {
+      console.error('❌ Error en test HTTP:', error);
+      throw new Error(error.message || 'Error al ejecutar la solicitud HTTP');
+    }
   };
 
   const handleMercadoPagoConfigSave = (mpConfig: any) => {
@@ -567,9 +1108,23 @@ export default function FlowBuilderPage() {
   };
 
   const createNodeFromModule = (module: any, config: any) => {
+    console.log('🔧 createNodeFromModule called:', {
+      module: module.id,
+      app: selectedApp?.id,
+      config,
+      sourceNodeForConnection,
+      currentNodesCount: nodes.length
+    });
 
     const sourceNode = nodes.find(n => n.id === sourceNodeForConnection);
-    if (!sourceNode && sourceNodeForConnection !== 'plus-initial') return;
+    // Permitir crear nodo si:
+    // 1. Hay un sourceNode válido
+    // 2. Es el nodo inicial (plus-initial)
+    // 3. Se está agregando desde la botonera (sourceNodeForConnection es null)
+    if (!sourceNode && sourceNodeForConnection !== 'plus-initial' && sourceNodeForConnection !== null) {
+      console.log('❌ Nodo NO creado - sourceNode no válido');
+      return;
+    }
 
     const newNodeId = `node-${Date.now()}`;
     const isRouter = module.id === 'router';
@@ -597,6 +1152,19 @@ export default function FlowBuilderPage() {
       // Default: processor
       return 'processor';
     };
+
+    // Función para obtener el color según el tipo de app
+    const getNodeColor = (appId: string): string => {
+      switch (appId) {
+        case 'whatsapp': return '#25D366';
+        case 'openai': return '#10a37f';
+        case 'woocommerce': return '#96588a';
+        case 'mercadopago': return '#009ee3';
+        case 'flow-control': return '#f59e0b';
+        case 'http': return '#0ea5e9';
+        default: return '#6b7280';
+      }
+    };
     
     let newNode: Node;
     
@@ -612,8 +1180,9 @@ export default function FlowBuilderPage() {
         } : { x: 400, y: 300 },
         data: {
           label: 'Router',
-          executionCount: nodes.length + 1,
+          executionCount: undefined, // Se calculará después
           routes: 2, // Por defecto 2 rutas
+          color: getNodeColor('flow-control'),
           onNodeClick: handleNodeClick,
           onHandleClick: handlePlusNodeClick,
           config: {
@@ -629,6 +1198,7 @@ export default function FlowBuilderPage() {
       const nodeType = selectedApp.id === 'whatsapp' ? 'whatsapp' : 
                        selectedApp.id === 'openai' ? 'gpt' : 
                        selectedApp.id === 'woocommerce' ? 'woocommerce' :
+                       selectedApp.id === 'http' ? 'http' :
                        selectedApp.id === 'flow-control' ? 'router' : 'app';
       
       // Determinar categoría automáticamente
@@ -636,6 +1206,14 @@ export default function FlowBuilderPage() {
       const category = getNodeCategory(selectedApp.id, module.id, isFirstNode);
       
       // Crear nodo normal (WhatsApp, OpenAI, etc.)
+      // Determinar label según el módulo
+      let nodeLabel = selectedApp.name;
+      if (selectedApp.id === 'whatsapp') {
+        nodeLabel = module.id === 'watch-events' ? 'Watch Events' : 
+                    module.id === 'send-message' ? 'Send Message' : 
+                    selectedApp.name;
+      }
+      
       newNode = {
         id: newNodeId,
         type: nodeType,
@@ -645,10 +1223,11 @@ export default function FlowBuilderPage() {
           y: sourceNode.position.y,
         } : { x: 400, y: 300 },
         data: {
-          label: selectedApp.name,
+          label: nodeLabel,
           subtitle: module.name,
-          executionCount: nodes.length + 1,
+          executionCount: undefined, // Se calculará después basado en posición en flujo
           hasConnection: false,
+          color: getNodeColor(selectedApp.id),
           onNodeClick: handleNodeClick,
           onHandleClick: handlePlusNodeClick,
           config: {
@@ -659,8 +1238,17 @@ export default function FlowBuilderPage() {
       };
     }
 
+    console.log('✅ Nodo creado:', {
+      id: newNode.id,
+      type: newNode.type,
+      label: newNode.data.label,
+      position: newNode.position,
+      category: newNode.category
+    });
+
     if (sourceNodeForConnection === 'plus-initial') {
       // Reemplazar nodo + inicial con el nuevo nodo
+      console.log('📍 Reemplazando nodo inicial');
       setNodes([{
         ...newNode,
         data: {
@@ -668,12 +1256,33 @@ export default function FlowBuilderPage() {
           hasConnection: false // Primer nodo nunca tiene conexión
         }
       }]);
+    } else if (sourceNodeForConnection === null) {
+      // Agregar nodo desde la botonera flotante (sin conexión)
+      console.log('📍 Agregando nodo desde botonera flotante');
+      setNodes(prev => {
+        const newNodes = [...prev, {
+          ...newNode,
+          data: {
+            ...newNode.data,
+            hasConnection: false
+          }
+        }];
+        console.log('📊 Total nodos después de agregar:', newNodes.length);
+        return newNodes;
+      });
     } else {
+      // Agregar nodo conectado desde el botón + de otro nodo
+      console.log('📍 Agregando nodo conectado desde otro nodo');
+      // Usar IDs de handles simples según documentación de React Flow
+      const sourceHandle = 'b'; // Handle de salida (source)
+      const targetHandle = 'a'; // Handle de entrada (target)
+      
       const newEdge: Edge = {
-        id: `${sourceNodeForConnection}-${sourceHandleForConnection || 'default'}-${newNodeId}`,
+        id: `e${sourceNodeForConnection}-${newNodeId}`,
         source: sourceNodeForConnection,
-        sourceHandle: sourceHandleForConnection,
+        sourceHandle: sourceHandle,
         target: newNodeId,
+        targetHandle: targetHandle,
         type: 'default',
         animated: true,
       };
@@ -693,9 +1302,10 @@ export default function FlowBuilderPage() {
             }
           }
         ];
+        console.log('📊 Total nodos después de agregar:', updatedNodes.length);
         return updatedNodes;
       });
-      setEdges(prev => [...prev, newEdge]);
+      setEdges(prev => [...prev, { ...newEdge, zIndex: 200 }]);
     }
 
     setSourceNodeForConnection(null);
@@ -710,22 +1320,71 @@ export default function FlowBuilderPage() {
     setShowAppsModal(true);
     const node = nodes.find(n => n.id === nodeId);
     if (node) {
-      setAppsModalPosition({ x: node.position.x, y: node.position.y });
+      setAppsModalPosition({ x: node.position.x + 150, y: node.position.y });
     }
   };
+
+  const handleAddNote = useCallback(() => {
+    const newNoteId = `note-${Date.now()}`;
+    const newNote: Node = {
+      id: newNoteId,
+      type: 'note',
+      position: { x: 400, y: 300 },
+      data: {
+        title: 'Nota',
+        content: '',
+        color: '#fef3c7',
+        isMinimized: false,
+        onDelete: (nodeId: string) => {
+          setNodes(prev => prev.filter(n => n.id !== nodeId));
+        },
+        onChange: (nodeId: string, content: string, title?: string) => {
+          setNodes(prev => prev.map(n => 
+            n.id === nodeId 
+              ? { ...n, data: { ...n.data, content, title: title || n.data.title } }
+              : n
+          ));
+        },
+        onToggleMinimize: (nodeId: string) => {
+          setNodes(prev => prev.map(n => 
+            n.id === nodeId 
+              ? { ...n, data: { ...n.data, isMinimized: !n.data.isMinimized } }
+              : n
+          ));
+        }
+      },
+      style: {
+        width: 280,
+        height: 200,
+      }
+    };
+    setNodes(prev => [...prev, newNote]);
+  }, [setNodes]);
 
   // Manejar cambios en edges con soporte para reconexión
   const onEdgesChange = useCallback(
     (changes: EdgeChange[]) => {
+      // Guardar estado antes de cambios significativos
+      const hasSignificantChange = changes.some(c => c.type === 'remove' || c.type === 'add');
+      
+      if (hasSignificantChange) {
+        // Usar setTimeout para no bloquear eventos
+        setTimeout(() => saveToHistory(), 0);
+      }
+      
       setEdges((eds) => applyEdgeChanges(changes, eds));
     },
-    [setEdges]
+    [setEdges, saveToHistory]
   );
 
-  // Conectar nodos con snap magnético
+  // Conectar nodos - Dejar que React Flow maneje los handles automáticamente
   const onConnect = useCallback(
     (params: Connection) => {
-      setEdges((eds) => addEdge({ ...params, type: 'default' }, eds));
+      setEdges((eds) => addEdge({ 
+        ...params, 
+        type: 'default', 
+        zIndex: 200 
+      }, eds));
     },
     [setEdges]
   );
@@ -741,7 +1400,11 @@ export default function FlowBuilderPage() {
       edgeUpdateSuccessful.current = true;
       setEdges((els) => {
         const updatedEdges = els.filter((e) => e.id !== oldEdge.id);
-        return addEdge({ ...newConnection, type: 'default' }, updatedEdges);
+        return addEdge({ 
+          ...newConnection, 
+          type: 'default', 
+          zIndex: 200 
+        }, updatedEdges);
       });
     },
     [setEdges]
@@ -764,6 +1427,7 @@ export default function FlowBuilderPage() {
     if (selectedApp.id === 'openai') return OPENAI_MODULES;
     if (selectedApp.id === 'flow-control') return FLOW_CONTROL_MODULES;
     if (selectedApp.id === 'woocommerce') return WOOCOMMERCE_MODULES;
+    if (selectedApp.id === 'http') return HTTP_MODULES;
     return [];
   };
 
@@ -771,30 +1435,74 @@ export default function FlowBuilderPage() {
     try {
       setIsSaving(true);
       
+      // Obtener empresaId del localStorage
+      const empresaId = typeof window !== 'undefined' ? localStorage.getItem('empresaId') : null;
+      
+      // Obtener userId del localStorage o del token JWT
+      let userId = typeof window !== 'undefined' ? localStorage.getItem('user_id') : null;
+      
+      // Si no hay userId en localStorage, decodificar el token JWT para obtenerlo
+      if (!userId && typeof window !== 'undefined') {
+        const token = localStorage.getItem('auth_token');
+        if (token) {
+          try {
+            // Decodificar el token JWT (sin verificar, solo para leer el payload)
+            const base64Url = token.split('.')[1];
+            const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+            const jsonPayload = decodeURIComponent(atob(base64).split('').map(function(c) {
+              return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+            }).join(''));
+            const payload = JSON.parse(jsonPayload);
+            userId = payload.userId;
+            console.log('🔑 userId extraído del token:', userId);
+          } catch (e) {
+            console.error('❌ Error decodificando token:', e);
+          }
+        }
+      }
+      
+      // Determinar el nodo inicial (primer nodo de tipo whatsapp con module watch-events)
+      const startNode = nodes.find(n => 
+        n.type === 'whatsapp' && n.data?.config?.module === 'watch-events'
+      )?.id || (nodes.length > 0 ? nodes[0].id : undefined);
+      
+      // IMPORTANTE: NO enviar _id ni id para evitar conflicto con índice único
       const flowData = {
         nombre: flowName,
-        empresaId: 'Veo Veo',
+        empresaId: empresaId || 'Intercapital',
         activo: currentFlowActive,
+        createdBy: userId,
+        startNode: startNode,
         nodes,
         edges,
-        config: {}
+        config: {
+          topicos_habilitados: Object.keys(globalTopics).length > 0,
+          topicos: globalTopics,
+          variables_globales: globalVariables
+        }
+        // NO incluir _id ni id aquí
       };
 
       const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';
       const url = currentFlowId ? `${apiUrl}/api/flows/${currentFlowId}` : `${apiUrl}/api/flows`;
       
-      const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
-      console.log('🔑 Token para guardar:', token ? `${token.substring(0, 20)}...` : 'NO TOKEN');
+      // Obtener token de autenticación
+      const token = typeof window !== 'undefined' ? localStorage.getItem('auth_token') : null;
       
-      const headers: Record<string, string> = {
-        'Content-Type': 'application/json'
-      };
-      
-      if (token) {
-        headers['Authorization'] = `Bearer ${token}`;
+      if (!token) {
+        toast.error('No estás autenticado. Por favor, inicia sesión nuevamente.');
+        window.location.href = '/login';
+        return;
       }
       
-      console.log('📤 Headers:', headers);
+      console.log('🔑 Token encontrado:', token.substring(0, 20) + '...');
+      
+      const headers: Record<string, string> = {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      };
+      
+      console.log('📤 Headers con token:', { 'Content-Type': headers['Content-Type'], 'Authorization': 'Bearer ***' });
       
       const response = await fetch(url, {
         method: currentFlowId ? 'PUT' : 'POST',
@@ -809,10 +1517,42 @@ export default function FlowBuilderPage() {
       const savedFlow = await response.json();
       setCurrentFlowId(savedFlow._id);
       
-      alert('Flow guardado exitosamente');
+      // Resetear contador de cambios y actualizar estado guardado (usar mismo formato que useEffect)
+      const significantNodes = nodes.map(node => ({
+        id: node.id,
+        type: node.type,
+        position: node.position,
+        data: {
+          label: node.data.label,
+          config: node.data.config,
+        }
+      }));
+
+      const significantEdges = edges.map(edge => ({
+        id: edge.id,
+        source: edge.source,
+        target: edge.target,
+        sourceHandle: edge.sourceHandle,
+        targetHandle: edge.targetHandle,
+        data: {
+          label: edge.data?.label,
+          condition: edge.data?.condition,
+        }
+      }));
+
+      const currentState = JSON.stringify({ 
+        nodes: significantNodes, 
+        edges: significantEdges, 
+        globalVariables, 
+        globalTopics 
+      });
+      setLastSavedState(currentState);
+      setHasUnsavedChanges(false);
+      
+      toast.success('Flujo guardado exitosamente');
     } catch (error) {
       console.error('Error guardando flow:', error);
-      alert('Error al guardar el flow');
+      toast.error('Error al guardar el flujo');
     } finally {
       setIsSaving(false);
     }
@@ -832,10 +1572,15 @@ export default function FlowBuilderPage() {
       
       const flow = await response.json();
       
-      console.log('🔄 Flow cargado:', {
+      console.log('🔄 Flow cargado desde API:', {
         nombre: flow.nombre,
         nodos: flow.nodes?.length,
         edges: flow.edges?.length
+      });
+      
+      console.log('📋 LISTA COMPLETA DE NODOS RECIBIDOS:');
+      flow.nodes?.forEach((node: any, index: number) => {
+        console.log(`   ${index + 1}. ${node.data?.label || node.type} (${node.id})`);
       });
       
       if (flow && flow.nodes && flow.edges) {
@@ -851,19 +1596,128 @@ export default function FlowBuilderPage() {
           }
         });
         
+        // Función helper para obtener color según tipo de nodo
+        const getColorForNodeType = (nodeType: string): string => {
+          switch (nodeType) {
+            case 'whatsapp': return '#25D366';
+            case 'gpt': return '#10a37f';
+            case 'woocommerce': return '#96588a';
+            case 'mercadopago': return '#009ee3';
+            case 'router': return '#f59e0b';
+            case 'webhook': return '#ff6b6b';
+            default: return '#6b7280';
+          }
+        };
+
+        // Calcular números de ejecución basados en posición en el flujo
+        const calculateExecutionOrder = (nodes: any[], edges: any[]) => {
+          const nodeOrder = new Map<string, number>();
+          const nodeLetter = new Map<string, string>();
+          const visited = new Set<string>();
+          
+          // Encontrar nodo inicial (primer nodo sin conexiones entrantes)
+          const nodesWithIncoming = new Set(edges.map((e: any) => e.target));
+          const startNode = nodes.find((n: any) => !nodesWithIncoming.has(n.id));
+          
+          if (!startNode) return { nodeOrder, nodeLetter };
+          
+          // BFS para calcular orden
+          const queue = [{ id: startNode.id, order: 1 }];
+          visited.add(startNode.id);
+          nodeOrder.set(startNode.id, 1);
+          
+          while (queue.length > 0) {
+            const current = queue.shift()!;
+            const outgoingEdges = edges.filter((e: any) => e.source === current.id);
+            
+            outgoingEdges.forEach((edge: any) => {
+              if (!visited.has(edge.target)) {
+                visited.add(edge.target);
+                const order = current.order + 1;
+                nodeOrder.set(edge.target, order);
+                queue.push({ id: edge.target, order });
+              }
+            });
+          }
+          
+          // Agrupar nodos por número de orden para asignar letras
+          const orderGroups = new Map<number, string[]>();
+          nodeOrder.forEach((order, nodeId) => {
+            if (!orderGroups.has(order)) {
+              orderGroups.set(order, []);
+            }
+            orderGroups.get(order)!.push(nodeId);
+          });
+          
+          // Asignar letras a nodos con el mismo número
+          orderGroups.forEach((nodeIds, order) => {
+            if (nodeIds.length > 1) {
+              // Múltiples nodos en el mismo nivel - asignar letras
+              nodeIds.sort(); // Ordenar para consistencia
+              nodeIds.forEach((nodeId, index) => {
+                const letter = String.fromCharCode(97 + index); // a, b, c, ...
+                nodeLetter.set(nodeId, letter);
+              });
+            }
+          });
+          
+          return { nodeOrder, nodeLetter };
+        };
+        
+        const { nodeOrder: executionOrder, nodeLetter: executionLetter } = calculateExecutionOrder(flow.nodes, flow.edges);
+
         // Agregar handlers a cada nodo
-        const nodesWithHandlers = flow.nodes.map((node: any) => ({
-          ...node,
-          data: {
-            ...node.data,
-            onNodeClick: handleNodeClick,
-            onPlusClick: handlePlusNodeClick,
-            routeHandles: node.type === 'router' ? routerHandles.get(node.id) || [] : undefined,
-          },
-        }));
+        const nodesWithHandlers = flow.nodes.map((node: any) => {
+          // Determinar label correcto para nodos WhatsApp
+          let nodeLabel = node.data.label;
+          if (node.type === 'whatsapp' && node.data.config?.module) {
+            nodeLabel = node.data.config.module === 'watch-events' ? 'Watch Events' : 
+                       node.data.config.module === 'send-message' ? 'Send Message' : 
+                       node.data.label;
+          }
+          
+          const order = executionOrder.get(node.id);
+          const letter = executionLetter.get(node.id);
+          
+          return {
+            ...node,
+            data: {
+              ...node.data,
+              label: nodeLabel,
+              executionCount: order ? (letter ? `${order}${letter}` : order) : undefined,
+              color: node.data.color || getColorForNodeType(node.type),
+              onNodeClick: handleNodeClick,
+              onPlusClick: handlePlusNodeClick,
+              routeHandles: node.type === 'router' ? routerHandles.get(node.id) || [] : undefined,
+              // Agregar callbacks para notas
+              ...(node.type === 'note' ? {
+                onDelete: (nodeId: string) => {
+                  setNodes(prev => prev.filter(n => n.id !== nodeId));
+                },
+                onChange: (nodeId: string, content: string, title?: string) => {
+                  setNodes(prev => prev.map(n => 
+                    n.id === nodeId 
+                      ? { ...n, data: { ...n.data, content, title: title || n.data.title } }
+                      : n
+                  ));
+                },
+                onToggleMinimize: (nodeId: string) => {
+                  setNodes(prev => prev.map(n => 
+                    n.id === nodeId 
+                      ? { ...n, data: { ...n.data, isMinimized: !n.data.isMinimized } }
+                      : n
+                  ));
+                }
+              } : {})
+            },
+          };
+        });
         
         const edgesWithHandlers = flow.edges.map((edge: any) => ({
           ...edge,
+          sourceHandle: 'b', // Normalizar a IDs simples
+          targetHandle: 'a', // Normalizar a IDs simples
+          zIndex: 200,
           data: {
             ...edge.data,
             onConfigClick: handleEdgeConfigClick,
@@ -875,16 +1729,24 @@ export default function FlowBuilderPage() {
         setFlowName(flow.nombre || 'Flow sin nombre');
         setCurrentFlowId(flowId);
         setCurrentFlowActive(flow.activo || false);
+        
+        // Cargar variables y tópicos globales
+        if (flow.config) {
+          setGlobalVariables(flow.config.variables_globales || {});
+          setGlobalTopics(flow.config.topicos || {});
+          console.log('📊 Variables cargadas:', flow.config.variables_globales);
+          console.log('📚 Tópicos cargados:', flow.config.topicos);
+        }
       }
     } catch (error) {
       console.error('Error cargando flow:', error);
-      alert('Error al cargar el flow');
+      toast.error('Error al cargar el flujo');
     }
   };
 
   const toggleCurrentFlowStatus = async () => {
     if (!currentFlowId) {
-      alert('No hay flujo seleccionado');
+      toast.warning('No hay flujo seleccionado');
       return;
     }
 
@@ -914,74 +1776,29 @@ export default function FlowBuilderPage() {
   return (
     <DashboardLayout>
       <div className={styles.flowBuilderContainer}>
-        {/* Header Toolbar */}
-        <div className={styles.header}>
-          <div className={styles.headerLeft}>
-            <button
-              onClick={() => router.push('/dashboard/flows')}
-              className={styles.btnBack}
-              title="Volver a lista de flujos"
-            >
-              <ArrowLeft size={18} />
-            </button>
-            <select
-              value={currentFlowId || ''}
-              onChange={(e) => {
-                const flowId = e.target.value;
-                if (flowId) {
-                  setCurrentFlowId(flowId);
-                  handleLoadFlow(flowId);
-                }
-              }}
-              className={styles.flowSelector}
-            >
-              <option value="">Seleccionar flujo...</option>
-              {flowsList.map((flow) => (
-                <option key={flow._id} value={flow._id}>
-                  {flow.nombre} {flow.activo ? '🟢' : '⏸️'}
-                </option>
-              ))}
-            </select>
-            <input
-              type="text"
-              value={flowName}
-              onChange={(e) => setFlowName(e.target.value)}
-              placeholder="Nombre del flow"
-              className={styles.titleInput}
-            />
-            <div className={styles.flowStatus}>
-              <span className={currentFlowActive ? styles.statusActive : styles.statusInactive}>
-                {currentFlowActive ? '🟢 Activo' : '⏸️ Pausado'}
-              </span>
-              <button
-                onClick={toggleCurrentFlowStatus}
-                className={currentFlowActive ? styles.btnPause : styles.btnPlay}
-                title={currentFlowActive ? 'Pausar flujo' : 'Activar flujo'}
-                disabled={!currentFlowId}
-              >
-                {currentFlowActive ? <Pause size={16} /> : <Play size={16} />}
-                {currentFlowActive ? 'Pausar' : 'Activar'}
-              </button>
-            </div>
-            <button
-              onClick={() => setShowVariablesPanel(!showVariablesPanel)}
-              className={styles.btnVariables}
-              title="Variables Globales"
-            >
-              🌐 Variables
-            </button>
-          </div>
-          <div className={styles.headerRight}>
-            <button
-              onClick={handleSaveFlow}
-              disabled={isSaving}
-              className={styles.btnSuccess}
-            >
-              {isSaving ? 'Guardando...' : '💾 Guardar'}
-            </button>
-          </div>
+        {/* Selector de flujos - arriba izquierda */}
+        <div className={styles.floatingFlowSelectorContainer}>
+          <select
+            value={currentFlowId || ''}
+            onChange={(e) => {
+              const flowId = e.target.value;
+              if (flowId) {
+                setCurrentFlowId(flowId);
+                handleLoadFlow(flowId);
+                router.push(`/dashboard/flow-builder?flowId=${flowId}`);
+              }
+            }}
+            className={styles.floatingFlowSelector}
+          >
+            <option value="">Seleccionar flujo...</option>
+            {flowsList.map((flow) => (
+              <option key={flow._id} value={flow._id}>
+                {flow.nombre}
+              </option>
+            ))}
+          </select>
         </div>
-        
+
         <div className={styles.flowCanvas}>
           <ReactFlow
             nodes={nodes}
@@ -1001,12 +1818,21 @@ export default function FlowBuilderPage() {
             fitView
             minZoom={0.5}
             maxZoom={1.5}
+            elementsSelectable={true}
+            deleteKeyCode={showConfigPanel ? null : 'Delete'}
             defaultEdgeOptions={{
               type: 'default',
               animated: true,
             }}
           >
-            <Controls />
+            <Controls>
+              <ControlButton onClick={handleUndo} disabled={historyIndex <= 0} title="Deshacer (Ctrl+Z)">
+                <Undo size={16} />
+              </ControlButton>
+              <ControlButton onClick={handleRedo} disabled={historyIndex >= history.length - 1} title="Rehacer (Ctrl+Y)">
+                <Redo size={16} />
+              </ControlButton>
+            </Controls>
             <Background variant={BackgroundVariant.Dots} gap={20} size={1} color="#e5e7eb" />
           </ReactFlow>
         </div>
@@ -1032,18 +1858,17 @@ export default function FlowBuilderPage() {
           />
         )}
 
-        {selectedApp && selectedModule && (
-          <WebhookConfigModal
-            isOpen={showWebhookConfigModal}
-            onClose={() => {
-              setShowWebhookConfigModal(false);
-              setSelectedModule(null);
-            }}
-            onSave={handleWebhookConfigSave}
-            appName={selectedApp.name}
-            moduleName={selectedModule.name}
-          />
-        )}
+        <WebhookConfigModal
+          isOpen={showWebhookConfigModal}
+          onClose={() => {
+            setShowWebhookConfigModal(false);
+            setSelectedModule(null);
+            setSelectedNode(null);
+          }}
+          onSave={selectedNode ? handleSaveWebhookNodeConfig : handleWebhookConfigSave}
+          initialConfig={selectedNode?.data?.config}
+          nodeId={selectedNode?.id || 'new-webhook'}
+        />
 
         {selectedApp && selectedModule && (
           <GPTConfigModal
@@ -1057,6 +1882,19 @@ export default function FlowBuilderPage() {
             moduleName={selectedModule.name}
           />
         )}
+
+        <HTTPConfigModal
+          isOpen={showHTTPConfigModal}
+          onClose={() => {
+            setShowHTTPConfigModal(false);
+            setSelectedModule(null);
+            setSelectedNode(null);
+          }}
+          onSave={selectedNode ? handleSaveHTTPNodeConfig : handleHTTPConfigSave}
+          initialConfig={selectedNode?.data?.config}
+          globalVariables={Object.entries(globalVariables).map(([name, value]) => ({ name, value: String(value) }))}
+          onTestRequest={handleTestHTTPRequest}
+        />
 
         <MercadoPagoConfigModal
           isOpen={showMercadoPagoConfigModal}
@@ -1077,6 +1915,8 @@ export default function FlowBuilderPage() {
           onSave={handleSaveEdgeConfig}
           edgeId={selectedEdgeId || ''}
           currentConfig={edges.find(e => e.id === selectedEdgeId)?.data}
+          availableNodes={nodes.map(n => ({ id: n.id, label: n.data.label, type: n.type || 'default' }))}
+          globalVariables={Object.keys(globalVariables)}
         />
 
         {showConfigPanel && selectedNode && (
@@ -1084,9 +1924,70 @@ export default function FlowBuilderPage() {
             node={selectedNode}
             onClose={() => setShowConfigPanel(false)}
             onSave={handleSaveNodeConfig}
+            globalVariables={globalVariables}
           />
         )}
+
+        <FloatingActionBar
+          onAddNode={() => {
+            console.log('🎯 Abriendo modal de apps para agregar nodo');
+            setSourceNodeForConnection(null);
+            setSourceHandleForConnection(undefined);
+            setShowAppsModal(true);
+            setAppsModalPosition(undefined);
+          }}
+          onAddNote={handleAddNote}
+          onOpenVariables={() => {
+            console.log('📊 Abriendo modal de variables');
+            setShowVariablesModal(true);
+          }}
+          onOpenTopics={() => {
+            console.log('📚 Abriendo modal de tópicos');
+            setShowTopicsModal(true);
+          }}
+          onSave={handleSaveFlow}
+          onToggleFlowStatus={toggleCurrentFlowStatus}
+          isFlowActive={currentFlowActive}
+          flowId={currentFlowId}
+          hasUnsavedChanges={hasUnsavedChanges}
+        />
+
+        <VariablesModal
+          isOpen={showVariablesModal}
+          onClose={() => setShowVariablesModal(false)}
+          variables={globalVariables}
+          onSave={(vars) => {
+            setGlobalVariables(vars);
+            console.log('✅ Variables globales actualizadas:', vars);
+          }}
+        />
+
+        <TopicsModal
+          isOpen={showTopicsModal}
+          onClose={() => setShowTopicsModal(false)}
+          topics={globalTopics}
+          onSave={(topics) => {
+            setGlobalTopics(topics);
+            console.log('✅ Tópicos globales actualizados:', topics);
+          }}
+        />
+
+        {/* Panel de validación del flujo */}
+        <FlowValidationPanel
+          nodes={nodes}
+          edges={edges}
+          onNodeSelect={handleNodeClick}
+          onOpenNodeConfig={handleOpenNodeConfigFromValidation}
+        />
       </div>
     </DashboardLayout>
+  );
+}
+
+export default function FlowBuilderPage() {
+  return (
+    <ToastProvider>
+      <FlowBuilderContent />
+    </ToastProvider>
   );
 }

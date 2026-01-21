@@ -16,7 +16,16 @@ router.get('/flows', async (req: Request, res: Response): Promise<void> => {
     const { empresaId } = req.query;
     const query = empresaId ? { empresaId } : {};
     
+    console.log('🔍 [FILTRO BACKEND] empresaId recibido:', empresaId);
+    console.log('🔍 [FILTRO BACKEND] Query MongoDB:', JSON.stringify(query));
+    
     const flows = await FlowModel.find(query).sort({ updatedAt: -1 });
+    
+    console.log('🔍 [FILTRO BACKEND] Flujos encontrados:', flows.length);
+    flows.forEach((flow: any) => {
+      console.log(`   - ${flow.nombre}: empresaId="${flow.empresaId}"`);
+    });
+    
     res.json(flows);
   } catch (error: any) {
     console.error('Error getting flows:', error);

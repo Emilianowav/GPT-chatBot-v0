@@ -1,0 +1,89 @@
+/**
+ * SISTEMA DE Z-INDEX ORGANIZADO POR CAPAS
+ * 
+ * Estructura de capas (de menor a mayor):
+ * 
+ * 0-9:     Base / Canvas
+ * 10-99:   Nodos y elementos del canvas
+ * 100-199: Handles y controles de nodos
+ * 200-299: Edges y conexiones
+ * 300-399: Tooltips y elementos flotantes pequeños
+ * 400-499: Paneles laterales
+ * 500-599: Modales de configuración
+ * 600-699: Modales de selección
+ * 700-799: Notificaciones y toasts
+ * 800-899: Overlays y loaders
+ * 900-999: Elementos críticos (dropdowns sobre modales)
+ */
+
+:root {
+  /* BASE / CANVAS (0-9) */
+  --z-canvas-background: 0;
+  --z-canvas-grid: 1;
+  
+  /* NODOS Y ELEMENTOS DEL CANVAS (10-99) */
+  --z-node-base: 10;
+  --z-node-selected: 15;
+  --z-node-badge: 20;
+  --z-node-label: 25;
+  --z-note-node: 30;
+  
+  /* HANDLES Y CONTROLES (100-199) */
+  --z-handle-base: 100;
+  --z-handle-hover: 110;
+  --z-handle-plus: 120;
+  --z-handle-active: 130;
+  
+  /* EDGES Y CONEXIONES (200-299) */
+  --z-edge-base: 200;
+  --z-edge-selected: 210;
+  --z-edge-label: 220;
+  
+  /* TOOLTIPS Y ELEMENTOS FLOTANTES (300-399) */
+  --z-tooltip: 300;
+  --z-popover: 310;
+  --z-dropdown-small: 320;
+  
+  /* PANELES LATERALES (400-499) */
+  --z-panel-config: 400;
+  --z-panel-variables: 410;
+  --z-panel-sidebar: 420;
+  
+  /* MODALES DE CONFIGURACIÓN (500-599) */
+  --z-modal-config: 500;
+  --z-modal-backdrop: 490;
+  
+  /* MODALES DE SELECCIÓN (600-699) */
+  --z-modal-selection: 600;
+  --z-modal-apps: 610;
+  --z-modal-modules: 620;
+  
+  /* NOTIFICACIONES Y TOASTS (700-799) */
+  --z-toast: 700;
+  --z-notification: 710;
+  
+  /* OVERLAYS Y LOADERS (800-899) */
+  --z-overlay: 800;
+  --z-loader: 810;
+  
+  /* ELEMENTOS CRÍTICOS (900-999) */
+  --z-dropdown-critical: 900;
+  --z-modal-critical: 910;
+  --z-debug: 999;
+}
+
+/* Clases de utilidad */
+.z-canvas-background { z-index: var(--z-canvas-background); }
+.z-canvas-grid { z-index: var(--z-canvas-grid); }
+.z-node-base { z-index: var(--z-node-base); }
+.z-node-selected { z-index: var(--z-node-selected); }
+.z-node-badge { z-index: var(--z-node-badge); }
+.z-handle-base { z-index: var(--z-handle-base); }
+.z-handle-plus { z-index: var(--z-handle-plus); }
+.z-edge-base { z-index: var(--z-edge-base); }
+.z-tooltip { z-index: var(--z-tooltip); }
+.z-panel-config { z-index: var(--z-panel-config); }
+.z-modal-config { z-index: var(--z-modal-config); }
+.z-modal-selection { z-index: var(--z-modal-selection); }
+.z-toast { z-index: var(--z-toast); }
+.z-overlay { z-index: var(--z-overlay); }

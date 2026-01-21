@@ -48,51 +48,92 @@ export function useOrbitHandles(
       (edge) => edge.source === nodeId || edge.target === nodeId
     );
 
-    connectedEdges.forEach((edge) => {
-      const isSource = edge.source === nodeId;
-      const connectedNodeId = isSource ? edge.target : edge.source;
-      const connectedNode = nodes.get(connectedNodeId);
+    // Agrupar edges por tipo (source/target)
+    const sourceEdges = connectedEdges.filter(edge => edge.source === nodeId);
+    const targetEdges = connectedEdges.filter(edge => edge.target === nodeId);
 
-      if (connectedNode) {
-        // Calcular ángulo desde este nodo hacia el nodo conectado
-        const angle = Math.atan2(
-          connectedNode.position.y - currentNode.position.y,
-          connectedNode.position.x - currentNode.position.x
-        );
+    // HANDLE DE ENTRADA (TARGET) - Solo UNO
+    // Si hay conexiones de entrada, calcular el ángulo promedio hacia todos los nodos conectados
+    if (targetEdges.length > 0) {
+      // Calcular ángulo promedio hacia todos los nodos fuente
+      let avgX = 0;
+      let avgY = 0;
+      let validNodes = 0;
 
-        // Calcular posición en la órbita
+      targetEdges.forEach(edge => {
+        const connectedNode = nodes.get(edge.source);
+        if (connectedNode) {
+          avgX += connectedNode.position.x - currentNode.position.x;
+          avgY += connectedNode.position.y - currentNode.position.y;
+          validNodes++;
+        }
+      });
+
+      if (validNodes > 0) {
+        const angle = Math.atan2(avgY / validNodes, avgX / validNodes);
         const x = Math.cos(angle) * ORBIT_RADIUS;
         const y = Math.sin(angle) * ORBIT_RADIUS;
 
         handles.push({
-          id: `${isSource ? 'source' : 'target'}-${connectedNodeId}`,
-          type: isSource ? 'source' : 'target',
+          id: `target-${nodeId}`,
+          type: 'target',
           angle,
           x,
           y,
           isConnected: true,
-          connectedNodeId,
+          connectedNodeId: targetEdges[0].source, // Referencia al primer nodo conectado
         });
       }
-    });
-
-    // Si no hay conexiones, agregar handles por defecto
-    if (handles.length === 0) {
-      // Handle izquierda (target) - entrada
+    } else {
+      // Handle de entrada por defecto (izquierda)
       handles.push({
-        id: 'default-target',
+        id: `target-${nodeId}`,
         type: 'target',
-        angle: Math.PI, // 180 grados
+        angle: Math.PI,
         x: -ORBIT_RADIUS,
         y: 0,
         isConnected: false,
       });
-      
-      // Handle derecha (source) - salida
+    }
+
+    // HANDLE DE SALIDA (SOURCE) - Solo UNO
+    // Si hay conexiones de salida, calcular el ángulo promedio hacia todos los nodos conectados
+    if (sourceEdges.length > 0) {
+      // Calcular ángulo promedio hacia todos los nodos destino
+      let avgX = 0;
+      let avgY = 0;
+      let validNodes = 0;
+
+      sourceEdges.forEach(edge => {
+        const connectedNode = nodes.get(edge.target);
+        if (connectedNode) {
+          avgX += connectedNode.position.x - currentNode.position.x;
+          avgY += connectedNode.position.y - currentNode.position.y;
+          validNodes++;
+        }
+      });
+
+      if (validNodes > 0) {
+        const angle = Math.atan2(avgY / validNodes, avgX / validNodes);
+        const x = Math.cos(angle) * ORBIT_RADIUS;
+        const y = Math.sin(angle) * ORBIT_RADIUS;
+
+        handles.push({
+          id: `source-${nodeId}`,
+          type: 'source',
+          angle,
+          x,
+          y,
+          isConnected: true,
+          connectedNodeId: sourceEdges[0].target, // Referencia al primer nodo conectado
+        });
+      }
+    } else {
+      // Handle de salida por defecto (derecha)
       handles.push({
-        id: 'default-source',
+        id: `source-${nodeId}`,
         type: 'source',
-        angle: 0, // 0 grados
+        angle: 0,
         x: ORBIT_RADIUS,
         y: 0,
         isConnected: false,

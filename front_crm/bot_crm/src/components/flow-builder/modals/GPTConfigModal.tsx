@@ -56,8 +56,6 @@ const GPTConfigModal: React.FC<GPTConfigModalProps> = ({
     temperatura: 0.7,
     maxTokens: 500,
     systemPrompt: getDefaultPrompt(moduleType),
-    variablesEntrada: [],
-    variablesSalida: [],
     outputFormat: moduleType === 'transform' ? 'json' : 'text',
     jsonSchema: moduleType === 'transform' ? '{\n  "campo1": "valor1",\n  "campo2": "valor2"\n}' : '',
   });
@@ -84,15 +82,6 @@ const GPTConfigModal: React.FC<GPTConfigModalProps> = ({
     onClose();
   };
 
-  const handleVariablesEntradaChange = (value: string) => {
-    const variables = value.split(',').map(v => v.trim()).filter(v => v);
-    setConfig({ ...config, variablesEntrada: variables });
-  };
-
-  const handleVariablesSalidaChange = (value: string) => {
-    const variables = value.split(',').map(v => v.trim()).filter(v => v);
-    setConfig({ ...config, variablesSalida: variables });
-  };
 
   return (
     <div className={styles.overlay} onClick={onClose}>
@@ -121,7 +110,6 @@ const GPTConfigModal: React.FC<GPTConfigModalProps> = ({
             </select>
           </div>
 
-
           {/* System Prompt */}
           <div className={styles.formGroup}>
             <label>System Prompt</label>
@@ -131,30 +119,7 @@ const GPTConfigModal: React.FC<GPTConfigModalProps> = ({
               onChange={(e) => setConfig({ ...config, systemPrompt: e.target.value })}
               placeholder="Instrucciones para el modelo..."
             />
-          </div>
-
-          {/* Variables de Entrada */}
-          <div className={styles.formGroup}>
-            <label>Variables de Entrada</label>
-            <input
-              type="text"
-              value={config.variablesEntrada?.join(', ') || ''}
-              onChange={(e) => handleVariablesEntradaChange(e.target.value)}
-              placeholder="mensaje_usuario, nombre_cliente, producto"
-            />
-            <small>Variables disponibles del nodo anterior (separadas por coma)</small>
-          </div>
-
-          {/* Variables de Salida */}
-          <div className={styles.formGroup}>
-            <label>Variables de Salida</label>
-            <input
-              type="text"
-              value={config.variablesSalida?.join(', ') || ''}
-              onChange={(e) => handleVariablesSalidaChange(e.target.value)}
-              placeholder="respuesta_gpt, datos_extraidos, decision"
-            />
-            <small>Variables que este nodo generará para nodos siguientes</small>
+            <small>Configura las variables y contexto después de crear el nodo</small>
           </div>
 
           {/* Configuración específica para Transform */}
@@ -187,7 +152,7 @@ const GPTConfigModal: React.FC<GPTConfigModalProps> = ({
             </>
           )}
 
-          {/* Info específica por tipo */}
+          {/* Info específica por tipo - MOVIDA AL FINAL */}
           <div className={styles.infoBox}>
             <strong>ℹ️ {getInfoTitle(moduleType)}</strong>
             <p>{getInfoText(moduleType)}</p>
@@ -231,7 +196,7 @@ function getInfoText(tipo: string): string {
     case 'procesador':
       return 'Este nodo analiza información, extrae datos clave y toma decisiones. Útil para clasificar, validar o procesar información antes de continuar el flujo.';
     case 'transform':
-      return 'Este nodo extrae información estructurada del texto. Devuelve un JSON con los datos extraídos según el schema definido.';
+      return 'Este nodo extrae información estructurada del texto usando GPT. Convierte conversaciones en datos JSON según el schema definido.';
     default:
       return '';
   }

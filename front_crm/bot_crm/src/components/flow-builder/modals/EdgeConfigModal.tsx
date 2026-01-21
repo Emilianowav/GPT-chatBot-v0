@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { X, Plus, Trash2 } from 'lucide-react';
+import { VariableSelector } from '../VariableSelector';
 import styles from './EdgeConfigModal.module.css';
 
 interface EdgeConfigModalProps {
@@ -11,12 +12,22 @@ interface EdgeConfigModalProps {
   edgeId: string;
   sourceNodeType?: string;
   currentConfig?: EdgeConfig;
+  availableNodes?: Array<{ id: string; label: string; type: string }>;
+  globalVariables?: string[];
 }
 
 interface EdgeConfig {
   label?: string;
   condition?: string;
+  conditions?: Condition[];
   color?: string;
+}
+
+interface Condition {
+  id: string;
+  variable: string;
+  operator: string;
+  value: string;
 }
 
 const OPERATORS = [
@@ -41,55 +52,95 @@ export default function EdgeConfigModal({
   edgeId,
   sourceNodeType,
   currentConfig,
+  availableNodes = [],
+  globalVariables = [],
 }: EdgeConfigModalProps) {
   const [label, setLabel] = useState(currentConfig?.label || '');
-  const [condition, setCondition] = useState(currentConfig?.condition || '');
-  const [selectedOperator, setSelectedOperator] = useState('==');
-  const [leftValue, setLeftValue] = useState('');
-  const [rightValue, setRightValue] = useState('');
+  const [conditions, setConditions] = useState<Condition[]>([]);
+  const [showVariableSelector, setShowVariableSelector] = useState(false);
+  const [selectorPosition, setSelectorPosition] = useState({ x: 0, y: 0 });
+  const [activeConditionId, setActiveConditionId] = useState<string | null>(null);
 
   useEffect(() => {
-    if (currentConfig?.condition) {
-      // Parse existing condition
-      // Soporta formatos:
-      // 1. {{variable}} operator (ej: {{gpt-conversacional.variables_faltantes}} empty)
-      // 2. variable operator value (ej: search != "")
-      
-      // Intentar formato {{variable}} operator primero
+    if (currentConfig?.conditions && currentConfig.conditions.length > 0) {
+      setConditions(currentConfig.conditions);
+    } else if (currentConfig?.condition) {
+      // Parse existing condition string to conditions array
       const bracketMatch = currentConfig.condition.match(/\{\{([^}]+)\}\}\s+(empty|not_empty|exists|not_exists)$/i);
       if (bracketMatch) {
-        setLeftValue(`{{${bracketMatch[1]}}}`);
-        setSelectedOperator(bracketMatch[2].toLowerCase().replace(/\s+/g, '_'));
-        setRightValue('');
-        return;
+        setConditions([{
+          id: Date.now().toString(),
+          variable: `{{${bracketMatch[1]}}}`,
+          operator: bracketMatch[2].toLowerCase().replace(/\s+/g, '_'),
+          value: ''
+        }]);
+      } else {
+        const standardMatch = currentConfig.condition.match(/(.+?)\s*(==|!=|>|<|>=|<=|contains|not_contains|exists|not_exists|empty|not_empty)\s*(.+)?/);
+        if (standardMatch) {
+          setConditions([{
+            id: Date.now().toString(),
+            variable: standardMatch[1].trim(),
+            operator: standardMatch[2].trim(),
+            value: standardMatch[3]?.trim() || ''
+          }]);
+        }
       }
-      
-      // Intentar formato estándar: variable operator value
-      const standardMatch = currentConfig.condition.match(/(.+?)\s*(==|!=|>|<|>=|<=|contains|not_contains|exists|not_exists|empty|not_empty)\s*(.+)?/);
-      if (standardMatch) {
-        setLeftValue(standardMatch[1].trim());
-        setSelectedOperator(standardMatch[2].trim());
-        setRightValue(standardMatch[3]?.trim() || '');
-      }
+    } else if (conditions.length === 0) {
+      // Agregar una condición vacía por defecto
+      addCondition();
     }
   }, [currentConfig]);
 
-  const handleSave = () => {
-    // Construir condición según el operador
-    let conditionString = '';
-    
-    if (selectedOperator === 'empty' || selectedOperator === 'not_empty' || 
-        selectedOperator === 'exists' || selectedOperator === 'not_exists') {
-      // Para estos operadores, no incluir rightValue
-      conditionString = `${leftValue} ${selectedOperator}`;
-    } else {
-      // Para otros operadores, incluir rightValue
-      conditionString = `${leftValue} ${selectedOperator} ${rightValue}`;
+  const addCondition = () => {
+    setConditions([...conditions, {
+      id: Date.now().toString(),
+      variable: '',
+      operator: '==',
+      value: ''
+    }]);
+  };
+
+  const removeCondition = (id: string) => {
+    setConditions(conditions.filter(c => c.id !== id));
+  };
+
+  const updateCondition = (id: string, field: keyof Condition, value: string) => {
+    setConditions(conditions.map(c => 
+      c.id === id ? { ...c, [field]: value } : c
+    ));
+  };
+
+  const openVariableSelector = (conditionId: string, event: React.MouseEvent) => {
+    const rect = (event.target as HTMLElement).getBoundingClientRect();
+    setSelectorPosition({ x: rect.right + 10, y: rect.top });
+    setActiveConditionId(conditionId);
+    setShowVariableSelector(true);
+  };
+
+  const handleVariableSelect = (variable: string) => {
+    if (activeConditionId) {
+      updateCondition(activeConditionId, 'variable', variable);
     }
+    setShowVariableSelector(false);
+    setActiveConditionId(null);
+  };
+
+  const handleSave = () => {
+    // Construir string de condición para compatibilidad
+    const conditionStrings = conditions.map(c => {
+      if (c.operator === 'empty' || c.operator === 'not_empty' || 
+          c.operator === 'exists' || c.operator === 'not_exists') {
+        return `${c.variable} ${c.operator}`;
+      }
+      return `${c.variable} ${c.operator} ${c.value}`;
+    });
+    
+    const conditionString = conditionStrings.join(' AND ');
     
     onSave({
       label: label || `Filter: ${conditionString}`,
       condition: conditionString,
+      conditions: conditions,
       color: '#8b5cf6',
     });
     
@@ -145,95 +196,105 @@ export default function EdgeConfigModal({
             <div className={styles.charCount}>{label.length}/120</div>
           </div>
 
-          {/* Condition Builder */}
+          {/* Conditions List */}
           <div className={styles.formGroup}>
-            <label className={styles.label}>Condition</label>
+            <div className={styles.conditionsHeader}>
+              <label className={styles.label}>Conditions</label>
+              <button
+                type="button"
+                onClick={addCondition}
+                className={styles.addConditionBtn}
+              >
+                <Plus size={16} />
+                Add Condition
+              </button>
+            </div>
             
-            <div className={styles.conditionBuilder}>
-              {/* Left Value (Variable) */}
-              <div className={styles.conditionPart}>
-                <label className={styles.smallLabel}>Variable</label>
-                <input
-                  type="text"
-                  value={leftValue}
-                  onChange={(e) => setLeftValue(e.target.value)}
-                  placeholder="search"
-                  className={styles.input}
-                />
-                <div className={styles.hint}>
-                  Tip: Use variable names like <code>search</code>, <code>total_productos</code>
-                </div>
-              </div>
+            <div className={styles.conditionsList}>
+              {conditions.map((cond, index) => (
+                <div key={cond.id} className={styles.conditionItem}>
+                  <div className={styles.conditionNumber}>{index + 1}</div>
+                  
+                  <div className={styles.conditionFields}>
+                    {/* Variable Selector */}
+                    <div className={styles.conditionField}>
+                      <label className={styles.smallLabel}>Variable</label>
+                      <button
+                        type="button"
+                        onClick={(e) => openVariableSelector(cond.id, e)}
+                        className={styles.variableButton}
+                      >
+                        {cond.variable || 'Select variable...'}
+                      </button>
+                    </div>
 
-              {/* Operator */}
-              <div className={styles.conditionPart}>
-                <label className={styles.smallLabel}>Operator</label>
-                <select
-                  value={selectedOperator}
-                  onChange={(e) => setSelectedOperator(e.target.value)}
-                  className={styles.select}
-                >
-                  {OPERATORS.map((op) => (
-                    <option key={op.value} value={op.value}>
-                      {op.label}
-                    </option>
-                  ))}
-                </select>
-              </div>
+                    {/* Operator */}
+                    <div className={styles.conditionField}>
+                      <label className={styles.smallLabel}>Operator</label>
+                      <select
+                        value={cond.operator}
+                        onChange={(e) => updateCondition(cond.id, 'operator', e.target.value)}
+                        className={styles.select}
+                      >
+                        {OPERATORS.map((op) => (
+                          <option key={op.value} value={op.value}>
+                            {op.label}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
 
-              {/* Right Value */}
-              {selectedOperator !== 'exists' && selectedOperator !== 'not_exists' && 
-               selectedOperator !== 'empty' && selectedOperator !== 'not_empty' && (
-                <div className={styles.conditionPart}>
-                  <label className={styles.smallLabel}>Value</label>
-                  <input
-                    type="text"
-                    value={rightValue}
-                    onChange={(e) => setRightValue(e.target.value)}
-                    placeholder='""'
-                    className={styles.input}
-                  />
-                  <div className={styles.hint}>
-                    Use <code>""</code> for empty string, or any value
+                    {/* Value */}
+                    {cond.operator !== 'exists' && cond.operator !== 'not_exists' && 
+                     cond.operator !== 'empty' && cond.operator !== 'not_empty' && (
+                      <div className={styles.conditionField}>
+                        <label className={styles.smallLabel}>Value</label>
+                        <input
+                          type="text"
+                          value={cond.value}
+                          onChange={(e) => updateCondition(cond.id, 'value', e.target.value)}
+                          placeholder='""'
+                          className={styles.input}
+                        />
+                      </div>
+                    )}
                   </div>
+
+                  {/* Delete Button */}
+                  {conditions.length > 1 && (
+                    <button
+                      type="button"
+                      onClick={() => removeCondition(cond.id)}
+                      className={styles.deleteConditionBtn}
+                      title="Remove condition"
+                    >
+                      <Trash2 size={16} />
+                    </button>
+                  )}
                 </div>
-              )}
+              ))}
             </div>
 
             {/* Preview */}
             <div className={styles.preview}>
               <div className={styles.previewLabel}>Preview:</div>
               <code className={styles.previewCode}>
-                {leftValue || 'variable'} {selectedOperator} {
-                  selectedOperator !== 'exists' && 
-                  selectedOperator !== 'not_exists' && 
-                  selectedOperator !== 'empty' && 
-                  selectedOperator !== 'not_empty' 
-                    ? (rightValue || 'value') 
-                    : ''
-                }
+                {conditions.map((c, i) => {
+                  const condStr = c.operator === 'empty' || c.operator === 'not_empty' || 
+                                  c.operator === 'exists' || c.operator === 'not_exists'
+                    ? `${c.variable || 'variable'} ${c.operator}`
+                    : `${c.variable || 'variable'} ${c.operator} ${c.value || 'value'}`;
+                  return (
+                    <span key={c.id}>
+                      {condStr}
+                      {i < conditions.length - 1 && <span className={styles.andOperator}> AND </span>}
+                    </span>
+                  );
+                })}
               </code>
             </div>
           </div>
 
-          {/* Examples */}
-          <div className={styles.examples}>
-            <div className={styles.examplesTitle}>💡 Examples:</div>
-            <div className={styles.examplesList}>
-              <div className={styles.example}>
-                <code>search != ""</code> - Search is not empty
-              </div>
-              <div className={styles.example}>
-                <code>total_productos &gt; 0</code> - Has products
-              </div>
-              <div className={styles.example}>
-                <code>mensaje_usuario contains "ayuda"</code> - Message contains "ayuda"
-              </div>
-              <div className={styles.example}>
-                <code>{`{{gpt.variables_faltantes}} empty`}</code> - Variables array is empty
-              </div>
-            </div>
-          </div>
         </div>
 
         {/* Footer */}
@@ -244,17 +305,29 @@ export default function EdgeConfigModal({
           <button 
             onClick={handleSave} 
             className={styles.btnPrimary}
-            disabled={!leftValue || (!rightValue && 
-              selectedOperator !== 'exists' && 
-              selectedOperator !== 'not_exists' &&
-              selectedOperator !== 'empty' &&
-              selectedOperator !== 'not_empty'
+            disabled={conditions.length === 0 || conditions.some(c => 
+              !c.variable || 
+              (c.operator !== 'exists' && c.operator !== 'not_exists' && 
+               c.operator !== 'empty' && c.operator !== 'not_empty' && !c.value)
             )}
           >
             Save
           </button>
         </div>
       </div>
+
+      {/* Variable Selector */}
+      <VariableSelector
+        isOpen={showVariableSelector}
+        onClose={() => {
+          setShowVariableSelector(false);
+          setActiveConditionId(null);
+        }}
+        onSelect={handleVariableSelect}
+        position={selectorPosition}
+        availableNodes={availableNodes}
+        globalVariables={globalVariables}
+      />
     </div>
   );
 }

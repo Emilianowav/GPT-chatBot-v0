@@ -1,5 +1,5 @@
 import React, { memo } from 'react';
-import { NodeProps, Handle, Position, useEdges } from 'reactflow';
+import { NodeProps, useEdges } from 'reactflow';
 import { Plus, Zap } from 'lucide-react';
 import styles from './AppNode.module.css';
 
@@ -102,10 +102,6 @@ function AppNode({ id, data, selected }: NodeProps<AppNodeData>) {
           <Plus size={20} color="white" strokeWidth={3} />
         </div>
       )}
-
-      {/* Handles invisibles ReactFlow */}
-      <Handle type="target" position={Position.Left} style={{ opacity: 0 }} />
-      <Handle type="source" position={Position.Right} style={{ opacity: 0 }} />
 
       {/* Labels */}
       <div className={styles.nodeLabel}>{label}</div>

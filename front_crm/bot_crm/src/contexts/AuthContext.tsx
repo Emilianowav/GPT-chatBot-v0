@@ -66,7 +66,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       apiClient.setToken(response.token);
       
       localStorage.setItem('auth_token', response.token);
-      localStorage.setItem('empresa_id', response.user.empresaId);
+      localStorage.setItem('user_id', response.user.id);
+      localStorage.setItem('empresaId', response.user.empresaId);
       localStorage.setItem('empresa_mongo_id', response.user.empresaNombre || '');
       localStorage.setItem('empresa_nombre', response.user.empresaNombre);
       localStorage.setItem('user_role', response.user.role || '');
@@ -87,6 +88,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setEmpresa(null);
     apiClient.clearToken();
     localStorage.removeItem('auth_token');
+    localStorage.removeItem('user_id');
     localStorage.removeItem('empresa_id');
     localStorage.removeItem('empresa_mongo_id');
     localStorage.removeItem('empresa_nombre');

@@ -33,4 +33,57 @@ router.post("/webhook-test", (req, res) => {
   });
 });
 
+// Endpoint para probar la configuración de WhatsApp
+router.post("/test-webhook", async (req, res) => {
+  try {
+    const { phoneNumberId, accessToken } = req.body;
+    
+    console.log('\n🧪 [TEST WEBHOOK] Probando configuración de WhatsApp...');
+    console.log('📱 Phone Number ID:', phoneNumberId);
+    
+    if (!phoneNumberId || !accessToken) {
+      return res.status(400).json({
+        success: false,
+        error: 'phoneNumberId y accessToken son requeridos'
+      });
+    }
+    
+    // Probar la conexión con la API de WhatsApp
+    const testUrl = `https://graph.facebook.com/v21.0/${phoneNumberId}`;
+    const response = await fetch(testUrl, {
+      method: 'GET',
+      headers: {
+        'Authorization': `Bearer ${accessToken}`,
+      },
+    });
+    
+    if (response.ok) {
+      const data = await response.json();
+      console.log('✅ [TEST WEBHOOK] Conexión exitosa con WhatsApp API');
+      console.log('📞 Número verificado:', data.display_phone_number);
+      
+      res.status(200).json({
+        success: true,
+        message: 'Webhook configurado correctamente',
+        phoneNumber: data.display_phone_number,
+        verified: data.verified_name || 'No verificado',
+      });
+    } else {
+      const errorData = await response.json();
+      console.error('❌ [TEST WEBHOOK] Error en la API de WhatsApp:', errorData);
+      
+      res.status(400).json({
+        success: false,
+        error: errorData.error?.message || 'Error al verificar credenciales',
+      });
+    }
+  } catch (error: any) {
+    console.error('❌ [TEST WEBHOOK] Error:', error);
+    res.status(500).json({
+      success: false,
+      error: error.message || 'Error al probar webhook',
+    });
+  }
+});
+
 export default router;

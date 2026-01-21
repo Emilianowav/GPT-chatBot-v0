@@ -1,0 +1,445 @@
+/**
+ * Script para crear un NUEVO flujo para Veo Veo
+ * Basado en la estructura del flujo actual pero como instancia nueva
+ */
+
+const { MongoClient, ObjectId } = require('mongodb');
+
+const MONGO_URI = 'mongodb+srv://momento_admin:admin@clustermomento.zafwwji.mongodb.net/neural_chatbot';
+
+async function crearNuevoFlujo() {
+  const client = new MongoClient(MONGO_URI);
+  
+  try {
+    await client.connect();
+    console.log('✅ Conectado a MongoDB\n');
+    
+    const db = client.db('neural_chatbot');
+    
+    console.log('═══════════════════════════════════════════════════════════');
+    console.log('🆕 CREANDO NUEVO FLUJO VEO VEO');
+    console.log('═══════════════════════════════════════════════════════════\n');
+    
+    const nuevoFlujo = {
+      nombre: "Veo Veo - Librería v2",
+      descripcion: "Flujo de atención al cliente, búsqueda de productos y gestión de pagos",
+      empresaId: "Veo Veo",
+      activo: true,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      config: {
+        topicos_habilitados: true,
+        topicos: {
+          empresa: {
+            nombre: "Librería Veo Veo",
+            ubicacion: "San Juan 1037, Corrientes Capital",
+            whatsapp: "5493794732177",
+            whatsapp_link: "https://wa.me/5493794732177"
+          },
+          horarios: {
+            lunes_viernes: "8:30-12:00 y 17:00-21:00",
+            sabados: "9:00-13:00 y 17:00-21:00",
+            domingos: "Cerrado",
+            descripcion: "Atendemos de Lunes a Viernes de 8:30 a 12:00 y de 17:00 a 21:00. Sábados de 9:00 a 13:00 y de 17:00 a 21:00. Domingos cerrado."
+          },
+          "tono-comunicacion": {
+            estilo: "Amigable, profesional, cercano",
+            uso_emojis: true,
+            tratamiento: "vos (argentino)"
+          },
+          "atencion-personalizada": {
+            descripcion: "Siempre preguntar qué busca el cliente, ofrecer alternativas, ser proactivo"
+          },
+          "libros-ingles": {
+            descripcion: "Tenemos amplia variedad de libros en inglés para todos los niveles"
+          },
+          "politica-retiro": {
+            descripcion: "Retiro en local sin cargo. Horarios: Lunes a Viernes 8:30-12 y 17-21, Sábados 9-13 y 17-21"
+          },
+          "politica-envios": {
+            descripcion: "Envíos a todo el país. Costo según destino."
+          },
+          "medios_pago": {
+            descripcion: "Aceptamos efectivo, transferencia, MercadoPago"
+          },
+          productos: {
+            libros_ingles: {
+              descripcion: "Libros en inglés para todos los niveles"
+            }
+          }
+        }
+      },
+      nodes: [
+        {
+          id: "webhook-whatsapp",
+          type: "webhook",
+          position: { x: 100, y: 100 },
+          data: {
+            label: "WhatsApp Business Cloud API",
+            config: {
+              tipo: "listener",
+              webhookUrl: "/api/webhook/whatsapp"
+            },
+            hasConnection: true
+          }
+        },
+        {
+          id: "gpt-clasificador-inteligente",
+          type: "gpt",
+          position: { x: 300, y: 100 },
+          data: {
+            label: "GPT Clasificador",
+            config: {
+              systemPrompt: "Sos un asistente de la Librería Veo Veo 📚.\n\nTU TAREA:\nAnalizar el mensaje del usuario y clasificar su intención.\n\nTIPOS DE ACCIÓN:\n- \"comprar\" → Usuario quiere buscar/comprar libros\n- \"consultar\" → Usuario hace preguntas generales\n- \"despedida\" → Usuario se despide\n\nOUTPUT (solo la palabra):\ncomprar | consultar | despedida",
+              model: "gpt-3.5-turbo",
+              temperature: 0.3,
+              response_format: "text",
+              variables_a_extraer: [
+                {
+                  nombre: "tipo_accion",
+                  tipo: "string",
+                  descripcion: "Tipo de acción: comprar, consultar, despedida",
+                  obligatoria: true
+                }
+              ],
+              topics: ["tono-comunicacion"]
+            },
+            hasConnection: true
+          }
+        },
+        {
+          id: "router-principal",
+          type: "router",
+          position: { x: 500, y: 100 },
+          data: {
+            label: "Router Principal",
+            config: {
+              variable: "tipo_accion",
+              routes: [
+                {
+                  condition: "equals",
+                  value: "buscar_producto",
+                  label: "🔍 Buscar Producto"
+                },
+                {
+                  condition: "equals",
+                  value: "comprar",
+                  label: "🛒 Comprar"
+                }
+              ]
+            },
+            routeHandles: [],
+            hasConnection: true
+          }
+        },
+        {
+          id: "gpt-formateador",
+          type: "gpt",
+          position: { x: 700, y: 50 },
+          data: {
+            label: "OpenAI (ChatGPT, Sera...",
+            subtitle: "formateador",
+            config: {
+              systemPrompt: "Eres un extractor de variables para búsqueda de libros en WooCommerce.\n\nVARIABLES A EXTRAER:\n- titulo: Título del libro (string) - **OBLIGATORIO**\n- editorial: Editorial del libro (string) - OPCIONAL\n- edicion: Edición del libro (string) - OPCIONAL\n\nSi el usuario no menciona editorial o edición, devolver null.\n\nOUTPUT (JSON):\n{\n  \"titulo\": \"Harry Potter 3\",\n  \"editorial\": null,\n  \"edicion\": null,\n  \"variables_completas\": true,\n  \"variables_faltantes\": []\n}",
+              model: "gpt-4o-mini",
+              temperature: 0.1,
+              response_format: "json_object"
+            },
+            hasConnection: true
+          }
+        },
+        {
+          id: "router",
+          type: "router",
+          position: { x: 900, y: 50 },
+          data: {
+            label: "Router",
+            subtitle: "Búsqueda Inicial",
+            config: {
+              routes: [
+                {
+                  id: "route-1",
+                  label: "Pedir Datos",
+                  condition: "{{gpt-formateador.variables_faltantes}} not_empty"
+                },
+                {
+                  id: "route-2",
+                  label: "Buscar en WooCommerce",
+                  condition: "{{gpt-formateador.variables_completas}} equals true"
+                }
+              ]
+            },
+            routeHandles: ["route-1", "route-2"],
+            hasConnection: true
+          }
+        },
+        {
+          id: "gpt-pedir-datos",
+          type: "gpt",
+          position: { x: 1100, y: 0 },
+          data: {
+            label: "OpenAI (ChatGPT, Sera...",
+            subtitle: "conversacional",
+            config: {
+              systemPrompt: "Eres un asistente amigable de Librería Veo Veo.\n\nINFORMACIÓN DISPONIBLE (NO INVENTES, USA ESTO):\n{{topicos.horarios.descripcion}}\n{{topicos.medios_pago.descripcion}}\n{{topicos.productos.libros_ingles.descripcion}}\n\nTU TAREA:\nPedir los datos faltantes de forma amigable.\n\nVariables faltantes: {{gpt-formateador.variables_faltantes}}\n\nEjemplo:\n\"¿Me podés decir la editorial del libro que buscás? 📚\"",
+              model: "gpt-3.5-turbo",
+              temperature: 0.7
+            },
+            hasConnection: true
+          }
+        },
+        {
+          id: "whatsapp-preguntar",
+          type: "whatsapp",
+          position: { x: 1300, y: 0 },
+          data: {
+            label: "WhatsApp Business Clo...",
+            config: {
+              action: "send_message",
+              message: "{{gpt-pedir-datos.response}}",
+              to: "{{1.from}}"
+            },
+            hasConnection: false
+          }
+        },
+        {
+          id: "whatsapp-solicitar-datos",
+          type: "whatsapp",
+          position: { x: 1100, y: 100 },
+          data: {
+            label: "WhatsApp Buscar Productos",
+            config: {
+              action: "send_message",
+              message: "🔍 Perfecto, déjame buscar eso para vos...",
+              to: "{{1.from}}"
+            },
+            hasConnection: true
+          }
+        },
+        {
+          id: "woocommerce",
+          type: "woocommerce",
+          position: { x: 1300, y: 100 },
+          data: {
+            label: "WooCommerce",
+            config: {
+              tipo: "buscar_productos",
+              empresaId: "Veo Veo"
+            },
+            hasConnection: true
+          }
+        },
+        {
+          id: "gpt-asistente-ventas",
+          type: "gpt",
+          position: { x: 1500, y: 100 },
+          data: {
+            label: "OpenAI (ChatGPT, Sera...",
+            subtitle: "conversacional",
+            config: {
+              systemPrompt: "Sos un asistente de ventas de la Librería Veo Veo 📚.\n\nTU TAREA:\nPresentar los resultados de búsqueda de libros de forma atractiva y ayudar al cliente a elegir.\n\nFORMATO DE PRESENTACIÓN:\nPerfecto😊, encontré estos libros:\n\n📚 [Título]\nEditorial: [Editorial]\nPrecio: $[Precio]\nStock: [Disponible/Agotado]\n\n¿Te interesa alguno?",
+              model: "gpt-4o-mini",
+              temperature: 0.7,
+              topics: ["tono-comunicacion", "atencion-personalizada", "libros-ingles"]
+            },
+            hasConnection: true
+          }
+        },
+        {
+          id: "whatsapp-asistente",
+          type: "whatsapp",
+          position: { x: 1700, y: 100 },
+          data: {
+            label: "WhatsApp Business Clo...",
+            config: {
+              action: "send_message",
+              message: "{{gpt-asistente-ventas.response}}",
+              to: "{{1.from}}"
+            },
+            hasConnection: false
+          }
+        },
+        {
+          id: "gpt-armar-carrito",
+          type: "gpt",
+          position: { x: 700, y: 200 },
+          data: {
+            label: "GPT Armar Carrito",
+            config: {
+              systemPrompt: "Sos un asistente de ventas de la Librería Veo Veo 📚.\n\nTU TAREA:\nAnalizar el historial completo y extraer información del carrito.\n\nFORMATO DE SALIDA (JSON):\n{\n  \"productos_carrito\": [{\"id\": 126, \"nombre\": \"...\", \"cantidad\": 1, \"precio\": 49000}],\n  \"total\": 49000,\n  \"confirmacion_compra\": true,\n  \"nombre_cliente\": null,\n  \"email_cliente\": null\n}",
+              model: "gpt-3.5-turbo",
+              temperature: 0.7,
+              response_format: "json_object",
+              contextSource: "historial_completo",
+              topics: ["tono-comunicacion", "politica-retiro", "politica-envios"]
+            },
+            hasConnection: true
+          }
+        },
+        {
+          id: "router-carrito",
+          type: "router",
+          position: { x: 900, y: 200 },
+          data: {
+            label: "Router Carrito",
+            config: {
+              variable: "confirmacion_compra",
+              routes: [
+                {
+                  condition: "equals",
+                  value: "true",
+                  label: "✅ Datos Completos"
+                }
+              ]
+            },
+            routeHandles: ["edge-router-mercadopago"],
+            hasConnection: true
+          }
+        },
+        {
+          id: "mercadopago-crear-preference",
+          type: "mercadopago",
+          position: { x: 1100, y: 200 },
+          data: {
+            config: {
+              linkType: "dynamic",
+              action: "create_payment_link",
+              mercadoPagoConnected: true,
+              empresaId: "Veo Veo"
+            },
+            hasConnection: true
+          }
+        },
+        {
+          id: "whatsapp-link-pago",
+          type: "whatsapp",
+          position: { x: 1300, y: 200 },
+          data: {
+            label: "WhatsApp Link Pago",
+            config: {
+              module: "send-message",
+              message: "{{mercadopago-crear-preference.mensaje}}",
+              to: "{{1.from}}"
+            },
+            hasConnection: false
+          }
+        }
+      ],
+      edges: [
+        {
+          id: "edge-webhook-clasificador",
+          source: "webhook-whatsapp",
+          target: "gpt-clasificador-inteligente",
+          type: "default"
+        },
+        {
+          id: "edge-clasificador-router",
+          source: "gpt-clasificador-inteligente",
+          target: "router-principal",
+          type: "default"
+        },
+        {
+          id: "edge-router-formateador",
+          source: "router-principal",
+          target: "gpt-formateador",
+          type: "default"
+        },
+        {
+          id: "edge-router-armar-carrito",
+          source: "router-principal",
+          target: "gpt-armar-carrito",
+          type: "default"
+        },
+        {
+          id: "edge-formateador-router",
+          source: "gpt-formateador",
+          target: "router",
+          type: "default"
+        },
+        {
+          id: "edge-router-pedir",
+          source: "router",
+          target: "gpt-pedir-datos",
+          sourceHandle: "route-1",
+          type: "default"
+        },
+        {
+          id: "edge-router-solicitar",
+          source: "router",
+          target: "whatsapp-solicitar-datos",
+          sourceHandle: "route-2",
+          type: "default"
+        },
+        {
+          id: "edge-pedir-whatsapp",
+          source: "gpt-pedir-datos",
+          target: "whatsapp-preguntar",
+          type: "default"
+        },
+        {
+          id: "edge-solicitar-woocommerce",
+          source: "whatsapp-solicitar-datos",
+          target: "woocommerce",
+          type: "default"
+        },
+        {
+          id: "edge-woocommerce-asistente",
+          source: "woocommerce",
+          target: "gpt-asistente-ventas",
+          type: "default"
+        },
+        {
+          id: "edge-asistente-whatsapp",
+          source: "gpt-asistente-ventas",
+          target: "whatsapp-asistente",
+          type: "default"
+        },
+        {
+          id: "edge-armar-router-carrito",
+          source: "gpt-armar-carrito",
+          target: "router-carrito",
+          type: "default"
+        },
+        {
+          id: "edge-router-mercadopago",
+          source: "router-carrito",
+          target: "mercadopago-crear-preference",
+          sourceHandle: "edge-router-mercadopago",
+          type: "default"
+        },
+        {
+          id: "edge-mercadopago-link",
+          source: "mercadopago-crear-preference",
+          target: "whatsapp-link-pago",
+          type: "default"
+        }
+      ]
+    };
+    
+    const result = await db.collection('flows').insertOne(nuevoFlujo);
+    
+    console.log('✅ Nuevo flujo creado exitosamente');
+    console.log(`   ID: ${result.insertedId}`);
+    console.log(`   Nombre: ${nuevoFlujo.nombre}`);
+    console.log(`   Nodos: ${nuevoFlujo.nodes.length}`);
+    console.log(`   Edges: ${nuevoFlujo.edges.length}`);
+    console.log('═══════════════════════════════════════════════════════════\n');
+    
+  } catch (error) {
+    console.error('❌ Error:', error);
+    throw error;
+  } finally {
+    await client.close();
+  }
+}
+
+// Ejecutar
+crearNuevoFlujo()
+  .then(() => {
+    console.log('✅ Script completado\n');
+    process.exit(0);
+  })
+  .catch((error) => {
+    console.error('\n❌ Script falló:', error);
+    process.exit(1);
+  });

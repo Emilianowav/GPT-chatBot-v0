@@ -1,28 +1,22 @@
 import React, { memo } from 'react';
-import { NodeProps, Handle, Position } from 'reactflow';
-import { GitBranch, Plus } from 'lucide-react';
-import styles from './RouterNode.module.css';
+import { Handle, Position, NodeProps, useEdges } from 'reactflow';
+import { GitBranch } from 'lucide-react';
 
-/**
- * ROUTER NODE - Nodo especial para múltiples salidas estilo Make.com
- * 
- * Características:
- * - Círculo 100px verde lima
- * - Icono de bifurcación en el centro
- * - Badge de ejecución arriba derecha
- * - Múltiples handles de salida
- * - Handle + para agregar más rutas
- */
+const RouterIcon = ({ size = 40, color = '#f59e0b' }: { size?: number; color?: string }) => (
+  <GitBranch size={size} color={color} strokeWidth={2} />
+);
 
 interface RouterNodeData {
   label: string;
   subtitle?: string;
-  executionCount?: number;
-  hasConnection?: boolean;
-  onHandleClick?: (nodeId: string, handleId?: string) => void;
-  onNodeClick?: (nodeId: string) => void;
+  executionCount?: string | number;
   routes?: number;
   config?: {
+    routes?: Array<{
+      id: string;
+      label: string;
+      condition?: string;
+    }>;
     conditions?: Array<{
       label: string;
       condition: string;
@@ -33,177 +27,132 @@ interface RouterNodeData {
       workflowId?: string;
     }>;
   };
+  routeHandles?: string[];
+  onNodeClick?: (nodeId: string) => void;
+  color?: string;
 }
 
 function RouterNode({ id, data, selected }: NodeProps<RouterNodeData>) {
-  const {
-    label,
-    subtitle,
-    executionCount = 1,
-    hasConnection = false,
-    onHandleClick,
-    onNodeClick,
-    routes = 2,
-    config,
-  } = data;
+  const { label, subtitle, executionCount, onNodeClick, routeHandles } = data;
+  const edges = useEdges();
 
-  const color = '#f59e0b'; // Router yellow/orange
-  
-  // Extraer handles dinámicos desde config.routes
-  const routeHandles = config?.routes?.map((route: any) => route.id) || [];
-  const totalRoutes = routeHandles.length || routes || 2;
-  
-  console.log(`🔷 RouterNode ${id}:`, {
-    routeHandles,
-    totalRoutes,
-    hasConfig: !!config?.routes
-  });
+  // Verificar si ya hay conexión en input (target) - Router solo acepta 1 entrada
+  const hasInputConnection = edges.some(edge => edge.target === id);
+  const color = data.color || '#f59e0b';
 
-  const handleNodeClick = () => {
-    if (onNodeClick) {
-      onNodeClick(id);
-    }
-  };
-
-  const handlePlusClick = (handleId: string) => (e: React.MouseEvent) => {
-    e.stopPropagation();
-    if (onHandleClick) {
-      onHandleClick(id, handleId);
-    }
-  };
+  // Generar handles de salida según número de rutas (IDs: b, c, d, e...)
+  const outputHandles = Array.from({ length: data.routes || 2 }, (_, i) => ({
+    id: String.fromCharCode(98 + i), // 'b', 'c', 'd', 'e'...
+    angle: (Math.PI / 2) + ((i - (data.routes || 2 - 1) / 2) * (Math.PI / 4)),
+  }));
 
   return (
-    <div className={styles.routerNodeContainer}>
-      {/* Handle invisible de entrada (izquierda) */}
-      <Handle
-        type="target"
-        position={Position.Left}
-        style={{ opacity: 0 }}
-      />
+    <div
+      style={{
+        padding: '10px',
+        borderRadius: '50%',
+        width: '80px',
+        height: '80px',
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center',
+        background: 'white',
+        border: selected ? `3px solid ${color}` : '2px solid #e5e7eb',
+        boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
+        position: 'relative',
+      }}
+    >
+      <RouterIcon size={40} color={color} />
 
-      {/* Círculo principal del nodo */}
-      <div 
-        className={`${styles.routerNode} ${selected ? styles.selected : ''}`}
-        style={{ background: color }}
-        onClick={handleNodeClick}
-        role="button"
-        tabIndex={0}
-        aria-label={label}
-      >
-        <GitBranch size={48} color="white" strokeWidth={2} />
-
-        <div 
-          className={styles.executionBadge}
-          style={{ background: '#ef4444' }}
+      {executionCount && (
+        <div
+          style={{
+            position: 'absolute',
+            top: '-8px',
+            right: '-8px',
+            background: '#ef4444',
+            color: 'white',
+            borderRadius: '50%',
+            minWidth: '24px',
+            height: '24px',
+            padding: '0 4px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            fontSize: '11px',
+            fontWeight: 'bold',
+            border: '2px solid white',
+          }}
         >
           {executionCount}
         </div>
+      )}
 
-        <div 
-          className={styles.appBadge}
-          style={{ background: color }}
-        >
-          <GitBranch size={16} color="white" strokeWidth={2.5} />
-        </div>
+      <div
+        style={{
+          position: 'absolute',
+          top: '90px',
+          textAlign: 'center',
+          fontSize: '12px',
+          fontWeight: '600',
+          color: '#1f2937',
+          whiteSpace: 'nowrap',
+        }}
+      >
+        {label || 'Router'}
       </div>
 
-      {/* Handles de salida múltiples (derecha) con botones + */}
-      {routeHandles.length > 0 ? (
-        routeHandles.map((handleId: string, index: number) => {
-          const topPosition = ((index + 1) * 100) / (totalRoutes + 1);
-          
-          return (
-            <React.Fragment key={handleId}>
-              <Handle
-                type="source"
-                position={Position.Right}
-                id={handleId}
-                style={{
-                  top: `${topPosition}%`,
-                  opacity: 0,
-                  background: color,
-                }}
-              />
-              
-              {/* Botón + para agregar nodo en esta ruta */}
-              <div
-                className={styles.handlePlus}
-                style={{
-                  position: 'absolute',
-                  right: '-40px',
-                  top: `calc(${topPosition}% - 15px)`,
-                  width: '30px',
-                  height: '30px',
-                  borderRadius: '50%',
-                  background: color,
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  cursor: 'pointer',
-                  zIndex: 10,
-                }}
-                onClick={handlePlusClick(handleId)}
-                role="button"
-                tabIndex={0}
-                aria-label={`Add module to route ${index + 1}`}
-              >
-                <Plus size={16} color="white" strokeWidth={3} />
-              </div>
-            </React.Fragment>
-          );
-        })
-      ) : (
-        // Fallback: usar route-1, route-2 si no hay config.routes
-        Array.from({ length: totalRoutes }).map((_, index) => {
-          const topPosition = ((index + 1) * 100) / (totalRoutes + 1);
-          const handleId = `route-${index + 1}`;
-          
-          return (
-            <React.Fragment key={handleId}>
-              <Handle
-                type="source"
-                position={Position.Right}
-                id={handleId}
-                style={{
-                  top: `${topPosition}%`,
-                  opacity: 0,
-                  background: color,
-                }}
-              />
-              
-              <div
-                className={styles.handlePlus}
-                style={{
-                  position: 'absolute',
-                  right: '-40px',
-                  top: `calc(${topPosition}% - 15px)`,
-                  width: '30px',
-                  height: '30px',
-                  borderRadius: '50%',
-                  background: color,
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  cursor: 'pointer',
-                  zIndex: 10,
-                }}
-                onClick={handlePlusClick(handleId)}
-                role="button"
-                tabIndex={0}
-                aria-label={`Add module to route ${index + 1}`}
-              >
-                <Plus size={16} color="white" strokeWidth={3} />
-              </div>
-            </React.Fragment>
-          );
-        })
+      {subtitle && (
+        <div
+          style={{
+            position: 'absolute',
+            top: '105px',
+            textAlign: 'center',
+            fontSize: '10px',
+            color: '#6b7280',
+            whiteSpace: 'nowrap',
+          }}
+        >
+          {subtitle}
+        </div>
       )}
 
-      {/* Label */}
-      <div className={styles.nodeLabel}>{label}</div>
-      {subtitle && (
-        <div className={styles.nodeSubtitle}>{subtitle}</div>
-      )}
+      {/* Handle de entrada (izquierda) - VISIBLE - Solo 1 conexión */}
+      <Handle
+        type="target"
+        position={Position.Left}
+        id="a"
+        isConnectable={!hasInputConnection}
+        style={{
+          background: hasInputConnection ? '#9ca3af' : color,
+          width: '14px',
+          height: '14px',
+          border: '2px solid white',
+          boxShadow: '0 2px 4px rgba(0,0,0,0.2)',
+          cursor: hasInputConnection ? 'not-allowed' : 'crosshair',
+        }}
+      />
+
+      {/* Múltiples handles de salida (derecha) - VISIBLES - ILIMITADAS */}
+      {outputHandles.map((handle) => (
+        <Handle
+          key={handle.id}
+          type="source"
+          position={Position.Right}
+          id={handle.id}
+          isConnectable={true}
+          style={{
+            background: color,
+            width: '14px',
+            height: '14px',
+            border: '2px solid white',
+            boxShadow: '0 2px 4px rgba(0,0,0,0.2)',
+            top: `${50 + Math.sin(handle.angle) * 30}%`,
+            cursor: 'crosshair',
+          }}
+        />
+      ))}
     </div>
   );
 }

@@ -27,7 +27,7 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
     { 
       icon: <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 2v6m0 4v10m8-10a8 8 0 1 1-16 0 8 8 0 0 1 16 0z"/><path d="M8 12h8"/></svg>, 
       label: 'Flujos', 
-      path: '/dashboard/flow-builder',
+      path: '/dashboard/flows',
       badge: 'Nuevo'
     },
     { 

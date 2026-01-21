@@ -53,7 +53,7 @@ function BaseRouterNode({ id, data, selected, nodeRadius = 50 }: BaseRouterNodeP
   } = data;
 
   const [isHovered, setIsHovered] = useState(false);
-  const { deleteElements } = useReactFlow();
+  const { deleteElements, getEdges } = useReactFlow();
   
   // Obtener handles en órbita para router
   const routeCount = config?.routes?.length || routes;
@@ -74,8 +74,14 @@ function BaseRouterNode({ id, data, selected, nodeRadius = 50 }: BaseRouterNodeP
 
   const handleDisconnect = (handleId: string, connectedNodeId: string) => (e: React.MouseEvent) => {
     e.stopPropagation();
-    // Encontrar y eliminar el edge conectado
-    deleteElements({ edges: [{ source: id, target: connectedNodeId }] });
+    // Encontrar el edge exacto a eliminar
+    const edgesToDelete = getEdges().filter(
+      edge => (edge.source === id && edge.target === connectedNodeId) ||
+              (edge.target === id && edge.source === connectedNodeId)
+    );
+    if (edgesToDelete.length > 0) {
+      deleteElements({ edges: edgesToDelete });
+    }
   };
 
   return (
@@ -121,44 +127,40 @@ function BaseRouterNode({ id, data, selected, nodeRadius = 50 }: BaseRouterNodeP
           id={handle.id}
           className={`${styles.orbitHandle} ${handle.isConnected ? styles.connected : ''}`}
           style={{
-            background: handle.isConnected ? color : '#d1d5db',
+            background: handle.isConnected ? color : '#9ca3af',
             left: `calc(50% + ${handle.x}px)`,
             top: `calc(50% + ${handle.y}px)`,
             transform: 'translate(-50%, -50%)',
-            width: '16px',
-            height: '16px',
-            border: '3px solid white',
-            boxShadow: '0 2px 8px rgba(0, 0, 0, 0.15)',
-            cursor: handle.isConnected ? 'pointer' : 'default',
+            width: '20px',
+            height: '20px',
+            border: '4px solid white',
+            boxShadow: handle.isConnected 
+              ? `0 0 0 2px ${color}, 0 4px 12px rgba(0, 0, 0, 0.2)` 
+              : '0 0 0 2px #6b7280, 0 4px 12px rgba(0, 0, 0, 0.15)',
+            cursor: 'pointer',
             transition: 'all 0.2s ease',
+            opacity: 1,
+            zIndex: 100,
           }}
           onClick={handle.isConnected && handle.connectedNodeId 
             ? handleDisconnect(handle.id, handle.connectedNodeId) 
             : undefined
           }
         >
-          {/* Botón X para desconectar (solo visible en hover del handle) */}
-          {handle.isConnected && (
-            <div
-              className={styles.disconnectButton}
-              style={{
-                position: 'absolute',
-                top: '-8px',
-                right: '-8px',
-                width: '16px',
-                height: '16px',
-                background: '#ef4444',
-                borderRadius: '50%',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                opacity: 0,
-                transition: 'opacity 0.2s',
-              }}
-            >
-              <X size={10} color="white" strokeWidth={3} />
-            </div>
-          )}
+          {/* Indicador visual del tipo de handle */}
+          <div
+            style={{
+              position: 'absolute',
+              top: '50%',
+              left: '50%',
+              transform: 'translate(-50%, -50%)',
+              width: '8px',
+              height: '8px',
+              background: 'white',
+              borderRadius: '50%',
+              pointerEvents: 'none',
+            }}
+          />
         </Handle>
       ))}
 
