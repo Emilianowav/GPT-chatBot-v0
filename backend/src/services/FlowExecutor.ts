@@ -1705,23 +1705,36 @@ export class FlowExecutor {
    * - Fallbacks: {{variable || "default"}}
    * - Expresiones: {{woocommerce-search.productos.length || 0}}
    */
-  private resolveVariableInString(str: string): string {
+  private resolveVariableInString(str: string, depth: number = 0): string {
     if (!str) return '';
+    
+    // Prevenir recursión infinita
+    const MAX_DEPTH = 5;
+    if (depth >= MAX_DEPTH) {
+      console.warn(`      ⚠️  Máxima profundidad de resolución alcanzada (${MAX_DEPTH})`);
+      return str;
+    }
 
-    console.log(`      🔧 [resolveVariableInString] Input: "${str.substring(0, 200)}${str.length > 200 ? '...' : ''}"`);
+    if (depth === 0) {
+      console.log(`      🔧 [resolveVariableInString] Input: "${str.substring(0, 200)}${str.length > 200 ? '...' : ''}"`);
+    }
 
     // Buscar todas las variables en el formato {{...}}
     const regex = /\{\{([^}]+)\}\}/g;
     
     const result = str.replace(regex, (match, expression) => {
       expression = expression.trim();
-      console.log(`      🔍 Encontrada variable: "${expression}"`);
+      if (depth === 0) {
+        console.log(`      🔍 Encontrada variable: "${expression}"`);
+      }
       
       try {
         // Evaluar la expresión de forma segura
         const result = this.evaluateExpression(expression);
         
-        console.log(`      ✅ Resultado de evaluación: ${JSON.stringify(result)?.substring(0, 100)}`);
+        if (depth === 0) {
+          console.log(`      ✅ Resultado de evaluación: ${JSON.stringify(result)?.substring(0, 100)}`);
+        }
         
         // IMPORTANTE: NO formatear productos automáticamente
         // Dejar que GPT interprete el JSON según su systemPrompt
@@ -1732,10 +1745,14 @@ export class FlowExecutor {
         
         // Retornar el valor como string
         if (result !== undefined && result !== null) {
-          console.log(`      ✅ Reemplazando "${match}" → "${String(result).substring(0, 100)}"`);
+          if (depth === 0) {
+            console.log(`      ✅ Reemplazando "${match}" → "${String(result).substring(0, 100)}"`);
+          }
           return String(result);
         } else {
-          console.log(`      ⚠️  Resultado undefined/null, manteniendo placeholder: "${match}"`);
+          if (depth === 0) {
+            console.log(`      ⚠️  Resultado undefined/null, manteniendo placeholder: "${match}"`);
+          }
           return match;
         }
       } catch (error) {
@@ -1744,7 +1761,17 @@ export class FlowExecutor {
       }
     });
     
-    console.log(`      🔧 [resolveVariableInString] Output: "${result.substring(0, 200)}${result.length > 200 ? '...' : ''}"`);
+    // IMPORTANTE: Resolver recursivamente si aún quedan variables
+    // Esto maneja casos como {{gpt.respuesta}} que contiene {{topicos.empresa.link}}
+    const hasMoreVariables = /\{\{([^}]+)\}\}/.test(result);
+    if (hasMoreVariables && depth < MAX_DEPTH) {
+      console.log(`      🔄 Resolución recursiva (profundidad ${depth + 1}): Quedan variables por resolver`);
+      return this.resolveVariableInString(result, depth + 1);
+    }
+    
+    if (depth === 0) {
+      console.log(`      🔧 [resolveVariableInString] Output: "${result.substring(0, 200)}${result.length > 200 ? '...' : ''}"`);
+    }
     return result;
   }
 
