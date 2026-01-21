@@ -1018,11 +1018,18 @@ export class FlowExecutor {
     // 3. Si input tiene una referencia a otro nodo, intentar obtener su output
     if (typeof input === 'object' && Object.keys(input).length > 0) {
       // Buscar campos que puedan contener el mensaje
-      const possibleFields = ['respuesta_gpt', 'texto', 'content', 'body'];
+      const possibleFields = ['respuesta_gpt', 'texto', 'content', 'body', 'mensaje'];
       for (const field of possibleFields) {
         if (input[field]) {
           console.log(`      ✅ Usando input.${field}`);
-          return String(input[field]);
+          const fieldValue = String(input[field]);
+          console.log('      Antes de resolver:', fieldValue.substring(0, 150));
+          // IMPORTANTE: Resolver variables también en campos de input (ej: respuesta_gpt de nodos GPT)
+          const resolved = this.resolveVariableInString(fieldValue);
+          console.log('      Después de resolver:', resolved.substring(0, 150));
+          if (resolved && resolved.trim() !== '') {
+            return resolved;
+          }
         }
       }
     }
