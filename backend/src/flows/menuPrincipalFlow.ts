@@ -580,7 +580,8 @@ async function crearTurnoConDatos(context: FlowContext, datosCapturados: Record<
       });
     }
     
-    mensaje += `\n${config?.mensajesFlujo?.datosIncompletos || '⚠️ El operador te contactará para confirmar origen, destino y horario.'}`;
+    const mensajeDatosIncompletos = (config?.mensajesFlujo as any)?.datosIncompletos || '⚠️ El operador te contactará para confirmar origen, destino y horario.';
+    mensaje += `\n${mensajeDatosIncompletos}`;
     mensaje += '\n\nEscribí "menu" para volver al menú principal.';
     
     await enviarMensajeWhatsAppTexto(telefono, mensaje, context.phoneNumberId);
