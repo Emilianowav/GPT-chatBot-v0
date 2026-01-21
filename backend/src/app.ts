@@ -7,7 +7,6 @@ import cors from "cors";
 import http from "http";
 import { WebSocketServer, WebSocket } from "ws";
 import openaiRoutes from "./routes/openaiRoutes.js";
-import whatsappRoutes from "./routes/whatsappRoutes.js";
 import statusRoutes from "./routes/statusRoutes.js";
 import authRoutes from "./routes/authRoutes.js";
 import empresaRoutes from "./routes/empresaRoutes.js";
@@ -27,7 +26,6 @@ import nodeFlowRoutes from "./routes/nodeFlowRoutes.js";
 import superAdminRoutes from "./routes/superAdminRoutes.js";
 import chatbotRoutes from "./routes/chatbotRoutes.js";
 import intervencionRoutes from "./routes/intervencionRoutes.js";
-import httpProxyRoutes from "./routes/httpProxyRoutes.js";
 // import primerMensajeRoutes from "./routes/primerMensajeRoutes.js";
 import { errorHandler } from "./middlewares/errorHandler.js";
 import { connectDB } from "./config/database.js";
@@ -113,7 +111,6 @@ app.use("/api/usuarios-empresa", usuarioEmpresaRoutes);
 app.use("/api/clientes", clienteRoutes);
 app.use("/api/conversaciones", conversacionesRoutes);
 app.use("/api/openai", openaiRoutes);
-app.use("/api/whatsapp", whatsappRoutes);
 // ⚠️ IMPORTANTE: Rutas específicas ANTES de rutas generales
 app.use("/api/modules/calendar/notificaciones-meta", notificacionesMetaRoutes);
 app.use("/api/modules/calendar/mensajes-flujo", mensajesFlujoRoutes);
@@ -131,7 +128,6 @@ app.use("/api/flows", flowRoutes); // DEBE IR ANTES que nodeFlowRoutes para que 
 app.use("/api", nodeFlowRoutes); // Sistema de nodos configurables
 app.use("/api/chatbots", chatbotRoutes);
 app.use("/api/intervencion", intervencionRoutes);
-app.use("/api/http-proxy", httpProxyRoutes); // Proxy para requests HTTP (evita CORS)
 // app.use("/api/primer-mensaje", primerMensajeRoutes);
 app.use("/api", statusRoutes);
 app.use(errorHandler);
