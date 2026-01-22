@@ -153,6 +153,7 @@ export default function AdministradorFlujosPage() {
       config: {
         plantilla: notificacionDiariaAgentes?.nombre || 'chofer_sanjose',
         idioma: notificacionDiariaAgentes?.idioma || 'es',
+        anticipacion: notificacionDiariaAgentes?.programacion?.anticipacion ?? 0,
         horaEnvio: notificacionDiariaAgentes?.programacion?.horaEnvio || '06:00',
         frecuencia: notificacionDiariaAgentes?.programacion?.frecuencia || 'diaria',
         diasSemana: notificacionDiariaAgentes?.programacion?.diasSemana || [1, 2, 3, 4, 5],
