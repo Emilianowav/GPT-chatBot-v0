@@ -243,10 +243,26 @@
   margin-top: -0.25rem;
 }
 
+.hintSuccess {
+  font-size: 0.75rem;
+  color: #4caf50;
+  margin-top: -0.25rem;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.selectConAsignados {
+  border: 2px solid #4caf50 !important;
+  box-shadow: 0 0 0 3px rgba(76, 175, 80, 0.1);
+}
+
+
 .loading {
   padding: 1rem;
   text-align: center;
-  color: rgba(255, 255, 255, 0.7);
+  color: rgba(255, 255 255, 0.7);
   background: rgba(255, 255, 255, 0.05);
   border-radius: 8px;
   font-size: 0.875rem;

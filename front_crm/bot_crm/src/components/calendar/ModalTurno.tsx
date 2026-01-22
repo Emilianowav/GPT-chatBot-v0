@@ -645,6 +645,23 @@ export default function ModalTurno({ isOpen, onClose, onSubmit }: ModalTurnoProp
                     Información Específica
                   </h3>
                   {configuracion.camposPersonalizados
+                    .filter(campo => {
+                      // Filtrar campos que ya se piden en pasos anteriores
+                      const claveLower = campo.clave.toLowerCase();
+                      const etiquetaLower = campo.etiqueta.toLowerCase();
+                      
+                      // Excluir campos de fecha (ya se pide en paso 2)
+                      if (claveLower.includes('fecha') || etiquetaLower.includes('fecha')) {
+                        return false;
+                      }
+                      
+                      // Excluir campos de hora (ya se pide en paso 2)
+                      if (claveLower.includes('hora') || etiquetaLower.includes('hora')) {
+                        return false;
+                      }
+                      
+                      return true;
+                    })
                     .sort((a, b) => a.orden - b.orden)
                     .map((campo) => (
                       <div key={campo.clave} className={styles.field}>
