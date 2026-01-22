@@ -38,11 +38,22 @@ export const guardarConfiguracion = async (req: Request, res: Response) => {
     const { empresaId } = req.params;
     const datosConfiguracion = req.body;
 
+    // 🔍 LOG: Ver qué se está recibiendo
+    console.log('\n💾 [GUARDAR CONFIG] Empresa:', empresaId);
+    console.log('📦 [GUARDAR CONFIG] Datos recibidos:');
+    console.log('   - plantillasMeta.notificacionDiariaAgentes:', JSON.stringify(datosConfiguracion.plantillasMeta?.notificacionDiariaAgentes, null, 2));
+
     const configuracion = await ConfiguracionModuloModel.findOneAndUpdate(
       { empresaId },
       { ...datosConfiguracion, empresaId },
       { new: true, upsert: true, runValidators: true }
     );
+
+    // 🔍 LOG: Ver qué se guardó
+    console.log('✅ [GUARDAR CONFIG] Guardado en BD:');
+    console.log('   - anticipacion:', configuracion.plantillasMeta?.notificacionDiariaAgentes?.programacion?.anticipacion);
+    console.log('   - diasSemana:', configuracion.plantillasMeta?.notificacionDiariaAgentes?.programacion?.diasSemana);
+    console.log('   - horaEnvio:', configuracion.plantillasMeta?.notificacionDiariaAgentes?.programacion?.horaEnvio);
 
     res.json({
       success: true,
