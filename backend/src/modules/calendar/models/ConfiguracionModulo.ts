@@ -133,6 +133,25 @@ export interface NotificacionDiariaAgentes {
   enviarATodos: boolean;      // true = todos los agentes, false = solo agentes con turnos
   plantillaMensaje: string;   // Plantilla del mensaje de resumen
   
+  // ✅ NUEVO: Programación para plantillasMeta
+  programacion?: {
+    metodoVerificacion: 'hora_fija' | 'inicio_jornada_agente';
+    horaEnvio?: string;
+    anticipacion?: number;
+    frecuencia?: string;
+    diasSemana?: number[];
+    rangoHorario?: string;
+    filtroEstado?: string[];
+    incluirDetalles?: {
+      origen?: boolean;
+      destino?: boolean;
+      nombreCliente?: boolean;
+      telefonoCliente?: boolean;
+      horaReserva?: boolean;
+      notasInternas?: boolean;
+    };
+  };
+  
   // Configuración de ciclo/frecuencia
   frecuencia: {
     tipo: 'diaria' | 'semanal' | 'mensual' | 'personalizada';
@@ -593,6 +612,28 @@ const NotificacionDiariaAgentesSchema = new Schema<NotificacionDiariaAgentes>(
     plantillaMensaje: {
       type: String,
       default: 'Buenos días! Estos son tus {turnos} de hoy:'
+    },
+    // ✅ NUEVO: Campo programacion para plantillasMeta
+    programacion: {
+      metodoVerificacion: {
+        type: String,
+        enum: ['hora_fija', 'inicio_jornada_agente'],
+        default: 'hora_fija'
+      },
+      horaEnvio: String,
+      anticipacion: Number,
+      frecuencia: String,
+      diasSemana: [Number],
+      rangoHorario: String,
+      filtroEstado: [String],
+      incluirDetalles: {
+        origen: Boolean,
+        destino: Boolean,
+        nombreCliente: Boolean,
+        telefonoCliente: Boolean,
+        horaReserva: Boolean,
+        notasInternas: Boolean
+      }
     },
     frecuencia: {
       tipo: {
