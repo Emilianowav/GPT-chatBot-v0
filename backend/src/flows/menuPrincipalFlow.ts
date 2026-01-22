@@ -192,7 +192,6 @@ export const menuPrincipalFlow: Flow = {
             resumen += `• ${campo.etiqueta}: ${val}\n`;
           }
         });
-        resumen += '\n⚠️ El operador te contactará para confirmar origen, destino y horario.\n';
         resumen += '\n¿Confirmas estos datos?\n';
         resumen += '1️⃣ Sí, confirmar\n';
         resumen += '2️⃣ No, cancelar';
@@ -580,7 +579,7 @@ async function crearTurnoConDatos(context: FlowContext, datosCapturados: Record<
       });
     }
     
-    const mensajeDatosIncompletos = (config?.mensajesFlujo as any)?.datosIncompletos || '⚠️ El operador te contactará para confirmar origen, destino y horario.';
+    const mensajeDatosIncompletos = (config?.mensajesFlujo as any)?.datosIncompletos || '';
     mensaje += `\n${mensajeDatosIncompletos}`;
     mensaje += '\n\nEscribí "menu" para volver al menú principal.';
     
