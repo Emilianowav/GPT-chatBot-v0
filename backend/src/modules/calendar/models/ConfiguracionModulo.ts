@@ -814,6 +814,7 @@ const PlantillasMetaSchema = new Schema(
           default: 'hora_fija'
         },
         horaEnvio: String,
+        anticipacion: Number,
         minutosAntes: Number,
         frecuencia: String,
         diasSemana: [Number],

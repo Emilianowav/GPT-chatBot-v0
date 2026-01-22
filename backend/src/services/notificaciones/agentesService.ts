@@ -21,18 +21,15 @@ export async function procesarNotificacionesDiariasAgentes() {
     
     const configuraciones = await ConfiguracionModuloModel.find({
       'plantillasMeta.notificacionDiariaAgentes.activa': true
-    }).lean();
-    
+    });
     
     if (configuraciones.length === 0) {
       console.log(`   ℹ️ No hay empresas con notificación diaria activa\n`);
       return;
     }
     
-    for (let config of configuraciones) {
+    for (const config of configuraciones) {
       try {
-        
-        config = await ConfiguracionModuloModel.findById(config._id) || config;
         
         const notifConfig = config.plantillasMeta?.notificacionDiariaAgentes;
         if (!notifConfig) continue;
