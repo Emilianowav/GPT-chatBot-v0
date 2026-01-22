@@ -60,7 +60,6 @@ export default function ModalTurno({ isOpen, onClose, onSubmit }: ModalTurnoProp
       });
       setClienteSeleccionado(null);
       setAgenteSeleccionado(null);
-      setAgentesAsignadosIds([]);
       setSlotsDisponibles([]);
       setPaso(1);
       setError(null);
@@ -472,15 +471,32 @@ export default function ModalTurno({ isOpen, onClose, onSubmit }: ModalTurnoProp
                     onChange={(e) => handleAgenteChange(e.target.value)}
                     required={configuracion.agenteRequerido}
                     disabled={loadingAgentes}
+                    className={agentesAsignadosIds.length > 0 ? styles.selectConAsignados : ''}
                   >
                     <option value="">Seleccionar {configuracion.nomenclatura?.agente?.toLowerCase() || 'agente'}...</option>
-                    {agentes.map(agente => (
-                      <option key={agente._id} value={agente._id}>
-                        {agente.nombre} {agente.apellido}
-                        {agente.especialidad && ` - ${agente.especialidad}`}
-                      </option>
-                    ))}
+                    {agentes.map(agente => {
+                      const esAsignado = agentesAsignadosIds.includes(agente._id);
+                      return (
+                        <option 
+                          key={agente._id} 
+                          value={agente._id}
+                          style={esAsignado ? { 
+                            fontWeight: 'bold',
+                            backgroundColor: '#e8f5e9'
+                          } : {}}
+                        >
+                          {esAsignado ? '⭐ ' : ''}{agente.nombre} {agente.apellido}
+                          {agente.especialidad && ` - ${agente.especialidad}`}
+                          {esAsignado ? ' (Asignado)' : ''}
+                        </option>
+                      );
+                    })}
                   </select>
+                  {agentesAsignadosIds.length > 0 && (
+                    <small className={styles.hintSuccess}>
+                      ⭐ Este cliente tiene {agentesAsignadosIds.length} {agentesAsignadosIds.length === 1 ? 'agente asignado' : 'agentes asignados'}
+                    </small>
+                  )}
                   {agenteSeleccionado && (
                     <small className={styles.hint}>
                       {agenteSeleccionado.modoAtencion === 'turnos_programados' && '⏰ Turnos con horarios específicos'}
