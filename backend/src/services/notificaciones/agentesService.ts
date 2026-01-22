@@ -127,13 +127,21 @@ async function enviarNotificacionesDiariasPorEmpresa(config: any) {
   
   if (!notifConfig || !notifConfig.activa) return;
   
+  // ✅ NUEVO: Calcular fecha objetivo según anticipación
+  const anticipacion = notifConfig.programacion?.anticipacion ?? notifConfig.anticipacion ?? 0;
+  console.log(`   📅 Anticipación configurada: ${anticipacion} días`);
+  
   const ahora = new Date();
-  const inicio = new Date(ahora);
+  const fechaObjetivo = new Date(ahora);
+  fechaObjetivo.setDate(fechaObjetivo.getDate() + anticipacion);
+  
+  const inicio = new Date(fechaObjetivo);
   inicio.setHours(0, 0, 0, 0);
   const fin = new Date(inicio);
   fin.setDate(fin.getDate() + 1);
   
-  console.log(`   🔍 Buscando turnos de agentes entre:`);
+  console.log(`   🔍 Buscando turnos de agentes para:`);
+  console.log(`      Fecha objetivo: ${fechaObjetivo.toLocaleDateString('es-AR')}`);
   console.log(`      Inicio: ${inicio.toISOString()}`);
   console.log(`      Fin: ${fin.toISOString()}`);
   console.log(`      Estados: ${notifConfig.programacion?.filtroEstado || ['pendiente', 'confirmado']}`);
