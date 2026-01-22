@@ -389,8 +389,10 @@ async function processPaymentNotification(paymentId: string): Promise<void> {
         const { CarritoModel } = await import('../../../models/Carrito.js');
         const carrito = await CarritoModel.findById(carritoId);
         
-        if (carrito && carrito.telefono && empresaId) {
-          console.log(`[MP Webhook] ✅ Teléfono encontrado en carrito: ${carrito.telefono}`);
+        if (carrito && carrito.telefono) {
+          // Obtener empresaId del carrito
+          const carritoEmpresaId = carrito.empresaId;
+          console.log(`[MP Webhook] ✅ Carrito encontrado - Teléfono: ${carrito.telefono}, EmpresaId: ${carritoEmpresaId}`);
           
           // Actualizar estado del carrito a 'pagado'
           carrito.estado = 'pagado';
@@ -398,9 +400,9 @@ async function processPaymentNotification(paymentId: string): Promise<void> {
           console.log(`[MP Webhook] ✅ Carrito ${carritoId} marcado como pagado`);
           
           // Buscar la empresa para obtener phoneNumberId
-          const empresaDoc = await EmpresaModel.findById(empresaId);
+          const empresaDoc = await EmpresaModel.findById(carritoEmpresaId);
           if (!empresaDoc || !empresaDoc.phoneNumberId) {
-            console.log(`[MP Webhook] ⚠️ No se encontró empresa o phoneNumberId`);
+            console.log(`[MP Webhook] ⚠️ No se encontró empresa o phoneNumberId para ${carritoEmpresaId}`);
             return;
           }
           
@@ -438,7 +440,7 @@ ${productosTexto}
           const { ContactoEmpresaModel } = await import('../../../models/ContactoEmpresa.js');
           const contacto = await ContactoEmpresaModel.findOne({
             telefono: carrito.telefono,
-            empresaId: empresaId
+            empresaId: carritoEmpresaId
           });
           
           if (contacto) {
@@ -458,7 +460,10 @@ ${productosTexto}
             console.log(`[MP Webhook] ℹ️ No se encontró contacto (normal en flujo de carrito)`);
           }
         } else {
-          console.log(`[MP Webhook] ⚠️ No se encontró carrito, teléfono o empresaId`);
+          console.log(`[MP Webhook] ⚠️ No se encontró carrito o no tiene teléfono`);
+          if (carrito) {
+            console.log(`[MP Webhook] Carrito encontrado pero sin teléfono: ${JSON.stringify(carrito)}`);
+          }
         }
       }
     }
