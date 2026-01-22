@@ -1833,7 +1833,12 @@ function FlowBuilderContent() {
                 <Redo size={16} />
               </ControlButton>
             </Controls>
-            <Background variant={BackgroundVariant.Dots} gap={20} size={1} color="#e5e7eb" />
+            <Background 
+              variant={BackgroundVariant.Dots} 
+              gap={24} 
+              size={0.5} 
+              color="rgba(0, 0, 0, 0.04)"
+            />
           </ReactFlow>
         </div>
 

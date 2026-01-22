@@ -855,6 +855,86 @@ const GPTConfigPanel: React.FC<GPTConfigPanelProps> = ({ config, onChange, globa
                 ⚠️ No hay variables globales disponibles. Agrega variables desde el botón de Variables en la barra superior.
               </div>
             )}
+
+            {/* NUEVA SECCIÓN: Variables Globales a Actualizar */}
+            <div className={styles.sectionHeader} style={{ marginTop: '32px' }}>
+              <h3>📤 Variables Globales a Actualizar</h3>
+              <div className={styles.infoBox}>
+                <Info size={16} />
+                <span>Selecciona qué variables globales este nodo actualizará después de ejecutarse</span>
+              </div>
+            </div>
+
+            {Object.keys(globalVariables).length > 0 ? (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                {Object.keys(globalVariables).map((varName) => {
+                  const estaSeleccionada = config.globalVariablesOutput?.includes(varName) || false;
+                  
+                  return (
+                    <div
+                      key={`output-${varName}`}
+                      style={{
+                        padding: '12px',
+                        background: estaSeleccionada ? '#eff6ff' : 'white',
+                        border: `2px solid ${estaSeleccionada ? '#3b82f6' : '#e5e7eb'}`,
+                        borderRadius: '6px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '12px',
+                        cursor: 'pointer',
+                        transition: 'all 0.2s'
+                      }}
+                      onClick={() => {
+                        const current = config.globalVariablesOutput || [];
+                        const newOutput = estaSeleccionada
+                          ? current.filter(v => v !== varName)
+                          : [...current, varName];
+                        onChange({ ...config, globalVariablesOutput: newOutput });
+                      }}
+                    >
+                      <input
+                        type="checkbox"
+                        checked={estaSeleccionada}
+                        onChange={() => {}} // Manejado por el onClick del div
+                        style={{
+                          width: '18px',
+                          height: '18px',
+                          cursor: 'pointer',
+                          accentColor: '#3b82f6'
+                        }}
+                      />
+                      <code style={{
+                        flex: 1,
+                        background: estaSeleccionada ? '#dbeafe' : '#f3f4f6',
+                        padding: '6px 12px',
+                        borderRadius: '4px',
+                        fontSize: '13px',
+                        fontWeight: '600',
+                        color: estaSeleccionada ? '#1e40af' : '#6b7280'
+                      }}>
+                        {varName}
+                      </code>
+                      {estaSeleccionada && (
+                        <span style={{ fontSize: '12px', color: '#3b82f6', fontWeight: '600' }}>
+                          ✓ Se actualizará
+                        </span>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            ) : (
+              <div style={{
+                padding: '16px',
+                background: '#fef3c7',
+                border: '2px solid #fbbf24',
+                borderRadius: '8px',
+                fontSize: '13px',
+                color: '#92400e'
+              }}>
+                ⚠️ No hay variables globales disponibles.
+              </div>
+            )}
             
             <div className={styles.sectionHeader} style={{ marginTop: '32px' }}>
               <h3>Variables a Recopilar del Usuario</h3>
