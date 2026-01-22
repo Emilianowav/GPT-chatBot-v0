@@ -19,6 +19,8 @@ type ResultadoChat = {
 
 const costosPorModelo: Record<string, { prompt: number; completion: number }> = {
   "gpt-4": { prompt: 0.03 / 1000, completion: 0.06 / 1000 },
+  "gpt-4o": { prompt: 0.005 / 1000, completion: 0.015 / 1000 },
+  "gpt-4o-mini": { prompt: 0.00015 / 1000, completion: 0.0006 / 1000 },
   "gpt-3.5-turbo": { prompt: 0.0015 / 1000, completion: 0.0015 / 1000 },
 };
 

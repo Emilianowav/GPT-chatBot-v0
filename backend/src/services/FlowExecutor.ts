@@ -1278,7 +1278,7 @@ export class FlowExecutor {
             // CRÍTICO: Formatear productos en texto legible para GPT
             // GPT no interpreta bien JSON crudo, necesita texto formateado
             const productosFormateados = productosSimplificados.map((p: any, i: number) => 
-              `${i + 1}. ${p.titulo}\n   💰 Precio: $${p.precio}\n   📦 Stock: ${p.stock}`
+              `${i + 1}. ${p.titulo}\n   💰 Precio: $${p.precio}\n   📦 Stock: ${p.stock}\n   🔗 Link: ${p.url}`
             ).join('\n\n');
             
             this.setGlobalVariable('productos_formateados', productosFormateados);

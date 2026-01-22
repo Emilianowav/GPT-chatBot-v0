@@ -270,24 +270,24 @@ export async function executeMercadoPagoNode(
     if (carrito.items.length === 0) {
       console.log('   📦 Carrito vacío en BD, intentando crear desde globalVariables...');
       
-      let productosCarrito = context.resolveVariableInString('{{productos_carrito}}');
-      const total = context.resolveVariableInString('{{total}}');
+      let productosCarrito = context.resolveVariableInString('{{carrito_items}}');
+      const total = context.resolveVariableInString('{{carrito_total}}');
       
-      console.log(`   productos_carrito (raw): ${JSON.stringify(productosCarrito)?.substring(0, 200)}`);
-      console.log(`   productos_carrito type: ${typeof productosCarrito}`);
-      console.log(`   total: ${total}`);
+      console.log(`   carrito_items (raw): ${JSON.stringify(productosCarrito)?.substring(0, 200)}`);
+      console.log(`   carrito_items type: ${typeof productosCarrito}`);
+      console.log(`   carrito_total: ${total}`);
       
       // Si es string, parsear a array
       if (typeof productosCarrito === 'string') {
         try {
           productosCarrito = JSON.parse(productosCarrito);
-          console.log(`   ✅ productos_carrito parseado a array`);
+          console.log(`   ✅ carrito_items parseado a array`);
         } catch (e) {
-          console.log(`   ❌ Error parseando productos_carrito: ${e}`);
+          console.log(`   ❌ Error parseando carrito_items: ${e}`);
         }
       }
       
-      console.log(`   productos_carrito (parsed): ${JSON.stringify(productosCarrito)?.substring(0, 200)}`);
+      console.log(`   carrito_items (parsed): ${JSON.stringify(productosCarrito)?.substring(0, 200)}`);
       console.log(`   Array.isArray: ${Array.isArray(productosCarrito)}`);
       console.log(`   length: ${productosCarrito?.length}`);
       
