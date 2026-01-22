@@ -270,24 +270,25 @@ export async function executeMercadoPagoNode(
     if (carrito.items.length === 0) {
       console.log('   📦 Carrito vacío en BD, intentando crear desde globalVariables...');
       
-      let productosCarrito = context.resolveVariableInString('{{carrito_items}}');
-      const total = context.resolveVariableInString('{{carrito_total}}');
+      // Intentar obtener carrito.productos y carrito.total
+      let productosCarrito = context.resolveVariableInString('{{carrito.productos}}');
+      const total = context.resolveVariableInString('{{carrito.total}}');
       
-      console.log(`   carrito_items (raw): ${JSON.stringify(productosCarrito)?.substring(0, 200)}`);
-      console.log(`   carrito_items type: ${typeof productosCarrito}`);
-      console.log(`   carrito_total: ${total}`);
+      console.log(`   carrito.productos (raw): ${JSON.stringify(productosCarrito)?.substring(0, 200)}`);
+      console.log(`   carrito.productos type: ${typeof productosCarrito}`);
+      console.log(`   carrito.total: ${total}`);
       
       // Si es string, parsear a array
       if (typeof productosCarrito === 'string') {
         try {
           productosCarrito = JSON.parse(productosCarrito);
-          console.log(`   ✅ carrito_items parseado a array`);
+          console.log(`   ✅ carrito.productos parseado a array`);
         } catch (e) {
-          console.log(`   ❌ Error parseando carrito_items: ${e}`);
+          console.log(`   ❌ Error parseando carrito.productos: ${e}`);
         }
       }
       
-      console.log(`   carrito_items (parsed): ${JSON.stringify(productosCarrito)?.substring(0, 200)}`);
+      console.log(`   carrito.productos (parsed): ${JSON.stringify(productosCarrito)?.substring(0, 200)}`);
       console.log(`   Array.isArray: ${Array.isArray(productosCarrito)}`);
       console.log(`   length: ${productosCarrito?.length}`);
       
@@ -323,11 +324,12 @@ export async function executeMercadoPagoNode(
         
         console.log(`   ✅ Carrito creado en BD con ${carrito.items.length} items`);
       } else {
-        console.log('   ❌ No hay productos en globalVariables');
+        console.log('   ❌ No hay productos en carrito.productos');
+        console.log('   💡 Verifica que gpt-armar-carrito esté generando el objeto carrito correctamente');
         return {
           output: {
             success: false,
-            error: 'El carrito está vacío'
+            error: 'El carrito está vacío. Verifica que el objeto carrito se haya generado correctamente.'
           }
         };
       }
