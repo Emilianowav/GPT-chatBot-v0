@@ -50,11 +50,13 @@ export const guardarConfiguracion = async (req: Request, res: Response) => {
     );
 
     // 🔍 LOG: Ver qué se guardó
+    const configObj = configuracion.toObject();
     console.log('✅ [GUARDAR CONFIG] Guardado en BD:');
-    console.log('   - Objeto completo programacion:', JSON.stringify(configuracion.plantillasMeta?.notificacionDiariaAgentes?.programacion, null, 2));
-    console.log('   - anticipacion:', configuracion.plantillasMeta?.notificacionDiariaAgentes?.programacion?.anticipacion);
-    console.log('   - diasSemana:', configuracion.plantillasMeta?.notificacionDiariaAgentes?.programacion?.diasSemana);
-    console.log('   - horaEnvio:', configuracion.plantillasMeta?.notificacionDiariaAgentes?.programacion?.horaEnvio);
+    console.log('   - Objeto completo programacion:', JSON.stringify(configObj.plantillasMeta?.notificacionDiariaAgentes?.programacion, null, 2));
+    console.log('   - anticipacion (toObject):', configObj.plantillasMeta?.notificacionDiariaAgentes?.programacion?.anticipacion);
+    console.log('   - anticipacion (directo):', configuracion.plantillasMeta?.notificacionDiariaAgentes?.programacion?.anticipacion);
+    console.log('   - diasSemana:', configObj.plantillasMeta?.notificacionDiariaAgentes?.programacion?.diasSemana);
+    console.log('   - horaEnvio:', configObj.plantillasMeta?.notificacionDiariaAgentes?.programacion?.horaEnvio);
 
     res.json({
       success: true,
