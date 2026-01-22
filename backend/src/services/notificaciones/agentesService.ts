@@ -50,6 +50,22 @@ export async function procesarNotificacionesDiariasAgentes() {
           const diferenciaMinutos = Math.abs((horaActual * 60 + minutoActual) - (horaConfig * 60 + minutoConfig));
           console.log(`         Diferencia minutos: ${diferenciaMinutos}`);
           
+          // ✅ Verificar día de la semana si está configurado
+          const diasSemana = programacion.diasSemana;
+          const diaActualSemana = ahoraArgentina.getDay(); // 0=Domingo, 1=Lunes, ..., 6=Sábado
+          
+          if (diasSemana && Array.isArray(diasSemana) && diasSemana.length > 0) {
+            const esDiaPermitido = diasSemana.includes(diaActualSemana);
+            console.log(`         Día actual: ${diaActualSemana} (${['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'][diaActualSemana]})`);
+            console.log(`         Días permitidos: ${diasSemana.map(d => ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'][d]).join(', ')}`);
+            console.log(`         Es día permitido: ${esDiaPermitido}`);
+            
+            if (!esDiaPermitido) {
+              console.log(`         ⏭️ Saltando envío - hoy no es un día configurado`);
+              continue;
+            }
+          }
+          
           // ✅ Verificar que no se haya enviado recientemente (últimos 5 minutos)
           const ultimoEnvio = notifConfig.ultimoEnvio;
           let minutosDesdUltimoEnvio = 999;

@@ -31,7 +31,8 @@ export default function ModalConfiguracionFlujo({
     estados: ['pendiente'],
     mensaje: '',
     mensajeConfirmacion: '✅ ¡Perfecto! Todos tus viajes han sido confirmados.\n\n¡Nos vemos pronto! 🚗',
-    mensajeFinal: '✅ ¡Perfecto! Tus cambios han sido guardados. Te esperamos mañana.'
+    mensajeFinal: '✅ ¡Perfecto! Tus cambios han sido guardados. Te esperamos mañana.',
+    diasSemana: [1, 2, 3, 4, 5] // Lunes a Viernes por defecto
   });
 
   // Reset al abrir
@@ -44,7 +45,8 @@ export default function ModalConfiguracionFlujo({
         estados: flujo.config?.estados ?? ['pendiente'],
         mensaje: flujo.config?.mensaje ?? '',
         mensajeConfirmacion: flujo.config?.mensajeConfirmacion ?? '✅ ¡Perfecto! Todos tus viajes han sido confirmados.\n\n¡Nos vemos pronto! 🚗',
-        mensajeFinal: flujo.config?.mensajeFinal ?? '✅ ¡Perfecto! Tus cambios han sido guardados. Te esperamos mañana.'
+        mensajeFinal: flujo.config?.mensajeFinal ?? '✅ ¡Perfecto! Tus cambios han sido guardados. Te esperamos mañana.',
+        diasSemana: flujo.config?.diasSemana ?? [1, 2, 3, 4, 5]
       });
       setPaso(1);
       setError(null);
@@ -154,6 +156,15 @@ export default function ModalConfiguracionFlujo({
     }));
   };
 
+  const toggleDiaSemana = (dia: number) => {
+    setConfig(prev => ({
+      ...prev,
+      diasSemana: prev.diasSemana.includes(dia)
+        ? prev.diasSemana.filter(d => d !== dia)
+        : [...prev.diasSemana, dia].sort()
+    }));
+  };
+
   if (!isOpen || !flujo) return null;
 
   return (
@@ -228,30 +239,32 @@ export default function ModalConfiguracionFlujo({
               </div>
 
               <div className={styles.fieldGroup}>
-                <div className={styles.field} style={{ flex: 1 }}>
-                  <label>
-                    <Clock size={16} />
-                    Días de Anticipación *
-                  </label>
-                  <select
-                    value={config.anticipacion}
-                    onChange={(e) => setConfig({ ...config, anticipacion: parseInt(e.target.value) })}
-                    required
-                    style={{ 
-                      backgroundColor: 'var(--momento-black, #1A1A1A)',
-                      color: 'var(--momento-white, #FFFFFF)',
-                      border: '2px solid rgba(255, 255, 255, 0.1)'
-                    }}
-                  >
-                    <option value="1">1 día antes</option>
-                    <option value="2">2 días antes</option>
-                    <option value="3">3 días antes</option>
-                    <option value="7">1 semana antes</option>
-                  </select>
-                  <small>Cuántos días antes del turno</small>
-                </div>
+                {flujo.id !== 'notificacion_diaria_agentes' && (
+                  <div className={styles.field} style={{ flex: 1 }}>
+                    <label>
+                      <Clock size={16} />
+                      Días de Anticipación *
+                    </label>
+                    <select
+                      value={config.anticipacion}
+                      onChange={(e) => setConfig({ ...config, anticipacion: parseInt(e.target.value) })}
+                      required
+                      style={{ 
+                        backgroundColor: 'var(--momento-black, #1A1A1A)',
+                        color: 'var(--momento-white, #FFFFFF)',
+                        border: '2px solid rgba(255, 255, 255, 0.1)'
+                      }}
+                    >
+                      <option value="1">1 día antes</option>
+                      <option value="2">2 días antes</option>
+                      <option value="3">3 días antes</option>
+                      <option value="7">1 semana antes</option>
+                    </select>
+                    <small>Cuántos días antes del turno</small>
+                  </div>
+                )}
 
-                <div className={styles.field} style={{ flex: 1 }}>
+                <div className={styles.field} style={{ flex: flujo.id === 'notificacion_diaria_agentes' ? 'auto' : 1 }}>
                   <label>
                     <Clock size={16} />
                     Hora de Envío *
@@ -267,9 +280,39 @@ export default function ModalConfiguracionFlujo({
                       border: '2px solid rgba(255, 255, 255, 0.1)'
                     }}
                   />
-                  <small>Hora específica del día (ej: 22:00)</small>
+                  <small>Hora específica del día (ej: {flujo.id === 'notificacion_diaria_agentes' ? '07:00' : '22:00'})</small>
                 </div>
               </div>
+
+              {flujo.id === 'notificacion_diaria_agentes' && (
+                <div className={styles.field}>
+                  <label>
+                    <CheckCircle size={16} />
+                    Días de la Semana *
+                  </label>
+                  <div className={styles.checkboxGroup} style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(120px, 1fr))', gap: '0.5rem' }}>
+                    {[
+                      { num: 1, nombre: 'Lunes' },
+                      { num: 2, nombre: 'Martes' },
+                      { num: 3, nombre: 'Miércoles' },
+                      { num: 4, nombre: 'Jueves' },
+                      { num: 5, nombre: 'Viernes' },
+                      { num: 6, nombre: 'Sábado' },
+                      { num: 0, nombre: 'Domingo' }
+                    ].map(dia => (
+                      <label key={dia.num} className={styles.checkboxLabel}>
+                        <input
+                          type="checkbox"
+                          checked={config.diasSemana.includes(dia.num)}
+                          onChange={() => toggleDiaSemana(dia.num)}
+                        />
+                        <span>{dia.nombre}</span>
+                      </label>
+                    ))}
+                  </div>
+                  <small>Selecciona los días en los que se enviarán las notificaciones</small>
+                </div>
+              )}
 
               <div className={styles.infoBox} style={{
                 backgroundColor: 'rgba(255, 107, 74, 0.1)',
@@ -279,8 +322,9 @@ export default function ModalConfiguracionFlujo({
                 marginBottom: '1.5rem'
               }}>
                 <p style={{ margin: 0, fontSize: '0.9rem', color: 'var(--momento-white, #FFFFFF)' }}>
-                  📅 <strong>Ejemplo:</strong> Si seleccionas "1 día antes" a las "22:00", las notificaciones se enviarán 
-                  todos los días a las 22:00 para los turnos del día siguiente.
+                  📅 <strong>Ejemplo:</strong> {flujo.id === 'notificacion_diaria_agentes' 
+                    ? 'Si seleccionas "07:00" y días laborales (Lun-Vie), las notificaciones se enviarán de lunes a viernes a las 7:00 AM con las reservas del día.'
+                    : 'Si seleccionas "1 día antes" a las "22:00", las notificaciones se enviarán todos los días a las 22:00 para los turnos del día siguiente.'}
                 </p>
               </div>
 

@@ -360,6 +360,7 @@ export interface IConfiguracionModulo extends Document {
         horaEnvio?: string;
         minutosAntes?: number;
         frecuencia: string;
+        diasSemana?: number[];
         rangoHorario: string;
         filtroEstado: string[];
         incluirDetalles?: {
@@ -768,6 +769,7 @@ const PlantillasMetaSchema = new Schema(
         horaEnvio: String,
         minutosAntes: Number,
         frecuencia: String,
+        diasSemana: [Number],
         rangoHorario: String,
         filtroEstado: [String],
         incluirDetalles: {
