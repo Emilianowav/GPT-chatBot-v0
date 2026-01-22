@@ -129,6 +129,7 @@ export interface NotificacionAutomatica {
 export interface NotificacionDiariaAgentes {
   activa: boolean;
   horaEnvio: string;          // "06:00" - hora del resumen diario
+  anticipacion?: number;      // 0 = mismo día, 1 = 1 día antes, etc.
   enviarATodos: boolean;      // true = todos los agentes, false = solo agentes con turnos
   plantillaMensaje: string;   // Plantilla del mensaje de resumen
   
@@ -359,6 +360,7 @@ export interface IConfiguracionModulo extends Document {
         metodoVerificacion: 'hora_fija' | 'inicio_jornada_agente';
         horaEnvio?: string;
         minutosAntes?: number;
+        anticipacion?: number;
         frecuencia: string;
         diasSemana?: number[];
         rangoHorario: string;
@@ -579,6 +581,10 @@ const NotificacionDiariaAgentesSchema = new Schema<NotificacionDiariaAgentes>(
     horaEnvio: {
       type: String,
       default: '06:00'
+    },
+    anticipacion: {
+      type: Number,
+      default: 0
     },
     enviarATodos: {
       type: Boolean,
