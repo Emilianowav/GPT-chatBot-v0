@@ -721,14 +721,13 @@ export class FlowExecutor {
     // DEBUG: Verificar condición de extracción
     console.log(`\n🔍 [DEBUG] Verificando condición de extracción:`);
     console.log(`   config.tipo === 'formateador': ${config.tipo === 'formateador'}`);
-    console.log(`   config.outputFormat === 'structured': ${config.outputFormat === 'structured'}`);
     console.log(`   config.extractionConfig existe: ${!!config.extractionConfig}`);
-    console.log(`   config.extractionConfig?.systemPrompt existe: ${!!config.extractionConfig?.systemPrompt}`);
     console.log(`   config.extractionConfig?.enabled: ${config.extractionConfig?.enabled}`);
-    console.log(`   Condición completa: ${(config.tipo === 'formateador' || config.outputFormat === 'structured') && config.extractionConfig?.enabled && config.extractionConfig?.systemPrompt}`);
+    console.log(`   config.extractionConfig?.systemPrompt existe: ${!!config.extractionConfig?.systemPrompt}`);
+    console.log(`   Condición completa: ${(config.tipo === 'formateador' || config.extractionConfig?.enabled) && config.extractionConfig?.systemPrompt}`);
 
-    // Procesar extracción de datos si es formateador O si tiene outputFormat: 'structured' con extractionConfig
-    if ((config.tipo === 'formateador' || config.outputFormat === 'structured') && config.extractionConfig?.enabled && config.extractionConfig?.systemPrompt) {
+    // Procesar extracción de datos si es formateador O si extractionConfig está habilitado
+    if ((config.tipo === 'formateador' || config.extractionConfig?.enabled) && config.extractionConfig?.systemPrompt) {
       console.log('   🔧 Usando extractionConfig del frontend');
       
       // Determinar fuente de datos
