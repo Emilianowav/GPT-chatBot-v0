@@ -402,6 +402,39 @@ export default function AdministradorFlujosPage() {
         if (!getResponse.ok) {
           throw new Error('Error al obtener configuración actual');
         }
+        
+        const { configuracion: configActual } = await getResponse.json();
+        
+        // ✅ Construir configuración actualizada con anticipacion y diasSemana
+        const configActualizada = {
+          ...configActual,
+          plantillasMeta: {
+            ...configActual.plantillasMeta,
+            notificacionDiariaAgentes: {
+              ...configActual.plantillasMeta?.notificacionDiariaAgentes,
+              activa: config.activo,
+              programacion: {
+                ...configActual.plantillasMeta?.notificacionDiariaAgentes?.programacion,
+                metodoVerificacion: 'hora_fija',
+                horaEnvio: config.horaEnvio,
+                anticipacion: config.anticipacion ?? 0,
+                frecuencia: 'diaria',
+                diasSemana: config.frecuencia?.diasSemana || config.diasSemana || [1, 2, 3, 4, 5],
+                rangoHorario: 'hoy',
+                filtroEstado: ['pendiente', 'confirmado']
+              },
+              incluirDetalles: config.incluirDetalles || {
+                origen: true,
+                destino: true,
+                pasajeros: true,
+                hora: true
+              }
+            }
+          }
+        };
+        
+        console.log('💾 [Agentes] Guardando configuración:', configActualizada.plantillasMeta.notificacionDiariaAgentes);
+        
         const response = await fetch(`${apiUrl}/api/modules/calendar/configuracion/${empresaId}`, {
           method: 'PUT',
           headers: {
