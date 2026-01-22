@@ -38,6 +38,7 @@ export default function ModalTurno({ isOpen, onClose, onSubmit }: ModalTurnoProp
   
   const [clienteSeleccionado, setClienteSeleccionado] = useState<Cliente | null>(null);
   const [agenteSeleccionado, setAgenteSeleccionado] = useState<calendarApi.Agente | null>(null);
+  const [agentesAsignadosIds, setAgentesAsignadosIds] = useState<string[]>([]);
   const [slotsDisponibles, setSlotsDisponibles] = useState<any[]>([]);
   const [loadingSlots, setLoadingSlots] = useState(false);
   
@@ -59,6 +60,7 @@ export default function ModalTurno({ isOpen, onClose, onSubmit }: ModalTurnoProp
       });
       setClienteSeleccionado(null);
       setAgenteSeleccionado(null);
+      setAgentesAsignadosIds([]);
       setSlotsDisponibles([]);
       setPaso(1);
       setError(null);
@@ -433,6 +435,25 @@ export default function ModalTurno({ isOpen, onClose, onSubmit }: ModalTurnoProp
                   onSelect={(cliente) => {
                     setClienteSeleccionado(cliente);
                     setFormData(prev => ({ ...prev, clienteId: cliente?._id || '' }));
+                    
+                    // Guardar IDs de agentes asignados para destacarlos
+                    if (cliente?.agentesAsignados && cliente.agentesAsignados.length > 0) {
+                      setAgentesAsignadosIds(cliente.agentesAsignados);
+                      console.log('✅ Cliente tiene agentes asignados:', cliente.agentesAsignados);
+                      
+                      // Si solo tiene un agente asignado, seleccionarlo automáticamente
+                      if (cliente.agentesAsignados.length === 1) {
+                        const agenteId = cliente.agentesAsignados[0];
+                        const agente = agentes.find(a => a._id === agenteId);
+                        if (agente) {
+                          setAgenteSeleccionado(agente);
+                          setFormData(prev => ({ ...prev, agenteId }));
+                          console.log('🎯 Agente seleccionado automáticamente:', agente.nombre);
+                        }
+                      }
+                    } else {
+                      setAgentesAsignadosIds([]);
+                    }
                   }}
                   clienteSeleccionado={clienteSeleccionado}
                   placeholder="Buscar cliente por nombre, teléfono o email..."
