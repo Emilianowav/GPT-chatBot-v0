@@ -23,6 +23,7 @@ export default function ModalConfiguracionAgentes({
   
   const [config, setConfig] = useState({
     activo: true,
+    anticipacion: 0,
     horaEnvio: '06:00',
     enviarATodos: false,
     mensaje: 'Buenos días {agente}! 🌅\nEstos son tus {turnos} de hoy:',
@@ -45,6 +46,7 @@ export default function ModalConfiguracionAgentes({
     if (isOpen && flujo) {
       setConfig({
         activo: flujo.activo ?? true,
+        anticipacion: flujo.config?.anticipacion ?? 0,
         horaEnvio: flujo.config?.horaEnvio ?? '06:00',
         enviarATodos: flujo.config?.enviarATodos ?? false,
         mensaje: flujo.config?.mensaje ?? 'Buenos días {agente}! 🌅\nEstos son tus {turnos} de hoy:',
@@ -233,23 +235,49 @@ export default function ModalConfiguracionAgentes({
                 <small>Cuando está inactivo, no se enviarán recordatorios diarios</small>
               </div>
 
-              <div className={styles.field}>
-                <label>
-                  <Clock size={16} />
-                  Hora de Envío *
-                </label>
-                <input
-                  type="time"
-                  value={config.horaEnvio}
-                  onChange={(e) => setConfig({ ...config, horaEnvio: e.target.value })}
-                  required
-                  style={{ 
-                    backgroundColor: 'var(--momento-black, #1A1A1A)',
-                    color: 'var(--momento-white, #FFFFFF)',
-                    border: '2px solid rgba(255, 255, 255, 0.1)'
-                  }}
-                />
-                <small>Hora en que se enviará el recordatorio (ej: 06:00 al inicio del día)</small>
+              <div className={styles.fieldGroup}>
+                <div className={styles.field} style={{ flex: 1 }}>
+                  <label>
+                    <Clock size={16} />
+                    Anticipación de Envío *
+                  </label>
+                  <select
+                    value={config.anticipacion}
+                    onChange={(e) => setConfig({ ...config, anticipacion: parseInt(e.target.value) })}
+                    required
+                    style={{ 
+                      backgroundColor: 'var(--momento-black, #1A1A1A)',
+                      color: 'var(--momento-white, #FFFFFF)',
+                      border: '2px solid rgba(255, 255, 255, 0.1)'
+                    }}
+                  >
+                    <option value="0">Mismo día</option>
+                    <option value="1">1 día antes</option>
+                    <option value="2">2 días antes</option>
+                    <option value="3">3 días antes</option>
+                    <option value="7">1 semana antes</option>
+                  </select>
+                  <small>Cuándo enviar el recordatorio (mismo día o días antes)</small>
+                </div>
+
+                <div className={styles.field} style={{ flex: 1 }}>
+                  <label>
+                    <Clock size={16} />
+                    Hora de Envío *
+                  </label>
+                  <input
+                    type="time"
+                    value={config.horaEnvio}
+                    onChange={(e) => setConfig({ ...config, horaEnvio: e.target.value })}
+                    required
+                    style={{ 
+                      backgroundColor: 'var(--momento-black, #1A1A1A)',
+                      color: 'var(--momento-white, #FFFFFF)',
+                      border: '2px solid rgba(255, 255, 255, 0.1)'
+                    }}
+                  />
+                  <small>Hora en que se enviará el recordatorio (ej: 06:00 al inicio del día)</small>
+                </div>
               </div>
 
               <div className={styles.field}>
@@ -277,24 +305,22 @@ export default function ModalConfiguracionAgentes({
                 </select>
               </div>
 
-              {config.frecuencia.tipo === 'semanal' && (
-                <div className={styles.field}>
-                  <label>Días de la Semana</label>
-                  <div className={styles.checkboxGroup}>
-                    {diasSemana.map(dia => (
-                      <label key={dia.id} className={styles.checkboxLabel}>
-                        <input
-                          type="checkbox"
-                          checked={config.frecuencia.diasSemana.includes(dia.id)}
-                          onChange={() => toggleDiaSemana(dia.id)}
-                        />
-                        <span>{dia.nombre}</span>
-                      </label>
-                    ))}
-                  </div>
-                  <small>Selecciona los días en que se enviará el recordatorio</small>
+              <div className={styles.field}>
+                <label>Días de la Semana</label>
+                <div className={styles.checkboxGroup}>
+                  {diasSemana.map(dia => (
+                    <label key={dia.id} className={styles.checkboxLabel}>
+                      <input
+                        type="checkbox"
+                        checked={config.frecuencia.diasSemana.includes(dia.id)}
+                        onChange={() => toggleDiaSemana(dia.id)}
+                      />
+                      <span>{dia.nombre}</span>
+                    </label>
+                  ))}
                 </div>
-              )}
+                <small>Selecciona los días en que se enviará el recordatorio</small>
+              </div>
 
               <div className={styles.field}>
                 <label className={styles.toggleLabel}>
