@@ -155,6 +155,7 @@ export default function AdministradorFlujosPage() {
         idioma: notificacionDiariaAgentes?.idioma || 'es',
         horaEnvio: notificacionDiariaAgentes?.programacion?.horaEnvio || '06:00',
         frecuencia: notificacionDiariaAgentes?.programacion?.frecuencia || 'diaria',
+        diasSemana: notificacionDiariaAgentes?.programacion?.diasSemana || [1, 2, 3, 4, 5],
         rangoHorario: notificacionDiariaAgentes?.programacion?.rangoHorario || 'hoy',
         estados: notificacionDiariaAgentes?.programacion?.filtroEstado || ['pendiente', 'confirmado'],
         incluirDetalles: notificacionDiariaAgentes?.programacion?.incluirDetalles || {
@@ -764,8 +765,10 @@ export default function AdministradorFlujosPage() {
                             activo: flujo.activo,
                             mensaje: flujo.config.mensaje,
                             anticipacion: flujo.config.anticipacion,
+                            horaEnvio: flujo.config.horaEnvio,
                             solicitarConfirmacion: flujo.config.solicitarConfirmacion,
-                            estados: flujo.config.estados
+                            estados: flujo.config.estados,
+                            diasSemana: flujo.config.diasSemana || [1, 2, 3, 4, 5]
                           });
                         }}
                         className={styles.btnEditar}
