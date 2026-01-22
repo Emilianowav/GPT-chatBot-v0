@@ -44,13 +44,17 @@ export default function ModalConfiguracionAgentes({
   // Reset al abrir
   useEffect(() => {
     if (isOpen && flujo) {
+      const frecuenciaConfig = flujo.config?.frecuencia || {};
       setConfig({
         activo: flujo.activo ?? true,
         anticipacion: flujo.config?.anticipacion ?? 0,
         horaEnvio: flujo.config?.horaEnvio ?? '06:00',
         enviarATodos: flujo.config?.enviarATodos ?? false,
         mensaje: flujo.config?.mensaje ?? 'Buenos días {agente}! 🌅\nEstos son tus {turnos} de hoy:',
-        frecuencia: flujo.config?.frecuencia ?? { tipo: 'diaria', diasSemana: [1, 2, 3, 4, 5] },
+        frecuencia: {
+          tipo: frecuenciaConfig.tipo || 'diaria',
+          diasSemana: frecuenciaConfig.diasSemana || flujo.config?.diasSemana || [1, 2, 3, 4, 5]
+        },
         incluirDetalles: flujo.config?.incluirDetalles ?? {
           origen: true,
           destino: true,
@@ -312,7 +316,7 @@ export default function ModalConfiguracionAgentes({
                     <label key={dia.id} className={styles.checkboxLabel}>
                       <input
                         type="checkbox"
-                        checked={config.frecuencia.diasSemana.includes(dia.id)}
+                        checked={config.frecuencia?.diasSemana?.includes(dia.id) ?? false}
                         onChange={() => toggleDiaSemana(dia.id)}
                       />
                       <span>{dia.nombre}</span>
