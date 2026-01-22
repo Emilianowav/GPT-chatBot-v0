@@ -1,7 +1,7 @@
 import mongoose, { Schema, Document } from 'mongoose';
 
 export interface ICarritoItem {
-  productoId: number;
+  productoId: string;
   nombre: string;
   precio: string;
   cantidad: number;
@@ -24,7 +24,7 @@ export interface ICarrito extends Document {
 }
 
 const CarritoItemSchema = new Schema<ICarritoItem>({
-  productoId: { type: Number, required: true },
+  productoId: { type: String, required: true },
   nombre: { type: String, required: true },
   precio: { type: String, required: true },
   cantidad: { type: Number, required: true, default: 1 },

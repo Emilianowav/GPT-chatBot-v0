@@ -41,7 +41,7 @@ export class CarritoService {
     contactoId: mongoose.Types.ObjectId,
     empresaId: string,
     producto: {
-      id: number;
+      id: string;
       name: string;
       price: string;
       cantidad?: number;
@@ -89,7 +89,7 @@ export class CarritoService {
   static async eliminarProducto(
     contactoId: mongoose.Types.ObjectId,
     empresaId: string,
-    productoId: number
+    productoId: string
   ): Promise<ICarrito> {
     const carrito = await this.obtenerCarritoActivo(contactoId, empresaId);
     
@@ -106,7 +106,7 @@ export class CarritoService {
   static async actualizarCantidad(
     contactoId: mongoose.Types.ObjectId,
     empresaId: string,
-    productoId: number,
+    productoId: string,
     cantidad: number
   ): Promise<ICarrito> {
     const carrito = await this.obtenerCarritoActivo(contactoId, empresaId);
