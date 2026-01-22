@@ -478,7 +478,7 @@ export default function ModalConfiguracionFlujo({
                         <strong>Estado:</strong> {config.activo ? '🟢 Activo' : '🔴 Inactivo'}
                       </li>
                       <li style={{ padding: '0.75rem', backgroundColor: 'rgba(255, 255, 255, 0.05)', borderRadius: '6px', marginBottom: '0.5rem' }}>
-                        <strong>Anticipación:</strong> {config.anticipacion} día(s) antes
+                        <strong>Anticipación:</strong> {config.anticipacion === 0 ? 'Mismo día' : `${config.anticipacion} día(s) antes`}
                       </li>
                       <li style={{ padding: '0.75rem', backgroundColor: 'rgba(255, 255, 255, 0.05)', borderRadius: '6px', marginBottom: '0.5rem' }}>
                         <strong>Hora de envío:</strong> {config.horaEnvio}
@@ -489,6 +489,11 @@ export default function ModalConfiguracionFlujo({
                       <li style={{ padding: '0.75rem', backgroundColor: 'rgba(255, 255, 255, 0.05)', borderRadius: '6px' }}>
                         <strong>Estados notificados:</strong> {config.estados.join(', ')}
                       </li>
+                      {flujo.id === 'notificacion_diaria_agentes' && config.diasSemana && (
+                        <li style={{ padding: '0.75rem', backgroundColor: 'rgba(255, 255, 255, 0.05)', borderRadius: '6px', marginTop: '0.5rem' }}>
+                          <strong>Días:</strong> {config.diasSemana.map(d => ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'][d]).join(', ')}
+                        </li>
+                      )}
                     </ul>
                   </div>
 
