@@ -1690,8 +1690,48 @@ export class FlowExecutor {
     console.log(`         ⚠️  No encontrado en globalVariables`);
     console.log(`         📋 globalVariables actuales: ${JSON.stringify(Object.keys(this.globalVariables))}`);
 
-    // Si no está en globalVariables, buscar en contexto de nodos
+    // Si no está en globalVariables, intentar buscar propiedades anidadas
+    // Ejemplo: "carrito.productos" → buscar "carrito" en globalVariables y acceder a .productos
     const parts = varPath.split('.');
+    if (parts.length > 1) {
+      const baseVar = parts[0];
+      const baseValue = this.getGlobalVariable(baseVar);
+      
+      if (baseValue !== undefined && baseValue !== null) {
+        console.log(`         ✅ Variable base "${baseVar}" encontrada en globalVariables`);
+        console.log(`         → Tipo: ${typeof baseValue}`);
+        
+        // Navegar por las propiedades anidadas
+        let value = baseValue;
+        for (let i = 1; i < parts.length; i++) {
+          const prop = parts[i];
+          
+          // Si es string, intentar parsear como JSON
+          if (typeof value === 'string') {
+            try {
+              value = JSON.parse(value);
+              console.log(`         → Parseado como JSON`);
+            } catch (e) {
+              console.log(`         ❌ No se pudo parsear como JSON`);
+              return undefined;
+            }
+          }
+          
+          if (value && typeof value === 'object' && prop in value) {
+            value = value[prop];
+            console.log(`         → Accediendo a .${prop}: ${JSON.stringify(value)?.substring(0, 100)}`);
+          } else {
+            console.log(`         ❌ Propiedad "${prop}" no encontrada en ${baseVar}`);
+            return undefined;
+          }
+        }
+        
+        console.log(`         ✅ Valor final de ${varPath}: ${JSON.stringify(value)?.substring(0, 100)}`);
+        return value;
+      }
+    }
+
+    // Si no está en globalVariables, buscar en contexto de nodos
     const nodeId = parts[0];
     const path = parts.slice(1);
 
