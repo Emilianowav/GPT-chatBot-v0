@@ -239,32 +239,37 @@ export default function ModalConfiguracionFlujo({
               </div>
 
               <div className={styles.fieldGroup}>
-                {flujo.id !== 'notificacion_diaria_agentes' && (
-                  <div className={styles.field} style={{ flex: 1 }}>
-                    <label>
-                      <Clock size={16} />
-                      Días de Anticipación *
-                    </label>
-                    <select
-                      value={config.anticipacion}
-                      onChange={(e) => setConfig({ ...config, anticipacion: parseInt(e.target.value) })}
-                      required
-                      style={{ 
-                        backgroundColor: 'var(--momento-black, #1A1A1A)',
-                        color: 'var(--momento-white, #FFFFFF)',
-                        border: '2px solid rgba(255, 255, 255, 0.1)'
-                      }}
-                    >
-                      <option value="1">1 día antes</option>
-                      <option value="2">2 días antes</option>
-                      <option value="3">3 días antes</option>
-                      <option value="7">1 semana antes</option>
-                    </select>
-                    <small>Cuántos días antes del turno</small>
-                  </div>
-                )}
+                <div className={styles.field} style={{ flex: 1 }}>
+                  <label>
+                    <Clock size={16} />
+                    {flujo.id === 'notificacion_diaria_agentes' ? 'Anticipación de Envío *' : 'Días de Anticipación *'}
+                  </label>
+                  <select
+                    value={config.anticipacion}
+                    onChange={(e) => setConfig({ ...config, anticipacion: parseInt(e.target.value) })}
+                    required
+                    style={{ 
+                      backgroundColor: 'var(--momento-black, #1A1A1A)',
+                      color: 'var(--momento-white, #FFFFFF)',
+                      border: '2px solid rgba(255, 255, 255, 0.1)'
+                    }}
+                  >
+                    {flujo.id === 'notificacion_diaria_agentes' && (
+                      <option value="0">Mismo día</option>
+                    )}
+                    <option value="1">1 día antes</option>
+                    <option value="2">2 días antes</option>
+                    <option value="3">3 días antes</option>
+                    <option value="7">1 semana antes</option>
+                  </select>
+                  <small>
+                    {flujo.id === 'notificacion_diaria_agentes' 
+                      ? 'Cuándo enviar el recordatorio (mismo día o días antes)'
+                      : 'Cuántos días antes del turno'}
+                  </small>
+                </div>
 
-                <div className={styles.field} style={{ flex: flujo.id === 'notificacion_diaria_agentes' ? 'auto' : 1 }}>
+                <div className={styles.field} style={{ flex: 1 }}>
                   <label>
                     <Clock size={16} />
                     Hora de Envío *
@@ -478,7 +483,7 @@ export default function ModalConfiguracionFlujo({
                         <strong>Estado:</strong> {config.activo ? '🟢 Activo' : '🔴 Inactivo'}
                       </li>
                       <li style={{ padding: '0.75rem', backgroundColor: 'rgba(255, 255, 255, 0.05)', borderRadius: '6px', marginBottom: '0.5rem' }}>
-                        <strong>Anticipación:</strong> {config.anticipacion === 0 ? 'Mismo día' : `${config.anticipacion} día(s) antes`}
+                        <strong>Anticipación:</strong> {config.anticipacion} día(s) antes
                       </li>
                       <li style={{ padding: '0.75rem', backgroundColor: 'rgba(255, 255, 255, 0.05)', borderRadius: '6px', marginBottom: '0.5rem' }}>
                         <strong>Hora de envío:</strong> {config.horaEnvio}
@@ -489,11 +494,6 @@ export default function ModalConfiguracionFlujo({
                       <li style={{ padding: '0.75rem', backgroundColor: 'rgba(255, 255, 255, 0.05)', borderRadius: '6px' }}>
                         <strong>Estados notificados:</strong> {config.estados.join(', ')}
                       </li>
-                      {flujo.id === 'notificacion_diaria_agentes' && config.diasSemana && (
-                        <li style={{ padding: '0.75rem', backgroundColor: 'rgba(255, 255, 255, 0.05)', borderRadius: '6px', marginTop: '0.5rem' }}>
-                          <strong>Días:</strong> {config.diasSemana.map(d => ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'][d]).join(', ')}
-                        </li>
-                      )}
                     </ul>
                   </div>
 

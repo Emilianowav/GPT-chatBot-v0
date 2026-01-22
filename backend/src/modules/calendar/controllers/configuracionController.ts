@@ -46,11 +46,12 @@ export const guardarConfiguracion = async (req: Request, res: Response) => {
     const configuracion = await ConfiguracionModuloModel.findOneAndUpdate(
       { empresaId },
       { ...datosConfiguracion, empresaId },
-      { new: true, upsert: true, runValidators: true }
+      { new: true, upsert: true, runValidators: true, strict: false }
     );
 
     // 🔍 LOG: Ver qué se guardó
     console.log('✅ [GUARDAR CONFIG] Guardado en BD:');
+    console.log('   - Objeto completo programacion:', JSON.stringify(configuracion.plantillasMeta?.notificacionDiariaAgentes?.programacion, null, 2));
     console.log('   - anticipacion:', configuracion.plantillasMeta?.notificacionDiariaAgentes?.programacion?.anticipacion);
     console.log('   - diasSemana:', configuracion.plantillasMeta?.notificacionDiariaAgentes?.programacion?.diasSemana);
     console.log('   - horaEnvio:', configuracion.plantillasMeta?.notificacionDiariaAgentes?.programacion?.horaEnvio);
