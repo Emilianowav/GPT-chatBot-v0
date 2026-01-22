@@ -21,7 +21,7 @@ export async function procesarNotificacionesDiariasAgentes() {
     
     const configuraciones = await ConfiguracionModuloModel.find({
       'plantillasMeta.notificacionDiariaAgentes.activa': true
-    });
+    }).lean();
     
     
     if (configuraciones.length === 0) {

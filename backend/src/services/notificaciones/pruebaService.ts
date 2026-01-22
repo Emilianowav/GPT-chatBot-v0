@@ -19,7 +19,7 @@ export async function enviarNotificacionPrueba(
 ): Promise<boolean> {
   console.log(`\n🧪 [PruebaService] Enviando prueba ${tipo} para empresa ${empresaId}`);
   
-  const config = await ConfiguracionModuloModel.findOne({ empresaId });
+  const config = await ConfiguracionModuloModel.findOne({ empresaId }).lean();
   if (!config) {
     throw new Error(`Configuración no encontrada para empresa ${empresaId}`);
   }
