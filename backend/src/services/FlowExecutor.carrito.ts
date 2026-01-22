@@ -295,7 +295,7 @@ export async function executeMercadoPagoNode(
         console.log('   ✅ Productos encontrados en globalVariables, creando carrito en BD...');
         
         // 🚨 TESTING MODE: Hardcodear precio a $0.20 (20 centavos ARS)
-        const TESTING_MODE = true;
+        const TESTING_MODE = false; // Desactivado - usar precios reales
         const TESTING_PRICE = 0.20;
         
         if (TESTING_MODE) {
