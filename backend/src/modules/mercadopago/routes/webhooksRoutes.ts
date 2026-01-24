@@ -407,8 +407,8 @@ async function processPaymentNotification(paymentId: string): Promise<void> {
           console.log(`[MP Webhook] 🧹 Carrito limpiado para nuevas compras`);
           
           // Buscar la empresa para obtener phoneNumberId
-          // carritoEmpresaId es el nombre/teléfono de la empresa, no un ObjectId
-          const empresaDoc = await EmpresaModel.findOne({ nombre: carritoEmpresaId });
+          // carritoEmpresaId es el teléfono de la empresa
+          const empresaDoc = await EmpresaModel.findOne({ telefono: carritoEmpresaId });
           if (!empresaDoc || !empresaDoc.phoneNumberId) {
             console.log(`[MP Webhook] ⚠️ No se encontró empresa o phoneNumberId para ${carritoEmpresaId}`);
             return;
