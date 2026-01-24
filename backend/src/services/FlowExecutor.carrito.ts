@@ -47,6 +47,10 @@ export async function executeCarritoNode(
 
         console.log('   📦 Item a agregar:', itemData);
 
+        // Obtener teléfono del cliente
+        const telefonoCliente = context.resolveVariableInString('{{telefono_cliente}}');
+        console.log('   📞 Teléfono cliente:', telefonoCliente);
+
         // Agregar al carrito
         const carrito = await CarritoService.agregarProducto(
           contactoId,
@@ -58,7 +62,8 @@ export async function executeCarritoNode(
             cantidad: itemData.cantidad || 1,
             image: itemData.imagen,
             permalink: itemData.metadata?.permalink
-          }
+          },
+          telefonoCliente
         );
 
         console.log('   ✅ Producto agregado al carrito');
