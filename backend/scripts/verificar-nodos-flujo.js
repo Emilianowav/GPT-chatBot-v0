@@ -1,8 +1,12 @@
-const mongoose = require('mongoose');
+import mongoose from 'mongoose';
+import dotenv from 'dotenv';
+
+dotenv.config();
 
 async function verificarNodosFlujo() {
   try {
-    await mongoose.connect('mongodb://localhost:27017/crm_db');
+    const mongoUri = process.env.MONGODB_URI || 'mongodb://localhost:27017/crm_db';
+    await mongoose.connect(mongoUri);
     console.log('✅ Conectado a MongoDB');
     
     const db = mongoose.connection.db;
@@ -25,6 +29,14 @@ async function verificarNodosFlujo() {
         flow.nodes.forEach((node, i) => {
           console.log(`      ${i + 1}. ${node.data?.label || node.type} (${node.id})`);
         });
+      }
+      
+      // Buscar específicamente gpt-armar-carrito
+      const armarCarrito = flow.nodes?.find(n => n.id === 'gpt-armar-carrito');
+      if (armarCarrito) {
+        console.log(`   ✅ Nodo gpt-armar-carrito EXISTE en BD`);
+      } else {
+        console.log(`   ❌ Nodo gpt-armar-carrito NO EXISTE en BD`);
       }
       console.log('');
     });

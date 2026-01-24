@@ -915,14 +915,91 @@ export class FlowExecutor {
       }
     }
 
-    // Guardar variables globales si están configuradas (legacy)
-    if (config.globalVariablesOutput && Array.isArray(config.globalVariablesOutput)) {
+    // Guardar variables globales si están configuradas + auto-extracción si faltan
+    if (config.globalVariablesOutput && Array.isArray(config.globalVariablesOutput) && config.globalVariablesOutput.length > 0) {
+      console.log(`\n💾 [globalVariablesOutput] Procesando ${config.globalVariablesOutput.length} variables`);
+      
+      // Verificar si hay variables faltantes en el output
+      const variablesFaltantes = config.globalVariablesOutput.filter(varName => 
+        output[varName] === undefined && 
+        (!output.datos_estructurados || output.datos_estructurados[varName] === undefined)
+      );
+      
+      // Si hay variables faltantes Y el nodo tiene respuesta_gpt, intentar auto-extracción
+      if (variablesFaltantes.length > 0 && output.respuesta_gpt) {
+        console.log(`   ⚠️  Variables faltantes: ${variablesFaltantes.join(', ')}`);
+        console.log(`   🤖 Intentando auto-extracción desde historial...`);
+        
+        try {
+          // Construir contexto completo
+          let contextoCompleto = '';
+          if (this.historialConversacion.length > 0) {
+            for (let i = 0; i < this.historialConversacion.length; i += 2) {
+              const userMsg = this.historialConversacion[i];
+              const assistantMsg = this.historialConversacion[i + 1];
+              if (userMsg) contextoCompleto += `Usuario: ${userMsg}\n`;
+              if (assistantMsg) contextoCompleto += `Asistente: ${assistantMsg}\n`;
+            }
+          }
+          if (userMessage) contextoCompleto += `Usuario: ${userMessage}\n`;
+          contextoCompleto += `Asistente: ${output.respuesta_gpt}`;
+          
+          // Prompt de extracción
+          const extractionPrompt = `Analiza la conversación y extrae la información en formato JSON.
+
+Variables a extraer:
+${variablesFaltantes.map(v => `- ${v}`).join('\n')}
+
+Conversación:
+${contextoCompleto}
+
+IMPORTANTE:
+- Responde SOLO con un objeto JSON válido
+- Si algún dato no está presente, usa null
+- Para arrays vacíos, usa []
+- Para números, usa el valor numérico sin comillas
+
+Ejemplo:
+{
+  "carrito_items": [{"id": "123", "nombre": "Producto", "precio": 100, "cantidad": 1}],
+  "carrito_total": 100
+}`;
+
+          const extractionResult = await obtenerRespuestaChat({
+            modelo: 'gpt-3.5-turbo',
+            historial: [{ role: 'user', content: extractionPrompt }]
+          });
+          
+          const extractionResponse = extractionResult.texto;
+          console.log(`   📄 Respuesta de extracción: ${extractionResponse.substring(0, 200)}`);
+          
+          const jsonMatch = extractionResponse.match(/\{[\s\S]*\}/);
+          if (jsonMatch) {
+            const datosExtraidos = JSON.parse(jsonMatch[0]);
+            console.log(`   ✅ Datos extraídos:`, datosExtraidos);
+            
+            for (const [key, value] of Object.entries(datosExtraidos)) {
+              if (value !== null && value !== undefined) {
+                output[key] = value;
+                console.log(`      💾 ${key} = ${JSON.stringify(value)?.substring(0, 100)}`);
+              }
+            }
+          }
+        } catch (error: any) {
+          console.warn(`   ⚠️  Error en auto-extracción: ${error.message}`);
+        }
+      }
+      
+      // Ahora guardar todas las variables en globalVariables
       for (const globalVar of config.globalVariablesOutput) {
-        // Intentar extraer del output
         if (output[globalVar] !== undefined) {
           this.setGlobalVariable(globalVar, output[globalVar]);
+          console.log(`   ✅ ${globalVar} guardado en globalVariables`);
         } else if (output.datos_estructurados && output.datos_estructurados[globalVar] !== undefined) {
           this.setGlobalVariable(globalVar, output.datos_estructurados[globalVar]);
+          console.log(`   ✅ ${globalVar} guardado desde datos_estructurados`);
+        } else {
+          console.log(`   ⚠️  ${globalVar} no encontrado en output`);
         }
       }
     }
