@@ -309,17 +309,22 @@ export async function executeMercadoPagoNode(
         
         // Agregar cada producto al carrito
         for (const producto of productosCarrito) {
+          // Si no tiene ID, generar uno basado en el nombre (para productos extraídos por GPT)
+          const productoId = producto.id || `gpt-${producto.nombre.toLowerCase().replace(/[^a-z0-9]/g, '-')}`;
+          
           carrito = await CarritoService.agregarProducto(
             contactoId,
             empresaId,
             {
-              id: producto.id,
+              id: productoId,
               name: producto.nombre,
               price: String(TESTING_MODE ? TESTING_PRICE : producto.precio),
               cantidad: producto.cantidad || 1
             },
             telefonoCliente
           );
+          
+          console.log(`   ✅ Producto agregado: ${producto.nombre} (ID: ${productoId})`);
         }
         
         console.log(`   ✅ Carrito creado en BD con ${carrito.items.length} items`);
