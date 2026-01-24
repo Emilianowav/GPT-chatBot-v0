@@ -280,13 +280,11 @@ export class FlowExecutor {
     try {
       console.log(`🚀 Ejecutando flujo: ${flowId}`);
       
-      // 1. Cargar flujo de BD (sin cache para obtener configuración actualizada)
-      this.flow = await FlowModel.findById(flowId).lean().exec();
+      // 1. Cargar flujo de BD
+      this.flow = await FlowModel.findById(flowId).lean(); // ← USAR .lean() para obtener objeto plano
       if (!this.flow) {
         throw new Error(`Flujo ${flowId} no encontrado`);
       }
-      
-      console.log(`📋 Flujo cargado: ${this.flow.nombre} - Nodos: ${this.flow.nodes?.length || 0}`);
 
       // 2. Cargar tópicos de conocimiento del flujo
       this.loadTopicos(this.flow);
