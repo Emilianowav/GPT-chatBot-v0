@@ -394,6 +394,21 @@ async function processPaymentNotification(paymentId: string): Promise<void> {
           const carritoEmpresaId = carrito.empresaId;
           console.log(`[MP Webhook] ✅ Carrito encontrado - Teléfono: ${carrito.telefono}, EmpresaId: ${carritoEmpresaId}`);
           
+          // IMPORTANTE: Guardar items del carrito en el Payment ANTES de limpiar
+          if (carrito.items && carrito.items.length > 0) {
+            const itemsToSave = carrito.items.map((item: any) => ({
+              nombre: item.nombre,
+              precio: parseFloat(item.precio),
+              cantidad: item.cantidad || 1
+            }));
+            
+            await Payment.updateOne(
+              { mpPaymentId: paymentId },
+              { $set: { items: itemsToSave } }
+            );
+            console.log(`[MP Webhook] ✅ Items del carrito guardados en Payment (${itemsToSave.length} productos)`);
+          }
+          
           // Actualizar estado del carrito a 'pagado' y limpiarlo
           carrito.estado = 'pagado';
           await carrito.save();

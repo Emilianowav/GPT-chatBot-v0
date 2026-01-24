@@ -44,6 +44,13 @@ export interface IPayment extends Document {
   dateApproved?: Date;
   dateLastUpdated?: Date;
   
+  // Items del carrito (productos comprados)
+  items?: Array<{
+    nombre: string;
+    precio: number;
+    cantidad: number;
+  }>;
+  
   // Metadata
   metadata?: Record<string, any>;
   
@@ -106,6 +113,12 @@ const PaymentSchema = new Schema<IPayment>({
   dateCreated: Date,
   dateApproved: Date,
   dateLastUpdated: Date,
+  
+  items: [{
+    nombre: { type: String },
+    precio: { type: Number },
+    cantidad: { type: Number }
+  }],
   
   metadata: Schema.Types.Mixed
 }, {
