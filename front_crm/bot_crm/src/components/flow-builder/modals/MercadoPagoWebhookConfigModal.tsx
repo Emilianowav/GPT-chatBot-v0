@@ -245,7 +245,7 @@ function MercadoPagoWebhookConfigModal({
   const exportToCSV = () => {
     if (payments.length === 0) return;
     
-    const headers = ['ID Pago', 'Estado', 'Monto', 'Moneda', 'Método', 'Email', 'Teléfono', 'Referencia', 'Fecha Creación', 'Fecha Aprobación'];
+    const headers = ['ID Pago', 'Estado', 'Monto', 'Moneda', 'Método', 'Email', 'Teléfono', 'Referencia', 'Productos', 'Fecha Creación', 'Fecha Aprobación'];
     const rows = payments.map(p => [
       p.mpPaymentId,
       p.status,
@@ -255,6 +255,9 @@ function MercadoPagoWebhookConfigModal({
       p.payerEmail || '',
       p.payerPhone || '',
       p.externalReference || '',
+      p.items && p.items.length > 0 
+        ? p.items.map(item => `${item.nombre} (x${item.cantidad} - $${item.precio})`).join('; ')
+        : 'Sin productos',
       p.dateCreated || p.createdAt,
       p.dateApproved || ''
     ]);
@@ -328,6 +331,7 @@ function MercadoPagoWebhookConfigModal({
               <th>Monto</th>
               <th>Método</th>
               <th>Email</th>
+              <th>Productos</th>
               <th>Fecha</th>
             </tr>
           </thead>
@@ -339,6 +343,11 @@ function MercadoPagoWebhookConfigModal({
                 <td>$${p.amount.toLocaleString('es-AR')} ${p.currency}</td>
                 <td>${p.paymentMethodId || '-'}</td>
                 <td>${p.payerEmail || '-'}</td>
+                <td style="font-size: 9px;">${
+                  p.items && p.items.length > 0
+                    ? p.items.map(item => `${item.nombre} (x${item.cantidad})`).join('<br/>')
+                    : '-'
+                }</td>
                 <td>${new Date(p.dateCreated || p.createdAt).toLocaleDateString('es-AR')}</td>
               </tr>
             `).join('')}
