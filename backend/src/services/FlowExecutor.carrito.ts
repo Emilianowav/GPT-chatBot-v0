@@ -418,8 +418,12 @@ export async function executeMercadoPagoNode(
       preferencia.init_point
     );
 
-    // Construir mensaje formateado
-    const mensaje = `💳 *¡Listo para pagar!*\n\nTu pedido:\n🛒 ${carrito.items.length} productos\n💰 Total: $${carrito.total.toLocaleString('es-AR')}\n\n👇 Paga de forma segura con Mercado Pago:\n${preferencia.init_point}\n\n⏰ Este link expira en 24 horas`;
+    // Construir mensaje formateado con lista de productos
+    const productosTexto = carrito.items.map((item: any, index: number) => 
+      `${index + 1}. ${item.nombre}\n   💰 $${parseFloat(item.precio).toLocaleString('es-AR')} × ${item.cantidad} = $${(parseFloat(item.precio) * item.cantidad).toLocaleString('es-AR')}`
+    ).join('\n\n');
+    
+    const mensaje = `💳 *¡Listo para pagar!*\n\n📦 *Tu pedido:*\n\n${productosTexto}\n\n━━━━━━━━━━━━━━━━\n🛒 Total de productos: ${carrito.items.length}\n💰 *Total a pagar: $${carrito.total.toLocaleString('es-AR')}*\n\n👇 Paga de forma segura con Mercado Pago:\n${preferencia.init_point}\n\n⏰ Este link expira en 24 horas`;
 
     // Preparar output
     const output = {
