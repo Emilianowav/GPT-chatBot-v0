@@ -422,8 +422,19 @@ async function processPaymentNotification(paymentId: string): Promise<void> {
           console.log(`[MP Webhook] 🧹 Carrito limpiado para nuevas compras`);
           
           // Buscar la empresa para obtener phoneNumberId
-          // carritoEmpresaId es el teléfono de la empresa
-          const empresaDoc = await EmpresaModel.findOne({ telefono: carritoEmpresaId });
+          // carritoEmpresaId es el teléfono de la empresa (puede tener o no el prefijo +)
+          let empresaDoc = await EmpresaModel.findOne({ telefono: carritoEmpresaId });
+          
+          // Si no se encuentra, intentar con el prefijo +
+          if (!empresaDoc) {
+            empresaDoc = await EmpresaModel.findOne({ telefono: `+${carritoEmpresaId}` });
+          }
+          
+          // Si aún no se encuentra, intentar sin el prefijo +
+          if (!empresaDoc && carritoEmpresaId.startsWith('+')) {
+            empresaDoc = await EmpresaModel.findOne({ telefono: carritoEmpresaId.substring(1) });
+          }
+          
           if (!empresaDoc || !empresaDoc.phoneNumberId) {
             console.log(`[MP Webhook] ⚠️ No se encontró empresa o phoneNumberId para ${carritoEmpresaId}`);
             return;
