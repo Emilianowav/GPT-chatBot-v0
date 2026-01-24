@@ -69,6 +69,9 @@ function MercadoPagoWebhookModal({
       const paymentsData = await paymentsResponse.json();
       
       if (paymentsData.success) {
+        console.log('💰 Historial de pagos:', paymentsData);
+        console.log('📦 Primer pago con items:', paymentsData.payments?.[0]);
+        console.log('📦 Items del primer pago:', paymentsData.payments?.[0]?.items);
         setPayments(paymentsData.payments || []);
       } else {
         throw new Error('Error al cargar pagos');
