@@ -494,16 +494,25 @@ ${productosTexto}
           if (contacto) {
             console.log(`[MP Webhook] 📝 Actualizando variables globales del contacto...`);
             const globalVars = (contacto.workflowState as any)?.globalVariables || {};
+            
+            // Actualizar variables de MercadoPago
             globalVars.mercadopago_estado = 'approved';
             globalVars.mercadopago_pago_id = paymentId;
             globalVars.mercadopago_monto = mpPayment.transaction_amount || 0;
+            
+            // IMPORTANTE: Limpiar variables del carrito para permitir nuevas compras
+            globalVars.carrito_items = [];
+            globalVars.carrito_total = 0;
+            globalVars.carrito_items_count = 0;
+            globalVars.carrito = undefined;
+            globalVars.accion_siguiente = undefined;
             
             if (!contacto.workflowState) {
               contacto.workflowState = {} as any;
             }
             (contacto.workflowState as any).globalVariables = globalVars;
             await contacto.save();
-            console.log(`[MP Webhook] ✅ Variables globales actualizadas`);
+            console.log(`[MP Webhook] ✅ Variables globales actualizadas y carrito limpiado`);
           } else {
             console.log(`[MP Webhook] ℹ️ No se encontró contacto (normal en flujo de carrito)`);
           }
