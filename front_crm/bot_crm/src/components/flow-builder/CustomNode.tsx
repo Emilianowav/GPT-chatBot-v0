@@ -31,8 +31,18 @@ const WooCommerceIcon = () => (
   <img 
     src="/logos tecnologias/woocommerce.png" 
     alt="WooCommerce" 
-    width="32" 
-    height="32"
+    width="50" 
+    height="50"
+    style={{ borderRadius: '4px' }}
+  />
+);
+
+const MercadoPagoIcon = () => (
+  <img 
+    src="/logos tecnologias/mp-logo.png" 
+    alt="MercadoPago" 
+    width="50" 
+    height="50"
     style={{ borderRadius: '4px' }}
   />
 );
@@ -44,6 +54,7 @@ const appIcons: Record<string, any> = {
   'OpenAI': OpenAIIcon,
   'GPT': OpenAIIcon,
   'WooCommerce': WooCommerceIcon,
+  'MercadoPago': MercadoPagoIcon,
 };
 
 const appColors: Record<string, string> = {

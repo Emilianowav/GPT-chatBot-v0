@@ -2,9 +2,9 @@ import React, { memo } from 'react';
 import { NodeProps } from 'reactflow';
 import { SimpleNode } from './SimpleNode';
 
-const WooCommerceIcon = ({ size = 40 }: { size?: number; color?: string }) => (
+const WooCommerceIcon = ({ size = 60 }: { size?: number; color?: string }) => (
   <img 
-    src="https://woocommerce.com/wp-content/themes/woo/images/logo-woocommerce@2x.png" 
+    src="/logos tecnologias/woocommerce.png" 
     alt="WooCommerce" 
     style={{ width: `${size}px`, height: `${size}px`, objectFit: 'contain' }}
   />

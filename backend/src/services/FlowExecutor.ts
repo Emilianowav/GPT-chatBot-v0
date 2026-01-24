@@ -242,11 +242,13 @@ export class FlowExecutor {
       const config = whatsappTrigger.data.config;
       this.flowConfig.whatsapp = {
         phoneNumberId: config.phoneNumberId,
-        verifyToken: config.verifyToken
+        verifyToken: config.verifyToken,
+        accessToken: config.accessToken // Guardar accessToken para usarlo al enviar mensajes
       };
       console.log(`   ✅ WhatsApp configurado:`);
       console.log(`      Phone Number ID: ${config.phoneNumberId}`);
       console.log(`      Verify Token: ${config.verifyToken}`);
+      console.log(`      Access Token: ${config.accessToken ? 'Configurado desde BD' : 'No configurado (usará token centralizado)'}`);
     }
     
     // Detectar primer nodo WooCommerce con conexión
@@ -977,11 +979,17 @@ export class FlowExecutor {
 
     console.log(`   → ${telefono}`);
 
+    // Obtener accessToken desde config del nodo o flowConfig
+    const accessToken = config.accessToken || this.flowConfig.whatsapp?.accessToken;
+    
+    console.log(`   🔑 Access Token: ${accessToken ? 'Usando token de BD' : 'Usando token centralizado'}`);
+
     // Enviar mensaje
     await enviarMensajeWhatsAppTexto(
       telefono,
       mensaje,
-      phoneNumberId
+      phoneNumberId,
+      accessToken // Pasar accessToken al servicio
     );
 
     return {
@@ -1746,6 +1754,20 @@ export class FlowExecutor {
       Object.entries(this.context).forEach(([key, val]) => {
         console.log(`            - ${key}: ${JSON.stringify(val)?.substring(0, 150)}`);
       });
+      
+      // SUGERENCIA: Buscar nodos que contengan "mercadopago" en su ID
+      if (nodeId.toLowerCase().includes('mercadopago')) {
+        console.log(`         💡 SUGERENCIA: Buscando nodos con "mercadopago" en el ID...`);
+        const mercadopagoNodes = Object.keys(this.context).filter(k => 
+          k.toLowerCase().includes('mercadopago') || 
+          this.context[k]?.output?.preferencia_id
+        );
+        if (mercadopagoNodes.length > 0) {
+          console.log(`         ✅ Nodos MercadoPago encontrados: ${mercadopagoNodes.join(', ')}`);
+          console.log(`         💡 Intenta usar: {{${mercadopagoNodes[0]}.mensaje}}`);
+        }
+      }
+      
       return undefined;
     }
     

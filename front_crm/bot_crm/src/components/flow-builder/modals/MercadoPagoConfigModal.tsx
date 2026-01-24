@@ -111,7 +111,7 @@ function MercadoPagoConfigModal({ isOpen, onClose, nodeData, onSave }: MercadoPa
         <div className={styles.header}>
           <div className={styles.headerContent}>
             <div className={styles.icon}>
-              <img src="/logos tecnologias/mercado-pago.svg" alt="MercadoPago" width="32" height="32" />
+              <img src="/logos tecnologias/mp-logo.png" alt="MercadoPago" width="32" height="32" />
             </div>
             <div>
               <h2 className={styles.title}>Configurar MercadoPago</h2>
@@ -260,7 +260,7 @@ function MercadoPagoConfigModal({ isOpen, onClose, nodeData, onSave }: MercadoPa
                       value={selectedLinkId}
                       onChange={(e) => setSelectedLinkId(e.target.value)}
                     >
-                      <option key="empty" value="">Selecciona un link...</option>
+                      <option key="default" value="">Selecciona un link...</option>
                       {paymentLinks.filter(l => l.active).map((link) => (
                         <option key={link._id} value={link._id}>
                           {link.title} - ${link.unitPrice.toLocaleString()}

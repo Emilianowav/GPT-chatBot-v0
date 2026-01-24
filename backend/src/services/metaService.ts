@@ -45,11 +45,13 @@ function formatPhoneNumberForWhatsapp(number: string): string {
  * @param numero Número del cliente (no formateado)
  * @param texto Contenido del mensaje
  * @param phoneNumberId ID de número de empresa (extraído de su config)
+ * @param accessToken Token de acceso (opcional, si no se provee usa getMetaToken())
  */
 export const enviarMensajeWhatsAppTexto = async (
   numero: string,
   texto: string,
-  phoneNumberId: string
+  phoneNumberId: string,
+  accessToken?: string
 ) => {
   console.log("📨 Enviando mensaje vía Meta WhatsApp API...");
 
@@ -59,8 +61,10 @@ export const enviarMensajeWhatsAppTexto = async (
   }
 
   const numeroFormateado = formatPhoneNumberForWhatsapp(numero);
-  const token = getMetaToken(); // Asegura que esté actualizado
+  // Usar accessToken del nodo si está disponible, sino usar el token centralizado
+  const token = accessToken || getMetaToken();
   
+  console.log('🔑 Token source:', accessToken ? 'FROM NODE CONFIG' : 'FROM TOKEN FILE');
   console.log('🔑 Token (primeros 20 chars):', token?.substring(0, 20) + '...');
   console.log('📱 Phone Number ID:', phoneNumberId);
 

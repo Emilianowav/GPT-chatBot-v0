@@ -215,36 +215,32 @@ router.get('/history/:empresaId', async (req, res): Promise<void> => {
     // Usar el ObjectId real para la query
     const empresaObjectId = empresa._id.toString();
 
-    console.log(`📊 [MP Payments] Empresa encontrada: ${empresa.nombre}`);
-
-    // Buscar el seller por nombre de empresa
-    const seller = await Seller.findOne({ internalId: empresa.nombre });
+    // Buscar el seller por nombre de empresa o por internalId "default"
+    let seller = await Seller.findOne({ internalId: empresa.nombre });
     
     if (!seller) {
-      console.log(`📊 [MP Payments] No hay seller para empresa "${empresa.nombre}"`);
-      res.json({
-        success: true,
-        payments: [],
-        total: 0,
-        limit: parseInt(limit as string),
-        offset: parseInt(offset as string)
-      });
-      return;
+      // Intentar con "default" si no encuentra por nombre
+      seller = await Seller.findOne({ internalId: 'default' });
+      console.log(`📊 [MP Payments] No hay seller específico para "${empresa.nombre}", usando seller default`);
+    } else {
+      console.log(`📊 [MP Payments] Seller encontrado:`, { internalId: seller.internalId, userId: seller.userId });
     }
 
-    console.log(`📊 [MP Payments] Seller encontrado:`, { internalId: seller.internalId, userId: seller.userId });
-
-    // Buscar pagos por sellerId Y empresaId (filtrado dual)
-    let query: any = { 
-      sellerId: seller.userId,
-      empresaId: empresaObjectId  // Usar el ObjectId real
-    };
-    const total = await Payment.countDocuments(query);
+    // Construir query: si hay seller, buscar por sellerId Y empresaId, sino solo por empresaId
+    let query: any = { empresaId: empresaObjectId };
     
-    console.log(`📊 [MP Payments] Query final (dual):`, query, `Total: ${total}`);
+    if (seller) {
+      query.sellerId = seller.userId;
+      console.log(`📊 [MP Payments] Query con seller:`, query);
+    } else {
+      console.log(`📊 [MP Payments] Query solo por empresaId:`, query);
+    }
+    
+    const total = await Payment.countDocuments(query);
+    console.log(`📊 [MP Payments] Total de pagos encontrados: ${total}`);
     
     if (total === 0) {
-      console.log(`📊 [MP Payments] No hay pagos para "${empresaObjectId}"`);
+      console.log(`📊 [MP Payments] No hay pagos para empresa "${empresaObjectId}"`);
       res.json({
         success: true,
         payments: [],
@@ -311,29 +307,27 @@ router.get('/stats/:empresaId', async (req, res): Promise<void> => {
     
     // Usar el ObjectId real para la query
     const empresaObjectId = empresa._id.toString();
-
-    // Buscar el seller por nombre de empresa
-    const seller = await Seller.findOne({ internalId: empresa.nombre });
+    
+    // Buscar el seller por nombre de empresa o por internalId "default"
+    let seller = await Seller.findOne({ internalId: empresa.nombre });
     
     if (!seller) {
-      res.json({
-        success: true,
-        stats: {
-          pagosAprobados: 0,
-          ingresosTotales: 0,
-          pagosDelMes: 0,
-          ingresosDelMes: 0,
-          pagosPendientes: 0
-        }
-      });
-      return;
+      // Intentar con "default" si no encuentra por nombre
+      seller = await Seller.findOne({ internalId: 'default' });
+      console.log(`📊 [MP Stats] No hay seller específico para "${empresa.nombre}", usando seller default`);
+    } else {
+      console.log(`📊 [MP Stats] Seller encontrado:`, { internalId: seller.internalId, userId: seller.userId });
     }
-
-    // Construir query por sellerId Y empresaId (filtrado dual)
-    const query: any = { 
-      sellerId: seller.userId,
-      empresaId: empresaObjectId  // Usar el ObjectId real
-    };
+    
+    // Construir query: si hay seller, buscar por sellerId Y empresaId, sino solo por empresaId
+    let query: any = { empresaId: empresaObjectId };
+    
+    if (seller) {
+      query.sellerId = seller.userId;
+      console.log(`📊 [MP Stats] Query con seller:`, query);
+    } else {
+      console.log(`📊 [MP Stats] Query solo por empresaId:`, query);
+    }
     
     const hoy = new Date();
     hoy.setHours(0, 0, 0, 0);

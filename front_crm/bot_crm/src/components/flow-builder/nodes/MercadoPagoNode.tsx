@@ -2,9 +2,9 @@ import React, { memo } from 'react';
 import { NodeProps } from 'reactflow';
 import { SimpleNode } from './SimpleNode';
 
-const MercadoPagoIcon = ({ size = 40 }: { size?: number; color?: string }) => (
+const MercadoPagoIcon = ({ size = 60 }: { size?: number; color?: string }) => (
   <img 
-    src="https://http2.mlstatic.com/frontend-assets/ml-web-navigation/ui-navigation/5.21.22/mercadolibre/logo__large_plus.png" 
+    src="/logos tecnologias/mp-logo.png" 
     alt="MercadoPago" 
     style={{ width: `${size}px`, height: `${size}px`, objectFit: 'contain' }}
   />

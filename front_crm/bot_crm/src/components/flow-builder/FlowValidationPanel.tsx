@@ -24,7 +24,7 @@ export const FlowValidationPanel: React.FC<FlowValidationPanelProps> = ({
   onOpenNodeConfig
 }) => {
   const [issues, setIssues] = useState<ValidationIssue[]>([]);
-  const [isExpanded, setIsExpanded] = useState(true);
+  const [expandedType, setExpandedType] = useState<'error' | 'warning' | 'info' | null>(null);
   const [position, setPosition] = useState(() => {
     const saved = localStorage.getItem('flowValidationPanelPosition');
     return saved ? JSON.parse(saved) : { x: window.innerWidth - 420, y: 20 };
@@ -230,34 +230,11 @@ export const FlowValidationPanel: React.FC<FlowValidationPanelProps> = ({
   const warnings = issues.filter(i => i.type === 'warning');
   const infos = issues.filter(i => i.type === 'info');
 
-  if (issues.length === 0) {
-    return (
-      <div 
-        className={styles.validationPanel}
-        style={{
-          left: `${position.x}px`,
-          top: `${position.y}px`,
-          cursor: isDragging ? 'grabbing' : 'default'
-        }}
-        onMouseDown={handleMouseDown}
-      >
-        <div className={`${styles.header} grip-handle`} style={{ cursor: isDragging ? 'grabbing' : 'grab' }}>
-          <GripVertical size={16} style={{ color: '#6c757d', flexShrink: 0 }} />
-          <div style={{ flex: 1, display: 'flex', alignItems: 'center', gap: '10px' }} onClick={(e) => { e.stopPropagation(); setIsExpanded(!isExpanded); }}>
-            <CheckCircle size={20} className={styles.successIcon} />
-            <span className={styles.title}>Flujo Validado</span>
-          </div>
-        </div>
-        {isExpanded && (
-          <div className={styles.content}>
-            <div className={styles.successMessage}>
-              ✅ El flujo está completamente configurado y listo para usar
-            </div>
-          </div>
-        )}
-      </div>
-    );
-  }
+  const handleIconClick = (type: 'error' | 'warning' | 'info') => {
+    setExpandedType(expandedType === type ? null : type);
+  };
+
+  if (issues.length === 0) return null;
 
   return (
     <div 
@@ -270,71 +247,76 @@ export const FlowValidationPanel: React.FC<FlowValidationPanelProps> = ({
       onMouseDown={handleMouseDown}
     >
       <div className={`${styles.header} grip-handle`} style={{ cursor: isDragging ? 'grabbing' : 'grab' }}>
-        <GripVertical size={16} style={{ color: '#6c757d', flexShrink: 0 }} />
-        <div style={{ flex: 1, display: 'flex', alignItems: 'center', gap: '10px' }} onClick={(e) => { e.stopPropagation(); setIsExpanded(!isExpanded); }}>
-          <AlertTriangle size={20} className={styles.warningIcon} />
-          <span className={styles.title}>
-            Validación del Flujo ({errors.length} errores, {warnings.length} advertencias)
-          </span>
-          <span className={styles.toggle}>{isExpanded ? '▼' : '▶'}</span>
+        <GripVertical size={14} style={{ color: '#6c757d', flexShrink: 0 }} />
+        
+        {/* Iconos compactos con contadores */}
+        <div className={styles.iconGroup}>
+          {errors.length > 0 && (
+            <div 
+              className={`${styles.iconBadge} ${styles.errorBadge} ${expandedType === 'error' ? styles.active : ''}`}
+              onClick={(e) => { e.stopPropagation(); handleIconClick('error'); }}
+              title={`${errors.length} errores`}
+            >
+              <XCircle size={16} />
+              <span>{errors.length}</span>
+            </div>
+          )}
+          
+          {warnings.length > 0 && (
+            <div 
+              className={`${styles.iconBadge} ${styles.warningBadge} ${expandedType === 'warning' ? styles.active : ''}`}
+              onClick={(e) => { e.stopPropagation(); handleIconClick('warning'); }}
+              title={`${warnings.length} advertencias`}
+            >
+              <AlertTriangle size={16} />
+              <span>{warnings.length}</span>
+            </div>
+          )}
+          
+          {infos.length > 0 && (
+            <div 
+              className={`${styles.iconBadge} ${styles.infoBadge} ${expandedType === 'info' ? styles.active : ''}`}
+              onClick={(e) => { e.stopPropagation(); handleIconClick('info'); }}
+              title={`${infos.length} información`}
+            >
+              <Info size={16} />
+              <span>{infos.length}</span>
+            </div>
+          )}
         </div>
       </div>
 
-      {isExpanded && (
+      {expandedType && (
         <div className={styles.content}>
-          {errors.length > 0 && (
-            <div className={styles.section}>
-              <div className={styles.sectionHeader}>
-                <XCircle size={16} className={styles.errorIcon} />
-                <span>Errores Críticos ({errors.length})</span>
-              </div>
-              {errors.map((issue, index) => (
-                <div 
-                  key={index} 
-                  className={`${styles.issue} ${styles.error} ${issue.nodeId ? styles.clickable : ''}`}
-                  onClick={() => handleIssueClick(issue.nodeId)}
-                >
-                  {issue.message}
-                </div>
-              ))}
+          {expandedType === 'error' && errors.map((issue, idx) => (
+            <div 
+              key={idx} 
+              className={`${styles.issue} ${styles.error} ${issue.nodeId ? styles.clickable : ''}`}
+              onClick={() => issue.nodeId && onNodeSelect?.(issue.nodeId)}
+            >
+              {issue.message}
             </div>
-          )}
+          ))}
 
-          {warnings.length > 0 && (
-            <div className={styles.section}>
-              <div className={styles.sectionHeader}>
-                <AlertTriangle size={16} className={styles.warningIcon} />
-                <span>Advertencias ({warnings.length})</span>
-              </div>
-              {warnings.map((issue, index) => (
-                <div 
-                  key={index} 
-                  className={`${styles.issue} ${styles.warning} ${issue.nodeId ? styles.clickable : ''}`}
-                  onClick={() => handleIssueClick(issue.nodeId)}
-                >
-                  {issue.message}
-                </div>
-              ))}
+          {expandedType === 'warning' && warnings.map((issue, idx) => (
+            <div 
+              key={idx} 
+              className={`${styles.issue} ${styles.warning} ${issue.nodeId ? styles.clickable : ''}`}
+              onClick={() => issue.nodeId && onNodeSelect?.(issue.nodeId)}
+            >
+              {issue.message}
             </div>
-          )}
+          ))}
 
-          {infos.length > 0 && (
-            <div className={styles.section}>
-              <div className={styles.sectionHeader}>
-                <Info size={16} className={styles.infoIcon} />
-                <span>Información ({infos.length})</span>
-              </div>
-              {infos.map((issue, index) => (
-                <div 
-                  key={index} 
-                  className={`${styles.issue} ${styles.info} ${issue.nodeId ? styles.clickable : ''}`}
-                  onClick={() => handleIssueClick(issue.nodeId)}
-                >
-                  {issue.message}
-                </div>
-              ))}
+          {expandedType === 'info' && infos.map((issue, idx) => (
+            <div 
+              key={idx} 
+              className={`${styles.issue} ${styles.info} ${issue.nodeId ? styles.clickable : ''}`}
+              onClick={() => issue.nodeId && onNodeSelect?.(issue.nodeId)}
+            >
+              {issue.message}
             </div>
-          )}
+          ))}
         </div>
       )}
     </div>

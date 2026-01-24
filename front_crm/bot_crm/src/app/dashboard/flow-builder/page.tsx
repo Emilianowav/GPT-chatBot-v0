@@ -37,6 +37,7 @@ import WebhookConfigModal from '@/components/flow-builder/modals/WebhookConfigMo
 import GPTConfigModal from '@/components/flow-builder/modals/GPTConfigModal';
 import EdgeConfigModal from '@/components/flow-builder/modals/EdgeConfigModal';
 import MercadoPagoConfigModal from '@/components/flow-builder/modals/MercadoPagoConfigModal';
+import MercadoPagoWebhookConfigModal from '@/components/flow-builder/modals/MercadoPagoWebhookConfigModal';
 import HTTPConfigModal from '@/components/flow-builder/modals/HTTPConfigModal';
 import NodeConfigPanel from '@/components/flow-builder/panels/NodeConfigPanel';
 import FloatingActionBar from '@/components/flow-builder/FloatingActionBar';
@@ -261,6 +262,7 @@ function FlowBuilderContent() {
   const [showGPTConfigModal, setShowGPTConfigModal] = useState(false);
   const [showHTTPConfigModal, setShowHTTPConfigModal] = useState(false);
   const [showMercadoPagoConfigModal, setShowMercadoPagoConfigModal] = useState(false);
+  const [showMercadoPagoWebhookModal, setShowMercadoPagoWebhookModal] = useState(false);
   const [showEdgeConfigModal, setShowEdgeConfigModal] = useState(false);
   const [appsModalPosition, setAppsModalPosition] = useState<{ x: number; y: number } | undefined>();
   const [selectedApp, setSelectedApp] = useState<any>(null);
@@ -336,7 +338,6 @@ function FlowBuilderContent() {
   }, []);
 
   const handleNodeClick = useCallback((nodeId: string) => {
-    // Usar función de actualización para evitar dependencia de nodes
     setNodes(currentNodes => {
       const node = currentNodes.find(n => n.id === nodeId);
       if (node) {
@@ -345,15 +346,37 @@ function FlowBuilderContent() {
           setSelectedNode(node);
           setShowHTTPConfigModal(true);
         }
-        // Si es un nodo WhatsApp/Webhook, abrir modal específico
+        // Si es un nodo WhatsApp/Webhook, verificar si es webhook de MercadoPago
         else if (node.type === 'whatsapp' || node.type === 'webhook') {
+          // Detectar si es webhook de MercadoPago
+          const isMercadoPagoWebhook = 
+            node.data?.config?.tipo === 'mercadopago_webhook' ||
+            node.data?.label?.toLowerCase().includes('mercadopago') ||
+            node.data?.label?.toLowerCase().includes('mercado pago') ||
+            node.data?.label?.toLowerCase().includes('pedidos confirmados') ||
+            node.data?.label?.toLowerCase().includes('verificar pago') ||
+            node.id?.toLowerCase().includes('mercadopago') ||
+            node.id?.toLowerCase().includes('verificar-pago');
+          
           setSelectedNode(node);
-          setShowWebhookConfigModal(true);
+          if (isMercadoPagoWebhook) {
+            setShowMercadoPagoWebhookModal(true);
+          } else {
+            setShowWebhookConfigModal(true);
+          }
         }
-        // Si es un nodo de MercadoPago, abrir modal específico
+        // Si es un nodo de MercadoPago, verificar si es webhook o configuración
         else if (node.type === 'mercadopago') {
           setSelectedNode(node);
-          setShowMercadoPagoConfigModal(true);
+          // Si es verificar_pago, abrir modal de webhook
+          if (node.data?.config?.action === 'verificar_pago' || 
+              node.id === 'mercadopago-verificar-pago' ||
+              node.data?.label?.toLowerCase().includes('verificar pago')) {
+            setShowMercadoPagoWebhookModal(true);
+          } else {
+            // Si es crear_preferencia, abrir modal de configuración
+            setShowMercadoPagoConfigModal(true);
+          }
         } else {
           setSelectedNode(node);
           setShowConfigPanel(true);
@@ -1105,6 +1128,13 @@ function FlowBuilderContent() {
       handleSaveNodeConfig(selectedNode.id, mpConfig);
     }
     setShowMercadoPagoConfigModal(false);
+  };
+
+  const handleMercadoPagoWebhookConfigSave = (webhookConfig: any) => {
+    if (selectedNode) {
+      handleSaveNodeConfig(selectedNode.id, webhookConfig);
+    }
+    setShowMercadoPagoWebhookModal(false);
   };
 
   const createNodeFromModule = (module: any, config: any) => {
@@ -1873,6 +1903,7 @@ function FlowBuilderContent() {
           onSave={selectedNode ? handleSaveWebhookNodeConfig : handleWebhookConfigSave}
           initialConfig={selectedNode?.data?.config}
           nodeId={selectedNode?.id || 'new-webhook'}
+          allNodes={nodes}
         />
 
         {selectedApp && selectedModule && (
@@ -1909,6 +1940,16 @@ function FlowBuilderContent() {
           }}
           nodeData={selectedNode}
           onSave={handleMercadoPagoConfigSave}
+        />
+
+        <MercadoPagoWebhookConfigModal
+          isOpen={showMercadoPagoWebhookModal}
+          onClose={() => {
+            setShowMercadoPagoWebhookModal(false);
+            setSelectedNode(null);
+          }}
+          nodeData={selectedNode}
+          onSave={handleMercadoPagoWebhookConfigSave}
         />
 
         <EdgeConfigModal

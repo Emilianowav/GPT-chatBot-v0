@@ -429,13 +429,18 @@ export async function executeMercadoPagoNode(
     };
 
     // IMPORTANTE: Guardar TODAS las propiedades del output como variables globales
-    // Esto permite acceder a ellas tanto como {{mercadopago-crear-preference.mensaje}}
-    // como {{mensaje}} desde cualquier nodo posterior
+    // Esto permite acceder a ellas tanto como {{nodo-id.mensaje}} como {{mensaje}}
     console.log('\n💾 Guardando variables globales del nodo MercadoPago:');
     for (const [key, value] of Object.entries(output)) {
       context.setGlobalVariable(key, value);
       console.log(`   ✅ ${key} = ${typeof value === 'string' ? value.substring(0, 100) : JSON.stringify(value)}`);
     }
+    
+    // LOG IMPORTANTE: Mostrar cómo acceder a estas variables
+    console.log('\n📝 IMPORTANTE: Para acceder a estas variables desde otros nodos:');
+    console.log(`   Opción 1 (recomendada): {{${node.id}.mensaje}}`);
+    console.log(`   Opción 2 (global): {{mensaje}}`);
+    console.log(`   ID del nodo actual: ${node.id}`);
 
     return { output };
   } catch (error: any) {
