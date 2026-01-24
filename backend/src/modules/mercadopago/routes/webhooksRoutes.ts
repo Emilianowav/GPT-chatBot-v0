@@ -307,6 +307,20 @@ async function processPaymentNotification(paymentId: string): Promise<void> {
     // Mapear status de MP a nuestro enum
     const status = mapMPStatus(mpPayment.status || 'pending');
     
+    // Si no tenemos empresaId y hay external_reference (carrito), intentar obtenerlo del carrito
+    if (!empresaId && mpPayment.external_reference && !mpPayment.external_reference.startsWith('link_')) {
+      try {
+        const { CarritoModel } = await import('../../../models/Carrito.js');
+        const carrito = await CarritoModel.findById(mpPayment.external_reference);
+        if (carrito && carrito.empresaId) {
+          empresaId = carrito.empresaId;
+          console.log(`[MP Webhook] EmpresaId obtenido del carrito: ${empresaId}`);
+        }
+      } catch (err) {
+        console.log(`[MP Webhook] No se pudo obtener empresaId del carrito`);
+      }
+    }
+    
     // Datos del pago
     const paymentData: Partial<IPayment> = {
       mpPaymentId: paymentId,
