@@ -24,6 +24,11 @@ interface Payment {
   dateCreated?: string;
   dateApproved?: string;
   createdAt: string;
+  items?: Array<{
+    nombre: string;
+    precio: number;
+    cantidad: number;
+  }>;
 }
 
 interface PaymentStats {
@@ -427,6 +432,32 @@ function MercadoPagoWebhookModal({
                               <span className={styles.detailValue}>{selectedPayment.paymentTypeId}</span>
                             </div>
                           )}
+                        </div>
+                      )}
+
+                      {selectedPayment.items && selectedPayment.items.length > 0 && (
+                        <div className={styles.detailSection}>
+                          <h5 className={styles.detailSectionTitle}>📦 Productos</h5>
+                          {selectedPayment.items.map((item, index) => (
+                            <div key={index} className={styles.detailRow} style={{ 
+                              padding: '12px',
+                              background: '#f9fafb',
+                              borderRadius: '6px',
+                              marginBottom: '8px'
+                            }}>
+                              <div style={{ flex: 1 }}>
+                                <div style={{ fontWeight: 600, marginBottom: '4px' }}>
+                                  {item.nombre}
+                                </div>
+                                <div style={{ fontSize: '13px', color: '#6b7280' }}>
+                                  Cantidad: {item.cantidad} × ${item.precio.toLocaleString('es-AR', { minimumFractionDigits: 2 })}
+                                </div>
+                              </div>
+                              <div style={{ fontWeight: 600, color: '#059669' }}>
+                                ${(item.cantidad * item.precio).toLocaleString('es-AR', { minimumFractionDigits: 2 })}
+                              </div>
+                            </div>
+                          ))}
                         </div>
                       )}
 

@@ -260,9 +260,37 @@ router.get('/history/:empresaId', async (req, res): Promise<void> => {
       .skip(parseInt(offset as string))
       .limit(parseInt(limit as string));
     
+    // Enriquecer cada pago con los items del carrito si existe
+    const { CarritoModel } = await import('../../../models/Carrito.js');
+    const paymentsWithItems = await Promise.all(
+      payments.map(async (payment) => {
+        const paymentObj = payment.toObject();
+        
+        // Si tiene externalReference, buscar el carrito
+        if (paymentObj.externalReference) {
+          try {
+            const carrito = await CarritoModel.findById(paymentObj.externalReference);
+            if (carrito && carrito.items && carrito.items.length > 0) {
+              // Agregar items del carrito al pago
+              paymentObj.items = carrito.items.map((item: any) => ({
+                nombre: item.nombre,
+                precio: parseFloat(item.precio),
+                cantidad: item.cantidad || 1
+              }));
+            }
+          } catch (err) {
+            // Si falla la búsqueda del carrito, continuar sin items
+            console.log(`[MP Payments] No se pudo cargar carrito ${paymentObj.externalReference}`);
+          }
+        }
+        
+        return paymentObj;
+      })
+    );
+    
     res.json({
       success: true,
-      payments,
+      payments: paymentsWithItems,
       total,
       limit: parseInt(limit as string),
       offset: parseInt(offset as string)
