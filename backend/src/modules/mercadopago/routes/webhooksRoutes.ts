@@ -394,10 +394,17 @@ async function processPaymentNotification(paymentId: string): Promise<void> {
           const carritoEmpresaId = carrito.empresaId;
           console.log(`[MP Webhook] ✅ Carrito encontrado - Teléfono: ${carrito.telefono}, EmpresaId: ${carritoEmpresaId}`);
           
-          // Actualizar estado del carrito a 'pagado'
+          // Actualizar estado del carrito a 'pagado' y limpiarlo
           carrito.estado = 'pagado';
           await carrito.save();
           console.log(`[MP Webhook] ✅ Carrito ${carritoId} marcado como pagado`);
+          
+          // Limpiar el carrito para permitir nuevas compras
+          carrito.items = [];
+          carrito.total = 0;
+          carrito.estado = 'activo';
+          await carrito.save();
+          console.log(`[MP Webhook] 🧹 Carrito limpiado para nuevas compras`);
           
           // Buscar la empresa para obtener phoneNumberId
           // carritoEmpresaId es el nombre/teléfono de la empresa, no un ObjectId
