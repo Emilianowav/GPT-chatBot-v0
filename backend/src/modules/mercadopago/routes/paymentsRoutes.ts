@@ -264,9 +264,14 @@ router.get('/history/:empresaId', async (req, res): Promise<void> => {
     const { CarritoModel } = await import('../../../models/Carrito.js');
     const paymentsWithItems = await Promise.all(
       payments.map(async (payment) => {
-        const paymentObj = payment.toObject();
+        const paymentObj: any = payment.toObject();
         
-        // Si tiene externalReference, buscar el carrito
+        // Si ya tiene items guardados, usarlos directamente
+        if (paymentObj.items && paymentObj.items.length > 0) {
+          return paymentObj;
+        }
+        
+        // Si no tiene items pero tiene externalReference, buscar el carrito (fallback para pagos antiguos)
         if (paymentObj.externalReference) {
           try {
             const carrito = await CarritoModel.findById(paymentObj.externalReference);
