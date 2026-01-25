@@ -14,7 +14,7 @@ interface Variable {
 interface VariableSelectorProps {
   isOpen: boolean;
   onClose: () => void;
-  onSelect: (variable: string) => void;
+  onSelect: (variable: string, label?: string) => void;
   position: { x: number; y: number };
   availableNodes?: Array<{ id: string; label: string; type: string }>;
   globalVariables?: string[];
@@ -29,8 +29,14 @@ export const VariableSelector: React.FC<VariableSelectorProps> = ({
   globalVariables = []
 }) => {
   const [searchTerm, setSearchTerm] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState<'all' | 'global' | 'nodes' | 'system'>('global');
+  const [selectedCategory, setSelectedCategory] = useState<'all' | 'global' | 'nodes' | 'system'>('nodes');
   const selectorRef = useRef<HTMLDivElement>(null);
+
+  // Función para enmascarar valores sensibles (API keys, tokens, etc.)
+  const shouldMaskVariable = (name: string): boolean => {
+    const sensitivePatterns = ['api_key', 'token', 'secret', 'password', 'bearer'];
+    return sensitivePatterns.some(pattern => name.toLowerCase().includes(pattern));
+  };
 
   // Variables del sistema
   const systemVariables: Variable[] = [
@@ -42,40 +48,124 @@ export const VariableSelector: React.FC<VariableSelectorProps> = ({
   ];
 
   // Variables globales
-  const globalVars: Variable[] = globalVariables.map(name => ({
-    name,
-    value: `{{${name}}}`,
-    type: 'global' as const,
-    description: 'Variable global'
-  }));
+  const globalVars: Variable[] = globalVariables.map(name => {
+    // Asegurar que name sea string
+    const varName = typeof name === 'string' ? name : String(name);
+    return {
+      name: varName,
+      value: `{{${varName}}}`,
+      type: 'global' as const,
+      description: 'Variable global'
+    };
+  });
 
   // Variables de nodos
   const nodeVariables: Variable[] = availableNodes.flatMap(node => {
     const baseVars = [
-      { name: 'output', value: `{{${node.id}.output}}`, nodeId: node.id, nodeLabel: node.label },
-      { name: 'success', value: `{{${node.id}.success}}`, nodeId: node.id, nodeLabel: node.label },
-      { name: 'error', value: `{{${node.id}.error}}`, nodeId: node.id, nodeLabel: node.label }
+      { name: 'output', value: `{{${node.id}.output}}`, nodeId: node.id, nodeLabel: node.label }
     ];
 
     // Variables específicas por tipo de nodo
-    if (node.type === 'gpt') {
-      baseVars.push(
-        { name: 'respuesta_gpt', value: `{{${node.id}.respuesta_gpt}}`, nodeId: node.id, nodeLabel: node.label },
-        { name: 'tokens', value: `{{${node.id}.tokens}}`, nodeId: node.id, nodeLabel: node.label },
-        { name: 'costo', value: `{{${node.id}.costo}}`, nodeId: node.id, nodeLabel: node.label }
-      );
+    if (node.type === 'gpt' || node.type === 'openai') {
+      return [
+        { 
+          name: 'topico_identificado', 
+          value: `{{${node.id}.topico_identificado}}`, 
+          nodeId: node.id, 
+          nodeLabel: node.label,
+          type: 'node' as const,
+          description: `${node.label} - Valor extraído (output variable)`
+        },
+        { 
+          name: 'respuesta_gpt', 
+          value: `{{${node.id}.respuesta_gpt}}`, 
+          nodeId: node.id, 
+          nodeLabel: node.label,
+          type: 'node' as const,
+          description: `${node.label} - Respuesta completa en texto`
+        },
+        { 
+          name: 'output', 
+          value: `{{${node.id}.output}}`, 
+          nodeId: node.id, 
+          nodeLabel: node.label,
+          type: 'node' as const,
+          description: `${node.label} - Output genérico`
+        }
+      ];
+    } else if (node.type === 'http') {
+      return [
+        { 
+          name: 'response', 
+          value: `{{${node.id}.response}}`, 
+          nodeId: node.id, 
+          nodeLabel: node.label,
+          type: 'node' as const,
+          description: `${node.label} - Respuesta HTTP`
+        },
+        { 
+          name: 'status', 
+          value: `{{${node.id}.status}}`, 
+          nodeId: node.id, 
+          nodeLabel: node.label,
+          type: 'node' as const,
+          description: `${node.label} - Código de estado`
+        },
+        { 
+          name: 'output', 
+          value: `{{${node.id}.output}}`, 
+          nodeId: node.id, 
+          nodeLabel: node.label,
+          type: 'node' as const,
+          description: `${node.label} - Output genérico`
+        }
+      ];
     } else if (node.type === 'mercadopago') {
-      baseVars.push(
-        { name: 'preferencia_id', value: `{{${node.id}.preferencia_id}}`, nodeId: node.id, nodeLabel: node.label },
-        { name: 'link_pago', value: `{{${node.id}.link_pago}}`, nodeId: node.id, nodeLabel: node.label },
-        { name: 'estado_pago', value: `{{${node.id}.estado_pago}}`, nodeId: node.id, nodeLabel: node.label },
-        { name: 'mensaje', value: `{{${node.id}.mensaje}}`, nodeId: node.id, nodeLabel: node.label }
-      );
+      return [
+        { 
+          name: 'link_pago', 
+          value: `{{${node.id}.link_pago}}`, 
+          nodeId: node.id, 
+          nodeLabel: node.label,
+          type: 'node' as const,
+          description: `${node.label} - Link de pago`
+        },
+        { 
+          name: 'estado_pago', 
+          value: `{{${node.id}.estado_pago}}`, 
+          nodeId: node.id, 
+          nodeLabel: node.label,
+          type: 'node' as const,
+          description: `${node.label} - Estado del pago`
+        },
+        { 
+          name: 'output', 
+          value: `{{${node.id}.output}}`, 
+          nodeId: node.id, 
+          nodeLabel: node.label,
+          type: 'node' as const,
+          description: `${node.label} - Output genérico`
+        }
+      ];
     } else if (node.type === 'woocommerce') {
-      baseVars.push(
-        { name: 'productos', value: `{{${node.id}.productos}}`, nodeId: node.id, nodeLabel: node.label },
-        { name: 'total_productos', value: `{{${node.id}.total_productos}}`, nodeId: node.id, nodeLabel: node.label }
-      );
+      return [
+        { 
+          name: 'productos', 
+          value: `{{${node.id}.productos}}`, 
+          nodeId: node.id, 
+          nodeLabel: node.label,
+          type: 'node' as const,
+          description: `${node.label} - Lista de productos`
+        },
+        { 
+          name: 'output', 
+          value: `{{${node.id}.output}}`, 
+          nodeId: node.id, 
+          nodeLabel: node.label,
+          type: 'node' as const,
+          description: `${node.label} - Output genérico`
+        }
+      ];
     }
 
     return baseVars.map(v => ({
@@ -90,11 +180,19 @@ export const VariableSelector: React.FC<VariableSelectorProps> = ({
 
   // Filtrar variables
   const filteredVariables = allVariables.filter(v => {
-    const matchesSearch = v.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         v.value.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         v.description?.toLowerCase().includes(searchTerm.toLowerCase());
+    const searchLower = searchTerm.toLowerCase();
+    const nameLower = v.name && typeof v.name === 'string' ? v.name.toLowerCase() : '';
+    const valueLower = v.value && typeof v.value === 'string' ? v.value.toLowerCase() : '';
+    const descLower = v.description && typeof v.description === 'string' ? v.description.toLowerCase() : '';
     
-    const matchesCategory = selectedCategory === 'all' || v.type === selectedCategory;
+    const matchesSearch = nameLower.includes(searchLower) ||
+                         valueLower.includes(searchLower) ||
+                         descLower.includes(searchLower);
+    
+    // Corregir filtro: 'nodes' debe matchear con tipo 'node'
+    const matchesCategory = selectedCategory === 'all' || 
+                           v.type === selectedCategory ||
+                           (selectedCategory === 'nodes' && v.type === 'node');
     
     return matchesSearch && matchesCategory;
   });
@@ -136,7 +234,11 @@ export const VariableSelector: React.FC<VariableSelectorProps> = ({
   if (!isOpen) return null;
 
   const handleSelect = (variable: Variable) => {
-    onSelect(variable.value);
+    // Crear label legible: "Nodo - propiedad" o solo "variable"
+    const label = variable.nodeLabel 
+      ? `${variable.nodeLabel} - ${variable.name}`
+      : variable.name;
+    onSelect(variable.value, label);
     onClose();
   };
 
@@ -160,6 +262,7 @@ export const VariableSelector: React.FC<VariableSelectorProps> = ({
         top: `${position.y}px`,
         transform: 'translateY(-50%)'
       }}
+      onClick={(e) => e.stopPropagation()}
     >
       {/* Header */}
       <div className={styles.header}>
@@ -191,28 +294,40 @@ export const VariableSelector: React.FC<VariableSelectorProps> = ({
         {/* Categories */}
         <div className={styles.categories}>
           <button
-            onClick={() => setSelectedCategory('all')}
+            onClick={(e) => {
+              e.stopPropagation();
+              setSelectedCategory('all');
+            }}
             className={`${styles.categoryButton} ${selectedCategory === 'all' ? styles.active : ''}`}
           >
-            All
+            Todas
           </button>
           <button
-            onClick={() => setSelectedCategory('system')}
+            onClick={(e) => {
+              e.stopPropagation();
+              setSelectedCategory('system');
+            }}
             className={`${styles.categoryButton} ${selectedCategory === 'system' ? styles.activeGreen : ''}`}
           >
-            Sys
+            Sistema
           </button>
           <button
-            onClick={() => setSelectedCategory('global')}
+            onClick={(e) => {
+              e.stopPropagation();
+              setSelectedCategory('global');
+            }}
             className={`${styles.categoryButton} ${selectedCategory === 'global' ? styles.activeBlue : ''}`}
           >
-            Global
+            Globales
           </button>
           <button
-            onClick={() => setSelectedCategory('nodes')}
+            onClick={(e) => {
+              e.stopPropagation();
+              setSelectedCategory('nodes');
+            }}
             className={`${styles.categoryButton} ${selectedCategory === 'nodes' ? styles.active : ''}`}
           >
-            Nodes
+            Nodos
           </button>
         </div>
       </div>
@@ -236,7 +351,10 @@ export const VariableSelector: React.FC<VariableSelectorProps> = ({
                 </div>
                 <div className={styles.variableContent}>
                   <div className={styles.variableName}>
-                    {variable.name}
+                    {variable.nodeLabel ? `${variable.nodeLabel} - ${variable.name}` : variable.name}
+                    {shouldMaskVariable(variable.name) && (
+                      <span style={{ marginLeft: '6px', fontSize: '10px', color: '#9ca3af' }}>🔒</span>
+                    )}
                   </div>
                   <code className={styles.variableValue}>
                     {variable.value}

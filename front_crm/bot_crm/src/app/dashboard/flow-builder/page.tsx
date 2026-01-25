@@ -460,6 +460,14 @@ function FlowBuilderContent() {
 
   // Wrapper para guardar configuración de HTTP cuando se edita un nodo existente
   const handleSaveHTTPNodeConfig = useCallback((config: any) => {
+    // Guardar API Key como variable global si está configurado
+    if (config.saveApiKeyAsVariable && config.apiKeyVariableName && config.auth?.apiKey) {
+      setGlobalVariables(prev => ({ 
+        ...prev, 
+        [config.apiKeyVariableName]: config.auth.apiKey 
+      }));
+    }
+    
     if (selectedNode) {
       handleSaveNodeConfig(selectedNode.id, config);
     }
@@ -652,8 +660,15 @@ function FlowBuilderContent() {
   // Listener de teclado para Delete y Ctrl+Z/Ctrl+Y
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
-      // Delete: eliminar nodos y edges seleccionados
-      if (event.key === 'Delete' || event.key === 'Backspace') {
+      // Verificar si el usuario está escribiendo en un input, textarea o elemento editable
+      const target = event.target as HTMLElement;
+      const isTyping = target.tagName === 'INPUT' || 
+                       target.tagName === 'TEXTAREA' || 
+                       target.isContentEditable ||
+                       target.closest('[contenteditable="true"]');
+      
+      // Delete: eliminar nodos y edges seleccionados (solo si NO está escribiendo)
+      if ((event.key === 'Delete' || event.key === 'Backspace') && !isTyping) {
         event.preventDefault();
         
         // Guardar estado antes de eliminar
@@ -1028,18 +1043,16 @@ function FlowBuilderContent() {
   };
 
   const handleHTTPConfigSave = (httpConfig: any) => {
-    setShowHTTPConfigModal(false);
-    
-    // Guardar API Key como variable global si está configurado
+    // Guardar API Key como variable global si está configurado (ANTES de cerrar el modal)
     if (httpConfig.saveApiKeyAsVariable && httpConfig.apiKeyVariableName && httpConfig.auth?.apiKey) {
-      const newVariable = {
-        name: httpConfig.apiKeyVariableName,
-        value: httpConfig.auth.apiKey,
-      };
-      const currentVars = Object.values(globalVariables);
-      setGlobalVariables({ ...globalVariables, [httpConfig.apiKeyVariableName]: httpConfig.auth.apiKey });
+      setGlobalVariables(prev => ({ 
+        ...prev, 
+        [httpConfig.apiKeyVariableName]: httpConfig.auth.apiKey 
+      }));
+      console.log('💾 Variable global guardada:', httpConfig.apiKeyVariableName, '=', httpConfig.auth.apiKey);
     }
     
+    setShowHTTPConfigModal(false);
     createNodeFromModule(selectedModule, httpConfig);
   };
 
@@ -1928,7 +1941,8 @@ function FlowBuilderContent() {
           }}
           onSave={selectedNode ? handleSaveHTTPNodeConfig : handleHTTPConfigSave}
           initialConfig={selectedNode?.data?.config}
-          globalVariables={Object.entries(globalVariables).map(([name, value]) => ({ name, value: String(value) }))}
+          globalVariables={Object.keys(globalVariables)}
+          availableNodes={nodes}
           onTestRequest={handleTestHTTPRequest}
         />
 
@@ -1960,8 +1974,104 @@ function FlowBuilderContent() {
           }}
           onSave={handleSaveEdgeConfig}
           edgeId={selectedEdgeId || ''}
+          sourceNodeType={(() => {
+            const edge = edges.find(e => e.id === selectedEdgeId);
+            if (!edge) return undefined;
+            const sourceNode = nodes.find(n => n.id === edge.source);
+            return sourceNode?.type;
+          })()}
           currentConfig={edges.find(e => e.id === selectedEdgeId)?.data}
-          availableNodes={nodes.map(n => ({ id: n.id, label: n.data.label, type: n.type || 'default' }))}
+          allNodes={nodes}
+          allEdges={edges}
+          availableNodes={(() => {
+            const edge = edges.find(e => e.id === selectedEdgeId);
+            if (!edge) return [];
+            
+            const sourceNodeId = edge.source;
+            const sourceNode = nodes.find(n => n.id === sourceNodeId);
+            if (!sourceNode) return [];
+            
+            console.log('🔍 DEBUG EdgeConfig - Edge:', edge.id);
+            console.log('   Source Node:', sourceNode.data.label, '(type:', sourceNode.type, ')');
+            
+            const upstreamNodes = new Set<string>();
+            
+            // Función para encontrar todos los nodos UPSTREAM (anteriores)
+            const findUpstreamNodes = (nodeId: string, visited = new Set<string>()) => {
+              if (visited.has(nodeId)) {
+                console.log('   ⚠️  Ciclo detectado, deteniendo recursión para:', nodeId);
+                return;
+              }
+              visited.add(nodeId);
+              
+              const currentNode = nodes.find(n => n.id === nodeId);
+              console.log('   Buscando upstream de:', currentNode?.data.label);
+              
+              // Buscar edges que LLEGAN a este nodo (incoming edges)
+              const incomingEdges = edges.filter(e => e.target === nodeId);
+              console.log('   Incoming edges:', incomingEdges.length);
+              
+              for (const incomingEdge of incomingEdges) {
+                const upstreamNode = nodes.find(n => n.id === incomingEdge.source);
+                if (!upstreamNode) continue;
+                
+                // Si ya visitamos este nodo, es un ciclo - no continuar
+                if (visited.has(upstreamNode.id)) {
+                  console.log('     → Upstream node:', upstreamNode.data.label, '(CICLO - ignorado)');
+                  continue;
+                }
+                
+                console.log('     → Upstream node:', upstreamNode.data.label, '(type:', upstreamNode.type, ')');
+                
+                // Agregar nodo upstream si genera datos (no es router)
+                if (upstreamNode.type !== 'router') {
+                  upstreamNodes.add(upstreamNode.id);
+                  console.log('       ✅ Agregado');
+                } else {
+                  console.log('       ❌ Excluido (router)');
+                }
+                
+                // Continuar buscando hacia atrás
+                findUpstreamNodes(upstreamNode.id, visited);
+              }
+            };
+            
+            // Si el edge sale de un Router, buscar nodos upstream del Router
+            // Si no, el source node es el único disponible
+            if (sourceNode.type === 'router') {
+              console.log('   Es Router, buscando nodos que conectan directamente...');
+              
+              // Para Router: solo buscar nodos que conectan DIRECTAMENTE (1 nivel)
+              // No hacer recursión profunda para evitar ciclos
+              const directIncomingEdges = edges.filter(e => e.target === sourceNodeId);
+              console.log('   Edges directos al Router:', directIncomingEdges.length);
+              
+              for (const incomingEdge of directIncomingEdges) {
+                const directUpstreamNode = nodes.find(n => n.id === incomingEdge.source);
+                if (directUpstreamNode && directUpstreamNode.type !== 'router') {
+                  upstreamNodes.add(directUpstreamNode.id);
+                  console.log('     ✅ Nodo directo agregado:', directUpstreamNode.data.label);
+                }
+              }
+            } else {
+              console.log('   No es Router, agregando source node');
+              upstreamNodes.add(sourceNodeId);
+              findUpstreamNodes(sourceNodeId);
+            }
+            
+            console.log('   📊 Total upstream nodes:', upstreamNodes.size);
+            
+            // Retornar nodos upstream con su información
+            const result = Array.from(upstreamNodes)
+              .map(nodeId => {
+                const node = nodes.find(n => n.id === nodeId);
+                return node ? { id: node.id, label: node.data.label, type: node.type || 'default' } : null;
+              })
+              .filter((n): n is { id: string; label: string; type: string } => n !== null);
+            
+            console.log('   📋 Nodos finales:', result.map(n => n.label));
+            return result;
+          })()}
           globalVariables={Object.keys(globalVariables)}
         />
 

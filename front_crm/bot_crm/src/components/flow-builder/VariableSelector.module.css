@@ -5,11 +5,12 @@
   box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
   border: 1px solid #d1d5db;
   z-index: 9999;
-  width: 192px;
-  max-height: 240px;
+  width: 220px;
+  max-height: 280px;
   display: flex;
   flex-direction: column;
   font-size: 10px;
+  pointer-events: auto;
 }
 
 .header {

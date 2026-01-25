@@ -27,6 +27,7 @@ import nodeFlowRoutes from "./routes/nodeFlowRoutes.js";
 import superAdminRoutes from "./routes/superAdminRoutes.js";
 import chatbotRoutes from "./routes/chatbotRoutes.js";
 import intervencionRoutes from "./routes/intervencionRoutes.js";
+import httpProxyRoutes from "./routes/httpProxyRoutes.js";
 // import primerMensajeRoutes from "./routes/primerMensajeRoutes.js";
 import { errorHandler } from "./middlewares/errorHandler.js";
 import { connectDB } from "./config/database.js";
@@ -130,6 +131,7 @@ app.use("/api/flows", flowRoutes); // DEBE IR ANTES que nodeFlowRoutes para que 
 app.use("/api", nodeFlowRoutes); // Sistema de nodos configurables
 app.use("/api/chatbots", chatbotRoutes);
 app.use("/api/intervencion", intervencionRoutes);
+app.use("/api/http-proxy", httpProxyRoutes);
 // app.use("/api/primer-mensaje", primerMensajeRoutes);
 app.use("/api", statusRoutes);
 app.use(errorHandler);

@@ -1,7 +1,7 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { X, Plus, Trash2 } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { X, Plus, Trash2, Globe, ArrowRight } from 'lucide-react';
 import { VariableSelector } from '../VariableSelector';
 import styles from './EdgeConfigModal.module.css';
 
@@ -14,6 +14,8 @@ interface EdgeConfigModalProps {
   currentConfig?: EdgeConfig;
   availableNodes?: Array<{ id: string; label: string; type: string }>;
   globalVariables?: string[];
+  allNodes?: any[];
+  allEdges?: any[];
 }
 
 interface EdgeConfig {
@@ -26,23 +28,24 @@ interface EdgeConfig {
 interface Condition {
   id: string;
   variable: string;
+  variableLabel?: string; // Nombre legible para mostrar
   operator: string;
   value: string;
 }
 
 const OPERATORS = [
-  { value: '==', label: 'Equal to' },
-  { value: '!=', label: 'Not equal to' },
-  { value: '>', label: 'Greater than' },
-  { value: '<', label: 'Less than' },
-  { value: '>=', label: 'Greater than or equal to' },
-  { value: '<=', label: 'Less than or equal to' },
-  { value: 'contains', label: 'Contains' },
-  { value: 'not_contains', label: 'Does not contain' },
-  { value: 'exists', label: 'Exists' },
-  { value: 'not_exists', label: 'Does not exist' },
-  { value: 'empty', label: 'Is empty' },
-  { value: 'not_empty', label: 'Is not empty' },
+  { value: '==', label: 'Igual a' },
+  { value: '!=', label: 'Diferente de' },
+  { value: '>', label: 'Mayor que' },
+  { value: '<', label: 'Menor que' },
+  { value: '>=', label: 'Mayor o igual que' },
+  { value: '<=', label: 'Menor o igual que' },
+  { value: 'contains', label: 'Contiene' },
+  { value: 'not_contains', label: 'No contiene' },
+  { value: 'exists', label: 'Existe' },
+  { value: 'not_exists', label: 'No existe' },
+  { value: 'empty', label: 'Está vacío' },
+  { value: 'not_empty', label: 'No está vacío' },
 ];
 
 export default function EdgeConfigModal({
@@ -54,12 +57,65 @@ export default function EdgeConfigModal({
   currentConfig,
   availableNodes = [],
   globalVariables = [],
+  allNodes = [],
+  allEdges = [],
 }: EdgeConfigModalProps) {
   const [label, setLabel] = useState(currentConfig?.label || '');
   const [conditions, setConditions] = useState<Condition[]>([]);
   const [showVariableSelector, setShowVariableSelector] = useState(false);
   const [selectorPosition, setSelectorPosition] = useState({ x: 0, y: 0 });
   const [activeConditionId, setActiveConditionId] = useState<string | null>(null);
+  const [nodeSearchDepth, setNodeSearchDepth] = useState<'direct' | 'all'>('direct');
+
+  // Calcular availableNodes dinámicamente basándose en nodeSearchDepth
+  const computedAvailableNodes = React.useMemo(() => {
+    if (!allNodes.length || !allEdges.length || !edgeId) return availableNodes;
+    
+    const currentEdge = allEdges.find((e: any) => e.id === edgeId);
+    if (!currentEdge) return availableNodes;
+    
+    const sourceNode = allNodes.find((n: any) => n.id === currentEdge.source);
+    if (!sourceNode || sourceNode.type !== 'router') return availableNodes;
+    
+    const upstreamNodes = new Set<string>();
+    
+    if (nodeSearchDepth === 'direct') {
+      // Solo nodos directamente conectados al Router
+      const directIncomingEdges = allEdges.filter((e: any) => e.target === sourceNode.id);
+      for (const incomingEdge of directIncomingEdges) {
+        const directUpstreamNode = allNodes.find((n: any) => n.id === incomingEdge.source);
+        if (directUpstreamNode && directUpstreamNode.type !== 'router') {
+          upstreamNodes.add(directUpstreamNode.id);
+        }
+      }
+    } else {
+      // Todos los nodos upstream (recursivo con detección de ciclos)
+      const visited = new Set<string>();
+      const findUpstreamNodes = (nodeId: string) => {
+        if (visited.has(nodeId)) return;
+        visited.add(nodeId);
+        
+        const incomingEdges = allEdges.filter((e: any) => e.target === nodeId);
+        for (const incomingEdge of incomingEdges) {
+          const upstreamNode = allNodes.find((n: any) => n.id === incomingEdge.source);
+          if (!upstreamNode || visited.has(upstreamNode.id)) continue;
+          
+          if (upstreamNode.type !== 'router') {
+            upstreamNodes.add(upstreamNode.id);
+          }
+          findUpstreamNodes(upstreamNode.id);
+        }
+      };
+      findUpstreamNodes(sourceNode.id);
+    }
+    
+    return Array.from(upstreamNodes)
+      .map(nodeId => {
+        const node = allNodes.find((n: any) => n.id === nodeId);
+        return node ? { id: node.id, label: node.data.label, type: node.type || 'default' } : null;
+      })
+      .filter((n): n is { id: string; label: string; type: string } => n !== null);
+  }, [allNodes, allEdges, edgeId, nodeSearchDepth, availableNodes]);
 
   useEffect(() => {
     if (currentConfig?.conditions && currentConfig.conditions.length > 0) {
@@ -117,9 +173,13 @@ export default function EdgeConfigModal({
     setShowVariableSelector(true);
   };
 
-  const handleVariableSelect = (variable: string) => {
+  const handleVariableSelect = (variable: string, label?: string) => {
     if (activeConditionId) {
-      updateCondition(activeConditionId, 'variable', variable);
+      setConditions(conditions.map(c => 
+        c.id === activeConditionId 
+          ? { ...c, variable, variableLabel: label || variable } 
+          : c
+      ));
     }
     setShowVariableSelector(false);
     setActiveConditionId(null);
@@ -162,12 +222,12 @@ export default function EdgeConfigModal({
             </div>
             <div>
               <h2 className={styles.modalTitle}>
-                {isRouter ? 'Configure Route Condition' : 'Set up a filter'}
+                {isRouter ? 'Configurar Condición de Ruta' : 'Configurar filtro'}
               </h2>
               <p className={styles.modalSubtitle}>
                 {isRouter 
-                  ? 'Define the condition for this route'
-                  : 'Only continue if the condition is met'
+                  ? 'Define la condición para esta ruta'
+                  : 'Solo continuar si se cumple la condición'
                 }
               </p>
             </div>
@@ -181,15 +241,41 @@ export default function EdgeConfigModal({
         <div className={styles.modalBody}>
           {/* Label */}
           <div className={styles.formGroup}>
-            <label className={styles.label}>
-              Label
-              <span className={styles.optional}>(optional, max 120 characters)</span>
-            </label>
+            <div className={styles.labelRow}>
+              <label className={styles.label}>
+                Etiqueta
+                <span className={styles.optional}>(opcional, máx 120 caracteres)</span>
+              </label>
+              {isRouter && (
+                <div 
+                  className={styles.scopeToggleContainer}
+                  title={nodeSearchDepth === 'direct' 
+                    ? 'Solo nodos directos - Click para mostrar todos los nodos anteriores'
+                    : 'Todos los nodos anteriores - Click para mostrar solo nodos directos'}
+                >
+                  <button
+                    type="button"
+                    onClick={() => setNodeSearchDepth(nodeSearchDepth === 'direct' ? 'all' : 'direct')}
+                    className={`${styles.scopeToggle} ${nodeSearchDepth === 'all' ? styles.scopeToggleActive : ''}`}
+                  >
+                    <div className={styles.toggleTrack}>
+                      <div className={`${styles.toggleThumb} ${nodeSearchDepth === 'all' ? styles.toggleThumbActive : ''}`}>
+                        {nodeSearchDepth === 'direct' ? (
+                          <span className={styles.toggleNumber}>1</span>
+                        ) : (
+                          <Globe size={12} />
+                        )}
+                      </div>
+                    </div>
+                  </button>
+                </div>
+              )}
+            </div>
             <input
               type="text"
               value={label}
               onChange={(e) => setLabel(e.target.value.slice(0, 120))}
-              placeholder={isRouter ? "Route name" : "Filter name"}
+              placeholder={isRouter ? "Nombre de la ruta" : "Nombre del filtro"}
               className={styles.input}
               maxLength={120}
             />
@@ -199,14 +285,14 @@ export default function EdgeConfigModal({
           {/* Conditions List */}
           <div className={styles.formGroup}>
             <div className={styles.conditionsHeader}>
-              <label className={styles.label}>Conditions</label>
+              <label className={styles.label}>Condiciones</label>
               <button
                 type="button"
                 onClick={addCondition}
                 className={styles.addConditionBtn}
               >
                 <Plus size={16} />
-                Add Condition
+                Agregar Condición
               </button>
             </div>
             
@@ -224,13 +310,13 @@ export default function EdgeConfigModal({
                         onClick={(e) => openVariableSelector(cond.id, e)}
                         className={styles.variableButton}
                       >
-                        {cond.variable || 'Select variable...'}
+                        {cond.variableLabel || cond.variable || 'Seleccionar variable...'}
                       </button>
                     </div>
 
                     {/* Operator */}
                     <div className={styles.conditionField}>
-                      <label className={styles.smallLabel}>Operator</label>
+                      <label className={styles.smallLabel}>Operador</label>
                       <select
                         value={cond.operator}
                         onChange={(e) => updateCondition(cond.id, 'operator', e.target.value)}
@@ -248,7 +334,7 @@ export default function EdgeConfigModal({
                     {cond.operator !== 'exists' && cond.operator !== 'not_exists' && 
                      cond.operator !== 'empty' && cond.operator !== 'not_empty' && (
                       <div className={styles.conditionField}>
-                        <label className={styles.smallLabel}>Value</label>
+                        <label className={styles.smallLabel}>Valor</label>
                         <input
                           type="text"
                           value={cond.value}
@@ -266,7 +352,7 @@ export default function EdgeConfigModal({
                       type="button"
                       onClick={() => removeCondition(cond.id)}
                       className={styles.deleteConditionBtn}
-                      title="Remove condition"
+                      title="Eliminar condición"
                     >
                       <Trash2 size={16} />
                     </button>
@@ -277,7 +363,7 @@ export default function EdgeConfigModal({
 
             {/* Preview */}
             <div className={styles.preview}>
-              <div className={styles.previewLabel}>Preview:</div>
+              <div className={styles.previewLabel}>Vista previa:</div>
               <code className={styles.previewCode}>
                 {conditions.map((c, i) => {
                   const condStr = c.operator === 'empty' || c.operator === 'not_empty' || 
@@ -300,7 +386,7 @@ export default function EdgeConfigModal({
         {/* Footer */}
         <div className={styles.modalFooter}>
           <button onClick={onClose} className={styles.btnSecondary}>
-            Cancel
+            Cancelar
           </button>
           <button 
             onClick={handleSave} 
@@ -311,7 +397,7 @@ export default function EdgeConfigModal({
                c.operator !== 'empty' && c.operator !== 'not_empty' && !c.value)
             )}
           >
-            Save
+            Guardar
           </button>
         </div>
       </div>
@@ -325,7 +411,7 @@ export default function EdgeConfigModal({
         }}
         onSelect={handleVariableSelect}
         position={selectorPosition}
-        availableNodes={availableNodes}
+        availableNodes={computedAvailableNodes}
         globalVariables={globalVariables}
       />
     </div>

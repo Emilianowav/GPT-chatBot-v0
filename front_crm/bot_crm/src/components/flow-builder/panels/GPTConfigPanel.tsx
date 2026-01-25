@@ -4,10 +4,14 @@ import styles from './GPTConfigPanel.module.css';
 
 // Tipos para la configuración del GPT con 3 bloques
 interface Topico {
-  id: string;
-  titulo: string;
-  contenido: string;
+  id?: string;
+  titulo?: string;
+  contenido?: string;
   keywords?: string[];
+  // Formato Intercapital
+  nombre?: string;
+  descripcion?: string;
+  categoria?: string;
 }
 
 interface VariableRecopilar {
@@ -82,6 +86,9 @@ export interface GPTConversacionalConfig {
   
   // CONFIGURACIÓN PARA FORMATEADOR/TRANSFORM
   configuracionExtraccion?: ConfiguracionExtraccion;
+  
+  // OUTPUT VARIABLE PERSONALIZADA (para procesadores)
+  outputVariable?: string;
   
   // Legacy
   variablesEntrada?: string[];
@@ -571,6 +578,19 @@ const GPTConfigPanel: React.FC<GPTConfigPanelProps> = ({ config, onChange, globa
               </select>
             </div>
 
+            {config.tipo === 'procesador' && (
+              <div className={styles.formGroup}>
+                <label>Output Variable (Opcional)</label>
+                <input
+                  type="text"
+                  placeholder="Ej: topico_identificado, categoria, sentimiento"
+                  value={config.outputVariable || ''}
+                  onChange={(e) => onChange({ ...config, outputVariable: e.target.value })}
+                />
+                <small>Nombre de la variable que extraerá un valor específico de la respuesta del GPT</small>
+              </div>
+            )}
+
             <div className={styles.infoBox} style={{ marginTop: '16px' }}>
               <Info size={16} />
               <span>La API Key de OpenAI se configura automáticamente desde el sistema</span>
@@ -614,51 +634,70 @@ const GPTConfigPanel: React.FC<GPTConfigPanelProps> = ({ config, onChange, globa
             </div>
 
             {config.topicos && config.topicos.length > 0 ? (
-              config.topicos.map((topico, index) => (
-                <div key={topico.id} className={styles.itemCard}>
-                  <div className={styles.itemHeader}>
-                    <h4>Tópico {index + 1}</h4>
-                    <button
-                      className={styles.deleteButton}
-                      onClick={() => eliminarTopico(index)}
-                      title="Eliminar tópico"
-                    >
-                      <Trash2 size={16} />
-                    </button>
-                  </div>
+              config.topicos.map((topico, index) => {
+                // Soportar ambos formatos: antiguo (titulo/contenido) y nuevo (nombre/descripcion)
+                const titulo = topico.titulo || topico.nombre || '';
+                const contenido = topico.contenido || topico.descripcion || '';
+                const key = topico.id || topico.nombre || `topico-${index}`;
+                
+                return (
+                  <div key={key} className={styles.itemCard}>
+                    <div className={styles.itemHeader}>
+                      <h4>{titulo || `Tópico ${index + 1}`}</h4>
+                      <button
+                        className={styles.deleteButton}
+                        onClick={() => eliminarTopico(index)}
+                        title="Eliminar tópico"
+                      >
+                        <Trash2 size={16} />
+                      </button>
+                    </div>
 
-                  <div className={styles.formGroup}>
-                    <label>Título del Tópico</label>
-                    <input
-                      type="text"
-                      placeholder="Ej: Horarios del Local"
-                      value={topico.titulo}
-                      onChange={(e) => actualizarTopico(index, 'titulo', e.target.value)}
-                    />
-                  </div>
+                    <div className={styles.formGroup}>
+                      <label>Título del Tópico</label>
+                      <input
+                        type="text"
+                        placeholder="Ej: Horarios del Local"
+                        value={titulo}
+                        onChange={(e) => actualizarTopico(index, topico.nombre ? 'nombre' : 'titulo', e.target.value)}
+                      />
+                    </div>
 
-                  <div className={styles.formGroup}>
-                    <label>Contenido</label>
-                    <textarea
-                      rows={5}
-                      placeholder="Ej: Lunes a Viernes 8:30-12 y 17-21. Sábados 9-13 y 17-21"
-                      value={topico.contenido}
-                      onChange={(e) => actualizarTopico(index, 'contenido', e.target.value)}
-                    />
-                  </div>
+                    <div className={styles.formGroup}>
+                      <label>Contenido</label>
+                      <textarea
+                        rows={5}
+                        placeholder="Ej: Lunes a Viernes 8:30-12 y 17-21. Sábados 9-13 y 17-21"
+                        value={contenido}
+                        onChange={(e) => actualizarTopico(index, topico.descripcion ? 'descripcion' : 'contenido', e.target.value)}
+                      />
+                    </div>
 
-                  <div className={styles.formGroup}>
-                    <label>Palabras Clave (opcional)</label>
-                    <input
-                      type="text"
-                      placeholder="Ej: horario, abierto, cerrado, cuando (separadas por coma)"
-                      value={topico.keywords?.join(', ') || ''}
-                      onChange={(e) => actualizarTopico(index, 'keywords', e.target.value)}
-                    />
-                    <small>Ayuda al GPT a identificar cuándo usar este tópico</small>
+                    {topico.categoria && (
+                      <div className={styles.formGroup}>
+                        <label>Categoría</label>
+                        <input
+                          type="text"
+                          placeholder="Ej: operacion, consulta, soporte"
+                          value={topico.categoria}
+                          onChange={(e) => actualizarTopico(index, 'categoria', e.target.value)}
+                        />
+                      </div>
+                    )}
+
+                    <div className={styles.formGroup}>
+                      <label>Palabras Clave (opcional)</label>
+                      <input
+                        type="text"
+                        placeholder="Ej: horario, abierto, cerrado, cuando (separadas por coma)"
+                        value={topico.keywords?.join(', ') || ''}
+                        onChange={(e) => actualizarTopico(index, 'keywords', e.target.value)}
+                      />
+                      <small>Ayuda al GPT a identificar cuándo usar este tópico</small>
+                    </div>
                   </div>
-                </div>
-              ))
+                );
+              })
             ) : (
               <div className={styles.emptyState}>
                 <p>No hay tópicos configurados</p>

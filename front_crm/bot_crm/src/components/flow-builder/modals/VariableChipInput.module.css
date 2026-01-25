@@ -1,0 +1,95 @@
+.container {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 42px;
+  padding: 6px 12px;
+  background: #ffffff;
+  border: 2px solid #e5e7eb;
+  border-radius: 10px;
+  cursor: text;
+}
+
+.container:focus-within {
+  border-color: #3b82f6;
+  background: #ffffff;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.chipsContainer {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+  min-height: 28px;
+}
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 8px 4px 10px;
+  background: #dbeafe;
+  border: 1px solid #93c5fd;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 500;
+  color: #1e40af;
+  font-family: 'Monaco', 'Menlo', 'Courier New', monospace;
+}
+
+.chipRemove {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2px;
+  background: rgba(255, 255, 255, 0.5);
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  color: #1e40af;
+}
+
+.textSegment {
+  font-size: 14px;
+  color: #374151;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.placeholder {
+  font-size: 14px;
+  color: #9ca3af;
+  font-style: italic;
+}
+
+.editInput {
+  flex: 1;
+  border: none;
+  outline: none;
+  background: transparent;
+  font-size: 14px;
+  color: #374151;
+  font-family: inherit;
+  padding: 0;
+  min-width: 100px;
+}
+
+.editInput::placeholder {
+  color: #9ca3af;
+}
+
+.addVariableBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 6px;
+  background: #dbeafe;
+  border: 1px solid #bfdbfe;
+  border-radius: 6px;
+  cursor: pointer;
+  color: #2563eb;
+  flex-shrink: 0;
+}

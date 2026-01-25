@@ -9,6 +9,7 @@ import type { IGPTConversacionalConfig } from '../types/gpt-config.types.js';
 import { createWooCommerceService } from './woocommerceService.js';
 import { executeCarritoNode, executeMercadoPagoNode, executeVerificarPagoNode } from './FlowExecutor.carrito.js';
 import { ApiConfigurationModel } from '../modules/integrations/models/ApiConfiguration.js';
+import axios from 'axios';
 
 interface FlowContext {
   [nodeId: string]: {
@@ -506,6 +507,9 @@ export class FlowExecutor {
           setGlobalVariable: this.setGlobalVariable.bind(this)
         });
       
+      case 'http':
+        return await this.executeHTTPNode(node, input);
+      
       default:
         console.warn(`⚠️  Tipo de nodo no soportado: ${node.type}`);
         return { output: input };
@@ -694,6 +698,17 @@ export class FlowExecutor {
       output.respuesta_gpt = resultado.texto;
       output.tokens = resultado.tokens;
       output.costo = resultado.costo;
+
+      // Si hay outputVariable configurada (para procesadores), extraer valor específico
+      if (config.outputVariable && resultado.texto) {
+        const outputVarName = config.outputVariable.trim();
+        console.log(`\n📤 Extrayendo output variable: ${outputVarName}`);
+        
+        // Intentar extraer el valor (asumiendo que el GPT responde con el valor limpio)
+        const cleanValue = resultado.texto.trim();
+        output[outputVarName] = cleanValue;
+        console.log(`   ✅ ${outputVarName} = "${cleanValue}"`);
+      }
     } else {
       console.log('\n⏭️  Saltando llamada a GPT (formateador solo extrae datos)');
     }
@@ -2158,5 +2173,181 @@ Ejemplo:
       
       return `${numero}. *${nombre}*\n   💰 ${precio}\n   ${stock}`;
     }).join('\n\n');
+  }
+
+  /**
+   * Ejecuta un nodo HTTP con reemplazo de variables y mapeo de respuestas
+   */
+  private async executeHTTPNode(node: any, input: any): Promise<NodeExecutionResult> {
+    const config = node.data.config;
+
+    console.log('\n═══════════════════════════════════════════════════════════');
+    console.log(`🌐 NODO HTTP: ${node.data.label}`);
+    console.log('═══════════════════════════════════════════════════════════');
+    console.log('\n📥 CONFIG:');
+    console.log(`   URL: ${config.url}`);
+    console.log(`   Method: ${config.method}`);
+    console.log(`   Timeout: ${config.timeout}ms`);
+
+    try {
+      // 1. Reemplazar variables en URL
+      let finalUrl = config.url || '';
+      Object.entries(this.globalVariables).forEach(([name, value]) => {
+        const regex = new RegExp(`\\{\\{\\s*${name}\\s*\\}\\}`, 'g');
+        finalUrl = finalUrl.replace(regex, String(value));
+      });
+
+      console.log(`   📍 URL final: ${finalUrl}`);
+
+      // 2. Construir query params con variables reemplazadas
+      const finalQueryParams: Record<string, string> = {};
+      if (config.queryParams) {
+        Object.entries(config.queryParams).forEach(([key, value]: [string, any]) => {
+          let finalValue = String(value);
+          Object.entries(this.globalVariables).forEach(([name, varValue]) => {
+            const regex = new RegExp(`\\{\\{\\s*${name}\\s*\\}\\}`, 'g');
+            finalValue = finalValue.replace(regex, String(varValue));
+          });
+          finalQueryParams[key] = finalValue;
+        });
+      }
+
+      // Agregar query params a la URL
+      if (Object.keys(finalQueryParams).length > 0) {
+        const params = new URLSearchParams(finalQueryParams);
+        finalUrl = `${finalUrl}?${params.toString()}`;
+        console.log(`   🔗 URL con params: ${finalUrl}`);
+      }
+
+      // 3. Preparar headers con variables reemplazadas
+      const finalHeaders: Record<string, string> = {};
+      if (config.headers) {
+        Object.entries(config.headers).forEach(([key, value]: [string, any]) => {
+          let finalValue = String(value);
+          Object.entries(this.globalVariables).forEach(([name, varValue]) => {
+            const regex = new RegExp(`\\{\\{\\s*${name}\\s*\\}\\}`, 'g');
+            finalValue = finalValue.replace(regex, String(varValue));
+          });
+          finalHeaders[key] = finalValue;
+        });
+      }
+
+      console.log(`   📋 Headers: ${Object.keys(finalHeaders).join(', ')}`);
+
+      // 4. Preparar body si existe (con variables reemplazadas)
+      let finalBody: any = undefined;
+      if (config.body && config.method !== 'GET') {
+        let bodyString = config.body;
+        Object.entries(this.globalVariables).forEach(([name, value]) => {
+          const regex = new RegExp(`\\{\\{\\s*${name}\\s*\\}\\}`, 'g');
+          bodyString = bodyString.replace(regex, String(value));
+        });
+        
+        try {
+          finalBody = JSON.parse(bodyString);
+        } catch {
+          finalBody = bodyString;
+        }
+        
+        console.log(`   📦 Body: ${JSON.stringify(finalBody).substring(0, 100)}...`);
+      }
+
+      // 5. Ejecutar request HTTP
+      console.log(`   🚀 Ejecutando ${config.method} request...`);
+      
+      const response = await axios({
+        url: finalUrl,
+        method: config.method || 'GET',
+        headers: finalHeaders,
+        data: finalBody,
+        timeout: config.timeout || 30000,
+        validateStatus: () => true, // No lanzar error en status codes
+      });
+
+      console.log(`   ✅ Response status: ${response.status}`);
+
+      // 6. Extraer datos según dataPath configurado
+      let responseData = response.data;
+      if (config.responseMapping?.dataPath) {
+        const path = config.responseMapping.dataPath;
+        const pathParts = path.split('.');
+        
+        for (const part of pathParts) {
+          if (responseData && typeof responseData === 'object') {
+            responseData = responseData[part];
+          }
+        }
+        
+        console.log(`   📊 Datos extraídos desde: ${path}`);
+      }
+
+      console.log(`   📦 Tipo de respuesta: ${Array.isArray(responseData) ? 'Array' : typeof responseData}`);
+      if (Array.isArray(responseData)) {
+        console.log(`   📊 Cantidad de items: ${responseData.length}`);
+      }
+
+      // 7. Aplicar variableMappings (guardar campos en variables globales)
+      if (config.variableMappings && Array.isArray(config.variableMappings) && config.variableMappings.length > 0) {
+        console.log(`\n💾 Aplicando ${config.variableMappings.length} mapeos de variables:`);
+        
+        for (const mapping of config.variableMappings) {
+          try {
+            // Extraer valor usando responsePath (ej: "data.comitente")
+            const pathParts = mapping.responsePath.split('.');
+            let value = responseData;
+            
+            for (const part of pathParts) {
+              if (value && typeof value === 'object') {
+                value = value[part];
+              } else {
+                value = undefined;
+                break;
+              }
+            }
+
+            if (value !== undefined && value !== null) {
+              // Guardar en variable global
+              if (mapping.variableType === 'global') {
+                this.setGlobalVariable(mapping.variableName, value);
+                console.log(`   ✅ ${mapping.variableName} = ${JSON.stringify(value).substring(0, 100)}`);
+              }
+            } else {
+              console.log(`   ⚠️  ${mapping.variableName}: valor no encontrado en ${mapping.responsePath}`);
+            }
+          } catch (error: any) {
+            console.warn(`   ❌ Error mapeando ${mapping.variableName}: ${error.message}`);
+          }
+        }
+      }
+
+      // 8. Retornar respuesta completa
+      const output = {
+        status: response.status,
+        statusText: response.statusText,
+        data: responseData,
+        fullResponse: response.data,
+      };
+
+      console.log(`\n✅ Nodo HTTP ejecutado exitosamente`);
+      
+      return { output };
+
+    } catch (error: any) {
+      console.error(`\n❌ Error ejecutando HTTP request:`, error.message);
+      
+      if (error.response) {
+        console.error(`   Status: ${error.response.status}`);
+        console.error(`   Data: ${JSON.stringify(error.response.data).substring(0, 200)}`);
+      }
+      
+      return {
+        output: {
+          error: error.message,
+          status: error.response?.status || 500,
+          data: error.response?.data || null,
+        },
+        error: error.message,
+      };
+    }
   }
 }

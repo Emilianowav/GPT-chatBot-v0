@@ -1,5 +1,7 @@
 import { useState, useEffect } from 'react';
-import { X, Plus, Trash2, Globe, Lock, ChevronDown, ChevronUp, Info, Play, Database } from 'lucide-react';
+import { X, Plus, Trash2, Globe, Lock, ChevronDown, ChevronUp, Info, Play, Database, Variable } from 'lucide-react';
+import { VariableSelector } from '../VariableSelector';
+import { VariableChipInput } from './VariableChipInput';
 import styles from './HTTPConfigModal.module.css';
 
 interface HTTPConfigModalProps {
@@ -7,7 +9,8 @@ interface HTTPConfigModalProps {
   onClose: () => void;
   onSave: (config: any) => void;
   initialConfig?: any;
-  globalVariables?: Array<{ name: string; value: string }>;
+  globalVariables?: string[];
+  availableNodes?: Array<{ id: string; label: string; type: string }>;
   onTestRequest?: (config: any) => Promise<any>;
   onCreateVariable?: (name: string, value: string) => void;
 }
@@ -18,9 +21,14 @@ export default function HTTPConfigModal({
   onSave, 
   initialConfig,
   globalVariables = [],
+  availableNodes = [],
   onTestRequest,
   onCreateVariable 
 }: HTTPConfigModalProps) {
+  // Estados para el selector de variables
+  const [showVariableSelector, setShowVariableSelector] = useState(false);
+  const [selectorPosition, setSelectorPosition] = useState({ x: 0, y: 0 });
+  const [activeField, setActiveField] = useState<{ type: 'url' | 'queryParam' | 'header' | 'body' | 'auth'; index?: number; field?: 'key' | 'value' } | null>(null);
   const [url, setUrl] = useState(initialConfig?.url || '');
   const [method, setMethod] = useState(initialConfig?.method || 'GET');
   const [timeout, setTimeout] = useState(initialConfig?.timeout || 30000);
@@ -73,6 +81,16 @@ export default function HTTPConfigModal({
     variableName: string; 
     variableType: 'global' | 'topic';
   }>>(initialConfig?.variableMappings || []);
+
+  // Función para enmascarar API keys
+  const maskApiKey = (key: string): string => {
+    if (!key || key.length < 8) return key;
+    const visibleChars = 4;
+    const start = key.substring(0, visibleChars);
+    const end = key.substring(key.length - visibleChars);
+    const masked = '•'.repeat(Math.min(key.length - (visibleChars * 2), 20));
+    return `${start}${masked}${end}`;
+  };
 
   // Detectar variables usadas en la configuración
   const detectUsedVariables = () => {
@@ -211,6 +229,47 @@ export default function HTTPConfigModal({
     });
   };
 
+  const openVariableSelector = (event: React.MouseEvent, type: 'url' | 'queryParam' | 'header' | 'body' | 'auth', index?: number, field?: 'key' | 'value') => {
+    event.preventDefault();
+    const rect = (event.target as HTMLElement).getBoundingClientRect();
+    setSelectorPosition({ x: rect.right + 10, y: rect.top });
+    setActiveField({ type, index, field });
+    setShowVariableSelector(true);
+  };
+
+  const handleVariableSelect = (variable: string) => {
+    if (!activeField) return;
+
+    switch (activeField.type) {
+      case 'url':
+        setUrl((prev: string) => prev + variable);
+        break;
+      case 'queryParam':
+        if (activeField.index !== undefined && activeField.field) {
+          updateQueryParam(activeField.index, activeField.field, queryParams[activeField.index][activeField.field] + variable);
+        }
+        break;
+      case 'header':
+        if (activeField.index !== undefined && activeField.field) {
+          updateHeader(activeField.index, activeField.field, headers[activeField.index][activeField.field] + variable);
+        }
+        break;
+      case 'body':
+        setBody((prev: string) => prev + variable);
+        break;
+      case 'auth':
+        if (authType === 'api-key') {
+          setApiKey((prev: string) => prev + variable);
+        } else if (authType === 'bearer') {
+          setBearerToken((prev: string) => prev + variable);
+        }
+        break;
+    }
+
+    setShowVariableSelector(false);
+    setActiveField(null);
+  };
+
   const addHeader = () => {
     console.log('🔧 Agregando header...');
     setHeaders([...headers, { key: '', value: '' }]);
@@ -314,8 +373,9 @@ export default function HTTPConfigModal({
   if (!isOpen) return null;
 
   return (
-    <div className={styles.modalOverlay} onClick={onClose}>
-      <div className={styles.modalContent} onClick={(e) => e.stopPropagation()}>
+    <>
+      <div className={styles.modalOverlay} onClick={onClose}>
+        <div className={styles.modalContent} onClick={(e) => e.stopPropagation()}>
         <div className={styles.modalHeader}>
           <div className={styles.headerLeft}>
             <div className={styles.appIcon}>
@@ -384,14 +444,41 @@ export default function HTTPConfigModal({
                     </div>
                     <div className={styles.formGroup}>
                       <label className={styles.label}>API Key</label>
-                      <input type="password" className={styles.input} value={apiKey} onChange={(e) => setApiKey(e.target.value)} placeholder="tu_api_key_aqui" />
+                      <div style={{ position: 'relative' }}>
+                        <input 
+                          type="text" 
+                          className={styles.input} 
+                          value={apiKey ? maskApiKey(apiKey) : ''} 
+                          onFocus={(e) => {
+                            if (apiKey) {
+                              e.target.value = apiKey;
+                              e.target.type = 'text';
+                            }
+                          }}
+                          onBlur={(e) => {
+                            e.target.type = 'text';
+                          }}
+                          onChange={(e) => setApiKey(e.target.value)} 
+                          placeholder="tu_api_key_aqui" 
+                        />
+                      </div>
                     </div>
                   </>
                 )}
                 {authType === 'bearer' && (
                   <div className={styles.formGroup}>
                     <label className={styles.label}>Bearer Token</label>
-                    <input type="password" className={styles.input} value={bearerToken} onChange={(e) => setBearerToken(e.target.value)} />
+                    <input 
+                      type="text" 
+                      className={styles.input} 
+                      value={bearerToken ? maskApiKey(bearerToken) : ''} 
+                      onFocus={(e) => {
+                        if (bearerToken) {
+                          e.target.value = bearerToken;
+                        }
+                      }}
+                      onChange={(e) => setBearerToken(e.target.value)} 
+                    />
                   </div>
                 )}
                 {authType === 'basic' && (
@@ -413,31 +500,73 @@ export default function HTTPConfigModal({
           <div className={styles.formGroup}>
             <label className={styles.label}>Query Parameters (URL)</label>
             {queryParams.map((param, index) => (
-              <div key={index} className={styles.headerRow}>
-                <input type="text" className={styles.input} value={param.key} onChange={(e) => updateQueryParam(index, 'key', e.target.value)} placeholder="parametro" />
-                <input type="text" className={styles.input} value={param.value} onChange={(e) => updateQueryParam(index, 'value', e.target.value)} placeholder="valor" />
-                <button onClick={() => removeQueryParam(index)} className={styles.btnIcon} type="button"><Trash2 size={16} /></button>
+              <div key={index} className={styles.paramRow}>
+                <input 
+                  type="text" 
+                  className={styles.inputKey} 
+                  value={param.key} 
+                  onChange={(e) => updateQueryParam(index, 'key', e.target.value)} 
+                  placeholder="parametro" 
+                />
+                <VariableChipInput
+                  value={param.value}
+                  onChange={(value) => updateQueryParam(index, 'value', value)}
+                  onOpenVariableSelector={(e) => openVariableSelector(e, 'queryParam', index, 'value')}
+                  placeholder="valor o {{variable}}"
+                  className={styles.chipInput}
+                />
+                <button onClick={() => removeQueryParam(index)} className={styles.btnDelete} type="button">
+                  <Trash2 size={16} />
+                </button>
               </div>
             ))}
-            <button onClick={addQueryParam} className={styles.btnSecondary} type="button"><Plus size={16} /> Agregar Parámetro</button>
+            <button onClick={addQueryParam} className={styles.btnAdd} type="button">
+              <Plus size={16} /> Agregar Parámetro
+            </button>
           </div>
 
           <div className={styles.formGroup}>
             <label className={styles.label}>Headers Personalizados</label>
             {headers.map((header, index) => (
-              <div key={index} className={styles.headerRow}>
-                <input type="text" className={styles.input} value={header.key} onChange={(e) => updateHeader(index, 'key', e.target.value)} placeholder="Content-Type" />
-                <input type="text" className={styles.input} value={header.value} onChange={(e) => updateHeader(index, 'value', e.target.value)} placeholder="application/json" />
-                <button onClick={() => removeHeader(index)} className={styles.btnIcon} type="button"><Trash2 size={16} /></button>
+              <div key={index} className={styles.paramRow}>
+                <input 
+                  type="text" 
+                  className={styles.inputKey} 
+                  value={header.key} 
+                  onChange={(e) => updateHeader(index, 'key', e.target.value)} 
+                  placeholder="Content-Type" 
+                />
+                <VariableChipInput
+                  value={header.value}
+                  onChange={(value) => updateHeader(index, 'value', value)}
+                  onOpenVariableSelector={(e) => openVariableSelector(e, 'header', index, 'value')}
+                  placeholder="valor o {{variable}}"
+                  className={styles.chipInput}
+                />
+                <button onClick={() => removeHeader(index)} className={styles.btnDelete} type="button">
+                  <Trash2 size={16} />
+                </button>
               </div>
             ))}
-            <button onClick={addHeader} className={styles.btnSecondary} type="button"><Plus size={16} /> Agregar Header</button>
+            <button onClick={addHeader} className={styles.btnAdd} type="button">
+              <Plus size={16} /> Agregar Header
+            </button>
           </div>
 
           {method !== 'GET' && method !== 'DELETE' && (
             <div className={styles.formGroup}>
               <label className={styles.label}>Body (JSON)</label>
-              <textarea className={styles.textarea} value={body} onChange={(e) => setBody(e.target.value)} placeholder='{"key": "value"}' rows={8} />
+              <div style={{ position: 'relative' }}>
+                <textarea className={styles.textarea} value={body} onChange={(e) => setBody(e.target.value)} placeholder='{"key": "value"}' rows={8} />
+                <button 
+                  onClick={(e) => openVariableSelector(e, 'body')} 
+                  className={styles.btnVariableTextarea}
+                  type="button"
+                  title="Seleccionar variable"
+                >
+                  <Variable size={16} />
+                </button>
+              </div>
             </div>
           )}
 
@@ -668,7 +797,21 @@ export default function HTTPConfigModal({
           <button className={styles.btnCancel} onClick={onClose}>Cancelar</button>
           <button className={styles.btnSave} onClick={handleSave}>Guardar Configuración</button>
         </div>
+        </div>
       </div>
-    </div>
+
+      {/* Variable Selector */}
+      <VariableSelector
+        isOpen={showVariableSelector}
+        onClose={() => {
+          setShowVariableSelector(false);
+          setActiveField(null);
+        }}
+        onSelect={handleVariableSelect}
+        position={selectorPosition}
+        availableNodes={availableNodes}
+        globalVariables={globalVariables}
+      />
+    </>
   );
 }

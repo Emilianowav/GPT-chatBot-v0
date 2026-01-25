@@ -9,18 +9,18 @@
 .tabs {
   display: flex;
   gap: 4px;
-  padding: 16px 16px 0;
+  padding: 12px 12px 0;
   border-bottom: 1px solid #e5e7eb;
   background: #f9fafb;
 }
 
 .tab,
 .tabActive {
-  padding: 8px 16px;
+  padding: 6px 12px;
   border: none;
   background: transparent;
   color: #6b7280;
-  font-size: 14px;
+  font-size: 12px;
   font-weight: 500;
   cursor: pointer;
   border-radius: 6px 6px 0 0;
@@ -42,14 +42,14 @@
 .tabContent {
   flex: 1;
   overflow-y: auto;
-  padding: 20px;
+  padding: 16px;
 }
 
 /* Section */
 .section {
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: 16px;
 }
 
 .sectionHeader {
@@ -61,7 +61,7 @@
 
 .sectionHeader h3 {
   margin: 0;
-  font-size: 18px;
+  font-size: 14px;
   font-weight: 600;
   color: #111827;
 }
@@ -90,7 +90,7 @@
 }
 
 .formGroup label {
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 500;
   color: #374151;
 }
@@ -100,10 +100,10 @@
 .formGroup input[type="range"],
 .formGroup select,
 .formGroup textarea {
-  padding: 8px 12px;
+  padding: 6px 10px;
   border: 1px solid #d1d5db;
   border-radius: 6px;
-  font-size: 14px;
+  font-size: 13px;
   font-family: inherit;
   transition: border-color 0.2s;
 }
@@ -119,7 +119,7 @@
 
 .formGroup textarea {
   resize: vertical;
-  min-height: 80px;
+  min-height: 60px;
   font-family: 'Courier New', monospace;
 }
 
@@ -150,13 +150,13 @@
 
 /* Item Card */
 .itemCard {
-  padding: 16px;
+  padding: 12px;
   border: 1px solid #e5e7eb;
-  border-radius: 8px;
+  border-radius: 6px;
   background: #fafafa;
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 10px;
 }
 
 .itemHeader {
@@ -169,7 +169,7 @@
 
 .itemHeader h4 {
   margin: 0;
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 600;
   color: #374151;
 }

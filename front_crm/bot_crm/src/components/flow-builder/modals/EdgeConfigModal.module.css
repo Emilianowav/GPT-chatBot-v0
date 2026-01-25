@@ -8,12 +8,12 @@
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(0, 0, 0, 0.5);
+  background: transparent;
   display: flex;
   align-items: center;
   justify-content: center;
   z-index: 1000;
-  backdrop-filter: blur(4px);
+  pointer-events: none;
 }
 
 .modalContent {
@@ -26,6 +26,7 @@
   flex-direction: column;
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
   animation: slideUp 0.3s ease-out;
+  pointer-events: auto;
 }
 
 @keyframes slideUp {
@@ -174,9 +175,82 @@
 
 .charCount {
   text-align: right;
-  font-size: 12px;
+  font-size: 10px;
   color: #9ca3af;
-  margin-top: 4px;
+  margin-top: 2px;
+}
+
+.labelRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 4px;
+}
+
+.scopeToggleContainer {
+  flex-shrink: 0;
+}
+
+.scopeToggle {
+  padding: 0;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.toggleTrack {
+  width: 44px;
+  height: 22px;
+  background: #e5e7eb;
+  border-radius: 11px;
+  position: relative;
+  transition: background-color 0.3s ease;
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.scopeToggleActive .toggleTrack {
+  background: #8b5cf6;
+}
+
+.toggleThumb {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 18px;
+  height: 18px;
+  background: white;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  color: #6b7280;
+  font-weight: 600;
+}
+
+.toggleThumbActive {
+  left: 24px;
+  color: #8b5cf6;
+}
+
+.toggleNumber {
+  font-size: 11px;
+  font-weight: 700;
+  color: #6b7280;
+}
+
+.scopeToggle:hover .toggleTrack {
+  background: #d1d5db;
+}
+
+.scopeToggle:hover .scopeToggleActive .toggleTrack {
+  background: #7c3aed;
+}
+
+.scopeToggle:active .toggleThumb {
+  width: 20px;
 }
 
 /* ========================================
