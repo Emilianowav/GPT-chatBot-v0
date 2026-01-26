@@ -1076,11 +1076,8 @@ Ejemplo:
     
     console.log(`   🔑 Access Token: ${accessToken ? 'Usando token de BD' : 'Usando token centralizado'}`);
 
-    // Agregar identificador de nodo para debugging (solo en desarrollo)
-    const isDev = process.env.NODE_ENV !== 'production';
-    const mensajeConDebug = isDev 
-      ? `${mensaje}\n\n🔧 [DEBUG: ${node.id}]`
-      : mensaje;
+    // Agregar identificador de nodo para debugging
+    const mensajeConDebug = `${mensaje}\n\n🔧 [${node.id}]`;
 
     console.log(`   📤 Nodo emisor: ${node.id}`);
 

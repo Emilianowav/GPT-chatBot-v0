@@ -339,7 +339,8 @@ export async function executeMercadoPagoNode(
         return {
           output: {
             success: false,
-            error: 'El carrito está vacío. Verifica que el objeto carrito se haya generado correctamente.'
+            error: 'El carrito está vacío. Verifica que el objeto carrito se haya generado correctamente.',
+            mensaje: '❌ No se pudo generar el link de pago porque el carrito está vacío. Por favor, agregá productos al carrito primero.'
           }
         };
       }
@@ -369,7 +370,8 @@ export async function executeMercadoPagoNode(
           return {
             output: {
               success: false,
-              error: 'MercadoPago no está conectado. Ve a Integraciones → MercadoPago para conectar tu cuenta.'
+              error: 'MercadoPago no está conectado. Ve a Integraciones → MercadoPago para conectar tu cuenta.',
+              mensaje: '❌ MercadoPago no está configurado. Por favor, contactá con soporte para configurar tu cuenta de MercadoPago.'
             }
           };
         }
@@ -381,7 +383,8 @@ export async function executeMercadoPagoNode(
         return {
           output: {
             success: false,
-            error: 'Error obteniendo credenciales de MercadoPago'
+            error: 'Error obteniendo credenciales de MercadoPago',
+            mensaje: '❌ Hubo un error al conectar con MercadoPago. Por favor, intentá nuevamente más tarde.'
           }
         };
       }
@@ -390,7 +393,8 @@ export async function executeMercadoPagoNode(
       return {
         output: {
           success: false,
-          error: 'MercadoPago no está configurado. Edita el nodo y conecta tu cuenta.'
+          error: 'MercadoPago no está configurado. Edita el nodo y conecta tu cuenta.',
+          mensaje: '❌ MercadoPago no está configurado. Por favor, contactá con soporte para habilitar pagos online.'
         }
       };
     }
