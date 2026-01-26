@@ -1331,17 +1331,55 @@ Ejemplo:
             
           } else {
             // Búsqueda simple (un solo término)
-            // Normalizar término de búsqueda: "Harry Potter 5" -> "Harry Potter"
+            
+            // Mapeo de categorías conocidas a IDs de WooCommerce
+            const categoryMap: Record<string, number> = {
+              'autoayuda': 137,
+              'auto ayuda': 137,
+              'novela': 177,
+              'novelas': 177,
+              'infantil': 147,
+              'infantiles': 147,
+              'clasico': 166,
+              'clasicos': 166,
+              'clásico': 166,
+              'clásicos': 166,
+              'desarrollo personal': 135,
+              'didactico': 220,
+              'didacticos': 220,
+              'didáctico': 220,
+              'didácticos': 220,
+              'escolares': 164,
+              'escolar': 164,
+              'literatura general': 146,
+              'cuentos': 176,
+              'cuento': 176
+            };
+            
+            // Detectar si el término de búsqueda es una categoría conocida
             if (params.search) {
-              const searchNormalized = String(params.search)
-                .replace(/\s*\d+\s*$/, '') // Eliminar números al final
-                .replace(/\s+/g, ' ')       // Normalizar espacios
-                .trim();
+              const searchLower = String(params.search).toLowerCase().trim();
+              const categoryId = categoryMap[searchLower];
               
-              console.log(`   🔍 Búsqueda original: "${params.search}"`);
-              console.log(`   🔍 Búsqueda normalizada: "${searchNormalized}"`);
-              
-              params.search = searchNormalized;
+              if (categoryId) {
+                console.log(`   🏷️  CATEGORÍA DETECTADA: "${params.search}" → ID ${categoryId}`);
+                console.log(`   📂 Buscando por categoría en lugar de texto`);
+                
+                // Buscar por categoría en lugar de por texto
+                delete params.search;
+                params.category = categoryId;
+              } else {
+                // No es una categoría, normalizar término de búsqueda
+                const searchNormalized = searchLower
+                  .replace(/\s*\d+\s*$/, '') // Eliminar números al final
+                  .replace(/\s+/g, ' ')       // Normalizar espacios
+                  .trim();
+                
+                console.log(`   🔍 Búsqueda original: "${params.search}"`);
+                console.log(`   🔍 Búsqueda normalizada: "${searchNormalized}"`);
+                
+                params.search = searchNormalized;
+              }
             }
             
             result = await wooService.searchProducts(params);
