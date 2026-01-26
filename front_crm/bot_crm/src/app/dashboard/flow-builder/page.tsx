@@ -1942,7 +1942,44 @@ function FlowBuilderContent() {
           onSave={selectedNode ? handleSaveHTTPNodeConfig : handleHTTPConfigSave}
           initialConfig={selectedNode?.data?.config}
           globalVariables={Object.keys(globalVariables)}
-          availableNodes={nodes}
+          availableNodes={(() => {
+            // Si estamos editando un nodo existente, calcular nodos anteriores
+            if (selectedNode) {
+              const upstreamNodes = new Set<string>();
+              const visited = new Set<string>();
+              
+              const findUpstreamNodes = (nodeId: string) => {
+                if (visited.has(nodeId)) return;
+                visited.add(nodeId);
+                
+                const incomingEdges = edges.filter(e => e.target === nodeId);
+                for (const edge of incomingEdges) {
+                  const upstreamNode = nodes.find(n => n.id === edge.source);
+                  if (!upstreamNode || visited.has(upstreamNode.id)) continue;
+                  
+                  // Solo agregar nodos HTTP, GPT y otros que generan datos
+                  if (upstreamNode.type === 'http' || upstreamNode.type === 'gpt' || 
+                      upstreamNode.type === 'mercadopago' || upstreamNode.type === 'woocommerce') {
+                    upstreamNodes.add(upstreamNode.id);
+                  }
+                  
+                  findUpstreamNodes(upstreamNode.id);
+                }
+              };
+              
+              findUpstreamNodes(selectedNode.id);
+              
+              return Array.from(upstreamNodes)
+                .map(nodeId => {
+                  const node = nodes.find(n => n.id === nodeId);
+                  return node ? { id: node.id, label: node.data.label, type: node.type || 'default' } : null;
+                })
+                .filter((n): n is { id: string; label: string; type: string } => n !== null);
+            }
+            
+            // Si es un nodo nuevo, retornar todos los nodos
+            return nodes.map(n => ({ id: n.id, label: n.data.label, type: n.type || 'default' }));
+          })()}
           onTestRequest={handleTestHTTPRequest}
         />
 

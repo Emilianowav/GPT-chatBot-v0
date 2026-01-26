@@ -2,12 +2,12 @@
   position: relative;
   display: flex;
   align-items: center;
-  gap: 8px;
-  min-height: 42px;
-  padding: 6px 12px;
+  gap: 6px;
+  min-height: 34px;
+  padding: 6px 10px;
   background: #ffffff;
-  border: 2px solid #e5e7eb;
-  border-radius: 10px;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
   cursor: text;
 }
 
@@ -22,22 +22,22 @@
   display: flex;
   align-items: center;
   flex-wrap: wrap;
-  gap: 6px;
-  min-height: 28px;
+  gap: 4px;
+  min-height: 22px;
 }
 
 .chip {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  padding: 4px 8px 4px 10px;
+  gap: 4px;
+  padding: 2px 6px;
   background: #dbeafe;
   border: 1px solid #93c5fd;
-  border-radius: 6px;
-  font-size: 13px;
+  border-radius: 4px;
+  font-size: 11px;
   font-weight: 500;
   color: #1e40af;
-  font-family: 'Monaco', 'Menlo', 'Courier New', monospace;
+  font-family: 'Courier New', monospace;
 }
 
 .chipRemove {
@@ -53,14 +53,15 @@
 }
 
 .textSegment {
-  font-size: 14px;
+  font-size: 11px;
   color: #374151;
   white-space: pre-wrap;
   word-break: break-word;
+  font-weight: 500;
 }
 
 .placeholder {
-  font-size: 14px;
+  font-size: 12px;
   color: #9ca3af;
   font-style: italic;
 }
@@ -70,11 +71,11 @@
   border: none;
   outline: none;
   background: transparent;
-  font-size: 14px;
+  font-size: 12px;
   color: #374151;
   font-family: inherit;
   padding: 0;
-  min-width: 100px;
+  min-width: 80px;
 }
 
 .editInput::placeholder {
@@ -85,10 +86,10 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 6px;
+  padding: 4px;
   background: #dbeafe;
   border: 1px solid #bfdbfe;
-  border-radius: 6px;
+  border-radius: 4px;
   cursor: pointer;
   color: #2563eb;
   flex-shrink: 0;

@@ -8,6 +8,7 @@ interface VariableChipInputProps {
   onOpenVariableSelector: (event: React.MouseEvent) => void;
   placeholder?: string;
   className?: string;
+  availableNodes?: Array<{ id: string; label: string; type: string; data?: any }>;
 }
 
 interface Segment {
@@ -20,7 +21,8 @@ export const VariableChipInput: React.FC<VariableChipInputProps> = ({
   onChange,
   onOpenVariableSelector,
   placeholder = '',
-  className = ''
+  className = '',
+  availableNodes = []
 }) => {
   const [isEditing, setIsEditing] = useState(false);
   const [editValue, setEditValue] = useState(value);
@@ -65,6 +67,21 @@ export const VariableChipInput: React.FC<VariableChipInputProps> = ({
   };
 
   const segments = parseValue(value);
+
+  // Formatear nombre de variable para mostrar nombre del nodo en lugar del ID
+  const formatVariableName = (varContent: string): string => {
+    // Formato: node-ID.field o simplemente variable
+    const match = varContent.match(/^node-(\d+)\.(.+)$/);
+    if (match && availableNodes.length > 0) {
+      const nodeId = `node-${match[1]}`;
+      const field = match[2];
+      const node = availableNodes.find(n => n.id === nodeId);
+      if (node) {
+        return `${node.label}.${field}`;
+      }
+    }
+    return varContent;
+  };
 
   const handleEdit = () => {
     setIsEditing(true);
@@ -120,8 +137,8 @@ export const VariableChipInput: React.FC<VariableChipInputProps> = ({
           segments.map((segment, index) => (
             segment.type === 'variable' ? (
               <div key={index} className={styles.chip}>
-                <Variable size={12} />
-                <span>{segment.content}</span>
+                <Variable size={10} />
+                <span>{formatVariableName(segment.content)}</span>
                 <button
                   onClick={(e) => {
                     e.stopPropagation();
@@ -130,7 +147,7 @@ export const VariableChipInput: React.FC<VariableChipInputProps> = ({
                   className={styles.chipRemove}
                   type="button"
                 >
-                  <X size={12} />
+                  <X size={10} />
                 </button>
               </div>
             ) : (

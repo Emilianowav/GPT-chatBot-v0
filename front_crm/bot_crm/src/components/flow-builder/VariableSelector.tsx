@@ -101,7 +101,47 @@ export const VariableSelector: React.FC<VariableSelectorProps> = ({
           nodeId: node.id, 
           nodeLabel: node.label,
           type: 'node' as const,
-          description: `${node.label} - Respuesta HTTP`
+          description: `${node.label} - Respuesta HTTP completa`
+        },
+        { 
+          name: 'data', 
+          value: `{{${node.id}.data}}`, 
+          nodeId: node.id, 
+          nodeLabel: node.label,
+          type: 'node' as const,
+          description: `${node.label} - Datos de la respuesta`
+        },
+        { 
+          name: 'token', 
+          value: `{{${node.id}.token}}`, 
+          nodeId: node.id, 
+          nodeLabel: node.label,
+          type: 'node' as const,
+          description: `${node.label} - Token de autenticación`
+        },
+        { 
+          name: 'access_token', 
+          value: `{{${node.id}.access_token}}`, 
+          nodeId: node.id, 
+          nodeLabel: node.label,
+          type: 'node' as const,
+          description: `${node.label} - Access token`
+        },
+        { 
+          name: 'api_key', 
+          value: `{{${node.id}.api_key}}`, 
+          nodeId: node.id, 
+          nodeLabel: node.label,
+          type: 'node' as const,
+          description: `${node.label} - API Key`
+        },
+        { 
+          name: 'id', 
+          value: `{{${node.id}.id}}`, 
+          nodeId: node.id, 
+          nodeLabel: node.label,
+          type: 'node' as const,
+          description: `${node.label} - ID del recurso`
         },
         { 
           name: 'status', 
@@ -109,7 +149,7 @@ export const VariableSelector: React.FC<VariableSelectorProps> = ({
           nodeId: node.id, 
           nodeLabel: node.label,
           type: 'node' as const,
-          description: `${node.label} - Código de estado`
+          description: `${node.label} - Código de estado HTTP`
         },
         { 
           name: 'output', 
