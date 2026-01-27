@@ -201,13 +201,37 @@ export class FlowExecutor {
    */
   private async loadHistorial(contactoId: string): Promise<void> {
     try {
+      console.log(`\n🔍 [HISTORIAL DEBUG] Intentando cargar historial para contactoId: ${contactoId}`);
       const contacto = await ContactoEmpresaModel.findById(contactoId);
-      if (contacto && contacto.conversaciones?.historial) {
+      
+      if (!contacto) {
+        console.log(`❌ [HISTORIAL DEBUG] Contacto NO encontrado en BD`);
+        this.historialConversacion = [];
+        return;
+      }
+      
+      console.log(`✅ [HISTORIAL DEBUG] Contacto encontrado: ${contacto.nombre || 'Sin nombre'}`);
+      console.log(`   Tiene conversaciones: ${!!contacto.conversaciones}`);
+      console.log(`   Tiene historial: ${!!contacto.conversaciones?.historial}`);
+      
+      if (contacto.conversaciones?.historial) {
         this.historialConversacion = contacto.conversaciones.historial;
         console.log(`📚 [HISTORIAL] Cargado: ${this.historialConversacion.length} mensajes`);
+        
+        // Mostrar últimos 3 mensajes para debugging
+        if (this.historialConversacion.length > 0) {
+          console.log(`   Últimos mensajes en historial:`);
+          const ultimos = this.historialConversacion.slice(-3);
+          ultimos.forEach((msg, i) => {
+            console.log(`     ${i + 1}. ${msg.substring(0, 60)}${msg.length > 60 ? '...' : ''}`);
+          });
+        }
+      } else {
+        console.log(`⚠️  [HISTORIAL DEBUG] Contacto existe pero NO tiene historial`);
+        this.historialConversacion = [];
       }
     } catch (error) {
-      console.warn('⚠️  Error cargando historial:', error);
+      console.error('❌ [HISTORIAL DEBUG] Error cargando historial:', error);
       this.historialConversacion = [];
     }
   }
@@ -681,9 +705,15 @@ export class FlowExecutor {
     console.log('─'.repeat(80));
 
     // TODOS LOS NODOS GPT ACCEDEN AL HISTORIAL DE MANERA NATIVA
+    console.log(`\n🔍 [HISTORIAL DEBUG] Estado del historial en executeGPTNode:`);
+    console.log(`   this.historialConversacion existe: ${!!this.historialConversacion}`);
+    console.log(`   this.historialConversacion.length: ${this.historialConversacion?.length || 0}`);
+    console.log(`   this.contactoId: ${this.contactoId || 'NO DEFINIDO'}`);
+    
     if (this.historialConversacion.length > 0) {
       console.log(`\n📚 [HISTORIAL NATIVO] Agregando historial completo: ${this.historialConversacion.length} mensajes`);
       console.log(`   Tipo de nodo: ${config.tipo || 'N/A'}`);
+      console.log(`   Nodo ID: ${node.id}`);
       console.log(`   Todos los nodos GPT tienen acceso al historial`);
       
       // Agregar historial (alternando user/assistant)
@@ -696,8 +726,15 @@ export class FlowExecutor {
           content: msg,
         });
       }
+      
+      console.log(`✅ [HISTORIAL NATIVO] Total de mensajes agregados al contexto GPT: ${this.historialConversacion.length}`);
     } else {
-      console.log('\n📚 [HISTORIAL NATIVO] Historial vacío (primera conversación)');
+      console.log('\n⚠️  [HISTORIAL NATIVO] Historial vacío');
+      console.log(`   Posibles causas:`);
+      console.log(`   1. Primera conversación del usuario`);
+      console.log(`   2. contactoId no se pasó al FlowExecutor`);
+      console.log(`   3. Contacto no tiene historial guardado en BD`);
+      console.log(`   4. Error al cargar historial desde BD`);
     }
 
     // Agregar mensaje actual
