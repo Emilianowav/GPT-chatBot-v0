@@ -1270,18 +1270,29 @@ Ejemplo:
     
     // Resolver variables en params (soporta {{variable}} y referencias directas)
     const params: Record<string, any> = {};
+    console.log(`   🔍 [DEBUG] Resolviendo parámetros de WooCommerce...`);
+    console.log(`   🔍 [DEBUG] config.params:`, JSON.stringify(config.params));
+    
     for (const [key, value] of Object.entries(config.params || {})) {
       const stringValue = String(value);
+      console.log(`   🔍 [DEBUG] Procesando param "${key}": "${stringValue}"`);
+      
       // Si tiene formato {{variable}}, usar resolveVariableInString
       if (stringValue.includes('{{')) {
-        params[key] = this.resolveVariableInString(stringValue);
+        const resolved = this.resolveVariableInString(stringValue);
+        console.log(`   🔍 [DEBUG] Variable "${stringValue}" → "${resolved}"`);
+        params[key] = resolved;
       } else {
         // Si no, intentar resolver como referencia directa
-        params[key] = this.getVariableValue(stringValue) || stringValue;
+        const resolved = this.getVariableValue(stringValue) || stringValue;
+        console.log(`   🔍 [DEBUG] Valor directo "${stringValue}" → "${resolved}"`);
+        params[key] = resolved;
       }
     }
     
-    console.log(`   📦 Parámetros:`, JSON.stringify(params).substring(0, 100) + '...');
+    console.log(`   📦 Parámetros RESUELTOS:`, JSON.stringify(params));
+    console.log(`   🔍 [DEBUG] params.search = "${params.search}"`);
+    console.log(`   🔍 [DEBUG] params.category = "${params.category}"`);
     
     // Ejecutar módulo específico
     let result: any;
