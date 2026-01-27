@@ -28,7 +28,7 @@ interface ModalTurnoProps {
 }
 
 export default function ModalTurno({ isOpen, onClose, onSubmit }: ModalTurnoProps) {
-  const empresaId = typeof window !== 'undefined' ? localStorage.getItem('empresa_id') || '' : '';
+  const empresaId = typeof window !== 'undefined' ? (localStorage.getItem('empresaId') || localStorage.getItem('empresa_id') || '') : '';
   const { configuracion, loading: loadingConfig } = useConfiguracion(empresaId);
   const { agentes, loading: loadingAgentes } = useAgentes(true);
 
@@ -52,6 +52,12 @@ export default function ModalTurno({ isOpen, onClose, onSubmit }: ModalTurnoProp
   // Reset al abrir/cerrar
   useEffect(() => {
     if (isOpen) {
+      console.log('🔍 Modal abierto - Configuración:', {
+        usaAgentes: configuracion?.usaAgentes,
+        agenteRequerido: configuracion?.agenteRequerido,
+        cantidadAgentes: agentes.length,
+        configuracionCompleta: configuracion
+      });
       setFormData({
         clienteId: '',
         fecha: '',
@@ -64,7 +70,7 @@ export default function ModalTurno({ isOpen, onClose, onSubmit }: ModalTurnoProp
       setPaso(1);
       setError(null);
     }
-  }, [isOpen]);
+  }, [isOpen, configuracion, agentes]);
 
   // Cerrar con ESC y bloquear scroll
   useEffect(() => {
@@ -288,14 +294,21 @@ export default function ModalTurno({ isOpen, onClose, onSubmit }: ModalTurnoProp
         throw new Error('Fecha u hora inválida');
       }
 
-      await onSubmit({
-        agenteId: formData.agenteId,
+      // Preparar datos del turno
+      const turnoData: any = {
         clienteId: formData.clienteId,
         fechaInicio: fechaInicio.toISOString(),
         duracion: formData.duracion || agenteSeleccionado?.duracionTurnoPorDefecto || 30,
         datos: formData.datos,
         notas: formData.notas
-      });
+      };
+
+      // Incluir agenteId solo si está seleccionado (puede ser automático o manual)
+      if (formData.agenteId) {
+        turnoData.agenteId = formData.agenteId;
+      }
+
+      await onSubmit(turnoData);
       
       onClose();
     } catch (err: any) {
@@ -460,20 +473,20 @@ export default function ModalTurno({ isOpen, onClose, onSubmit }: ModalTurnoProp
                 />
               </div>
 
-              {configuracion?.usaAgentes && (
+              {(agentes.length > 0 || configuracion?.usaAgentes) && (
                 <div className={styles.field}>
                   <label>
                     <Users size={16} />
-                    {configuracion.nomenclatura?.agente || 'Agente'} {configuracion.agenteRequerido && '*'}
+                    {configuracion?.nomenclatura?.agente || 'Agente'} {configuracion?.agenteRequerido && '*'}
                   </label>
                   <select
                     value={formData.agenteId || ''}
                     onChange={(e) => handleAgenteChange(e.target.value)}
-                    required={configuracion.agenteRequerido}
-                    disabled={loadingAgentes}
+                    required={configuracion?.agenteRequerido}
+                    disabled={loadingAgentes || (agentesAsignadosIds.length === 1)}
                     className={agentesAsignadosIds.length > 0 ? styles.selectConAsignados : ''}
                   >
-                    <option value="">Seleccionar {configuracion.nomenclatura?.agente?.toLowerCase() || 'agente'}...</option>
+                    <option value="">Seleccionar {configuracion?.nomenclatura?.agente?.toLowerCase() || 'agente'}...</option>
                     {agentes.map(agente => {
                       const esAsignado = agentesAsignadosIds.includes(agente._id);
                       return (
@@ -492,9 +505,14 @@ export default function ModalTurno({ isOpen, onClose, onSubmit }: ModalTurnoProp
                       );
                     })}
                   </select>
-                  {agentesAsignadosIds.length > 0 && (
+                  {agentesAsignadosIds.length === 1 && (
                     <small className={styles.hintSuccess}>
-                      ⭐ Este cliente tiene {agentesAsignadosIds.length} {agentesAsignadosIds.length === 1 ? 'agente asignado' : 'agentes asignados'}
+                      ✅ Agente asignado automáticamente
+                    </small>
+                  )}
+                  {agentesAsignadosIds.length > 1 && (
+                    <small className={styles.hintSuccess}>
+                      ⭐ Este cliente tiene {agentesAsignadosIds.length} agentes asignados - Selecciona uno
                     </small>
                   )}
                   {agenteSeleccionado && (

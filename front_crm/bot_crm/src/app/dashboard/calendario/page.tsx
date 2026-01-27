@@ -18,7 +18,7 @@ export default function CalendarioPage() {
   const { isAuthenticated, empresa, loading: authLoading } = useAuth();
   const router = useRouter();
   
-  const empresaId = typeof window !== 'undefined' ? localStorage.getItem('empresa_id') || '' : '';
+  const empresaId = typeof window !== 'undefined' ? (localStorage.getItem('empresaId') || localStorage.getItem('empresa_id') || '') : '';
   
   const { turnos, loading: loadingTurnos, cargarTurnos, cargarTurnosDelDia, crearTurno, cancelarTurno, actualizarEstado } = useTurnos();
   const { estadisticas } = useEstadisticas();

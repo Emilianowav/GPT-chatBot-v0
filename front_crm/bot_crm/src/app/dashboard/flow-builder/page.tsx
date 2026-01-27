@@ -1795,24 +1795,39 @@ function FlowBuilderContent() {
 
     try {
       const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';
+      const token = localStorage.getItem('auth_token');
+      
       const response = await fetch(`${apiUrl}/api/flows/${currentFlowId}/toggle`, {
-        method: 'PATCH'
+        method: 'PATCH',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
       });
 
       if (response.ok) {
         const data = await response.json();
         setCurrentFlowActive(data.activo);
+        toast.success(`Flujo ${data.activo ? 'activado' : 'pausado'} exitosamente`);
         console.log(`${data.activo ? '▶️' : '⏸️'} Flow ${data.activo ? 'activado' : 'pausado'}`);
         
         // Recargar lista de flujos
         const empresaId = localStorage.getItem('empresaId') || 'Veo Veo';
-        const listResponse = await fetch(`${apiUrl}/api/flows?empresaId=${empresaId}`);
+        const listResponse = await fetch(`${apiUrl}/api/flows?empresaId=${empresaId}`, {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
         const listData = await listResponse.json();
         const flows = Array.isArray(listData) ? listData : (listData.flows || []);
         setFlowsList(flows);
+      } else {
+        const errorData = await response.json().catch(() => ({ error: 'Error desconocido' }));
+        toast.error(errorData.error || 'Error al cambiar estado del flujo');
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error toggling flow status:', error);
+      toast.error('Error al cambiar estado del flujo');
     }
   };
 

@@ -15,7 +15,7 @@ import styles from './flujos.module.css';
 export default function AdministradorFlujosPage() {
   const { isAuthenticated, loading: authLoading } = useAuth();
   const router = useRouter();
-  const empresaId = typeof window !== 'undefined' ? localStorage.getItem('empresa_id') || '' : '';
+  const empresaId = typeof window !== 'undefined' ? (localStorage.getItem('empresaId') || localStorage.getItem('empresa_id') || '') : '';
   
   const { configuracion, loading, toggleBot } = useConfiguracionBot(empresaId);
   const { configuracion: configModulo, loading: loadingModulo } = useConfiguracion(empresaId);

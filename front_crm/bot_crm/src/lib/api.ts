@@ -24,6 +24,7 @@ export class ApiClient {
     this.token = null;
     if (typeof window !== 'undefined') {
       localStorage.removeItem('auth_token');
+      localStorage.removeItem('empresaId');
       localStorage.removeItem('empresa_id');
       localStorage.removeItem('empresa_nombre');
     }

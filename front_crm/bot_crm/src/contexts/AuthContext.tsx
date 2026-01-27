@@ -22,7 +22,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     // Verificar si hay sesión guardada
     const token = localStorage.getItem('auth_token');
-    const empresaId = localStorage.getItem('empresa_id');
+    const empresaId = localStorage.getItem('empresaId') || localStorage.getItem('empresa_id'); // Soportar ambas claves
     const empresaMongoId = localStorage.getItem('empresa_mongo_id');
     const empresaNombre = localStorage.getItem('empresa_nombre');
     const role = localStorage.getItem('user_role');
@@ -89,6 +89,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     apiClient.clearToken();
     localStorage.removeItem('auth_token');
     localStorage.removeItem('user_id');
+    localStorage.removeItem('empresaId'); // Limpiar ambas claves
     localStorage.removeItem('empresa_id');
     localStorage.removeItem('empresa_mongo_id');
     localStorage.removeItem('empresa_nombre');
