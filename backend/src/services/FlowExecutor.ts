@@ -648,9 +648,12 @@ export class FlowExecutor {
     console.log(systemPromptResolved);
     console.log('─'.repeat(80));
 
-    // Si es conversacional, agregar historial completo
-    if (config.tipo === 'conversacional' && this.historialConversacion.length > 0) {
-      console.log(`\n📚 Agregando historial: ${this.historialConversacion.length} mensajes`);
+    // TODOS LOS NODOS GPT ACCEDEN AL HISTORIAL DE MANERA NATIVA
+    if (this.historialConversacion.length > 0) {
+      console.log(`\n📚 [HISTORIAL NATIVO] Agregando historial completo: ${this.historialConversacion.length} mensajes`);
+      console.log(`   Tipo de nodo: ${config.tipo || 'N/A'}`);
+      console.log(`   Todos los nodos GPT tienen acceso al historial`);
+      
       // Agregar historial (alternando user/assistant)
       for (let i = 0; i < this.historialConversacion.length; i++) {
         const msg = this.historialConversacion[i];
@@ -661,8 +664,8 @@ export class FlowExecutor {
           content: msg,
         });
       }
-    } else if (config.tipo === 'conversacional') {
-      console.log('\n📚 Historial vacío (primera conversación)');
+    } else {
+      console.log('\n📚 [HISTORIAL NATIVO] Historial vacío (primera conversación)');
     }
 
     // Agregar mensaje actual
