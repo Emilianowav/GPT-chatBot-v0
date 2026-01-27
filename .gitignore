@@ -6,5 +6,8 @@
 node_modules/
 extras
 
+# Scripts de configuración de BD
+backend/scripts/
+
 # Documentación con credenciales sensibles
 backend/docs/VEO-VEO-GPT-CONFIGURACION.md
