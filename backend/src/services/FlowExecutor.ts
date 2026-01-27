@@ -1294,6 +1294,24 @@ Ejemplo:
     console.log(`   🔍 [DEBUG] params.search = "${params.search}"`);
     console.log(`   🔍 [DEBUG] params.category = "${params.category}"`);
     
+    // Filtrar parámetros que tienen placeholders sin resolver ({{variable}})
+    // Esto evita enviar "{{categoria}}" literal a la API de WooCommerce
+    const cleanParams: Record<string, any> = {};
+    for (const [key, value] of Object.entries(params)) {
+      const stringValue = String(value);
+      // Solo incluir si NO tiene placeholders sin resolver
+      if (!stringValue.includes('{{') && !stringValue.includes('}}')) {
+        cleanParams[key] = value;
+      } else {
+        console.log(`   ⚠️  Omitiendo parámetro "${key}" con placeholder no resuelto: "${stringValue}"`);
+      }
+    }
+    
+    console.log(`   📦 Parámetros LIMPIOS (sin placeholders):`, JSON.stringify(cleanParams));
+    
+    // Usar cleanParams en lugar de params
+    const finalParams = cleanParams;
+    
     // Ejecutar módulo específico
     let result: any;
     
@@ -1305,9 +1323,9 @@ Ejemplo:
         
         case 'search-product':
           // Detectar búsqueda múltiple (separada por " | ")
-          if (params.search && params.search.includes(' | ')) {
+          if (finalParams.search && finalParams.search.includes(' | ')) {
             console.log(`   🔍 BÚSQUEDA MÚLTIPLE detectada`);
-            const terminos = params.search.split(' | ').map((t: string) => t.trim());
+            const terminos = finalParams.search.split(' | ').map((t: string) => t.trim());
             console.log(`   📚 Buscando ${terminos.length} libro(s): ${terminos.join(', ')}`);
             
             // Buscar cada término por separado
@@ -1322,7 +1340,7 @@ Ejemplo:
                 console.log(`   🔍 Buscando: "${termino}" → "${terminoNormalizado}"`);
                 
                 const productos = await wooService.searchProducts({
-                  ...params,
+                  ...finalParams,
                   search: terminoNormalizado
                 });
                 
@@ -1368,17 +1386,17 @@ Ejemplo:
             };
             
             // Detectar si el término de búsqueda es una categoría conocida
-            if (params.search) {
-              const searchLower = String(params.search).toLowerCase().trim();
+            if (finalParams.search) {
+              const searchLower = String(finalParams.search).toLowerCase().trim();
               const categoryId = categoryMap[searchLower];
               
               if (categoryId) {
-                console.log(`   🏷️  CATEGORÍA DETECTADA: "${params.search}" → ID ${categoryId}`);
+                console.log(`   🏷️  CATEGORÍA DETECTADA: "${finalParams.search}" → ID ${categoryId}`);
                 console.log(`   📂 Buscando por categoría en lugar de texto`);
                 
                 // Buscar por categoría en lugar de por texto
-                delete params.search;
-                params.category = categoryId;
+                delete finalParams.search;
+                finalParams.category = categoryId;
               } else {
                 // No es una categoría, normalizar término de búsqueda
                 const searchNormalized = searchLower
@@ -1386,19 +1404,19 @@ Ejemplo:
                   .replace(/\s+/g, ' ')       // Normalizar espacios
                   .trim();
                 
-                console.log(`   🔍 Búsqueda original: "${params.search}"`);
+                console.log(`   🔍 Búsqueda original: "${finalParams.search}"`);
                 console.log(`   🔍 Búsqueda normalizada: "${searchNormalized}"`);
                 
-                params.search = searchNormalized;
+                finalParams.search = searchNormalized;
               }
             }
             
-            result = await wooService.searchProducts(params);
+            result = await wooService.searchProducts(finalParams);
             console.log(`   ✅ Productos encontrados: ${result.length}`);
           }
           
           if (result.length === 0) {
-            console.log(`   ⚠️  ADVERTENCIA: No se encontraron productos para "${params.search}"`);
+            console.log(`   ⚠️  ADVERTENCIA: No se encontraron productos para "${finalParams.search || 'búsqueda vacía'}"`);
             console.log(`   💡 Sugerencia: Verificar que el término de búsqueda coincida con productos en WooCommerce`);
           }
           
