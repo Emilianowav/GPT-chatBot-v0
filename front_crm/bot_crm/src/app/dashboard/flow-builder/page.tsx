@@ -46,6 +46,7 @@ import TopicsModal from '@/components/flow-builder/modals/TopicsModal';
 import { FlowValidationPanel } from '@/components/flow-builder/FlowValidationPanel';
 import { ToastProvider, useToast } from '@/components/common/ToastContainer';
 import { ArrowLeft, Play, Pause, Undo, Redo } from 'lucide-react';
+import { transformNodesForBackend, transformNodesFromBackend } from '@/utils/nodeTransformers';
 import styles from './flow-builder.module.css';
 
 const nodeTypes = {
@@ -1509,6 +1510,10 @@ function FlowBuilderContent() {
         n.type === 'whatsapp' && n.data?.config?.module === 'watch-events'
       )?.id || (nodes.length > 0 ? nodes[0].id : undefined);
       
+      // TRANSFORMAR NODOS: Convertir configuracionExtraccion → extractionConfig
+      const transformedNodes = transformNodesForBackend(nodes);
+      console.log('🔄 [SAVE] Nodos transformados para backend');
+      
       // IMPORTANTE: NO enviar _id ni id para evitar conflicto con índice único
       const flowData = {
         nombre: flowName,
@@ -1516,7 +1521,7 @@ function FlowBuilderContent() {
         activo: currentFlowActive,
         createdBy: userId,
         startNode: startNode,
-        nodes,
+        nodes: transformedNodes,
         edges,
         config: {
           topicos_habilitados: Object.keys(globalTopics).length > 0,
@@ -1627,6 +1632,11 @@ function FlowBuilderContent() {
       });
       
       if (flow && flow.nodes && flow.edges) {
+        // TRANSFORMAR NODOS: Convertir extractionConfig → configuracionExtraccion
+        const transformedNodes = transformNodesFromBackend(flow.nodes);
+        console.log('🔄 [LOAD] Nodos transformados desde backend');
+        flow.nodes = transformedNodes;
+        
         // PRECALCULAR HANDLES DE ROUTERS
         const routerHandles = new Map<string, string[]>();
         flow.edges.forEach((edge: any) => {
