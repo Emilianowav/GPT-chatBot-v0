@@ -630,6 +630,38 @@ export class FlowExecutor {
       systemPrompt += topicosSection;
     }
 
+    // INYECTAR VARIABLES GLOBALES AUTOMÁTICAMENTE EN TODOS LOS NODOS GPT
+    if (this.globalVariables && Object.keys(this.globalVariables).length > 0) {
+      console.log(`\n🔢 [VARIABLES GLOBALES] Inyectando automáticamente ${Object.keys(this.globalVariables).length} variable(s)`);
+      
+      let variablesSection = '\n\n═══ VARIABLES DISPONIBLES ═══\n';
+      variablesSection += 'Puedes usar estas variables en tu respuesta con la sintaxis {{variable}}:\n\n';
+      
+      Object.entries(this.globalVariables).forEach(([key, value]: [string, any]) => {
+        console.log(`   - ${key}: ${typeof value === 'object' ? JSON.stringify(value).substring(0, 50) + '...' : value}`);
+        
+        // Formatear el valor para mostrarlo
+        let valorFormateado: string;
+        if (value === null || value === undefined) {
+          valorFormateado = 'null';
+        } else if (typeof value === 'object') {
+          // Si es array u objeto, mostrar de forma compacta
+          valorFormateado = JSON.stringify(value).substring(0, 100);
+          if (JSON.stringify(value).length > 100) {
+            valorFormateado += '...';
+          }
+        } else {
+          valorFormateado = String(value);
+        }
+        
+        variablesSection += `  • {{${key}}}: ${valorFormateado}\n`;
+      });
+      
+      variablesSection += '\nNOTA: Estas variables se resuelven automáticamente cuando las uses.\n';
+      
+      systemPrompt += variablesSection;
+    }
+
     // Construir mensajes para GPT
     const messages: ChatCompletionMessageParam[] = [
       {
