@@ -1379,14 +1379,30 @@ Ejemplo:
           // Construir objeto de búsqueda solo con parámetros válidos
           const searchParams: any = {};
           
-          // Solo incluir search si existe y no es placeholder
-          if (params.search && !params.search.includes('{{')) {
+          // Helper para validar si un parámetro es válido
+          const isValidParam = (value: any): boolean => {
+            if (!value) return false; // null, undefined, '', 0, false
+            const strValue = String(value).trim();
+            if (strValue === '') return false; // string vacío
+            if (strValue.includes('{{')) return false; // placeholder sin resolver
+            if (strValue === 'undefined' || strValue === 'null') return false; // strings literales
+            return true;
+          };
+          
+          // Solo incluir search si existe y es válido
+          if (isValidParam(params.search)) {
             searchParams.search = params.search;
+            console.log(`   ✅ Incluido params.search: "${params.search}"`);
+          } else {
+            console.log(`   ⏭️  Omitido params.search (no válido o vacío)`);
           }
           
-          // Solo incluir category si existe y no es placeholder
-          if (params.category && !params.category.includes('{{')) {
+          // Solo incluir category si existe y es válido
+          if (isValidParam(params.category)) {
             searchParams.category = params.category;
+            console.log(`   ✅ Incluido params.category: "${params.category}"`);
+          } else {
+            console.log(`   ⏭️  Omitido params.category (no válido o vacío)`);
           }
           
           // Incluir otros parámetros
