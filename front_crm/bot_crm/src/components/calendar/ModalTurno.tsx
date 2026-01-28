@@ -280,7 +280,8 @@ export default function ModalTurno({ isOpen, onClose, onSubmit }: ModalTurnoProp
   };
 
   const handleSubmit = async () => {
-    if (!validarPaso1() || !validarPaso2() || !validarPaso3()) return;
+    // Solo validar el paso 3 (los pasos anteriores ya fueron validados al avanzar)
+    if (!validarPaso3()) return;
     
     try {
       setLoading(true);
