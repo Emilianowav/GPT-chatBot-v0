@@ -1885,6 +1885,49 @@ Ejemplo:
       return result;
     }
 
+    // Patrón: "{{variable}} == value" (operador de igualdad estricta)
+    const doubleEqualsMatch = condition.match(/\{\{([^}]+)\}\}\s*==\s*(.+)$/i);
+    if (doubleEqualsMatch) {
+      const varName = doubleEqualsMatch[1].trim();
+      const expectedValue = doubleEqualsMatch[2].trim();
+      console.log(`      → Detectado '==' para variable: "${varName}"`);
+      
+      const actualValue = this.getVariableValue(varName);
+      
+      // Normalizar valores para comparación
+      const normalizedActual = String(actualValue).toLowerCase().trim();
+      const normalizedExpected = expectedValue.toLowerCase().trim();
+      
+      const result = normalizedActual === normalizedExpected;
+      
+      console.log(`      → Variable "${varName}" = ${JSON.stringify(actualValue)}`);
+      console.log(`      → Esperado: ${expectedValue}`);
+      console.log(`      → Comparación: "${normalizedActual}" === "${normalizedExpected}"`);
+      console.log(`      → Resultado: ${result}`);
+      return result;
+    }
+
+    // Patrón: "{{variable}} != value" (operador de desigualdad)
+    const notEqualsOperatorMatch = condition.match(/\{\{([^}]+)\}\}\s*!=\s*(.+)$/i);
+    if (notEqualsOperatorMatch) {
+      const varName = notEqualsOperatorMatch[1].trim();
+      const expectedValue = notEqualsOperatorMatch[2].trim();
+      console.log(`      → Detectado '!=' para variable: "${varName}"`);
+      
+      const actualValue = this.getVariableValue(varName);
+      
+      const normalizedActual = String(actualValue).toLowerCase().trim();
+      const normalizedExpected = expectedValue.toLowerCase().trim();
+      
+      const result = normalizedActual !== normalizedExpected;
+      
+      console.log(`      → Variable "${varName}" = ${JSON.stringify(actualValue)}`);
+      console.log(`      → Esperado diferente de: ${expectedValue}`);
+      console.log(`      → Comparación: "${normalizedActual}" !== "${normalizedExpected}"`);
+      console.log(`      → Resultado: ${result}`);
+      return result;
+    }
+
     // Si no coincide con patrones especiales, resolver y evaluar normalmente
     const resolvedCondition = this.resolveVariableInString(condition);
     console.log(`      Condición resuelta: ${resolvedCondition}`);
