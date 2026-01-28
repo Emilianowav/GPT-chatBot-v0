@@ -7,6 +7,8 @@ import NodeList from './NodeList';
 import FlowVisualizer from './FlowVisualizer';
 import styles from './FlowEditor.module.css';
 
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';
+
 interface Flow {
   _id?: string;
   empresaId: string;
@@ -67,7 +69,7 @@ export default function FlowEditor({ flow, empresaId, onClose }: FlowEditorProps
 
   const loadNodes = async (flowId: string) => {
     try {
-      const response = await fetch(`http://localhost:3000/api/flows/${flowId}/nodes`);
+      const response = await fetch(`${API_URL}/api/flows/${flowId}/nodes`);
       if (response.ok) {
         const data = await response.json();
         setNodes(data);
@@ -86,8 +88,8 @@ export default function FlowEditor({ flow, empresaId, onClose }: FlowEditorProps
     setSaving(true);
     try {
       const url = flow?._id 
-        ? `http://localhost:3000/api/flows/${flow._id}`
-        : 'http://localhost:3000/api/flows';
+        ? `${API_URL}/api/flows/${flow._id}`
+        : `${API_URL}/api/flows`;
       
       const method = flow?._id ? 'PUT' : 'POST';
       
@@ -115,8 +117,8 @@ export default function FlowEditor({ flow, empresaId, onClose }: FlowEditorProps
   const handleSaveNode = async (node: FlowNode) => {
     try {
       const url = node._id
-        ? `http://localhost:3000/api/flows/${flowData.id}/nodes/${node._id}`
-        : `http://localhost:3000/api/flows/${flowData.id}/nodes`;
+        ? `${API_URL}/api/flows/${flowData.id}/nodes/${node._id}`
+        : `${API_URL}/api/flows/${flowData.id}/nodes`;
       
       const method = node._id ? 'PUT' : 'POST';
       
@@ -140,7 +142,7 @@ export default function FlowEditor({ flow, empresaId, onClose }: FlowEditorProps
     if (!confirm('¿Eliminar este nodo?')) return;
     
     try {
-      const response = await fetch(`http://localhost:3000/api/flows/${flowData.id}/nodes/${nodeId}`, {
+      const response = await fetch(`${API_URL}/api/flows/${flowData.id}/nodes/${nodeId}`, {
         method: 'DELETE'
       });
 

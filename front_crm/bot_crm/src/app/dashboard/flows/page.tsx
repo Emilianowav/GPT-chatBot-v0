@@ -6,6 +6,8 @@ import { useRouter } from 'next/navigation';
 import DashboardLayout from '@/components/DashboardLayout/DashboardLayout';
 import styles from './flows.module.css';
 
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';
+
 interface FlowListItem {
   _id: string;
   nombre: string;
@@ -26,7 +28,7 @@ export default function FlowsPage() {
     try {
       setLoading(true);
       const empresaId = localStorage.getItem('empresaId') || '';
-      const response = await fetch(`http://localhost:3000/api/flows?empresaId=${empresaId}`);
+      const response = await fetch(`${API_URL}/api/flows?empresaId=${empresaId}`);
       if (response.ok) {
         const data = await response.json();
         const flows = Array.isArray(data) ? data : (data.flows || []);
@@ -52,7 +54,7 @@ export default function FlowsPage() {
     e.stopPropagation();
     
     try {
-      const response = await fetch(`http://localhost:3000/api/flows/${flowId}/toggle`, {
+      const response = await fetch(`${API_URL}/api/flows/${flowId}/toggle`, {
         method: 'PATCH'
       });
       
@@ -72,7 +74,7 @@ export default function FlowsPage() {
     }
 
     try {
-      const response = await fetch(`http://localhost:3000/api/flows/${flowId}`, {
+      const response = await fetch(`${API_URL}/api/flows/${flowId}`, {
         method: 'DELETE'
       });
 
