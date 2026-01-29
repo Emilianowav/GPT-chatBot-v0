@@ -1,0 +1,806 @@
+{
+  "_id": "695a156681f6d67f0ae9cf40",
+  "nombre": "WooCommerce Flow",
+  "empresaId": "Veo Veo",
+  "activo": true,
+  "nodes": [
+    {
+      "id": "webhook-whatsapp",
+      "type": "webhook",
+      "category": "trigger",
+      "position": {
+        "x": 100,
+        "y": 300
+      },
+      "data": {
+        "label": "WhatsApp Message",
+        "subtitle": "Trigger",
+        "color": "#25D366",
+        "config": {
+          "type": "message",
+          "description": "Recibe mensajes de WhatsApp"
+        }
+      }
+    },
+    {
+      "id": "gpt-clasificador-inteligente",
+      "type": "gpt",
+      "category": "processor",
+      "position": {
+        "x": 400,
+        "y": 300
+      },
+      "data": {
+        "label": "Clasificador Inteligente",
+        "subtitle": "GPT Procesador",
+        "color": "#10A37F",
+        "tipo": "procesador",
+        "config": {
+          "tipo": "procesador",
+          "model": "gpt-4",
+          "personalidad": {
+            "estilo": "Amigable, profesional, cercano",
+            "uso_emojis": true,
+            "tratamiento": "vos (argentino)"
+          },
+          "topicos_habilitados": true,
+          "variables_entrada": {
+            "historial": "{{historial}}",
+            "mensaje_usuario": "{{webhook-whatsapp.message}}",
+            "telefono_cliente": "{{webhook-whatsapp.from}}"
+          },
+          "systemPrompt": "Eres un clasificador de intenciones para la Librería Veo Veo.\n\nTu ÚNICA tarea es analizar el mensaje del usuario y clasificar su intención.\n\nFORMATO DE SALIDA OBLIGATORIO:\nDebes responder ÚNICAMENTE con UNA de estas palabras exactas (sin espacios, sin puntos, sin explicaciones):\n- buscar_producto\n- comprar\n- ver_carrito\n- consulta_general\n\nEJEMPLOS:\nUsuario: \"Busco libros de autoayuda\" → Respuesta: buscar_producto\nUsuario: \"Quiero comprar el libro X\" → Respuesta: comprar\nUsuario: \"Qué tengo en mi carrito?\" → Respuesta: ver_carrito\nUsuario: \"Cuál es el horario?\" → Respuesta: consulta_general\n\nIMPORTANTE: Solo responde con la palabra clave, nada más.",
+          "prompt": "Historial de conversación:\n{{historial}}\n\nMensaje actual del usuario: {{mensaje_usuario}}\n\nClasifica la intención del usuario y responde SOLO con una de estas palabras: buscar_producto, comprar, ver_carrito, consulta_general",
+          "temperature": 0.1,
+          "maxTokens": 20,
+          "variables_salida": {
+            "tipo_accion": "output"
+          }
+        }
+      }
+    },
+    {
+      "id": "router-principal",
+      "type": "router",
+      "category": "processor",
+      "position": {
+        "x": 700,
+        "y": 300
+      },
+      "data": {
+        "label": "Router Principal",
+        "subtitle": "Divide según acción",
+        "color": "#A3E635",
+        "config": {
+          "routes": [
+            {
+              "id": "route-buscar",
+              "label": "Buscar Producto"
+            },
+            {
+              "id": "route-comprar",
+              "label": "Comprar"
+            },
+            {
+              "id": "route-ver-carrito",
+              "label": "Ver Carrito"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "gpt-formateador",
+      "type": "gpt",
+      "category": "processor",
+      "position": {
+        "x": 1000,
+        "y": 100
+      },
+      "data": {
+        "label": "Formateador de Búsqueda",
+        "subtitle": "GPT Procesador",
+        "color": "#10A37F",
+        "tipo": "procesador",
+        "config": {
+          "tipo": "procesador",
+          "model": "gpt-4",
+          "systemPrompt": "Eres un procesador que extrae información de búsqueda de productos. Analiza el mensaje del usuario y extrae:\n- categoria: categoría del producto (libros, juguetes, escolares, etc.) - SOLO si está explícita\n- contenido: términos de búsqueda específicos\n\nResponde SIEMPRE en formato JSON válido:\n{\n  \"categoria\": \"categoria_extraida_o_vacio\",\n  \"contenido\": \"terminos_de_busqueda\"\n}\n\nSi no hay categoría explícita, deja categoria como string vacío \"\".",
+          "prompt": "Mensaje del usuario: {{webhook-whatsapp.message}}\nHistorial: {{historial}}\n\nExtrae la categoría (si está explícita) y el contenido de búsqueda. Responde en JSON.",
+          "temperature": 0.2,
+          "maxTokens": 100,
+          "parseJSON": true,
+          "variables_salida": {
+            "categoria": "output.categoria",
+            "contenido": "output.contenido"
+          }
+        }
+      }
+    },
+    {
+      "id": "router",
+      "type": "router",
+      "category": "processor",
+      "position": {
+        "x": 1300,
+        "y": 100
+      },
+      "data": {
+        "label": "Verificar Datos",
+        "subtitle": "Router",
+        "color": "#A3E635",
+        "config": {
+          "routes": [
+            {
+              "id": "route-datos-ok",
+              "label": "Datos Completos"
+            },
+            {
+              "id": "route-pedir-datos",
+              "label": "Faltan Datos"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "woocommerce",
+      "type": "http",
+      "category": "action",
+      "position": {
+        "x": 1600,
+        "y": 50
+      },
+      "data": {
+        "label": "Buscar en WooCommerce",
+        "subtitle": "HTTP Request",
+        "color": "#7F54B3",
+        "config": {
+          "method": "GET",
+          "url": "https://www.veoveolibros.com.ar/wp-json/wc/v3/products",
+          "headers": {
+            "Authorization": "Basic {{woocommerce_auth}}"
+          },
+          "params": {
+            "search": "{{contenido}}",
+            "category": "{{categoria}}",
+            "per_page": "5",
+            "orderby": "popularity"
+          },
+          "arrayPath": "data",
+          "variables_salida": {
+            "productos": "output"
+          }
+        }
+      }
+    },
+    {
+      "id": "gpt-asistente-ventas",
+      "type": "gpt",
+      "category": "processor",
+      "position": {
+        "x": 1900,
+        "y": 50
+      },
+      "data": {
+        "label": "Asistente de Ventas",
+        "subtitle": "GPT Formateador",
+        "color": "#10A37F",
+        "tipo": "formateador",
+        "config": {
+          "tipo": "formateador",
+          "model": "gpt-4",
+          "systemPrompt": "Eres un asistente de ventas de la Librería Veo Veo. Formatea la lista de productos de manera atractiva para WhatsApp.\n\nUsa este formato EXACTO:\n📚 *Productos encontrados:*\n\n1️⃣ *[Nombre del producto]*\n   💰 Precio: $[precio]\n   📦 Stock: [disponible/agotado]\n   \n2️⃣ *[Siguiente producto]*\n   💰 Precio: $[precio]\n   📦 Stock: [disponible/agotado]\n\nAl final pregunta: \"¿Te interesa alguno? Decime el número para agregarlo al carrito 🛒\"",
+          "prompt": "Productos encontrados:\n{{productos}}\n\nFormatea esta lista de manera atractiva para WhatsApp usando el formato especificado.",
+          "temperature": 0.7,
+          "maxTokens": 500,
+          "variables_salida": {
+            "productos_formateados": "output"
+          }
+        }
+      }
+    },
+    {
+      "id": "whatsapp-solicitar-datos",
+      "type": "whatsapp",
+      "category": "action",
+      "position": {
+        "x": 2200,
+        "y": 50
+      },
+      "data": {
+        "label": "Enviar Productos",
+        "subtitle": "WhatsApp Send",
+        "color": "#25D366",
+        "config": {
+          "message": "{{productos_formateados}}",
+          "to": "{{webhook-whatsapp.from}}"
+        }
+      }
+    },
+    {
+      "id": "gpt-pedir-datos",
+      "type": "gpt",
+      "category": "processor",
+      "position": {
+        "x": 1600,
+        "y": 200
+      },
+      "data": {
+        "label": "Pedir Más Datos",
+        "subtitle": "GPT Conversacional",
+        "color": "#10A37F",
+        "tipo": "conversacional",
+        "config": {
+          "tipo": "conversacional",
+          "model": "gpt-4",
+          "systemPrompt": "Eres un asistente amigable que ayuda a los clientes a especificar mejor su búsqueda.",
+          "prompt": "El cliente busca algo pero no especificó bien. Pregúntale de manera amigable qué tipo de producto busca exactamente.\n\nMensaje del cliente: {{webhook-whatsapp.message}}",
+          "temperature": 0.7,
+          "maxTokens": 150,
+          "variables_salida": {
+            "pregunta": "output"
+          }
+        }
+      }
+    },
+    {
+      "id": "whatsapp-preguntar",
+      "type": "whatsapp",
+      "category": "action",
+      "position": {
+        "x": 1900,
+        "y": 200
+      },
+      "data": {
+        "label": "Solicitar Detalles",
+        "subtitle": "WhatsApp Send",
+        "color": "#25D366",
+        "config": {
+          "message": "{{pregunta}}",
+          "to": "{{webhook-whatsapp.from}}"
+        }
+      }
+    },
+    {
+      "id": "gpt-armar-carrito",
+      "type": "gpt",
+      "category": "processor",
+      "position": {
+        "x": 1000,
+        "y": 400
+      },
+      "data": {
+        "label": "Armar Carrito",
+        "subtitle": "GPT Procesador",
+        "color": "#10A37F",
+        "tipo": "procesador",
+        "config": {
+          "tipo": "procesador",
+          "model": "gpt-4",
+          "systemPrompt": "Procesa la solicitud de compra del cliente. Analiza el historial y el mensaje actual para:\n1. Identificar qué productos quiere comprar\n2. Calcular el total\n3. Determinar si ya confirmó la compra o aún está armando el carrito\n\nResponde SIEMPRE en formato JSON válido:\n{\n  \"carrito_items\": [\"Producto 1 - $precio\", \"Producto 2 - $precio\"],\n  \"carrito_total\": 1500,\n  \"confirmacion_compra\": true\n}\n\nconfirmacion_compra debe ser true SOLO si el cliente dijo explícitamente \"sí\", \"confirmo\", \"comprar\", etc.",
+          "prompt": "Mensaje del cliente: {{webhook-whatsapp.message}}\nHistorial: {{historial}}\n\nProcesa la compra y responde en JSON.",
+          "temperature": 0.2,
+          "maxTokens": 300,
+          "parseJSON": true,
+          "variables_salida": {
+            "carrito_items": "output.carrito_items",
+            "carrito_total": "output.carrito_total",
+            "confirmacion_compra": "output.confirmacion_compra"
+          }
+        }
+      }
+    },
+    {
+      "id": "router-carrito",
+      "type": "router",
+      "category": "processor",
+      "position": {
+        "x": 1300,
+        "y": 400
+      },
+      "data": {
+        "label": "Confirmar Compra",
+        "subtitle": "Router",
+        "color": "#A3E635",
+        "config": {
+          "routes": [
+            {
+              "id": "route-confirmar",
+              "label": "Compra Confirmada"
+            },
+            {
+              "id": "route-solicitar",
+              "label": "Solicitar Confirmación"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "mercadopago-crear-preference",
+      "type": "mercadopago",
+      "category": "action",
+      "position": {
+        "x": 1600,
+        "y": 350
+      },
+      "data": {
+        "label": "Crear Pago MP",
+        "subtitle": "MercadoPago",
+        "color": "#009EE3",
+        "config": {
+          "title": "Compra en Veo Veo",
+          "amount": "{{carrito_total}}",
+          "description": "Productos de librería",
+          "variables_salida": {
+            "mercadopago_link": "init_point",
+            "mercadopago_preference_id": "id"
+          }
+        }
+      }
+    },
+    {
+      "id": "whatsapp-link-pago",
+      "type": "whatsapp",
+      "category": "action",
+      "position": {
+        "x": 1900,
+        "y": 350
+      },
+      "data": {
+        "label": "Enviar Link de Pago",
+        "subtitle": "WhatsApp Send",
+        "color": "#25D366",
+        "config": {
+          "message": "✅ *Tu pedido está listo*\n\n💰 Total: ${{carrito_total}}\n\n👉 Pagá aquí: {{mercadopago_link}}",
+          "to": "{{webhook-whatsapp.from}}"
+        }
+      }
+    },
+    {
+      "id": "whatsapp-confirmacion-pago",
+      "type": "whatsapp",
+      "category": "action",
+      "position": {
+        "x": 1600,
+        "y": 500
+      },
+      "data": {
+        "label": "Solicitar Confirmación",
+        "subtitle": "WhatsApp Send",
+        "color": "#25D366",
+        "config": {
+          "message": "🛒 *Resumen de tu carrito:*\n\n{{carrito_items}}\n\n💰 Total: ${{carrito_total}}\n\n¿Confirmás la compra? (Sí/No)",
+          "to": "{{webhook-whatsapp.from}}"
+        }
+      }
+    },
+    {
+      "id": "gpt-mostrar-carrito",
+      "type": "gpt",
+      "category": "processor",
+      "position": {
+        "x": 1000,
+        "y": 550
+      },
+      "data": {
+        "label": "Mostrar Carrito",
+        "subtitle": "GPT Formateador",
+        "color": "#10A37F",
+        "tipo": "formateador",
+        "config": {
+          "tipo": "formateador",
+          "model": "gpt-4",
+          "systemPrompt": "Formatea el carrito de compras de manera clara y atractiva.",
+          "prompt": "Carrito actual:\n{{carrito_items}}\n\nTotal: ${{carrito_total}}\n\nFormatea esto para WhatsApp de manera atractiva.",
+          "temperature": 0.7,
+          "maxTokens": 300,
+          "variables_salida": {
+            "mensaje_carrito": "output"
+          }
+        }
+      }
+    },
+    {
+      "id": "webhook-mercadopago-pago",
+      "type": "webhook",
+      "category": "trigger",
+      "position": {
+        "x": 700,
+        "y": 550
+      },
+      "data": {
+        "label": "MercadoPago Webhook",
+        "subtitle": "Payment Update",
+        "color": "#009EE3",
+        "config": {
+          "type": "mercadopago_payment",
+          "description": "Recibe notificaciones de pago"
+        }
+      }
+    }
+  ],
+  "edges": [
+    {
+      "type": "default",
+      "animated": true,
+      "source": "gpt-formateador",
+      "sourceHandle": "b",
+      "target": "router",
+      "targetHandle": "a",
+      "zIndex": 200,
+      "id": "reactflow__edge-gpt-formateadorb-routera",
+      "data": {}
+    },
+    {
+      "type": "default",
+      "animated": true,
+      "source": "gpt-armar-carrito",
+      "sourceHandle": "b",
+      "target": "router-carrito",
+      "targetHandle": "a",
+      "zIndex": 200,
+      "id": "reactflow__edge-gpt-armar-carritob-router-carritoa",
+      "data": {}
+    },
+    {
+      "type": "default",
+      "animated": true,
+      "source": "router-carrito",
+      "sourceHandle": "b",
+      "target": "mercadopago-crear-preference",
+      "targetHandle": "a",
+      "zIndex": 200,
+      "id": "reactflow__edge-router-carritob-mercadopago-crear-preferencea",
+      "data": {
+        "condition": "{{confirmacion_compra}} == true",
+        "label": "Compra Confirmada"
+      }
+    },
+    {
+      "type": "default",
+      "animated": true,
+      "source": "router-carrito",
+      "sourceHandle": "b",
+      "target": "whatsapp-confirmacion-pago",
+      "targetHandle": "a",
+      "zIndex": 200,
+      "id": "reactflow__edge-router-carritoc-whatsapp-confirmacion-pagoa",
+      "data": {
+        "condition": "{{confirmacion_compra}} != true",
+        "label": "Solicitar Confirmación"
+      }
+    },
+    {
+      "type": "default",
+      "animated": true,
+      "source": "mercadopago-crear-preference",
+      "sourceHandle": "b",
+      "target": "whatsapp-link-pago",
+      "targetHandle": "a",
+      "zIndex": 200,
+      "id": "reactflow__edge-mercadopago-crear-preferenceb-whatsapp-link-pagoa",
+      "data": {}
+    },
+    {
+      "type": "default",
+      "animated": true,
+      "source": "webhook-whatsapp",
+      "sourceHandle": "b",
+      "target": "gpt-clasificador-inteligente",
+      "targetHandle": "a",
+      "zIndex": 200,
+      "id": "reactflow__edge-webhook-whatsappb-gpt-clasificador-inteligentea",
+      "data": {}
+    },
+    {
+      "type": "default",
+      "animated": true,
+      "source": "gpt-clasificador-inteligente",
+      "sourceHandle": "b",
+      "target": "router-principal",
+      "targetHandle": "a",
+      "zIndex": 200,
+      "id": "reactflow__edge-gpt-clasificador-inteligenteb-router-principala",
+      "data": {}
+    },
+    {
+      "type": "default",
+      "animated": true,
+      "source": "gpt-pedir-datos",
+      "sourceHandle": "b",
+      "target": "whatsapp-preguntar",
+      "targetHandle": "a",
+      "zIndex": 200,
+      "id": "reactflow__edge-gpt-pedir-datosb-whatsapp-preguntara",
+      "data": {}
+    },
+    {
+      "type": "default",
+      "animated": true,
+      "source": "woocommerce",
+      "sourceHandle": "b",
+      "target": "gpt-asistente-ventas",
+      "targetHandle": "a",
+      "zIndex": 200,
+      "id": "reactflow__edge-woocommerceb-gpt-asistente-ventasa",
+      "data": {}
+    },
+    {
+      "type": "default",
+      "animated": true,
+      "source": "gpt-asistente-ventas",
+      "sourceHandle": "b",
+      "target": "whatsapp-solicitar-datos",
+      "targetHandle": "a",
+      "zIndex": 200,
+      "id": "reactflow__edge-gpt-asistente-ventasb-whatsapp-solicitar-datosa",
+      "data": {}
+    },
+    {
+      "type": "default",
+      "animated": true,
+      "source": "router-principal",
+      "sourceHandle": "b",
+      "target": "gpt-formateador",
+      "targetHandle": "a",
+      "zIndex": 200,
+      "id": "reactflow__edge-router-principalc-gpt-formateadora",
+      "data": {
+        "condition": "{{tipo_accion}} == 'buscar_producto'",
+        "label": "🔍 Buscar Producto"
+      }
+    },
+    {
+      "type": "default",
+      "animated": true,
+      "source": "router-principal",
+      "sourceHandle": "b",
+      "target": "gpt-armar-carrito",
+      "targetHandle": "a",
+      "zIndex": 200,
+      "id": "reactflow__edge-router-principalc-gpt-armar-carritoa",
+      "data": {
+        "condition": "{{tipo_accion}} == 'comprar'",
+        "label": "🛒 Comprar"
+      }
+    },
+    {
+      "type": "default",
+      "animated": true,
+      "source": "router",
+      "sourceHandle": "b",
+      "target": "woocommerce",
+      "targetHandle": "a",
+      "zIndex": 200,
+      "id": "reactflow__edge-routerb-woocommercea",
+      "data": {
+        "condition": "{{contenido}} != '' || {{categoria}} != ''",
+        "label": "✅ Datos Completos"
+      }
+    },
+    {
+      "type": "default",
+      "animated": true,
+      "source": "router",
+      "sourceHandle": "b",
+      "target": "gpt-pedir-datos",
+      "targetHandle": "a",
+      "zIndex": 200,
+      "id": "reactflow__edge-routerc-gpt-pedir-datosa",
+      "data": {
+        "condition": "{{contenido}} == '' && {{categoria}} == ''",
+        "label": "❌ Faltan Datos"
+      }
+    },
+    {
+      "id": "edge-webhook-mp-to-carrito",
+      "source": "webhook-mercadopago-pago",
+      "target": "gpt-armar-carrito",
+      "type": "default",
+      "data": {
+        "label": "Actualización Imperativa",
+        "condition": "payment.status == \"approved\"",
+        "description": "Cuando el pago es aprobado, actualiza el carrito automáticamente"
+      },
+      "sourceHandle": "b",
+      "targetHandle": "a",
+      "zIndex": 200
+    },
+    {
+      "id": "reactflow__edge-router-principald-gpt-mostrar-carritoa",
+      "source": "router-principal",
+      "target": "gpt-mostrar-carrito",
+      "sourceHandle": "b",
+      "targetHandle": "a",
+      "type": "smoothstep",
+      "animated": true,
+      "data": {
+        "condition": "{{tipo_accion}} == 'ver_carrito'"
+      },
+      "zIndex": 200
+    },
+    {
+      "id": "reactflow__edge-gpt-mostrar-carritoa-whatsapp-solicitar-datosa",
+      "source": "gpt-mostrar-carrito",
+      "target": "whatsapp-solicitar-datos",
+      "sourceHandle": "b",
+      "targetHandle": "a",
+      "type": "smoothstep",
+      "animated": false,
+      "zIndex": 200,
+      "data": {}
+    }
+  ],
+  "createdAt": "2026-01-10T07:24:16.313Z",
+  "updatedAt": "2026-01-28T22:56:51.736Z",
+  "actualizadoEn": "2026-01-10T10:42:46.534Z",
+  "config": {
+    "topicos": {
+      "empresa": {
+        "nombre": "Librería Veo Veo",
+        "ubicacion": "Corrientes Capital",
+        "whatsapp": "5493794732177",
+        "whatsapp_link": "https://wa.me/5493794732177",
+        "web": "www.veoveolibros.com.ar",
+        "descripcion": "Librería especializada en literatura infantil y juvenil, material educativo y libros escolares"
+      },
+      "horarios": {
+        "lunes_viernes": "9:00 a 13:00 y 16:30 a 20:30",
+        "sabados": "9:00 a 13:00",
+        "domingos": "Cerrado",
+        "descripcion": "Lunes a Viernes de 9:00 a 13:00 y de 16:30 a 20:30. Sábados de 9:00 a 13:00. Domingos cerrado."
+      },
+      "tono_comunicacion": {
+        "estilo": "Amigable, profesional, cercano",
+        "uso_emojis": true,
+        "tratamiento": "vos (argentino)"
+      },
+      "atencion_personalizada": {
+        "descripcion": "Siempre preguntar qué busca el cliente, ofrecer alternativas, ser proactivo"
+      },
+      "libros_ingles": {
+        "descripcion": "Los libros de inglés escolares se trabajan a pedido con seña",
+        "contacto": "https://wa.me/5493794732177?text=Hola,%20estoy%20interesado%20en%20libros%20de%20inglés%20a%20pedido",
+        "importante": "Dirigir al cliente al asesor para pedidos especiales de libros de inglés"
+      },
+      "politica_retiro": {
+        "descripcion": "Retiro en local sin cargo",
+        "ubicacion": "Corrientes Capital",
+        "horarios": "Mismo horario de atención"
+      },
+      "politica_envios": {
+        "descripcion": "Envíos a todo el país. Costo según destino.",
+        "corrientes_capital": "Consultá costo según ubicación",
+        "interior": "A través de correo o transporte"
+      },
+      "medios_pago": {
+        "descripcion": "Aceptamos efectivo, transferencia bancaria y MercadoPago",
+        "banco_corrientes": {
+          "lunes_miercoles": "3 cuotas sin interés + 20% bonificación con app +Banco (Visa/Mastercard). Tope $20.000",
+          "jueves": "30% Off en 6 cuotas sin interés con Tarjeta Bonita Visa. Tope $50.000"
+        },
+        "banco_nacion": {
+          "sabados": "10% reintegro + hasta 3 cuotas sin interés con MODO BNA+ (Visa/Mastercard). Tope $10.000"
+        },
+        "banco_hipotecario": {
+          "todos_los_dias": "6 cuotas fijas con tarjeta de crédito",
+          "miercoles": "25% off con tarjeta de débito. Tope $10.000"
+        },
+        "locred": {
+          "descripcion": "3 y 6 cuotas sin interés todos los días"
+        },
+        "naranjax": {
+          "descripcion": "planZ: 3 cuotas sin interés, 6 cuotas sin interés"
+        },
+        "go_cuotas": {
+          "descripcion": "Con tarjeta de Débito: hasta 3 cuotas sin interés"
+        }
+      },
+      "productos": {
+        "literatura_infantil_juvenil": "Amplia variedad de títulos",
+        "libros_educativos": "Material educativo y escolares",
+        "libros_texto": "Libros de texto para todos los niveles",
+        "material_didactico": "Artículos de librería y material didáctico",
+        "libros_ingles": "Se trabajan a pedido con seña (contactar asesor)"
+      },
+      "devoluciones": {
+        "plazo": "10 días desde recibido el producto",
+        "condiciones": "El producto debe estar en perfectas condiciones",
+        "comprobante": "Se debe presentar el comprobante de compra"
+      }
+    },
+    "topicos_habilitados": true,
+    "variables_globales": {
+      "telefono_cliente": "",
+      "telefono_empresa": "5493794057297",
+      "mensaje_usuario": "",
+      "tipo_accion": "",
+      "titulo": "",
+      "productos": [],
+      "productos_formateados": "",
+      "carrito_items": [],
+      "carrito_total": 0,
+      "mercadopago_link": "",
+      "mercadopago_preference_id": ""
+    }
+  },
+  "id": "visual-695a156681f6d67f0ae9cf40",
+  "createdBy": "6953055e8acb4fa609fe8ac5",
+  "startNode": "plus-initial",
+  "topicos": {
+    "empresa": {
+      "nombre": "Librería Veo Veo",
+      "ubicacion": "Corrientes Capital",
+      "whatsapp": "5493794732177",
+      "whatsapp_link": "https://wa.me/5493794732177",
+      "web": "www.veoveolibros.com.ar",
+      "descripcion": "Librería especializada en literatura infantil y juvenil, material educativo y libros escolares"
+    },
+    "horarios": {
+      "lunes_viernes": "9:00 a 13:00 y 16:30 a 20:30",
+      "sabados": "9:00 a 13:00",
+      "domingos": "Cerrado",
+      "descripcion": "Lunes a Viernes de 9:00 a 13:00 y de 16:30 a 20:30. Sábados de 9:00 a 13:00. Domingos cerrado."
+    },
+    "tono_comunicacion": {
+      "estilo": "Amigable, profesional, cercano",
+      "uso_emojis": true,
+      "tratamiento": "vos (argentino)"
+    },
+    "atencion_personalizada": {
+      "descripcion": "Siempre preguntar qué busca el cliente, ofrecer alternativas, ser proactivo"
+    },
+    "libros_ingles": {
+      "descripcion": "Los libros de inglés escolares se trabajan a pedido con seña",
+      "contacto": "https://wa.me/5493794732177?text=Hola,%20estoy%20interesado%20en%20libros%20de%20inglés%20a%20pedido",
+      "importante": "Dirigir al cliente al asesor para pedidos especiales de libros de inglés"
+    },
+    "politica_retiro": {
+      "descripcion": "Retiro en local sin cargo",
+      "ubicacion": "Corrientes Capital",
+      "horarios": "Mismo horario de atención"
+    },
+    "politica_envios": {
+      "descripcion": "Envíos a todo el país. Costo según destino.",
+      "corrientes_capital": "Consultá costo según ubicación",
+      "interior": "A través de correo o transporte"
+    },
+    "medios_pago": {
+      "descripcion": "Aceptamos efectivo, transferencia bancaria y MercadoPago",
+      "banco_corrientes": {
+        "lunes_miercoles": "3 cuotas sin interés + 20% bonificación con app +Banco (Visa/Mastercard). Tope $20.000",
+        "jueves": "30% Off en 6 cuotas sin interés con Tarjeta Bonita Visa. Tope $50.000"
+      },
+      "banco_nacion": {
+        "sabados": "10% reintegro + hasta 3 cuotas sin interés con MODO BNA+ (Visa/Mastercard). Tope $10.000"
+      },
+      "banco_hipotecario": {
+        "todos_los_dias": "6 cuotas fijas con tarjeta de crédito",
+        "miercoles": "25% off con tarjeta de débito. Tope $10.000"
+      },
+      "locred": {
+        "descripcion": "3 y 6 cuotas sin interés todos los días"
+      },
+      "naranjax": {
+        "descripcion": "planZ: 3 cuotas sin interés, 6 cuotas sin interés"
+      },
+      "go_cuotas": {
+        "descripcion": "Con tarjeta de Débito: hasta 3 cuotas sin interés"
+      }
+    },
+    "productos": {
+      "literatura_infantil_juvenil": "Amplia variedad de títulos",
+      "libros_educativos": "Material educativo y escolares",
+      "libros_texto": "Libros de texto para todos los niveles",
+      "material_didactico": "Artículos de librería y material didáctico",
+      "libros_ingles": "Se trabajan a pedido con seña (contactar asesor)"
+    },
+    "devoluciones": {
+      "plazo": "10 días desde recibido el producto",
+      "condiciones": "El producto debe estar en perfectas condiciones",
+      "comprobante": "Se debe presentar el comprobante de compra"
+    }
+  }
+}
