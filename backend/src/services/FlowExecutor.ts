@@ -1100,9 +1100,12 @@ Ejemplo:
   private async executeWhatsAppNode(node: any, input: any): Promise<NodeExecutionResult> {
     const config = node.data.config;
 
+    // Si no tiene module configurado, asumir 'send-message' por defecto
+    const module = config.module || 'send-message';
+    
     // Solo ejecutar si es send-message
-    if (config.module !== 'send-message') {
-      console.log(`   Módulo WhatsApp: ${config.module} (skip)`);
+    if (module !== 'send-message') {
+      console.log(`   Módulo WhatsApp: ${module} (skip)`);
       return { output: input };
     }
 
