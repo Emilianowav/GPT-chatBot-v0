@@ -799,15 +799,20 @@ export class FlowExecutor {
       }
     }
 
-    // IMPORTANTE: Guardar SIEMPRE en historial, independientemente del tipo de nodo
-    // Esto permite que todos los nodos GPT (clasificadores, formateadores, conversacionales)
-    // tengan acceso al contexto completo de la conversación
+    // IMPORTANTE: Guardar SIEMPRE el mensaje del usuario en historial
+    // Esto asegura que TODOS los nodos GPT tengan acceso al contexto completo
+    console.log('\n💾 Guardando mensaje del usuario en historial...');
+    await this.saveToHistorial(userMessage);
+    console.log(`   ✅ Mensaje del usuario guardado`);
+    
+    // Si hay respuesta GPT (nodos conversacionales), también guardarla
     if (output.respuesta_gpt) {
-      console.log('\n💾 Guardando en historial de BD...');
-      await this.saveToHistorial(userMessage);
+      console.log('💾 Guardando respuesta GPT en historial...');
       await this.saveToHistorial(output.respuesta_gpt);
-      console.log(`   ✅ Historial actualizado (${this.historialConversacion.length} mensajes totales)`);
+      console.log(`   ✅ Respuesta GPT guardada`);
     }
+    
+    console.log(`   📊 Total mensajes en historial: ${this.historialConversacion.length}`);
 
     // DEBUG: Verificar condición de extracción
     console.log(`\n🔍 [DEBUG] Verificando condición de extracción:`);
