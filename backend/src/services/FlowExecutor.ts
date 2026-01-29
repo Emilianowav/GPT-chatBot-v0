@@ -1889,10 +1889,16 @@ Ejemplo:
     const doubleEqualsMatch = condition.match(/\{\{([^}]+)\}\}\s*==\s*(.+)$/i);
     if (doubleEqualsMatch) {
       const varName = doubleEqualsMatch[1].trim();
-      const expectedValue = doubleEqualsMatch[2].trim();
+      let expectedValue = doubleEqualsMatch[2].trim();
       console.log(`      → Detectado '==' para variable: "${varName}"`);
       
       const actualValue = this.getVariableValue(varName);
+      
+      // Remover comillas simples o dobles del expectedValue
+      if ((expectedValue.startsWith("'") && expectedValue.endsWith("'")) ||
+          (expectedValue.startsWith('"') && expectedValue.endsWith('"'))) {
+        expectedValue = expectedValue.slice(1, -1);
+      }
       
       // Normalizar valores para comparación
       const normalizedActual = String(actualValue).toLowerCase().trim();
@@ -1911,10 +1917,16 @@ Ejemplo:
     const notEqualsOperatorMatch = condition.match(/\{\{([^}]+)\}\}\s*!=\s*(.+)$/i);
     if (notEqualsOperatorMatch) {
       const varName = notEqualsOperatorMatch[1].trim();
-      const expectedValue = notEqualsOperatorMatch[2].trim();
+      let expectedValue = notEqualsOperatorMatch[2].trim();
       console.log(`      → Detectado '!=' para variable: "${varName}"`);
       
       const actualValue = this.getVariableValue(varName);
+      
+      // Remover comillas simples o dobles del expectedValue
+      if ((expectedValue.startsWith("'") && expectedValue.endsWith("'")) ||
+          (expectedValue.startsWith('"') && expectedValue.endsWith('"'))) {
+        expectedValue = expectedValue.slice(1, -1);
+      }
       
       const normalizedActual = String(actualValue).toLowerCase().trim();
       const normalizedExpected = expectedValue.toLowerCase().trim();
