@@ -799,8 +799,10 @@ export class FlowExecutor {
       }
     }
 
-    // Guardar en historial si es conversacional
-    if (config.tipo === 'conversacional' && output.respuesta_gpt) {
+    // IMPORTANTE: Guardar SIEMPRE en historial, independientemente del tipo de nodo
+    // Esto permite que todos los nodos GPT (clasificadores, formateadores, conversacionales)
+    // tengan acceso al contexto completo de la conversación
+    if (output.respuesta_gpt) {
       console.log('\n💾 Guardando en historial de BD...');
       await this.saveToHistorial(userMessage);
       await this.saveToHistorial(output.respuesta_gpt);
