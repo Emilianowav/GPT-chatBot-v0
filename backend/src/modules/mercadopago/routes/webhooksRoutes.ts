@@ -313,8 +313,25 @@ async function processPaymentNotification(paymentId: string): Promise<void> {
         const { CarritoModel } = await import('../../../models/Carrito.js');
         const carrito = await CarritoModel.findById(mpPayment.external_reference);
         if (carrito && carrito.empresaId) {
-          empresaId = carrito.empresaId;
-          console.log(`[MP Webhook] EmpresaId obtenido del carrito: ${empresaId}`);
+          const carritoEmpresaId = carrito.empresaId;
+          console.log(`[MP Webhook] EmpresaId del carrito (teléfono): ${carritoEmpresaId}`);
+          
+          // CRÍTICO: El empresaId del carrito es el TELÉFONO, necesitamos el ObjectId real
+          // Buscar la empresa por teléfono para obtener su ObjectId
+          let empresaDoc = await EmpresaModel.findOne({ telefono: carritoEmpresaId });
+          if (!empresaDoc) {
+            empresaDoc = await EmpresaModel.findOne({ telefono: `+${carritoEmpresaId}` });
+          }
+          if (!empresaDoc && carritoEmpresaId.startsWith('+')) {
+            empresaDoc = await EmpresaModel.findOne({ telefono: carritoEmpresaId.substring(1) });
+          }
+          
+          if (empresaDoc) {
+            empresaId = empresaDoc._id.toString();
+            console.log(`[MP Webhook] ✅ EmpresaId (ObjectId) obtenido del carrito: ${empresaId}`);
+          } else {
+            console.log(`[MP Webhook] ⚠️ No se encontró empresa con teléfono: ${carritoEmpresaId}`);
+          }
         }
       } catch (err) {
         console.log(`[MP Webhook] No se pudo obtener empresaId del carrito`);
