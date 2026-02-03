@@ -530,6 +530,15 @@ export const recibirMensaje = async (req: Request, res: Response, next: NextFunc
               `Para completar tu compra, hacé clic en el siguiente link:\n` +
               `👉 ${paymentResult.paymentUrl}\n\n` +
               `Una vez que realices el pago, te confirmaremos por este medio. ¡Gracias! 🙌`;
+          } else {
+            console.error(`💳 [GPT] Error generando link:`, paymentResult.error);
+            // IMPORTANTE: Siempre asignar un mensaje, nunca dejar textoFinal vacío
+            textoFinal = respuesta.texto || 
+              `Tu pedido está confirmado:\n\n` +
+              `📦 *${args.title || 'Tu pedido'}*\n` +
+              `💰 Total: $${(args.amount || 0).toFixed(2)}\n\n` +
+              `En este momento no pudimos generar el link de pago automático. ` +
+              `Por favor, contactanos para coordinar el pago. ¡Disculpá las molestias!`;
           }
         }
         
@@ -634,6 +643,16 @@ export const recibirMensaje = async (req: Request, res: Response, next: NextFunc
       profileName
     };
     
+    // 📝 CRÍTICO: Guardar mensaje del usuario ANTES de ejecutar el flujo
+    // Esto permite que el FlowExecutor tenga acceso al historial actualizado
+    try {
+      const { actualizarHistorialConversacion } = await import('../services/contactoService.js');
+      await actualizarHistorialConversacion(contacto._id.toString(), mensaje);
+      console.log('📝 Mensaje del usuario guardado en historial ANTES de ejecutar flujo');
+    } catch (errorHistorial) {
+      console.error('⚠️ Error guardando mensaje en historial (no crítico):', errorHistorial);
+    }
+    
     // 📝 Iniciar tracking de mensajes para guardar en historial
     startTracking(telefonoCliente, contacto._id.toString());
     
@@ -659,12 +678,9 @@ export const recibirMensaje = async (req: Request, res: Response, next: NextFunc
       if (handled && result?.success) {
         console.log('✅ Mensaje procesado por sistema de flujos');
         
-        // Guardar en historial de conversaciones
+        // Guardar respuestas del bot en historial
         try {
           const { actualizarHistorialConversacion } = await import('../services/contactoService.js');
-          
-          // Guardar mensaje del usuario
-          await actualizarHistorialConversacion(contacto._id.toString(), mensaje);
           
           // Obtener mensajes trackeados (respuestas del bot)
           const tracked = endTracking(telefonoCliente);
@@ -672,9 +688,9 @@ export const recibirMensaje = async (req: Request, res: Response, next: NextFunc
             for (const respuesta of tracked.mensajes) {
               await actualizarHistorialConversacion(contacto._id.toString(), respuesta);
             }
-            console.log(`📝 Historial actualizado: 1 mensaje usuario + ${tracked.mensajes.length} respuestas bot`);
+            console.log(`📝 Historial actualizado: ${tracked.mensajes.length} respuestas bot`);
           } else {
-            console.log('📝 Historial actualizado: 1 mensaje usuario (sin respuestas trackeadas)');
+            console.log('📝 Sin respuestas trackeadas para guardar');
           }
         } catch (errorHistorial) {
           console.error('⚠️ Error guardando historial (no crítico):', errorHistorial);
