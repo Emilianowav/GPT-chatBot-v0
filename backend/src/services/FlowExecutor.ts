@@ -824,6 +824,14 @@ export class FlowExecutor {
       
       let contexto = '';
       if (fuenteDatos === 'historial_completo') {
+        // CRÍTICO: Agregar productos_formateados al contexto si existe
+        // Esto permite que el GPT arme el carrito incluso si el historial está vacío
+        const productosFormateados = this.getGlobalVariable('productos_formateados');
+        if (productosFormateados) {
+          contexto += `📚 PRODUCTOS DISPONIBLES:\n${productosFormateados}\n\n`;
+          console.log('   ✅ productos_formateados agregado al contexto del GPT');
+        }
+        
         // Construir contexto con TODO el historial
         for (let i = 0; i < this.historialConversacion.length; i += 2) {
           const userMsg = this.historialConversacion[i];
