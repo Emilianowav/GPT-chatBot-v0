@@ -16,9 +16,10 @@ export interface ICarrito extends Document {
   telefono?: string;
   items: ICarritoItem[];
   total: number;
-  estado: 'activo' | 'pagado' | 'cancelado';
+  estado: 'activo' | 'pagado' | 'cancelado' | 'completado';
   fechaCreacion: Date;
   fechaActualizacion: Date;
+  fechaCompletado?: Date;
   mercadoPagoLink?: string;
   mercadoPagoId?: string;
 }
@@ -41,11 +42,12 @@ const CarritoSchema = new Schema<ICarrito>({
   total: { type: Number, required: true, default: 0 },
   estado: { 
     type: String, 
-    enum: ['activo', 'pagado', 'cancelado'],
+    enum: ['activo', 'pagado', 'cancelado', 'completado'],
     default: 'activo'
   },
   fechaCreacion: { type: Date, default: Date.now },
   fechaActualizacion: { type: Date, default: Date.now },
+  fechaCompletado: { type: Date },
   mercadoPagoLink: { type: String },
   mercadoPagoId: { type: String }
 }, {
