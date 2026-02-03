@@ -878,10 +878,17 @@ export class FlowExecutor {
             console.log(`   ⚠️  ${nombre} = ${valor} (no guardado, no existe valor previo)`);
           }
         } else {
+          // Limpiar comillas extra si el valor es un string que viene con comillas del JSON
+          let valorLimpio = valor;
+          if (typeof valor === 'string' && valor.startsWith('"') && valor.endsWith('"')) {
+            valorLimpio = valor.slice(1, -1);
+            console.log(`   🧹 Limpiando comillas extra: "${valor}" → "${valorLimpio}"`);
+          }
+          
           // Guardar el nuevo valor
-          console.log(`   ✅ ${nombre} = "${JSON.stringify(valor)?.substring(0, 100)}"`);
-          this.setGlobalVariable(nombre, valor);
-          output[nombre] = valor;
+          console.log(`   ✅ ${nombre} = "${JSON.stringify(valorLimpio)?.substring(0, 100)}"`);
+          this.setGlobalVariable(nombre, valorLimpio);
+          output[nombre] = valorLimpio;
         }
       }
       
