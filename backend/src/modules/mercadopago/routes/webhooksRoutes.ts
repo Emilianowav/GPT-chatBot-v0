@@ -501,15 +501,39 @@ ${productosTexto}
           
           console.log(`[MP Webhook] ✅ Mensaje de confirmación enviado`);
           
-          // Intentar actualizar variables globales del contacto si existe
+          // 🚨 CRÍTICO: Limpiar variables globales del contacto para permitir nuevas compras
           const { ContactoEmpresaModel } = await import('../../../models/ContactoEmpresa.js');
-          const contacto = await ContactoEmpresaModel.findOne({
-            telefono: carrito.telefono,
+          
+          // Normalizar teléfono del cliente para búsqueda
+          const telefonoCliente = carrito.telefono.replace(/\D/g, '');
+          console.log(`[MP Webhook] 🔍 Buscando contacto - Teléfono: ${telefonoCliente}, EmpresaId: ${carritoEmpresaId}`);
+          
+          // Intentar múltiples búsquedas para encontrar el contacto
+          let contacto = await ContactoEmpresaModel.findOne({
+            telefono: telefonoCliente,
             empresaId: carritoEmpresaId
           });
           
+          // Si no se encuentra, intentar con el teléfono con prefijo +
+          if (!contacto) {
+            contacto = await ContactoEmpresaModel.findOne({
+              telefono: `+${telefonoCliente}`,
+              empresaId: carritoEmpresaId
+            });
+          }
+          
+          // Si no se encuentra, intentar sin el prefijo + (si el teléfono lo tiene)
+          if (!contacto && carrito.telefono.startsWith('+')) {
+            contacto = await ContactoEmpresaModel.findOne({
+              telefono: carrito.telefono.substring(1).replace(/\D/g, ''),
+              empresaId: carritoEmpresaId
+            });
+          }
+          
           if (contacto) {
-            console.log(`[MP Webhook] 📝 Actualizando variables globales del contacto...`);
+            console.log(`[MP Webhook] ✅ Contacto encontrado - ID: ${contacto._id}`);
+            console.log(`[MP Webhook] 📝 Limpiando estado global del carrito...`);
+            
             const globalVars = (contacto.workflowState as any)?.globalVariables || {};
             
             // Actualizar variables de MercadoPago
@@ -517,21 +541,26 @@ ${productosTexto}
             globalVars.mercadopago_pago_id = paymentId;
             globalVars.mercadopago_monto = mpPayment.transaction_amount || 0;
             
-            // IMPORTANTE: Limpiar variables del carrito para permitir nuevas compras
+            // 🧹 LIMPIAR COMPLETAMENTE EL ESTADO DEL CARRITO
             globalVars.carrito_items = [];
             globalVars.carrito_total = 0;
             globalVars.carrito_items_count = 0;
             globalVars.carrito = undefined;
+            globalVars.carrito_id = undefined;
             globalVars.accion_siguiente = undefined;
+            globalVars.tipo_accion = undefined;
+            globalVars.productos_carrito = undefined;
             
             if (!contacto.workflowState) {
               contacto.workflowState = {} as any;
             }
             (contacto.workflowState as any).globalVariables = globalVars;
             await contacto.save();
-            console.log(`[MP Webhook] ✅ Variables globales actualizadas y carrito limpiado`);
+            console.log(`[MP Webhook] ✅ Estado global del carrito limpiado completamente`);
+            console.log(`[MP Webhook] 🎯 El GPT ahora puede armar un nuevo carrito`);
           } else {
-            console.log(`[MP Webhook] ℹ️ No se encontró contacto (normal en flujo de carrito)`);
+            console.log(`[MP Webhook] ⚠️ No se encontró contacto con teléfono ${carrito.telefono} y empresaId ${carritoEmpresaId}`);
+            console.log(`[MP Webhook] ⚠️ El estado global NO se pudo limpiar - el GPT puede quedar bugeado`);
           }
         } else {
           console.log(`[MP Webhook] ⚠️ No se encontró carrito o no tiene teléfono`);

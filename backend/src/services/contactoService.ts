@@ -151,11 +151,30 @@ export async function buscarOCrearContacto(
 
 /**
  * Actualiza el historial de conversación de un contacto
+ * PREVIENE DUPLICADOS: No agrega el mensaje si ya existe en los últimos 3 mensajes
  */
 export async function actualizarHistorialConversacion(
   contactoId: string,
   mensaje: string
 ): Promise<void> {
+  // Obtener el contacto para verificar duplicados
+  const contacto = await ContactoEmpresaModel.findById(contactoId);
+  
+  if (!contacto) {
+    console.warn(`⚠️ [actualizarHistorialConversacion] Contacto no encontrado: ${contactoId}`);
+    return;
+  }
+  
+  // Verificar si el mensaje ya existe en los últimos 3 mensajes
+  const historial = contacto.conversaciones?.historial || [];
+  const ultimosMensajes = historial.slice(-3);
+  
+  if (ultimosMensajes.includes(mensaje)) {
+    console.log(`⏭️ [actualizarHistorialConversacion] Mensaje duplicado detectado, omitiendo: "${mensaje.substring(0, 50)}..."`);
+    return;
+  }
+  
+  // Si no es duplicado, agregar al historial
   await ContactoEmpresaModel.findByIdAndUpdate(
     contactoId,
     {
@@ -166,6 +185,8 @@ export async function actualizarHistorialConversacion(
       }
     }
   );
+  
+  console.log(`✅ [actualizarHistorialConversacion] Mensaje guardado: "${mensaje.substring(0, 50)}..."`);
 }
 
 /**

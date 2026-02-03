@@ -799,18 +799,11 @@ export class FlowExecutor {
       }
     }
 
-    // IMPORTANTE: Guardar SIEMPRE el mensaje del usuario en historial
-    // Esto asegura que TODOS los nodos GPT tengan acceso al contexto completo
-    console.log('\n💾 Guardando mensaje del usuario en historial...');
-    await this.saveToHistorial(userMessage);
-    console.log(`   ✅ Mensaje del usuario guardado`);
-    
-    // Si hay respuesta GPT (nodos conversacionales), también guardarla
-    if (output.respuesta_gpt) {
-      console.log('💾 Guardando respuesta GPT en historial...');
-      await this.saveToHistorial(output.respuesta_gpt);
-      console.log(`   ✅ Respuesta GPT guardada`);
-    }
+    // ⚠️ NO GUARDAR AQUÍ - El historial se guarda en whatsappController.ts
+    // para evitar duplicación de mensajes
+    // El FlowExecutor solo usa el historial en memoria (this.historialConversacion)
+    console.log('\n📝 Historial se guardará al finalizar el flujo (whatsappController.ts)');
+    console.log('   Evitando duplicación de mensajes...');
     
     console.log(`   📊 Total mensajes en historial: ${this.historialConversacion.length}`);
 
