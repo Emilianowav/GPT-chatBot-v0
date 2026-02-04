@@ -151,7 +151,28 @@ export class CarritoService {
   }
 
   /**
-   * Marca el carrito como pagado
+   * Guarda la información de MercadoPago en el carrito (sin cambiar estado)
+   * El estado se cambiará a 'completado' solo cuando el webhook confirme el pago
+   */
+  static async guardarInfoMercadoPago(
+    contactoId: mongoose.Types.ObjectId,
+    empresaId: string,
+    mercadoPagoId: string,
+    mercadoPagoLink: string
+  ): Promise<ICarrito> {
+    const carrito = await this.obtenerCarritoActivo(contactoId, empresaId);
+    
+    // Solo guardar info de MP, NO cambiar estado
+    // El estado se cambia a 'completado' en el webhook cuando el pago es aprobado
+    carrito.mercadoPagoId = mercadoPagoId;
+    carrito.mercadoPagoLink = mercadoPagoLink;
+    
+    await carrito.save();
+    return carrito;
+  }
+  
+  /**
+   * Marca el carrito como pagado (DEPRECATED - usar solo en webhook)
    */
   static async marcarComoPagado(
     contactoId: mongoose.Types.ObjectId,

@@ -268,82 +268,22 @@ export async function executeMercadoPagoNode(
     const contactoId = new mongoose.Types.ObjectId(context.contactoId);
     const empresaId = context.empresaId;
 
-    // Intentar obtener carrito activo de BD
-    let carrito = await CarritoService.obtenerCarritoActivo(contactoId, empresaId);
+    // Obtener carrito activo de BD
+    // El carrito ya debe existir porque se persiste cuando el GPT extrae carrito_items
+    const carrito = await CarritoService.obtenerCarritoActivo(contactoId, empresaId);
 
-    // Si el carrito está vacío en BD, intentar crearlo desde globalVariables
+    // Verificar que el carrito tenga items
     if (carrito.items.length === 0) {
-      console.log('   📦 Carrito vacío en BD, intentando crear desde globalVariables...');
-      
-      // Intentar obtener carrito_items y carrito_total (nombres de variables del frontend)
-      let productosCarrito = context.resolveVariableInString('{{carrito_items}}');
-      const total = context.resolveVariableInString('{{carrito_total}}');
-      
-      console.log(`   carrito_items (raw): ${JSON.stringify(productosCarrito)?.substring(0, 200)}`);
-      console.log(`   carrito_items type: ${typeof productosCarrito}`);
-      console.log(`   carrito_total: ${total}`);
-      
-      // Si es string, parsear a array
-      if (typeof productosCarrito === 'string') {
-        try {
-          productosCarrito = JSON.parse(productosCarrito);
-          console.log(`   ✅ carrito_items parseado a array`);
-        } catch (e) {
-          console.log(`   ❌ Error parseando carrito_items: ${e}`);
+      console.log('   ❌ Carrito vacío en BD');
+      console.log('   � El carrito debería haberse creado cuando el GPT extrajo carrito_items');
+      console.log('   💡 Verifica que el nodo gpt-armar-carrito esté extrayendo carrito_items correctamente');
+      return {
+        output: {
+          success: false,
+          error: 'El carrito está vacío. El carrito debe crearse antes de generar el link de pago.',
+          mensaje: '❌ No se pudo generar el link de pago porque el carrito está vacío. Por favor, agregá productos al carrito primero.'
         }
-      }
-      
-      console.log(`   carrito_items (parsed): ${JSON.stringify(productosCarrito)?.substring(0, 200)}`);
-      console.log(`   Array.isArray: ${Array.isArray(productosCarrito)}`);
-      console.log(`   length: ${productosCarrito?.length}`);
-      
-      if (productosCarrito && Array.isArray(productosCarrito) && productosCarrito.length > 0) {
-        console.log('   ✅ Productos encontrados en globalVariables, creando carrito en BD...');
-        
-        // 🚨 TESTING MODE: Hardcodear precio a $0.20 (20 centavos ARS)
-        const TESTING_MODE = true; // ✅ ACTIVADO para testing
-        const TESTING_PRICE = 0.20;
-        
-        if (TESTING_MODE) {
-          console.log(`   🧪 TESTING MODE ACTIVADO: Precio hardcodeado a $${TESTING_PRICE}`);
-        }
-        
-        // Obtener teléfono del cliente desde variables globales
-        const telefonoCliente = context.resolveVariableInString('{{1.from}}');
-        console.log(`   📞 Teléfono del cliente: ${telefonoCliente}`);
-        
-        // Agregar cada producto al carrito
-        for (const producto of productosCarrito) {
-          // Si no tiene ID, generar uno basado en el nombre (para productos extraídos por GPT)
-          const productoId = producto.id || `gpt-${producto.nombre.toLowerCase().replace(/[^a-z0-9]/g, '-')}`;
-          
-          carrito = await CarritoService.agregarProducto(
-            contactoId,
-            empresaId,
-            {
-              id: productoId,
-              name: producto.nombre,
-              price: String(TESTING_MODE ? TESTING_PRICE : producto.precio),
-              cantidad: producto.cantidad || 1
-            },
-            telefonoCliente
-          );
-          
-          console.log(`   ✅ Producto agregado: ${producto.nombre} (ID: ${productoId})`);
-        }
-        
-        console.log(`   ✅ Carrito creado en BD con ${carrito.items.length} items`);
-      } else {
-        console.log('   ❌ No hay productos en carrito_items');
-        console.log('   💡 Verifica que el nodo GPT esté extrayendo las variables carrito_items y carrito_total correctamente');
-        return {
-          output: {
-            success: false,
-            error: 'El carrito está vacío. Verifica que el objeto carrito se haya generado correctamente.',
-            mensaje: '❌ No se pudo generar el link de pago porque el carrito está vacío. Por favor, agregá productos al carrito primero.'
-          }
-        };
-      }
+      };
     }
 
     console.log(`   📦 Items en carrito: ${carrito.items.length}`);
@@ -419,8 +359,9 @@ export async function executeMercadoPagoNode(
     console.log('   ✅ Preferencia creada');
     console.log(`   🔗 Link: ${preferencia.init_point}`);
 
-    // Actualizar carrito con info de MP
-    await CarritoService.marcarComoPagado(
+    // Guardar info de MP en el carrito (sin cambiar estado)
+    // El estado se cambiará a 'completado' en el webhook cuando el pago sea aprobado
+    await CarritoService.guardarInfoMercadoPago(
       contactoId,
       empresaId,
       preferencia.id,
