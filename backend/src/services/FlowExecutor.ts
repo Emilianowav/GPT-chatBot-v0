@@ -1739,7 +1739,27 @@ Ejemplo:
       
     } catch (error: any) {
       console.error(`   ❌ Error en módulo WooCommerce:`, error.message);
-      throw error;
+      
+      // En lugar de lanzar el error, devolver un mensaje amigable al usuario
+      // Esto permite que el flujo continúe y el usuario reciba una respuesta
+      const mensajeError = '😔 Disculpá, estamos teniendo problemas técnicos para buscar productos en este momento.\n\n' +
+                          '¿Podrías intentar de nuevo en unos minutos?\n\n' +
+                          'Si el problema persiste, contactanos directamente. ¡Gracias por tu paciencia! 🙏';
+      
+      // Guardar mensaje de error en variables globales para que el siguiente nodo pueda usarlo
+      this.setGlobalVariable('error_woocommerce', mensajeError);
+      this.setGlobalVariable('productos_formateados', mensajeError);
+      
+      console.log(`   ⚠️  Devolviendo mensaje de error amigable al usuario`);
+      
+      return {
+        output: {
+          productos: [],
+          count: 0,
+          error: true,
+          mensaje_error: mensajeError
+        }
+      };
     }
   }
 
