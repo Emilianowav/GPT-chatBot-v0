@@ -267,7 +267,9 @@ const ContactoEmpresaSchema = new Schema<IContactoEmpresa>({
       intentosFallidos: Number,
       iniciadoEn: Date,
       ultimaActividad: Date,
-      esperandoRepeticion: Boolean  // Si está esperando decisión de repetir workflow
+      esperandoRepeticion: Boolean,  // Si está esperando decisión de repetir workflow
+      globalVariables: Schema.Types.Mixed,  // Variables globales del flujo visual (productos_formateados, etc)
+      ultimaActualizacion: Date  // Última actualización de globalVariables
     },
     required: false
   },

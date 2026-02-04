@@ -220,45 +220,39 @@ export const recibirMensaje = async (req: Request, res: Response, next: NextFunc
       console.log(`   Nodos: ${flowVisual.nodes.length}, Edges: ${flowVisual.edges.length}`);
       console.log(`   🔄 Flujo recargado desde MongoDB (no cache)`);
       
-      try {
-        // Ejecutar flujo visual con FlowExecutor
-        const executor = new FlowExecutor();
-        const resultado = await executor.execute(
-          flowVisual._id.toString(), 
-          {
-            message: mensaje,
-            from: telefonoCliente,
-            to: telefonoEmpresa,
-            phoneNumberId: phoneNumberId,
-            timestamp: new Date(),
-            profileName: profileName,
-          },
-          contacto._id.toString() // ← Pasar contactoId para cargar historial
-        );
-        
-        console.log('✅ Flujo visual ejecutado exitosamente');
-        console.log('📊 Resultado:', JSON.stringify(resultado, null, 2));
-        
-        // El historial ya se guarda dentro del FlowExecutor, no duplicar aquí
-        
-        await incrementarMetricas(contacto._id.toString(), {
-          mensajesEnviados: 1,
-          mensajesRecibidos: 1,
-          interacciones: 1
-        });
-        
-        console.log('✅ Mensaje procesado con flujo visual');
-        res.sendStatus(200);
-        return;
-        
-      } catch (error: any) {
-        console.error('❌ Error en flujo visual:', error.message);
-        console.error('Stack:', error.stack);
-        console.log('⚠️ Fallback a sistema legacy...');
-        // Continuar con sistema legacy si falla
-      }
+      // Ejecutar flujo visual con FlowExecutor
+      const executor = new FlowExecutor();
+      const resultado = await executor.execute(
+        flowVisual._id.toString(), 
+        {
+          message: mensaje,
+          from: telefonoCliente,
+          to: telefonoEmpresa,
+          phoneNumberId: phoneNumberId,
+          timestamp: new Date(),
+          profileName: profileName,
+        },
+        contacto._id.toString() // ← Pasar contactoId para cargar historial
+      );
+      
+      console.log('✅ Flujo visual ejecutado exitosamente');
+      console.log('📊 Resultado:', JSON.stringify(resultado, null, 2));
+      
+      // El historial ya se guarda dentro del FlowExecutor, no duplicar aquí
+      
+      await incrementarMetricas(contacto._id.toString(), {
+        mensajesEnviados: 1,
+        mensajesRecibidos: 1,
+        interacciones: 1
+      });
+      
+      console.log('✅ Mensaje procesado con flujo visual');
+      res.sendStatus(200);
+      return;
     } else {
-      console.log('⚠️ No hay flujo visual activo, usando sistema legacy');
+      console.error('❌ No hay flujo visual configurado para esta empresa');
+      res.status(500).json({ error: 'No hay flujo visual configurado' });
+      return;
     }
     
     // 🎯 ROUTER UNIVERSAL: Evaluar triggers ANTES de decidir flujo
