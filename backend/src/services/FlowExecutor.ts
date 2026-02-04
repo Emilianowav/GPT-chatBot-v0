@@ -2048,8 +2048,11 @@ Ejemplo:
         expectedValue = expectedValue.slice(1, -1);
       }
       
-      // Normalizar valores para comparación
-      const normalizedActual = String(actualValue).toLowerCase().trim();
+      // CRÍTICO: Tratar undefined, null y '' como equivalentes
+      // Si actualValue es undefined/null, tratarlo como ''
+      const normalizedActual = (actualValue === undefined || actualValue === null) 
+        ? '' 
+        : String(actualValue).toLowerCase().trim();
       const normalizedExpected = expectedValue.toLowerCase().trim();
       
       const result = normalizedActual === normalizedExpected;
@@ -2076,7 +2079,11 @@ Ejemplo:
         expectedValue = expectedValue.slice(1, -1);
       }
       
-      const normalizedActual = String(actualValue).toLowerCase().trim();
+      // CRÍTICO: Tratar undefined, null y '' como equivalentes
+      // Si actualValue es undefined/null, tratarlo como ''
+      const normalizedActual = (actualValue === undefined || actualValue === null) 
+        ? '' 
+        : String(actualValue).toLowerCase().trim();
       const normalizedExpected = expectedValue.toLowerCase().trim();
       
       const result = normalizedActual !== normalizedExpected;
