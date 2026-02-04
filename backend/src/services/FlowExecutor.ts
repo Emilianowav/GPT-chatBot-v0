@@ -2048,6 +2048,20 @@ Ejemplo:
         expectedValue = expectedValue.slice(1, -1);
       }
       
+      // CRÍTICO: Manejar comparaciones booleanas
+      // Si se compara con 'true' o 'false', convertir ambos a boolean
+      if (expectedValue === 'true' || expectedValue === 'false') {
+        const actualBool = actualValue === true || actualValue === 'true' || actualValue === 'True' || actualValue === 'TRUE';
+        const expectedBool = expectedValue === 'true';
+        const result = actualBool === expectedBool;
+        
+        console.log(`      → Variable "${varName}" = ${JSON.stringify(actualValue)}`);
+        console.log(`      → Esperado (boolean): ${expectedValue}`);
+        console.log(`      → Comparación booleana: ${actualBool} === ${expectedBool}`);
+        console.log(`      → Resultado: ${result}`);
+        return result;
+      }
+      
       // CRÍTICO: Tratar undefined, null y '' como equivalentes
       // Si actualValue es undefined/null, tratarlo como ''
       const normalizedActual = (actualValue === undefined || actualValue === null) 
