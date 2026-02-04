@@ -492,6 +492,11 @@ export class FlowExecutor {
       
       // CRÍTICO: Guardar globalVariables en workflowState de MongoDB
       // Esto permite que productos_formateados persista entre mensajes
+      console.log('\n🔍 DEBUG GUARDADO DE GLOBALVARIABLES:');
+      console.log(`   this.contactoId: ${this.contactoId}`);
+      console.log(`   globalVariables keys: ${Object.keys(this.globalVariables).length}`);
+      console.log(`   globalVariables: ${JSON.stringify(Object.keys(this.globalVariables))}`);
+      
       if (this.contactoId && Object.keys(this.globalVariables).length > 0) {
         try {
           console.log('\n💾 Guardando globalVariables en workflowState...');
@@ -508,6 +513,14 @@ export class FlowExecutor {
           console.log(`   📋 Variables: ${Object.keys(this.globalVariables).join(', ')}`);
         } catch (errorGuardado) {
           console.error('   ⚠️ Error guardando globalVariables (no crítico):', errorGuardado);
+        }
+      } else {
+        console.log('   ⚠️ NO SE GUARDAN globalVariables:');
+        if (!this.contactoId) {
+          console.log('      Razón: this.contactoId es undefined/null');
+        }
+        if (Object.keys(this.globalVariables).length === 0) {
+          console.log('      Razón: globalVariables está vacío');
         }
       }
       
