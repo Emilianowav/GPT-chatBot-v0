@@ -90,6 +90,19 @@ export interface GPTConversacionalConfig {
   // OUTPUT VARIABLE PERSONALIZADA (para procesadores)
   outputVariable?: string;
   
+  // EXTRACTION CONFIG (para nodos GPT con extractionConfig)
+  extractionConfig?: {
+    enabled?: boolean;
+    method?: string;
+    systemPrompt?: string;
+    variables?: Array<{
+      name: string;
+      type: string;
+      description: string;
+      required: boolean;
+    }>;
+  };
+  
   // Legacy
   variablesEntrada?: string[];
   variablesSalida?: string[];
@@ -1195,11 +1208,29 @@ const GPTConfigPanel: React.FC<GPTConfigPanelProps> = ({ config, onChange, globa
               </div>
             </div>
 
-            {/* Instrucciones de Extracción */}
+            {/* System Prompt (extractionConfig) */}
             <div className={styles.formGroup}>
-              <label>Instrucciones de Extracción</label>
+              <label>System Prompt (Instrucciones para el GPT)</label>
               <textarea
-                rows={8}
+                rows={12}
+                placeholder="Ejemplo:\nEres un asistente que extrae información de conversaciones.\n\n🚨 REGLAS ABSOLUTAS:\n1. NUNCA inventes información\n2. SOLO usa datos del historial\n3. Si no tienes información, da un cierre profesional: 'No tengo información sobre...'"
+                value={config.extractionConfig?.systemPrompt || ''}
+                onChange={(e) => onChange({
+                  ...config,
+                  extractionConfig: {
+                    ...config.extractionConfig,
+                    systemPrompt: e.target.value
+                  }
+                })}
+              />
+              <small>Define las reglas y comportamiento del GPT. Este prompt se usa para procesar el mensaje del usuario.</small>
+            </div>
+
+            {/* Instrucciones de Extracción (Legacy) */}
+            <div className={styles.formGroup}>
+              <label>Instrucciones de Extracción (Legacy)</label>
+              <textarea
+                rows={6}
                 placeholder="Ejemplo:\nAnaliza la conversación y extrae la información sobre el libro que el usuario está buscando.\nIdentifica el título del libro, la editorial (si la mencionó), y la edición (si la mencionó).\nSi el usuario dijo 'cualquiera', deja ese campo como null."
                 value={config.configuracionExtraccion?.instruccionesExtraccion || ''}
                 onChange={(e) => onChange({
@@ -1210,7 +1241,7 @@ const GPTConfigPanel: React.FC<GPTConfigPanelProps> = ({ config, onChange, globa
                   }
                 })}
               />
-              <small>Describe qué información debe extraer del historial de conversación</small>
+              <small>Describe qué información debe extraer del historial de conversación (sistema antiguo)</small>
             </div>
 
             {/* Fuente de Datos */}

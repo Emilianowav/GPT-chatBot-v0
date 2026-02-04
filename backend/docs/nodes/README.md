@@ -97,7 +97,61 @@ Envío de mensajes a través de WhatsApp Business API:
 
 ---
 
-### 5. [Condicionales en Conexiones](./CONDICIONALES.md)
+### 5. [Nodo Google Sheets](./NODO-GOOGLE-SHEETS.md)
+**Tipo:** Integración OAuth con Google Sheets
+
+Integración completa con Google Sheets mediante OAuth 2.0:
+- Lectura de datos de hojas de cálculo
+- Escritura y actualización de filas
+- Búsqueda y filtrado de datos
+- Creación de nuevas hojas
+- Autorización con un solo botón
+- Tokens encriptados y refresh automático
+
+**Módulos disponibles:**
+- `read` - Leer datos de rangos
+- `write` - Escribir datos
+- `append` - Agregar filas
+- `update` - Actualizar celdas
+- `search` - Buscar en columnas
+- `create-sheet` - Crear nueva hoja
+
+**Casos de uso:**
+- Guardar leads en hoja de cálculo
+- Buscar clientes en base de datos
+- Actualizar inventario
+- Registrar pedidos automáticamente
+
+---
+
+### 6. [Nodo Google Calendar](./NODO-GOOGLE-CALENDAR.md)
+**Tipo:** Integración OAuth con Google Calendar
+
+Gestión completa de calendarios de Google mediante OAuth 2.0:
+- Crear eventos automáticamente
+- Listar eventos próximos
+- Actualizar y eliminar eventos
+- Verificar disponibilidad horaria
+- Enviar invitaciones automáticas
+- Recordatorios configurables
+
+**Módulos disponibles:**
+- `create-event` - Crear evento
+- `list-events` - Listar eventos
+- `update-event` - Actualizar evento
+- `delete-event` - Eliminar evento
+- `check-availability` - Verificar disponibilidad
+
+**Casos de uso:**
+- Sistema de reserva de turnos
+- Agendar reuniones automáticamente
+- Cancelar/reprogramar citas
+- Verificar horarios disponibles
+- Enviar recordatorios a clientes
+
+---
+
+### 7. [Condicionales en Conexiones](./CONDICIONALES.md)
 **Documentación:** Condiciones en edges/conexiones
 
 Guía completa sobre cómo configurar condiciones en las conexiones entre nodos:
@@ -324,7 +378,12 @@ Simplificar productos de WooCommerce antes de pasarlos a GPT para reducir tokens
 - [NODO-ROUTER.md](./NODO-ROUTER.md)
 - [NODO-WOOCOMMERCE.md](./NODO-WOOCOMMERCE.md)
 - [NODO-WHATSAPP.md](./NODO-WHATSAPP.md)
+- [NODO-GOOGLE-SHEETS.md](./NODO-GOOGLE-SHEETS.md) ⭐ Nuevo
+- [NODO-GOOGLE-CALENDAR.md](./NODO-GOOGLE-CALENDAR.md) ⭐ Nuevo
 - [CONDICIONALES.md](./CONDICIONALES.md)
+
+### Documentación OAuth
+- [../OAUTH-IMPLEMENTATION.md](../OAUTH-IMPLEMENTATION.md) - Guía completa de implementación OAuth 2.0
 
 ---
 

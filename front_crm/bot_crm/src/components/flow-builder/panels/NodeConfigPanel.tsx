@@ -46,7 +46,8 @@ const NodeConfigPanel: React.FC<NodeConfigPanelProps> = ({ node, onClose, onSave
       outputFormat: config.outputFormat || 'text',
       jsonSchema: config.jsonSchema,
       systemPrompt: config.systemPrompt,
-      configuracionExtraccion: config.configuracionExtraccion || undefined
+      configuracionExtraccion: config.configuracionExtraccion || undefined,
+      extractionConfig: config.extractionConfig || undefined
     };
 
     return (

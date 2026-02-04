@@ -207,7 +207,9 @@ export const gptFlow: Flow = {
             `Una vez que realices el pago, te confirmaremos por este medio. ¡Gracias por tu compra! 🙌`;
         } else {
           console.error(`💳 [GPT] Error generando link:`, paymentResult.error);
-          textoFinal = `Tu pedido está confirmado:\n\n` +
+          // IMPORTANTE: Siempre asignar un mensaje, nunca dejar textoFinal vacío
+          textoFinal = respuesta.texto || 
+            `Tu pedido está confirmado:\n\n` +
             `📦 *${args.title || 'Tu pedido'}*\n` +
             `💰 Total: $${(args.amount || 0).toFixed(2)}\n\n` +
             `En este momento no pudimos generar el link de pago automático. ` +
