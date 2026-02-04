@@ -46,6 +46,8 @@ export interface WorkflowState {
   iniciadoEn: Date;
   ultimaActividad: Date;
   esperandoRepeticion?: boolean;  // Si está esperando decisión de repetir workflow
+  globalVariables?: Record<string, any>;  // Variables globales del flujo visual (productos_formateados, etc)
+  ultimaActualizacion?: Date;  // Última vez que se actualizaron las globalVariables
 }
 
 export interface IContactoEmpresa extends Document {
