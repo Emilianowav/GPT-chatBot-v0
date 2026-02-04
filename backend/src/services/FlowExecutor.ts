@@ -927,6 +927,91 @@ export class FlowExecutor {
       console.log(JSON.stringify(datosExtraidos, null, 2));
       console.log(`\n📊 Resumen: ${Object.keys(datosExtraidos).length} variable(s) extraída(s)`);
       
+      // 🔧 LÓGICA DIRECTA: Detectar confirmación automáticamente
+      // Si el nodo es gpt-armar-carrito y el usuario confirma, forzar confirmacion_compra=true
+      if (node.id === 'gpt-armar-carrito') {
+        const mensajeUsuario = userMessage.toLowerCase().trim();
+        const palabrasConfirmacion = ['si', 'sí', 'sii', 'confirmo', 'dale', 'ok', 'acepto', 'confirmar'];
+        const esConfirmacion = palabrasConfirmacion.some(palabra => mensajeUsuario === palabra || mensajeUsuario.includes(palabra));
+        
+        if (esConfirmacion) {
+          console.log('\n🎯 CONFIRMACIÓN DETECTADA AUTOMÁTICAMENTE');
+          console.log(`   Mensaje: "${mensajeUsuario}"`);
+          
+          // Obtener mensaje_carrito de variables globales
+          const mensajeCarrito = this.getGlobalVariable('mensaje_carrito');
+          const productosPresent = this.getGlobalVariable('productos_presentados');
+          
+          if (mensajeCarrito || productosPresent) {
+            console.log('   ✅ Forzando confirmacion_compra = true');
+            datosExtraidos.confirmacion_compra = true;
+            
+            // Si hay mensaje_carrito, extraer productos de ahí
+            if (mensajeCarrito && typeof mensajeCarrito === 'string') {
+              console.log('   📦 Extrayendo productos del mensaje_carrito...');
+              
+              // Parsear formato: "📦 NOMBRE - $PRECIO x CANTIDAD = $SUBTOTAL"
+              const lineas = mensajeCarrito.split('\n');
+              const items: any[] = [];
+              let totalCalculado = 0;
+              
+              for (const linea of lineas) {
+                const match = linea.match(/📦\s*(.+?)\s*-\s*\$(\d+)\s*x\s*(\d+)\s*=\s*\$(\d+)/);
+                if (match) {
+                  const [, nombre, precio, cantidad, subtotal] = match;
+                  items.push({
+                    id: `producto-${items.length + 1}`,
+                    nombre: nombre.trim(),
+                    precio: parseInt(precio),
+                    cantidad: parseInt(cantidad),
+                    imagen: '',
+                    permalink: ''
+                  });
+                  totalCalculado += parseInt(subtotal);
+                  console.log(`      ✅ ${nombre.trim()} - $${precio} x ${cantidad}`);
+                }
+              }
+              
+              if (items.length > 0) {
+                datosExtraidos.carrito_items = items;
+                datosExtraidos.carrito_total = totalCalculado;
+                datosExtraidos.mensaje_carrito = mensajeCarrito;
+                console.log(`   ✅ ${items.length} producto(s) extraído(s)`);
+                console.log(`   💰 Total: $${totalCalculado}`);
+              }
+            }
+            // Si no hay mensaje_carrito pero hay productos_presentados, usar esos
+            else if (productosPresent && Array.isArray(productosPresent) && productosPresent.length > 0) {
+              console.log('   📦 Usando productos_presentados...');
+              const producto = productosPresent[0];
+              
+              // Extraer cantidad del mensaje del usuario
+              const cantidadMatch = mensajeUsuario.match(/(\d+)/);
+              const cantidad = cantidadMatch ? parseInt(cantidadMatch[1]) : 1;
+              
+              const items = [{
+                id: 'producto-1',
+                nombre: producto.titulo,
+                precio: parseInt(producto.precio),
+                cantidad: cantidad,
+                imagen: '',
+                permalink: producto.url || ''
+              }];
+              
+              const total = parseInt(producto.precio) * cantidad;
+              datosExtraidos.carrito_items = items;
+              datosExtraidos.carrito_total = total;
+              datosExtraidos.mensaje_carrito = `📦 ${producto.titulo} - $${producto.precio} x ${cantidad} = $${total}`;
+              
+              console.log(`   ✅ Producto: ${producto.titulo} x${cantidad}`);
+              console.log(`   💰 Total: $${total}`);
+            }
+          } else {
+            console.log('   ⚠️  No hay mensaje_carrito ni productos_presentados para confirmar');
+          }
+        }
+      }
+      
       // Guardar cada dato extraído en variables globales
       // IMPORTANTE: Hacer merge con variables existentes para mantener valores previos
       console.log('\n💾 Guardando variables globales (con merge):');
