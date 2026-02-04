@@ -440,12 +440,17 @@ async function processPaymentNotification(paymentId: string): Promise<void> {
             console.log(`[MP Webhook] ✅ Items del carrito guardados en Payment (${itemsToSave.length} productos)`);
           }
           
-          // 🚨 CRÍTICO: Marcar carrito como completado (NO dejarlo activo vacío)
-          // Esto permite que se cree un nuevo carrito limpio en la próxima compra
-          carrito.estado = 'completado';
-          carrito.fechaCompletado = new Date();
+          // Marcar carrito como pagado
+          carrito.estado = 'pagado';
           await carrito.save();
-          console.log(`[MP Webhook] ✅ Carrito ${carritoId} marcado como completado`);
+          console.log(`[MP Webhook] ✅ Carrito ${carritoId} marcado como pagado`);
+          
+          // Limpiar el carrito para permitir nuevas compras
+          carrito.items = [];
+          carrito.total = 0;
+          carrito.estado = 'activo';
+          await carrito.save();
+          console.log(`[MP Webhook] 🧹 Carrito limpiado para nuevas compras`);
           
           // Buscar la empresa para obtener phoneNumberId
           // carritoEmpresaId es el teléfono de la empresa (puede tener o no el prefijo +)
