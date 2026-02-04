@@ -302,6 +302,25 @@ export class FlowExecutor {
     if (contactoId) {
       await this.loadHistorial(contactoId);
     }
+    
+    // CRÍTICO: Cargar globalVariables desde workflowState de MongoDB
+    // Esto permite recuperar productos_formateados del mensaje anterior
+    if (contactoId) {
+      try {
+        const ContactoEmpresaModel = (await import('../models/ContactoEmpresa.js')).ContactoEmpresaModel;
+        const contacto = await ContactoEmpresaModel.findById(contactoId);
+        
+        if (contacto?.workflowState?.globalVariables) {
+          console.log('\n📥 Cargando globalVariables desde workflowState...');
+          this.globalVariables = { ...contacto.workflowState.globalVariables };
+          console.log(`   ✅ ${Object.keys(this.globalVariables).length} variables cargadas desde MongoDB`);
+          console.log(`   📋 Variables: ${Object.keys(this.globalVariables).join(', ')}`);
+        }
+      } catch (errorCarga) {
+        console.error('   ⚠️ Error cargando globalVariables (no crítico):', errorCarga);
+      }
+    }
+    
     try {
       console.log(`🚀 Ejecutando flujo: ${flowId}`);
       
@@ -470,6 +489,28 @@ export class FlowExecutor {
       }
 
       console.log(`\n✅ Flujo completado. Nodos ejecutados: ${executionCount}`);
+      
+      // CRÍTICO: Guardar globalVariables en workflowState de MongoDB
+      // Esto permite que productos_formateados persista entre mensajes
+      if (this.contactoId && Object.keys(this.globalVariables).length > 0) {
+        try {
+          console.log('\n💾 Guardando globalVariables en workflowState...');
+          const ContactoEmpresaModel = (await import('../models/ContactoEmpresa.js')).ContactoEmpresaModel;
+          
+          await ContactoEmpresaModel.findByIdAndUpdate(this.contactoId, {
+            $set: {
+              'workflowState.globalVariables': this.globalVariables,
+              'workflowState.ultimaActualizacion': new Date()
+            }
+          });
+          
+          console.log(`   ✅ ${Object.keys(this.globalVariables).length} variables guardadas en MongoDB`);
+          console.log(`   📋 Variables: ${Object.keys(this.globalVariables).join(', ')}`);
+        } catch (errorGuardado) {
+          console.error('   ⚠️ Error guardando globalVariables (no crítico):', errorGuardado);
+        }
+      }
+      
       return this.context;
 
     } catch (error: any) {
