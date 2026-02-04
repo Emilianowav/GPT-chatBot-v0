@@ -996,7 +996,8 @@ export class FlowExecutor {
       }
       
       // 🛒 PERSISTIR CARRITO EN MONGODB si se extrajo carrito_items
-      if (datosExtraidos.carrito_items && this.contactoId && this.empresaId) {
+      const empresaId = this.getGlobalVariable('telefono_empresa');
+      if (datosExtraidos.carrito_items && this.contactoId && empresaId) {
         console.log('\n🛒 PERSISTIENDO CARRITO EN MONGODB...');
         try {
           let carritoItems = datosExtraidos.carrito_items;
@@ -1023,7 +1024,7 @@ export class FlowExecutor {
             // Limpiar el carrito actual primero
             await CarritoService.vaciarCarrito(
               new mongoose.Types.ObjectId(this.contactoId),
-              this.empresaId
+              empresaId
             );
             console.log('   🧹 Carrito limpiado');
             
@@ -1032,7 +1033,7 @@ export class FlowExecutor {
               if (item.id && item.nombre && item.precio) {
                 await CarritoService.agregarProducto(
                   new mongoose.Types.ObjectId(this.contactoId),
-                  this.empresaId,
+                  empresaId,
                   {
                     id: String(item.id),
                     name: item.nombre,
@@ -1050,7 +1051,7 @@ export class FlowExecutor {
             // Obtener el carrito actualizado para verificar el total
             const carritoActualizado = await CarritoService.obtenerCarritoActivo(
               new mongoose.Types.ObjectId(this.contactoId),
-              this.empresaId
+              empresaId
             );
             
             console.log(`   💰 Total en BD: $${carritoActualizado.total}`);
