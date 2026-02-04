@@ -4,19 +4,23 @@ import mongoose from 'mongoose';
 export class CarritoService {
   /**
    * Obtiene o crea un carrito activo para un contacto
+   * IMPORTANTE: Solo busca el carrito activo más reciente
+   * Si el último carrito está completado/pagado, crea uno nuevo
    */
   static async obtenerCarritoActivo(
     contactoId: mongoose.Types.ObjectId,
     empresaId: string,
     telefono?: string
   ): Promise<ICarrito> {
+    // Buscar el carrito activo MÁS RECIENTE (no cualquier carrito viejo)
     let carrito = await CarritoModel.findOne({
       contactoId,
       empresaId,
       estado: 'activo'
-    });
+    }).sort({ fechaCreacion: -1 }); // Ordenar por fecha descendente
 
     if (!carrito) {
+      // No hay carrito activo, crear uno nuevo
       carrito = await CarritoModel.create({
         contactoId,
         empresaId,
@@ -25,6 +29,7 @@ export class CarritoService {
         total: 0,
         estado: 'activo'
       });
+      console.log(`🆕 Carrito nuevo creado: ${carrito._id}`);
     } else if (telefono && !carrito.telefono) {
       // Actualizar teléfono si no existe
       carrito.telefono = telefono;
