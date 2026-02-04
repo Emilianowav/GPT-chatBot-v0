@@ -10,6 +10,8 @@ import { createWooCommerceService } from './woocommerceService.js';
 import { executeCarritoNode, executeMercadoPagoNode, executeVerificarPagoNode } from './FlowExecutor.carrito.js';
 import { ApiConfigurationModel } from '../modules/integrations/models/ApiConfiguration.js';
 import axios from 'axios';
+import { CarritoService } from './CarritoService.js';
+import mongoose from 'mongoose';
 
 interface FlowContext {
   [nodeId: string]: {
@@ -991,6 +993,79 @@ export class FlowExecutor {
         console.log('\n📊 VALIDACIÓN DE VARIABLES:');
         console.log(`   variables_completas: ${output.variables_completas}`);
         console.log(`   variables_faltantes: ${JSON.stringify(output.variables_faltantes)}`);
+      }
+      
+      // 🛒 PERSISTIR CARRITO EN MONGODB si se extrajo carrito_items
+      if (datosExtraidos.carrito_items && this.contactoId && this.empresaId) {
+        console.log('\n🛒 PERSISTIENDO CARRITO EN MONGODB...');
+        try {
+          let carritoItems = datosExtraidos.carrito_items;
+          
+          // Si carrito_items es un string JSON, parsearlo
+          if (typeof carritoItems === 'string') {
+            try {
+              carritoItems = JSON.parse(carritoItems);
+            } catch (e) {
+              console.error('   ❌ Error parseando carrito_items:', e);
+              carritoItems = [];
+            }
+          }
+          
+          // Asegurar que sea un array
+          if (!Array.isArray(carritoItems)) {
+            console.log('   ⚠️  carrito_items no es un array, convirtiéndolo...');
+            carritoItems = [carritoItems];
+          }
+          
+          if (carritoItems.length > 0) {
+            console.log(`   📦 ${carritoItems.length} producto(s) a persistir`);
+            
+            // Limpiar el carrito actual primero
+            await CarritoService.vaciarCarrito(
+              new mongoose.Types.ObjectId(this.contactoId),
+              this.empresaId
+            );
+            console.log('   🧹 Carrito limpiado');
+            
+            // Agregar cada producto al carrito
+            for (const item of carritoItems) {
+              if (item.id && item.nombre && item.precio) {
+                await CarritoService.agregarProducto(
+                  new mongoose.Types.ObjectId(this.contactoId),
+                  this.empresaId,
+                  {
+                    id: String(item.id),
+                    name: item.nombre,
+                    price: String(item.precio),
+                    cantidad: item.cantidad || 1,
+                    image: item.imagen,
+                    permalink: item.permalink
+                  },
+                  this.getGlobalVariable('telefono_cliente')
+                );
+                console.log(`   ✅ Agregado: ${item.nombre} x${item.cantidad || 1}`);
+              }
+            }
+            
+            // Obtener el carrito actualizado para verificar el total
+            const carritoActualizado = await CarritoService.obtenerCarritoActivo(
+              new mongoose.Types.ObjectId(this.contactoId),
+              this.empresaId
+            );
+            
+            console.log(`   💰 Total en BD: $${carritoActualizado.total}`);
+            
+            // Actualizar carrito_total en variables globales con el total REAL de la BD
+            this.setGlobalVariable('carrito_total', carritoActualizado.total);
+            output.carrito_total = carritoActualizado.total;
+            
+            console.log('   ✅ Carrito persistido en MongoDB');
+          } else {
+            console.log('   ⚠️  carrito_items está vacío, no se persiste');
+          }
+        } catch (error: any) {
+          console.error('   ❌ Error persistiendo carrito:', error.message);
+        }
       }
       
     } else if (config.variablesRecopilar && config.variablesRecopilar.length > 0) {
