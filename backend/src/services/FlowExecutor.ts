@@ -363,6 +363,9 @@ export class FlowExecutor {
       }
       if (triggerData.message) {
         this.setGlobalVariable('mensaje_usuario', triggerData.message);
+        // Guardar mensaje del usuario en historial
+        await this.saveToHistorial(triggerData.message);
+        console.log(`📝 Mensaje del usuario guardado en historial`);
       }
       
       console.log(`📋 Variables globales inicializadas:`, Object.keys(this.globalVariables));
@@ -1402,6 +1405,10 @@ Ejemplo:
       phoneNumberId,
       accessToken // Pasar accessToken al servicio
     );
+
+    // Guardar respuesta del bot en historial
+    await this.saveToHistorial(mensaje);
+    console.log(`   📝 Respuesta del bot guardada en historial`);
 
     return {
       output: {
