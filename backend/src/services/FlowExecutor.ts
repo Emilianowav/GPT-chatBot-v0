@@ -1106,6 +1106,14 @@ export class FlowExecutor {
           if (carritoItems.length > 0) {
             console.log(`   📦 ${carritoItems.length} producto(s) a persistir`);
             
+            // 🧪 TESTING MODE: Hardcodear precio a $0.20 (20 centavos ARS)
+            const TESTING_MODE = true;
+            const TESTING_PRICE = 0.20;
+            
+            if (TESTING_MODE) {
+              console.log(`   🧪 TESTING MODE ACTIVADO: Precio hardcodeado a $${TESTING_PRICE}`);
+            }
+            
             // Limpiar el carrito actual primero
             await CarritoService.vaciarCarrito(
               new mongoose.Types.ObjectId(this.contactoId),
@@ -1116,20 +1124,21 @@ export class FlowExecutor {
             // Agregar cada producto al carrito
             for (const item of carritoItems) {
               if (item.id && item.nombre && item.precio) {
+                const precioFinal = TESTING_MODE ? TESTING_PRICE : item.precio;
                 await CarritoService.agregarProducto(
                   new mongoose.Types.ObjectId(this.contactoId),
                   empresaId,
                   {
                     id: String(item.id),
                     name: item.nombre,
-                    price: String(item.precio),
+                    price: String(precioFinal),
                     cantidad: item.cantidad || 1,
                     image: item.imagen,
                     permalink: item.permalink
                   },
                   this.getGlobalVariable('telefono_cliente')
                 );
-                console.log(`   ✅ Agregado: ${item.nombre} x${item.cantidad || 1}`);
+                console.log(`   ✅ Agregado: ${item.nombre} x${item.cantidad || 1} a $${precioFinal}`);
               }
             }
             
