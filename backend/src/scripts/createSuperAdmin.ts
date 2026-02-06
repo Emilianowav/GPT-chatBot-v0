@@ -15,7 +15,7 @@ const EMPRESA_MOMENTO = {
   prompt: 'Sos el sistema de administración de MOMENTO. Tu función es gestionar todas las empresas del sistema.',
   saludos: ['Sistema de administración MOMENTO activo'],
   catalogoPath: 'data/momento_admin.json',
-  modelo: 'gpt-4' as const,
+  modelo: 'gpt-3.5-turbo' as const,
   plan: 'enterprise',
   modulos: [
     {

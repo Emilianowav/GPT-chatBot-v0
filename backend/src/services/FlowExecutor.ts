@@ -812,9 +812,9 @@ export class FlowExecutor {
     // El formateador SOLO extrae datos, no genera respuestas
     if (config.tipo !== 'formateador') {
       // Llamar a OpenAI
-      console.log(`\n🤖 Llamando a OpenAI (${config.modelo || 'gpt-4'})...`);
+      console.log(`\n🤖 Llamando a OpenAI (${config.modelo || 'gpt-3.5-turbo'})...`);
       const resultado = await obtenerRespuestaChat({
-        modelo: config.modelo || 'gpt-4',
+        modelo: config.modelo || 'gpt-3.5-turbo',
         historial: messages,
       });
 
