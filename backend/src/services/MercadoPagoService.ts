@@ -37,11 +37,19 @@ export class MercadoPagoService {
     } = {}
   ): Promise<PreferenciaResponse> {
     try {
+      // 🧪 TESTING MODE: Hardcodear precio a $0.20 (20 centavos ARS)
+      const TESTING_MODE = true;
+      const TESTING_PRICE = 0.20;
+      
+      if (TESTING_MODE) {
+        console.log(`   🧪 TESTING MODE ACTIVADO: Precio hardcodeado a $${TESTING_PRICE}`);
+      }
+      
       // Construir items para Mercado Pago
       const items = carrito.items.map(item => ({
         title: item.nombre,
         quantity: item.cantidad,
-        unit_price: parseFloat(item.precio),
+        unit_price: TESTING_MODE ? TESTING_PRICE : parseFloat(item.precio),
         currency_id: 'ARS',
         picture_url: item.imagen,
         description: `Producto ID: ${item.productoId}`
