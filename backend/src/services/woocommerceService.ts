@@ -36,16 +36,16 @@ export class WooCommerceService {
    * Crea cliente axios con autenticación básica
    */
   private getClient() {
-    const auth = Buffer.from(
-      `${this.connection.consumerKey}:${this.connection.consumerSecret}`
-    ).toString('base64');
-
     return axios.create({
       baseURL: `${this.connection.eshopUrl}/wp-json/wc/v3`,
+      auth: {
+        username: this.connection.consumerKey,
+        password: this.connection.consumerSecret
+      },
       headers: {
-        'Authorization': `Basic ${auth}`,
         'Content-Type': 'application/json'
-      }
+      },
+      timeout: 10000 // 10 segundos timeout
     });
   }
 
