@@ -1660,6 +1660,36 @@ Ejemplo:
           
           console.log(`   📦 Parámetros de búsqueda (solo válidos):`, JSON.stringify(searchParams));
           
+          // 🛡️ FALLBACK ROBUSTO: Detectar múltiples productos incluso sin " | "
+          let searchText = searchParams.search || '';
+          
+          // Si no tiene " | " pero tiene separadores comunes, agregarlos
+          if (searchText && !searchText.includes(' | ')) {
+            // Detectar patrones de múltiples productos
+            const hasMultipleProducts = 
+              searchText.match(/\s+y\s+/i) ||      // "Binaria 1 y Lecturas"
+              searchText.match(/,\s*/g) ||          // "Matemática 5, Lengua 5"
+              searchText.match(/\s+más\s+/i) ||    // "libro 1 más libro 2"
+              searchText.match(/\s+e\s+/i);        // "libro 1 e historia"
+            
+            if (hasMultipleProducts) {
+              console.log(`   🛡️ FALLBACK: Detectados múltiples productos sin " | ", normalizando...`);
+              console.log(`   📝 Original: "${searchText}"`);
+              
+              // Normalizar separadores a " | "
+              searchText = searchText
+                .replace(/\s*,\s*/g, ' | ')        // Comas
+                .replace(/\s+y\s+/gi, ' | ')       // "y"
+                .replace(/\s+e\s+/gi, ' | ')       // "e"
+                .replace(/\s+más\s+/gi, ' | ')     // "más"
+                .replace(/\s*\|\s*/g, ' | ')       // Normalizar pipes
+                .trim();
+              
+              searchParams.search = searchText;
+              console.log(`   ✅ Normalizado: "${searchText}"`);
+            }
+          }
+          
           // Detectar búsqueda múltiple (separada por " | ")
           if (searchParams.search && searchParams.search.includes(' | ')) {
             console.log(`   🔍 BÚSQUEDA MÚLTIPLE detectada`);
