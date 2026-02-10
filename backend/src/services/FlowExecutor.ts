@@ -1811,18 +1811,6 @@ Ejemplo:
             console.log(`   💰 Ejemplo precio: $${primerProducto.precio}`);
           }
           
-          // 🧪 TESTING MODE: Aplicar precio de testing a productos ANTES de guardarlos
-          const TESTING_MODE = true;
-          const TESTING_PRICE = 0.20;
-          
-          if (TESTING_MODE) {
-            console.log(`   🧪 TESTING MODE: Aplicando precio $${TESTING_PRICE} a productos_presentados`);
-            productosSimplificados = productosSimplificados.map((p: any) => ({
-              ...p,
-              precio: TESTING_PRICE
-            }));
-          }
-          
           // IMPORTANTE: Guardar productos como variable global para que el clasificador los detecte
           if (productosSimplificados.length > 0) {
             this.setGlobalVariable('productos_presentados', productosSimplificados);
