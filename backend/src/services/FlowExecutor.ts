@@ -406,8 +406,10 @@ export class FlowExecutor {
             console.log(`      - ${e.id}: ${e.data?.condition || 'SIN CONDICIÓN'} → ${e.target}`);
           });
           
+          let edgeSinCondicion = null;
+          
           for (const edge of possibleEdges) {
-            if (edge.data?.condition) {
+            if (edge.data?.condition && edge.data.condition.trim() !== '') {
               console.log(`   🔍 Evaluando condición del edge ${edge.id}: ${edge.data.condition}`);
               try {
                 const conditionResult = this.evaluateStringCondition(edge.data.condition);
@@ -422,28 +424,29 @@ export class FlowExecutor {
                 console.error(`   ❌ Error evaluando condición del edge ${edge.id}:`, error);
               }
             } else {
-              console.log(`   ⚠️  Edge ${edge.id} NO tiene condición`);
+              console.log(`   ⚠️  Edge ${edge.id} NO tiene condición (será usado como fallback)`);
+              edgeSinCondicion = edge;
             }
           }
           
-          // Si no se encontró edge por condición, usar routerPath
+          // Si no se encontró edge por condición, usar el edge sin condición (fallback)
           if (!nextEdge) {
-            const routerPath = this.context[currentNodeId]?.output?._routerPath;
-            console.log(`   🔀 No hay condiciones cumplidas, usando routerPath: ${routerPath || 'default'}`);
-            
-            // Buscar edge que coincida con la ruta (sourceHandle es donde está el routeId)
-            nextEdge = possibleEdges.find((e: any) => 
-              e.sourceHandle === routerPath ||
-              e.data?.routeId === routerPath || 
-              e.id.includes(routerPath)
-            );
-            
-            // Si no encuentra, usar el primero (fallback)
-            if (!nextEdge) {
-              console.log(`   ⚠️  No se encontró edge para ruta ${routerPath}, usando fallback`);
-              nextEdge = possibleEdges[0];
+            if (edgeSinCondicion) {
+              console.log(`   ✅ Usando edge sin condición como fallback: ${edgeSinCondicion.id}`);
+              nextEdge = edgeSinCondicion;
             } else {
-              console.log(`   ✅ Edge encontrado para ruta ${routerPath}: ${nextEdge.id}`);
+              // Si no hay edge sin condición, intentar usar routerPath
+              const routerPath = this.context[currentNodeId]?.output?._routerPath;
+              console.log(`   🔀 No hay edge sin condición, usando routerPath: ${routerPath || 'default'}`);
+              
+              nextEdge = possibleEdges.find((e: any) => e.sourceHandle === routerPath);
+              
+              if (!nextEdge) {
+                console.log(`   ⚠️  No se encontró edge para ruta ${routerPath}, usando primer edge`);
+                nextEdge = possibleEdges[0];
+              } else {
+                console.log(`   ✅ Edge encontrado para ruta ${routerPath}: ${nextEdge.id}`);
+              }
             }
           }
         } else {
