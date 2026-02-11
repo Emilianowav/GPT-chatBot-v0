@@ -370,12 +370,12 @@ export class FlowExecutor {
       
       console.log(`📋 Variables globales inicializadas:`, Object.keys(this.globalVariables));
 
-      // 3. Encontrar nodo trigger (webhook)
-      const triggerNode = this.flow.nodes.find((n: any) => n.type === 'webhook');
+      // 3. Encontrar nodo trigger (marcado con data.trigger === true)
+      const triggerNode = this.flow.nodes.find((n: any) => n.data?.trigger === true);
       
       if (!triggerNode) {
         console.error('❌ NO SE ENCONTRÓ NODO TRIGGER');
-        console.log('🔍 Nodos disponibles:', this.flow.nodes.map((n: any) => ({ id: n.id, type: n.type })));
+        console.log('🔍 Nodos disponibles:', this.flow.nodes.map((n: any) => ({ id: n.id, type: n.type, trigger: n.data?.trigger })));
         throw new Error('No se encontró nodo trigger en el flujo');
       }
 
