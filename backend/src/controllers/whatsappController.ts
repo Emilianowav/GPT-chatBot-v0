@@ -84,11 +84,14 @@ export const recibirMensaje = async (req: Request, res: Response, next: NextFunc
 
     console.log('🏢 Empresa encontrada:', { nombre: empresa.nombre, telefono: empresa.telefono });
     
-    // Buscar el documento MongoDB de la empresa para obtener el _id
-    const empresaDoc = await EmpresaModel.findOne({ nombre: empresa.nombre });
+    // Buscar el documento MongoDB de la empresa para obtener el _id y flujoActivo
+    const empresaDoc = await EmpresaModel.findOne({ nombre: empresa.nombre }).select('+flujoActivo');
     const empresaMongoId = empresaDoc?._id;
     
     console.log('🆔 Empresa MongoDB ID:', empresaMongoId);
+    if (empresaDoc?.flujoActivo) {
+      console.log('🎯 Empresa tiene flujoActivo:', empresaDoc.flujoActivo);
+    }
     
     // Validación de seguridad: empresaMongoId debe existir
     if (!empresaMongoId) {
@@ -212,7 +215,7 @@ export const recibirMensaje = async (req: Request, res: Response, next: NextFunc
         empresaId: empresaMongoId,
         activo: true,
         botType: 'visual'
-      });
+      }).lean();
     }
 
     if (flowVisual && flowVisual.nodes && flowVisual.edges) {
