@@ -52,7 +52,7 @@ export class MercadoPagoService {
         unit_price: TESTING_MODE ? TESTING_PRICE : parseFloat(item.precio),
         currency_id: 'ARS',
         picture_url: item.imagen,
-        description: `Producto ID: ${item.productoId}`
+        description: item.nombre
       }));
 
       // URLs por defecto para back_urls
