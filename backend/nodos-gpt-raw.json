@@ -1,0 +1,109 @@
+{
+  "gpt-asistente-ventas": {
+    "id": "gpt-asistente-ventas",
+    "type": "gpt",
+    "data": {
+      "label": "Asistente de Ventas",
+      "subtitle": "GPT Formateador",
+      "color": "#10A37F",
+      "tipo": "formateador",
+      "config": {
+        "tipo": "conversacional",
+        "modelo": "gpt-3.5-turbo",
+        "temperatura": 0.7,
+        "maxTokens": 500,
+        "personalidad": "Asistente de ventas amigable y profesional",
+        "systemPrompt": "Eres un asistente de ventas de la Librería Veo Veo.\n\n🚨 REGLA CRÍTICA - NO INVENTAR PRODUCTOS:\nSOLO puedes presentar los productos que están en la variable {{productos_formateados}}.\nSi NO hay productos (variable vacía o undefined), debes decir que no se encontraron productos.\nNUNCA inventes nombres, precios o links de productos.\n\nFORMATO EXACTO cuando HAY productos:\n📚 *Productos encontrados:*\n\n1️⃣ *[Nombre del producto]*\n   💰 Precio: $[precio]\n   📦 Stock: [disponible/agotado]\n   🔗 [link]\n\n2️⃣ *[Siguiente producto]*\n   💰 Precio: $[precio]\n   📦 Stock: [disponible/agotado]\n   🔗 [link]\n\nAl final pregunta: \"¿Te interesa alguno? Decime el número para agregarlo al carrito 🛒\"\n\nFORMATO cuando NO hay productos:\n\"No encontré productos que coincidan con tu búsqueda. ¿Podrías ser más específico o probar con otro término?\"\n\nIMPORTANTE:\n- Usa emojis para hacer el mensaje más atractivo\n- Sé breve y claro\n- Usa el tratamiento \"vos\" (argentino)\n- SOLO muestra productos que existan en {{productos_formateados}}",
+        "prompt": "{{productos_formateados}}\n\n🚨 INSTRUCCIONES:\n- Si la variable {{productos_formateados}} está vacía o no tiene productos, responde: \"No encontré productos que coincidan con tu búsqueda. ¿Podrías ser más específico?\"\n- Si HAY productos, formatéalos de manera atractiva para WhatsApp usando emojis\n- NO inventes productos que no estén en la lista\n- Usa EXACTAMENTE los nombres, precios y links que aparecen arriba",
+        "extractionConfig": {
+          "enabled": true,
+          "method": "advanced",
+          "systemPrompt": "",
+          "variables": []
+        },
+        "configuracionExtraccion": {
+          "instruccionesExtraccion": "",
+          "formatoSalida": {
+            "tipo": "json",
+            "estructura": "",
+            "ejemplo": ""
+          },
+          "camposEsperados": []
+        },
+        "model": "gpt-3.5-turbo",
+        "temperature": 0.7,
+        "response_format": "json_object",
+        "variablesEntrada": [
+          {
+            "nombre": "productos_formateados",
+            "tipo": "string",
+            "descripcion": "Lista de productos encontrados en WooCommerce",
+            "requerido": true
+          }
+        ],
+        "topicos": [
+          {
+            "titulo": "Productos de WooCommerce",
+            "contenido": "Muestra productos encontrados en WooCommerce con precios y links reales"
+          }
+        ]
+      },
+      "executionCount": "8a"
+    }
+  },
+  "gpt-pedir-datos": {
+    "id": "gpt-pedir-datos",
+    "type": "gpt",
+    "data": {
+      "label": "Pedir Más Datos",
+      "subtitle": "GPT Conversacional",
+      "color": "#10A37F",
+      "tipo": "conversacional",
+      "config": {
+        "tipo": "conversacional",
+        "model": "gpt-3.5-turbo",
+        "systemPrompt": "Eres un asistente amigable que ayuda a los clientes a especificar mejor su búsqueda.",
+        "prompt": "El cliente busca algo pero no especificó bien. Pregúntale de manera amigable qué tipo de producto busca exactamente.\n\nMensaje del cliente: {{webhook-whatsapp.message}}",
+        "temperature": 0.7,
+        "maxTokens": 150,
+        "variables_salida": {
+          "pregunta": "output"
+        },
+        "extractionConfig": {
+          "enabled": true,
+          "method": "advanced",
+          "systemPrompt": "",
+          "variables": []
+        },
+        "configuracionExtraccion": {
+          "instruccionesExtraccion": "",
+          "formatoSalida": {
+            "tipo": "json",
+            "estructura": "",
+            "ejemplo": ""
+          },
+          "camposEsperados": []
+        },
+        "modelo": "gpt-3.5-turbo",
+        "temperatura": 0.7,
+        "response_format": "json_object",
+        "variablesEntrada": [
+          {
+            "nombre": "mensaje_usuario",
+            "tipo": "string",
+            "descripcion": "Mensaje del usuario",
+            "requerido": true
+          }
+        ],
+        "topicos": [
+          {
+            "titulo": "Librería Veo Veo",
+            "contenido": "Librería especializada en libros escolares y literatura en Corrientes, Argentina"
+          }
+        ],
+        "personalidad": "Asistente amigable y servicial de la Librería Veo Veo"
+      },
+      "executionCount": "4c"
+    }
+  }
+}
