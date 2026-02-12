@@ -2788,7 +2788,8 @@ Ejemplo:
           finalBody = bodyString;
         }
         
-        console.log(`   📦 Body: ${JSON.stringify(finalBody).substring(0, 100)}...`);
+        console.log(`   📦 Body COMPLETO:`);
+        console.log(JSON.stringify(finalBody, null, 2));
       }
 
       // 5. Ejecutar request HTTP
