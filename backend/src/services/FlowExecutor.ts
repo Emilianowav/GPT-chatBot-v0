@@ -773,15 +773,18 @@ export class FlowExecutor {
     console.log(`   this.contactoId: ${this.contactoId || 'NO DEFINIDO'}`);
     
     if (this.historialConversacion.length > 0) {
-      console.log(`\n📚 [HISTORIAL NATIVO] Agregando historial completo: ${this.historialConversacion.length} mensajes`);
+      // Limitar a los últimos 10 mensajes para evitar que historial antiguo domine sobre el systemPrompt
+      const historialReciente = this.historialConversacion.slice(-10);
+      console.log(`\n📚 [HISTORIAL NATIVO] Agregando historial (últimos ${historialReciente.length} de ${this.historialConversacion.length} mensajes)`);
       console.log(`   Tipo de nodo: ${config.tipo || 'N/A'}`);
       console.log(`   Nodo ID: ${node.id}`);
-      console.log(`   Todos los nodos GPT tienen acceso al historial`);
       
       // Agregar historial (alternando user/assistant)
-      for (let i = 0; i < this.historialConversacion.length; i++) {
-        const msg = this.historialConversacion[i];
-        const role = i % 2 === 0 ? 'user' : 'assistant';
+      for (let i = 0; i < historialReciente.length; i++) {
+        const msg = historialReciente[i];
+        // Calcular rol correcto según posición en el historial completo
+        const posicionReal = this.historialConversacion.length - historialReciente.length + i;
+        const role = posicionReal % 2 === 0 ? 'user' : 'assistant';
         console.log(`   ${i + 1}. ${role}: ${msg.substring(0, 60)}${msg.length > 60 ? '...' : ''}`);
         messages.push({
           role: role as 'user' | 'assistant',
@@ -789,7 +792,7 @@ export class FlowExecutor {
         });
       }
       
-      console.log(`✅ [HISTORIAL NATIVO] Total de mensajes agregados al contexto GPT: ${this.historialConversacion.length}`);
+      console.log(`✅ [HISTORIAL NATIVO] Total de mensajes agregados al contexto GPT: ${historialReciente.length}`);
     } else {
       console.log('\n⚠️  [HISTORIAL NATIVO] Historial vacío');
       console.log(`   Posibles causas:`);
