@@ -31,6 +31,8 @@ interface Condition {
   variableLabel?: string; // Nombre legible para mostrar
   operator: string;
   value: string;
+  valueIsVariable?: boolean; // Si el valor es una variable {{...}}
+  valueLabel?: string; // Nombre legible del valor si es variable
 }
 
 const OPERATORS = [
@@ -63,8 +65,10 @@ export default function EdgeConfigModal({
   const [label, setLabel] = useState(currentConfig?.label || '');
   const [conditions, setConditions] = useState<Condition[]>([]);
   const [showVariableSelector, setShowVariableSelector] = useState(false);
+  const [showValueVariableSelector, setShowValueVariableSelector] = useState(false);
   const [selectorPosition, setSelectorPosition] = useState({ x: 0, y: 0 });
   const [activeConditionId, setActiveConditionId] = useState<string | null>(null);
+  const [activeValueConditionId, setActiveValueConditionId] = useState<string | null>(null);
   const [nodeSearchDepth, setNodeSearchDepth] = useState<'direct' | 'all'>('direct');
 
   // Calcular availableNodes dinámicamente basándose en nodeSearchDepth
@@ -173,6 +177,13 @@ export default function EdgeConfigModal({
     setShowVariableSelector(true);
   };
 
+  const openValueVariableSelector = (conditionId: string, event: React.MouseEvent) => {
+    const rect = (event.target as HTMLElement).getBoundingClientRect();
+    setSelectorPosition({ x: rect.right + 10, y: rect.top });
+    setActiveValueConditionId(conditionId);
+    setShowValueVariableSelector(true);
+  };
+
   const handleVariableSelect = (variable: string, label?: string) => {
     if (activeConditionId) {
       setConditions(conditions.map(c => 
@@ -183,6 +194,18 @@ export default function EdgeConfigModal({
     }
     setShowVariableSelector(false);
     setActiveConditionId(null);
+  };
+
+  const handleValueVariableSelect = (variable: string, label?: string) => {
+    if (activeValueConditionId) {
+      setConditions(conditions.map(c =>
+        c.id === activeValueConditionId
+          ? { ...c, value: variable, valueIsVariable: true, valueLabel: label || variable }
+          : c
+      ));
+    }
+    setShowValueVariableSelector(false);
+    setActiveValueConditionId(null);
   };
 
   const handleSave = () => {
@@ -334,14 +357,63 @@ export default function EdgeConfigModal({
                     {cond.operator !== 'exists' && cond.operator !== 'not_exists' && 
                      cond.operator !== 'empty' && cond.operator !== 'not_empty' && (
                       <div className={styles.conditionField}>
-                        <label className={styles.smallLabel}>Valor</label>
-                        <input
-                          type="text"
-                          value={cond.value}
-                          onChange={(e) => updateCondition(cond.id, 'value', e.target.value)}
-                          placeholder='""'
-                          className={styles.input}
-                        />
+                        <label className={styles.smallLabel}>
+                          Valor
+                          <button
+                            type="button"
+                            title="Usar variable como valor"
+                            onClick={(e) => openValueVariableSelector(cond.id, e)}
+                            style={{
+                              marginLeft: '6px',
+                              background: cond.valueIsVariable ? '#8b5cf6' : 'transparent',
+                              border: '1px solid #8b5cf6',
+                              borderRadius: '4px',
+                              color: cond.valueIsVariable ? '#fff' : '#8b5cf6',
+                              cursor: 'pointer',
+                              fontSize: '10px',
+                              padding: '1px 5px',
+                              lineHeight: '1.4',
+                            }}
+                          >
+                            {'{{}}'}
+                          </button>
+                        </label>
+                        {cond.valueIsVariable ? (
+                          <div style={{ display: 'flex', gap: '4px', alignItems: 'center' }}>
+                            <button
+                              type="button"
+                              onClick={(e) => openValueVariableSelector(cond.id, e)}
+                              className={styles.variableButton}
+                              style={{ flex: 1 }}
+                            >
+                              {cond.valueLabel || cond.value || 'Seleccionar variable...'}
+                            </button>
+                            <button
+                              type="button"
+                              title="Cambiar a valor literal"
+                              onClick={() => updateCondition(cond.id, 'valueIsVariable' as any, false as any)}
+                              style={{
+                                background: 'transparent',
+                                border: '1px solid #ccc',
+                                borderRadius: '4px',
+                                cursor: 'pointer',
+                                padding: '4px 6px',
+                                fontSize: '11px',
+                                color: '#666',
+                              }}
+                            >
+                              abc
+                            </button>
+                          </div>
+                        ) : (
+                          <input
+                            type="text"
+                            value={cond.value}
+                            onChange={(e) => updateCondition(cond.id, 'value', e.target.value)}
+                            placeholder='""'
+                            className={styles.input}
+                          />
+                        )}
                       </div>
                     )}
                   </div>
@@ -402,7 +474,7 @@ export default function EdgeConfigModal({
         </div>
       </div>
 
-      {/* Variable Selector */}
+      {/* Variable Selector - lado izquierdo */}
       <VariableSelector
         isOpen={showVariableSelector}
         onClose={() => {
@@ -410,6 +482,19 @@ export default function EdgeConfigModal({
           setActiveConditionId(null);
         }}
         onSelect={handleVariableSelect}
+        position={selectorPosition}
+        availableNodes={computedAvailableNodes}
+        globalVariables={globalVariables}
+      />
+
+      {/* Variable Selector - lado derecho (valor) */}
+      <VariableSelector
+        isOpen={showValueVariableSelector}
+        onClose={() => {
+          setShowValueVariableSelector(false);
+          setActiveValueConditionId(null);
+        }}
+        onSelect={handleValueVariableSelect}
         position={selectorPosition}
         availableNodes={computedAvailableNodes}
         globalVariables={globalVariables}

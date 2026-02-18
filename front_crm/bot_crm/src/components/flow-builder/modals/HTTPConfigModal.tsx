@@ -29,6 +29,7 @@ export default function HTTPConfigModal({
   const [showVariableSelector, setShowVariableSelector] = useState(false);
   const [selectorPosition, setSelectorPosition] = useState({ x: 0, y: 0 });
   const [activeField, setActiveField] = useState<{ type: 'url' | 'queryParam' | 'header' | 'body' | 'auth'; index?: number; field?: 'key' | 'value' } | null>(null);
+  const [label, setLabel] = useState(initialConfig?.label || 'HTTP Request');
   const [url, setUrl] = useState(initialConfig?.url || '');
   const [baseUrl, setBaseUrl] = useState('');
   const [endpointPath, setEndpointPath] = useState('');
@@ -287,6 +288,7 @@ export default function HTTPConfigModal({
     console.log('🔧 HTTPConfigModal useEffect:', { isOpen, initialConfig });
     if (isOpen && initialConfig) {
       console.log('✅ Cargando configuración guardada:', JSON.stringify(initialConfig, null, 2));
+      setLabel(initialConfig.label || 'HTTP Request');
       setUrl(initialConfig.url || '');
       setMethod(initialConfig.method || 'GET');
       setTimeout(initialConfig.timeout || 30000);
@@ -322,6 +324,7 @@ export default function HTTPConfigModal({
       setShowAuth(initialConfig.auth?.type !== 'none');
     } else if (isOpen && !initialConfig) {
       // Resetear a valores por defecto si no hay initialConfig
+      setLabel('HTTP Request');
       setUrl('');
       setMethod('GET');
       setTimeout(30000);
@@ -371,6 +374,7 @@ export default function HTTPConfigModal({
       : url;
 
     onSave({
+      label,
       url: finalUrl,
       baseUrl: saveBaseUrl && baseUrl ? baseUrl : undefined, // Guardar URL base si el toggle está activo
       method,
@@ -630,6 +634,23 @@ export default function HTTPConfigModal({
               </div>
             </div>
           )}
+
+          {/* Nombre del Nodo */}
+          <div className={styles.formGroup}>
+            <label className={styles.label}>
+              Nombre del Nodo <span className={styles.required}>*</span>
+            </label>
+            <input
+              type="text"
+              className={styles.input}
+              value={label}
+              onChange={(e) => setLabel(e.target.value)}
+              placeholder="Ej: HTTP Perfil, HTTP Cotización, etc."
+            />
+            <p className={styles.helpText}>
+              Este nombre aparecerá debajo del nodo en el flujo
+            </p>
+          </div>
 
           {/* URL Base */}
           <div className={styles.formGroup}>

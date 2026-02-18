@@ -2187,6 +2187,30 @@ Ejemplo:
       return result;
     }
 
+    // Patrón: "{{varA}} == {{varB}}" (comparación entre dos variables)
+    const twoVarEqualsMatch = condition.match(/^\{\{([^}]+)\}\}\s*==\s*\{\{([^}]+)\}\}$/);
+    if (twoVarEqualsMatch) {
+      const varA = twoVarEqualsMatch[1].trim();
+      const varB = twoVarEqualsMatch[2].trim();
+      const valA = String(this.getVariableValue(varA) ?? '').toLowerCase().trim();
+      const valB = String(this.getVariableValue(varB) ?? '').toLowerCase().trim();
+      const result = valA === valB;
+      console.log(`      → Comparación entre variables: {{${varA}}}="${valA}" == {{${varB}}}="${valB}" → ${result}`);
+      return result;
+    }
+
+    // Patrón: "{{varA}} != {{varB}}" (desigualdad entre dos variables)
+    const twoVarNotEqualsMatch = condition.match(/^\{\{([^}]+)\}\}\s*!=\s*\{\{([^}]+)\}\}$/);
+    if (twoVarNotEqualsMatch) {
+      const varA = twoVarNotEqualsMatch[1].trim();
+      const varB = twoVarNotEqualsMatch[2].trim();
+      const valA = String(this.getVariableValue(varA) ?? '').toLowerCase().trim();
+      const valB = String(this.getVariableValue(varB) ?? '').toLowerCase().trim();
+      const result = valA !== valB;
+      console.log(`      → Comparación entre variables: {{${varA}}}="${valA}" != {{${varB}}}="${valB}" → ${result}`);
+      return result;
+    }
+
     // Patrón: "{{variable}} == value" (operador de igualdad estricta)
     const doubleEqualsMatch = condition.match(/\{\{([^}]+)\}\}\s*==\s*(.+)$/i);
     if (doubleEqualsMatch) {
@@ -2232,7 +2256,7 @@ Ejemplo:
       return result;
     }
 
-    // Patrón: "{{variable}} != value" (operador de desigualdad)
+    // Patrón: "{{variable}} != value" (operador de desigualdad, valor literal)
     const notEqualsOperatorMatch = condition.match(/\{\{([^}]+)\}\}\s*!=\s*(.+)$/i);
     if (notEqualsOperatorMatch) {
       const varName = notEqualsOperatorMatch[1].trim();

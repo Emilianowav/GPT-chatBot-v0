@@ -1877,6 +1877,7 @@ function FlowBuilderContent() {
             onEdgeUpdate={onEdgeUpdate}
             onEdgeUpdateStart={onEdgeUpdateStart}
             onEdgeUpdateEnd={onEdgeUpdateEnd}
+            onEdgeClick={(event, edge) => handleEdgeConfigClick(edge.id)}
             nodeTypes={nodeTypes}
             edgeTypes={edgeTypes}
             connectionMode={ConnectionMode.Loose}

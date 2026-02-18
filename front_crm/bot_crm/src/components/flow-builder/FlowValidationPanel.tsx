@@ -129,9 +129,12 @@ export const FlowValidationPanel: React.FC<FlowValidationPanelProps> = ({
         });
       }
 
-      // Verificaciones específicas por tipo
+      // Verificar systemPrompt solo si el tipo requiere conversación
       if (config.tipo === 'conversacional' || config.tipo === 'procesador') {
-        if (!config.personalidad || config.personalidad.trim() === '') {
+        const hasPrompt = (config.systemPrompt && config.systemPrompt.trim() !== '') || 
+                         (config.personalidad && config.personalidad.trim() !== '');
+        
+        if (!hasPrompt) {
           foundIssues.push({
             type: 'warning',
             nodeId: node.id,
@@ -139,25 +142,10 @@ export const FlowValidationPanel: React.FC<FlowValidationPanelProps> = ({
             message: `[Nodo #${nodeNumber}] ${label}: Sin personalidad configurada (prompt system)`
           });
         }
-
-        if (!config.topicos || config.topicos.length === 0) {
-          foundIssues.push({
-            type: 'warning',
-            nodeId: node.id,
-            nodeLabel: label,
-            message: `[Nodo #${nodeNumber}] ${label}: Sin tópicos de información estática`
-          });
-        }
-
-        if (!config.variablesEntrada || config.variablesEntrada.length === 0) {
-          foundIssues.push({
-            type: 'info',
-            nodeId: node.id,
-            nodeLabel: label,
-            message: `[Nodo #${nodeNumber}] ${label}: Sin variables de entrada configuradas`
-          });
-        }
       }
+      
+      // Si tiene systemPrompt configurado, no mostrar warnings adicionales
+      // Los tópicos y variables son opcionales
     });
 
     // Verificar nodos HTTP
@@ -167,7 +155,15 @@ export const FlowValidationPanel: React.FC<FlowValidationPanelProps> = ({
       const label = node.data?.label || 'HTTP sin nombre';
       const nodeNumber = getNodeNumber(node.id);
 
-      if (!config.url || config.url.trim() === '') {
+      // Verificar si tiene URL configurada de alguna forma:
+      // 1. URL directa en config.url (y no vacía)
+      // 2. API configurada con apiConfigId + endpointId
+      // 3. baseUrl + endpointPath
+      const hasUrl = (config.url && typeof config.url === 'string' && config.url.trim() !== '') ||
+                     (config.apiConfigId && config.endpointId) ||
+                     (config.baseUrl && config.baseUrl.trim() !== '' && config.endpointPath);
+
+      if (!hasUrl) {
         foundIssues.push({
           type: 'error',
           nodeId: node.id,

@@ -1,0 +1,57 @@
+{
+  "id": "node-1768863064253",
+  "type": "gpt",
+  "category": "processor",
+  "position": {
+    "x": 1155,
+    "y": 390
+  },
+  "data": {
+    "label": "GPT Procesador",
+    "subtitle": "Procesador",
+    "executionCount": "4b",
+    "hasConnection": true,
+    "color": "#10a37f",
+    "config": {
+      "model": "gpt-3.5-turbo",
+      "tipo": "formateador",
+      "systemPrompt": "Eres el asistente virtual de Intercapital.\n\nDATOS DEL CLIENTE:\n- Nombre: {{nombre_cliente}}\n- Comitente: {{comitente}}\n- Saldo en Pesos: ${{saldo_pesos}}\n- Saldo en Dólares: ${{saldo_dolares}}\n- Cuenta habilitada: {{cuenta_habilitada}}\n\nHISTORIAL DE CONVERSACIÓN:\n{{historial}}\n\nMENSAJE DEL USUARIO:\n{{mensaje_usuario}}\n\nTu tarea es:\n1. Identificar el tópico de la consulta\n2. Extraer las entidades necesarias\n3. Responder de forma amigable y profesional\n\nTópicos disponibles:\n- CONSULTA_DOLAR: consultas sobre cotización del dólar\n- CONSULTA: consultas sobre cotización de acciones/bonos\n- COMPRA: intención de comprar activos\n- VENTA: intención de vender activos\n- SALDO: consultar saldo de cuenta\n- PORTFOLIO: ver portafolio de inversiones\n- AYUDA: ayuda general\n\nSi el usuario saluda o hace una consulta general, responde amigablemente y pregunta en qué puedes ayudar.",
+      "temperature": 0.7,
+      "maxTokens": 500,
+      "extractionConfig": {
+        "enabled": true,
+        "systemPrompt": "Extrae del mensaje del usuario:\n\n1. topico_identificado: CONSULTA_DOLAR | CONSULTA | COMPRA | VENTA | SALDO | PORTFOLIO | AYUDA\n2. symbol: símbolo del activo (ej: YPFD, GGAL, AL30)\n3. cantidad: cantidad de activos\n4. tipo_dolar: MEP | CCL | BLUE | OFICIAL (solo para consultas de dólar)\n\nSi el usuario solo saluda o hace consulta general, topico_identificado = AYUDA\n\nDevuelve JSON con las variables extraídas.",
+        "variables": [
+          {
+            "name": "topico_identificado",
+            "type": "string",
+            "required": true
+          },
+          {
+            "name": "symbol",
+            "type": "string",
+            "required": false
+          },
+          {
+            "name": "cantidad",
+            "type": "number",
+            "required": false
+          },
+          {
+            "name": "tipo_dolar",
+            "type": "string",
+            "required": false
+          }
+        ]
+      }
+    }
+  },
+  "width": 80,
+  "height": 80,
+  "selected": false,
+  "positionAbsolute": {
+    "x": 1155,
+    "y": 390
+  },
+  "dragging": false
+}
