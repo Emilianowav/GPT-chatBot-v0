@@ -435,17 +435,25 @@ export class FlowExecutor {
               console.log(`   ✅ Usando edge sin condición como fallback: ${edgeSinCondicion.id}`);
               nextEdge = edgeSinCondicion;
             } else {
-              // Si no hay edge sin condición, intentar usar routerPath
+              // Si no hay edge sin condición, intentar usar _selectedEdgeId (del router) o routerPath
+              const selectedEdgeId = this.context[currentNodeId]?.output?._selectedEdgeId;
               const routerPath = this.context[currentNodeId]?.output?._routerPath;
-              console.log(`   🔀 No hay edge sin condición, usando routerPath: ${routerPath || 'default'}`);
-              
-              nextEdge = possibleEdges.find((e: any) => e.sourceHandle === routerPath);
-              
+
+              if (selectedEdgeId) {
+                nextEdge = possibleEdges.find((e: any) => e.id === selectedEdgeId);
+                if (nextEdge) {
+                  console.log(`   ✅ Edge seleccionado por router (_selectedEdgeId): ${nextEdge.id}`);
+                }
+              }
+
+              if (!nextEdge) {
+                console.log(`   🔀 No hay _selectedEdgeId, usando routerPath: ${routerPath || 'default'}`);
+                nextEdge = possibleEdges.find((e: any) => e.sourceHandle === routerPath);
+              }
+
               if (!nextEdge) {
                 console.log(`   ⚠️  No se encontró edge para ruta ${routerPath}, usando primer edge`);
                 nextEdge = possibleEdges[0];
-              } else {
-                console.log(`   ✅ Edge encontrado para ruta ${routerPath}: ${nextEdge.id}`);
               }
             }
           }
@@ -1951,7 +1959,8 @@ Ejemplo:
           output: { 
             ...input, 
             _routerPath: routeId,
-            _routerLabel: label 
+            _routerLabel: label,
+            _selectedEdgeId: edge.id
           } 
         };
       }
@@ -1964,11 +1973,13 @@ Ejemplo:
         console.log(`\n✅ RUTA SELECCIONADA: ${label}`);
         console.log(`   _routerPath = ${routeId}`);
         console.log(`   _routerLabel = ${label}`);
+        console.log(`   _selectedEdgeId = ${edge.id}`);
         return { 
           output: { 
             ...input, 
             _routerPath: routeId,
-            _routerLabel: label 
+            _routerLabel: label,
+            _selectedEdgeId: edge.id
           } 
         };
       }
@@ -1984,7 +1995,8 @@ Ejemplo:
       output: { 
         ...input, 
         _routerPath: fallbackRouteId,
-        _routerLabel: fallbackLabel 
+        _routerLabel: fallbackLabel,
+        _selectedEdgeId: fallbackEdge.id
       } 
     };
   }
