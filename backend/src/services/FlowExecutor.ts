@@ -2213,6 +2213,54 @@ Ejemplo:
       return result;
     }
 
+    // Patrón: "{{varA}} <= {{varB}}" (comparación numérica menor o igual)
+    const twoVarLteMatch = condition.match(/^\{\{([^}]+)\}\}\s*<=\s*\{\{([^}]+)\}\}$/);
+    if (twoVarLteMatch) {
+      const varA = twoVarLteMatch[1].trim();
+      const varB = twoVarLteMatch[2].trim();
+      const valA = parseFloat(String(this.getVariableValue(varA) ?? 0));
+      const valB = parseFloat(String(this.getVariableValue(varB) ?? 0));
+      const result = valA <= valB;
+      console.log(`      → Comparación numérica: {{${varA}}}=${valA} <= {{${varB}}}=${valB} → ${result}`);
+      return result;
+    }
+
+    // Patrón: "{{varA}} >= {{varB}}" (comparación numérica mayor o igual)
+    const twoVarGteMatch = condition.match(/^\{\{([^}]+)\}\}\s*>=\s*\{\{([^}]+)\}\}$/);
+    if (twoVarGteMatch) {
+      const varA = twoVarGteMatch[1].trim();
+      const varB = twoVarGteMatch[2].trim();
+      const valA = parseFloat(String(this.getVariableValue(varA) ?? 0));
+      const valB = parseFloat(String(this.getVariableValue(varB) ?? 0));
+      const result = valA >= valB;
+      console.log(`      → Comparación numérica: {{${varA}}}=${valA} >= {{${varB}}}=${valB} → ${result}`);
+      return result;
+    }
+
+    // Patrón: "{{varA}} < {{varB}}" (comparación numérica menor)
+    const twoVarLtMatch = condition.match(/^\{\{([^}]+)\}\}\s*<\s*\{\{([^}]+)\}\}$/);
+    if (twoVarLtMatch) {
+      const varA = twoVarLtMatch[1].trim();
+      const varB = twoVarLtMatch[2].trim();
+      const valA = parseFloat(String(this.getVariableValue(varA) ?? 0));
+      const valB = parseFloat(String(this.getVariableValue(varB) ?? 0));
+      const result = valA < valB;
+      console.log(`      → Comparación numérica: {{${varA}}}=${valA} < {{${varB}}}=${valB} → ${result}`);
+      return result;
+    }
+
+    // Patrón: "{{varA}} > {{varB}}" (comparación numérica mayor)
+    const twoVarGtMatch = condition.match(/^\{\{([^}]+)\}\}\s*>\s*\{\{([^}]+)\}\}$/);
+    if (twoVarGtMatch) {
+      const varA = twoVarGtMatch[1].trim();
+      const varB = twoVarGtMatch[2].trim();
+      const valA = parseFloat(String(this.getVariableValue(varA) ?? 0));
+      const valB = parseFloat(String(this.getVariableValue(varB) ?? 0));
+      const result = valA > valB;
+      console.log(`      → Comparación numérica: {{${varA}}}=${valA} > {{${varB}}}=${valB} → ${result}`);
+      return result;
+    }
+
     // Patrón: "{{variable}} == value" (operador de igualdad estricta)
     const doubleEqualsMatch = condition.match(/\{\{([^}]+)\}\}\s*==\s*(.+)$/i);
     if (doubleEqualsMatch) {
