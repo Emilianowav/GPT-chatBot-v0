@@ -2026,9 +2026,7 @@ Ejemplo:
    * Ejemplos: "{{titulo_libro}} exists", "{{cualquier_variable}} empty", "true", "false"
    */
   private evaluateStringCondition(condition: string): boolean {
-    // Limpiar paréntesis colgantes (artefactos de splits incorrectos)
-    condition = condition.trim().replace(/^\(+/, '').replace(/\)+$/, '').trim();
-    
+    condition = condition.trim();
     console.log(`      Condición original: ${condition}`);
 
     // Casos especiales: true/false literales
