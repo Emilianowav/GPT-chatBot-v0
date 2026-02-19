@@ -370,14 +370,34 @@ export class FlowExecutor {
       
       console.log(`📋 Variables globales inicializadas:`, Object.keys(this.globalVariables));
 
-      // 3. Encontrar nodo trigger (marcado con data.trigger === true)
-      const triggerNode = this.flow.nodes.find((n: any) => n.data?.trigger === true);
+      // 3. Encontrar nodo trigger con múltiples estrategias de detección
+      let triggerNode = this.flow.nodes.find((n: any) => n.data?.trigger === true);
+      
+      if (!triggerNode) {
+        // Fallback 1: nodo de tipo webhook
+        triggerNode = this.flow.nodes.find((n: any) => n.type === 'webhook');
+      }
+      
+      if (!triggerNode) {
+        // Fallback 2: nodo WhatsApp con módulo watch-events
+        triggerNode = this.flow.nodes.find((n: any) => 
+          n.type === 'whatsapp' && n.data?.config?.module === 'watch-events'
+        );
+      }
+      
+      if (!triggerNode) {
+        // Fallback 3: nodo sin edges entrantes (nodo raíz del flujo)
+        const targetIds = new Set(this.flow.edges.map((e: any) => e.target));
+        triggerNode = this.flow.nodes.find((n: any) => !targetIds.has(n.id));
+      }
       
       if (!triggerNode) {
         console.error('❌ NO SE ENCONTRÓ NODO TRIGGER');
         console.log('🔍 Nodos disponibles:', this.flow.nodes.map((n: any) => ({ id: n.id, type: n.type, trigger: n.data?.trigger })));
         throw new Error('No se encontró nodo trigger en el flujo');
       }
+      
+      console.log(`✅ Nodo trigger encontrado: ${triggerNode.id} (tipo: ${triggerNode.type})`);
 
       console.log(`🔄 1. ${triggerNode.data.label}`);
 
@@ -2002,8 +2022,20 @@ Ejemplo:
     if (condition.trim() === 'true') return true;
     if (condition.trim() === 'false') return false;
 
+    // SOPORTE PARA PARÉNTESIS: resolver grupos antes de evaluar operadores
+    if (condition.includes('(')) {
+      // Reemplazar el grupo más interno (sin paréntesis anidados) por su resultado
+      const resolved = condition.replace(/\(([^()]+)\)/g, (_, inner) => {
+        const innerResult = this.evaluateStringCondition(inner.trim());
+        console.log(`      → Grupo (${inner.trim()}) = ${innerResult}`);
+        return innerResult ? 'true' : 'false';
+      });
+      console.log(`      → Condición con paréntesis resueltos: ${resolved}`);
+      return this.evaluateStringCondition(resolved);
+    }
+
     // SOPORTE PARA OPERADORES LÓGICOS (OR, AND, ||, &&)
-    // Evaluar OR/|| primero (menor precedencia)
+    // Evaluar OR/|| con menor precedencia (después de AND)
     if (condition.includes(' OR ') || condition.includes(' || ')) {
       console.log(`      → Detectado operador OR/||`);
       const parts = condition.split(/ OR | \|\| /).map(p => p.trim());
@@ -2014,7 +2046,7 @@ Ejemplo:
       return result;
     }
 
-    // Evaluar AND/&& (mayor precedencia)
+    // Evaluar AND/&& (mayor precedencia que OR)
     if (condition.includes(' AND ') || condition.includes(' && ')) {
       console.log(`      → Detectado operador AND/&&`);
       const parts = condition.split(/ AND | && /).map(p => p.trim());
