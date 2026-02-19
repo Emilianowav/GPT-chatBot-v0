@@ -1040,9 +1040,8 @@ export class FlowExecutor {
         }
       }
       
-      // Variables de sesión que deben limpiarse cuando el GPT extrae null explícitamente
-      // (no deben mantenerse del historial entre mensajes)
-      const variablesSesion = ['cantidad', 'confirmacion_usuario', 'monto_operacion', 'tipo_dolar'];
+      // Variables que deben limpiarse siempre cuando GPT extrae null (no persisten entre mensajes)
+      const variablesSiempreLimpiar = ['confirmacion_usuario'];
 
       // Guardar cada dato extraído en variables globales
       // IMPORTANTE: Hacer merge con variables existentes para mantener valores previos
@@ -1050,9 +1049,9 @@ export class FlowExecutor {
       for (const [nombre, valor] of Object.entries(datosExtraidos)) {
         // Si el valor es null/undefined/"", verificar si ya existe una variable con ese nombre
         if (valor === undefined || valor === null || valor === '') {
-          // Variables de sesión: limpiar siempre cuando GPT extrae null
-          if (variablesSesion.includes(nombre)) {
-            console.log(`   🧹 ${nombre} = null (variable de sesión, limpiada)`);
+          // Estas variables siempre se limpian - no deben persistir del mensaje anterior
+          if (variablesSiempreLimpiar.includes(nombre)) {
+            console.log(`   🧹 ${nombre} = null (limpiada, no persiste entre mensajes)`);
             this.setGlobalVariable(nombre, null);
             output[nombre] = null;
             continue;
@@ -2027,13 +2026,17 @@ Ejemplo:
    * Ejemplos: "{{titulo_libro}} exists", "{{cualquier_variable}} empty", "true", "false"
    */
   private evaluateStringCondition(condition: string): boolean {
+    // Limpiar paréntesis colgantes (artefactos de splits incorrectos)
+    condition = condition.trim().replace(/^\(+/, '').replace(/\)+$/, '').trim();
+    
     console.log(`      Condición original: ${condition}`);
 
     // Casos especiales: true/false literales
     if (condition.trim() === 'true') return true;
     if (condition.trim() === 'false') return false;
 
-    // SOPORTE PARA PARÉNTESIS: resolver grupos antes de evaluar operadores
+    // SOPORTE PARA PARÉNTESIS: resolver grupos ANTES de evaluar OR/AND
+    // Esto es crítico para condiciones como: A AND (B OR C) AND D
     if (condition.includes('(')) {
       // Reemplazar el grupo más interno (sin paréntesis anidados) por su resultado
       const resolved = condition.replace(/\(([^()]+)\)/g, (_, inner) => {
@@ -2046,18 +2049,8 @@ Ejemplo:
     }
 
     // SOPORTE PARA OPERADORES LÓGICOS (OR, AND, ||, &&)
-    // Evaluar OR/|| con menor precedencia (después de AND)
-    if (condition.includes(' OR ') || condition.includes(' || ')) {
-      console.log(`      → Detectado operador OR/||`);
-      const parts = condition.split(/ OR | \|\| /).map(p => p.trim());
-      const results = parts.map(part => this.evaluateStringCondition(part));
-      console.log(`      → Partes: ${parts.length}, Resultados: ${results.join(', ')}`);
-      const result = results.some(r => r === true);
-      console.log(`      → OR resultado: ${result}`);
-      return result;
-    }
-
-    // Evaluar AND/&& (mayor precedencia que OR)
+    // IMPORTANTE: Solo splitear por OR/AND cuando NO hay paréntesis sin resolver
+    // Evaluar AND primero (mayor precedencia), luego OR
     if (condition.includes(' AND ') || condition.includes(' && ')) {
       console.log(`      → Detectado operador AND/&&`);
       const parts = condition.split(/ AND | && /).map(p => p.trim());
@@ -2065,6 +2058,16 @@ Ejemplo:
       console.log(`      → Partes: ${parts.length}, Resultados: ${results.join(', ')}`);
       const result = results.every(r => r === true);
       console.log(`      → AND resultado: ${result}`);
+      return result;
+    }
+
+    if (condition.includes(' OR ') || condition.includes(' || ')) {
+      console.log(`      → Detectado operador OR/||`);
+      const parts = condition.split(/ OR | \|\| /).map(p => p.trim());
+      const results = parts.map(part => this.evaluateStringCondition(part));
+      console.log(`      → Partes: ${parts.length}, Resultados: ${results.join(', ')}`);
+      const result = results.some(r => r === true);
+      console.log(`      → OR resultado: ${result}`);
       return result;
     }
 
