@@ -1040,12 +1040,23 @@ export class FlowExecutor {
         }
       }
       
+      // Variables de sesión que deben limpiarse cuando el GPT extrae null explícitamente
+      // (no deben mantenerse del historial entre mensajes)
+      const variablesSesion = ['cantidad', 'confirmacion_usuario', 'monto_operacion', 'tipo_dolar'];
+
       // Guardar cada dato extraído en variables globales
       // IMPORTANTE: Hacer merge con variables existentes para mantener valores previos
       console.log('\n💾 Guardando variables globales (con merge):');
       for (const [nombre, valor] of Object.entries(datosExtraidos)) {
         // Si el valor es null/undefined/"", verificar si ya existe una variable con ese nombre
         if (valor === undefined || valor === null || valor === '') {
+          // Variables de sesión: limpiar siempre cuando GPT extrae null
+          if (variablesSesion.includes(nombre)) {
+            console.log(`   🧹 ${nombre} = null (variable de sesión, limpiada)`);
+            this.setGlobalVariable(nombre, null);
+            output[nombre] = null;
+            continue;
+          }
           const existingValue = this.getVariableValue(nombre);
           if (existingValue !== undefined && existingValue !== null && existingValue !== '') {
             // Mantener el valor existente
