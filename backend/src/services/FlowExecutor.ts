@@ -914,7 +914,8 @@ export class FlowExecutor {
       try {
         datosExtraidos = await GPTPromptBuilder.extractWithFrontendConfig(
           contexto,
-          config.extractionConfig
+          config.extractionConfig,
+          this.globalVariables // Pasar variables globales como contexto
         );
       } catch (error: any) {
         console.error('\n❌ ERROR EN EXTRACCIÓN GPT:');

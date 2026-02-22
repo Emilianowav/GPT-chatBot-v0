@@ -121,7 +121,8 @@ export class GPTPromptBuilder {
    */
   static async extractWithFrontendConfig(
     contexto: string,
-    extractionConfig: any
+    extractionConfig: any,
+    globalVariables?: Record<string, any>
   ): Promise<Record<string, any>> {
     console.log('\n🔍 [extractWithFrontendConfig] INICIANDO EXTRACCIÓN');
     const resultado: Record<string, any> = {};
@@ -134,7 +135,18 @@ export class GPTPromptBuilder {
 
     try {
       // Usar SOLO el systemPrompt del frontend (sin agregar nada)
-      const systemPrompt = extractionConfig.systemPrompt;
+      let systemPrompt = extractionConfig.systemPrompt;
+      
+      // Si hay variables globales, agregarlas como contexto
+      if (globalVariables && Object.keys(globalVariables).length > 0) {
+        systemPrompt += '\n\nCONTEXTO (Variables globales actuales):\n';
+        Object.entries(globalVariables).forEach(([key, value]) => {
+          if (value !== null && value !== undefined) {
+            systemPrompt += `- ${key}: ${JSON.stringify(value)}\n`;
+          }
+        });
+        systemPrompt += '\nUsa este contexto para entender mejor la intención del usuario.';
+      }
       
       console.log('   📤 Enviando a GPT con systemPrompt del frontend...');
       console.log('   📝 Contexto length:', contexto.length);
