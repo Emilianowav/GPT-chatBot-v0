@@ -1417,6 +1417,17 @@ Ejemplo:
     await this.saveToHistorial(mensaje);
     console.log(`   📝 Respuesta del bot guardada en historial`);
 
+    // Limpiar variables si está configurado
+    if (config.clearVariablesOnExecute && Array.isArray(config.clearVariablesOnExecute)) {
+      console.log(`\n🧹 Limpiando variables después de enviar mensaje:`);
+      for (const varName of config.clearVariablesOnExecute) {
+        if (this.globalVariables[varName] !== undefined) {
+          console.log(`   🗑️  ${varName} = ${JSON.stringify(this.globalVariables[varName])?.substring(0, 50)} → null`);
+          this.setGlobalVariable(varName, null);
+        }
+      }
+    }
+
     return {
       output: {
         status: 'sent',
