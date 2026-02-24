@@ -863,6 +863,8 @@ export class FlowExecutor {
     
     console.log(`   📊 Total mensajes en historial: ${this.historialConversacion.length}`);
 
+    // CRÍTICO: Procesar extracción DESPUÉS del GPT conversacional
+    // Esto asegura que todos los nodos previos estén en el contexto
     // DEBUG: Verificar condición de extracción
     console.log(`\n🔍 [DEBUG] Verificando condición de extracción:`);
     console.log(`   config.tipo === 'formateador': ${config.tipo === 'formateador'}`);
