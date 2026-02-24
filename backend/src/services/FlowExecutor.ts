@@ -863,6 +863,14 @@ export class FlowExecutor {
     
     console.log(`   📊 Total mensajes en historial: ${this.historialConversacion.length}`);
 
+    // CRÍTICO: Agregar output al contexto del nodo ANTES del extraction
+    // Esto permite que {{respuesta_gpt}} esté disponible para el extraction
+    if (output.respuesta_gpt) {
+      console.log('\n📦 Agregando output al contexto del nodo actual...');
+      this.nodeContext[node.id] = { output };
+      console.log(`   ✅ ${node.id}.output.respuesta_gpt disponible para extraction`);
+    }
+
     // CRÍTICO: Procesar extracción DESPUÉS del GPT conversacional
     // Esto asegura que todos los nodos previos estén en el contexto
     // DEBUG: Verificar condición de extracción
