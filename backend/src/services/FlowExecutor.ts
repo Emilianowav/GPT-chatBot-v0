@@ -909,12 +909,18 @@ export class FlowExecutor {
       const variablesToExtract = extractionConfigAny.variablesToExtract || config.extractionConfig.variables || [];
       console.log(`📋 Variables a extraer: ${variablesToExtract.map((v: any) => `${v.nombre}${v.requerido ? '*' : ''}`).join(', ')}`);
       
+      // CRÍTICO: Resolver variables en extractionConfig.systemPrompt antes de enviar a GPT
+      const extractionConfigResolved = {
+        ...config.extractionConfig,
+        systemPrompt: this.resolveVariableInString(config.extractionConfig.systemPrompt)
+      };
+      
       // Usar extractionConfig.systemPrompt + extractionConfig.variablesToExtract
       let datosExtraidos;
       try {
         datosExtraidos = await GPTPromptBuilder.extractWithFrontendConfig(
           contexto,
-          config.extractionConfig,
+          extractionConfigResolved,
           this.globalVariables // Pasar variables globales como contexto
         );
       } catch (error: any) {
